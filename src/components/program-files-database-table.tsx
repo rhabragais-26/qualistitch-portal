@@ -1,10 +1,15 @@
-
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, useFirebaseApp, useToast } from '@/firebase';
+import React, { useCallback, useMemo, useState } from 'react';
+import Image from 'next/image';
+import { Download, X } from 'lucide-react';
+
+import { useCollection, useFirestore, useMemoFirebase, useFirebaseApp } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+
 import { getStorage, ref, getBlob } from 'firebase/storage';
 import { collection, query } from 'firebase/firestore';
-import React, { useCallback, useMemo, useState } from 'react';
+
 import {
   Table,
   TableBody,
@@ -13,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+
 import {
   Card,
   CardContent,
@@ -20,12 +26,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+
 import { Skeleton } from './ui/skeleton';
 import { Button } from './ui/button';
-import { Download, X } from 'lucide-react';
 import { Input } from './ui/input';
-import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+
 import { toTitleCase } from '@/lib/utils';
 
 type FileObject = {
@@ -60,17 +66,25 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
   const firestore = useFirestore();
   const app = useFirebaseApp();
   const { toast } = useToast();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [fileSearch, setFileSearch] = useState('');
   const [imageInView, setImageInView] = useState<string | null>(null);
 
-  const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
+  const leadsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'leads')) : null),
+    [firestore]
+  );
+
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const getContactDisplay = useCallback((lead: Lead) => {
-    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
-    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+    const mobile =
+      lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline =
+      lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
     if (mobile && landline) return `${mobile} / ${landline}`;
     return mobile || landline || null;
   }, []);
@@ -81,75 +95,86 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   }, []);
 
-  const handleDownload = useCallback(async (url: string, name: string) => {
-    if (!app) {
-      toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: "Firebase app is not available.",
-      });
-      return;
-    }
-    const storage = getStorage(app);
-    try {
-      const pathStartIndex = url.indexOf('/o/') + 3;
-      const pathEndIndex = url.indexOf('?alt=media');
-      if (pathStartIndex === 2 || pathEndIndex === -1) {
-        throw new Error('Invalid Firebase Storage URL format.');
+  const handleDownload = useCallback(
+    async (url: string, name: string) => {
+      if (!app) {
+        toast({
+          variant: 'destructive',
+          title: 'Download Failed',
+          description: 'Firebase app is not available.',
+        });
+        return;
       }
-      const encodedPath = url.substring(pathStartIndex, pathEndIndex);
-      const decodedPath = decodeURIComponent(encodedPath);
-      
-      const fileRef = ref(storage, decodedPath);
-      const blob = await getBlob(fileRef);
 
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
-    } catch (err: any) {
-      console.error('File download failed:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Download Failed',
-        description: err.message || 'Could not download the file. Please check your permissions and network.',
-      });
-    }
-  }, [app, toast]);
+      const storage = getStorage(app);
+
+      try {
+        const pathStartIndex = url.indexOf('/o/') + 3;
+        const pathEndIndex = url.indexOf('?alt=media');
+
+        // If "/o/" isn't found, indexOf returns -1, so + 3 becomes 2
+        if (pathStartIndex === 2 || pathEndIndex === -1) {
+          throw new Error('Invalid Firebase Storage URL format.');
+        }
+
+        const encodedPath = url.substring(pathStartIndex, pathEndIndex);
+        const decodedPath = decodeURIComponent(encodedPath);
+
+        const fileRef = ref(storage, decodedPath);
+        const blob = await getBlob(fileRef);
+
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(link.href);
+      } catch (err: any) {
+        console.error('File download failed:', err);
+        toast({
+          variant: 'destructive',
+          title: 'Download Failed',
+          description: err?.message || 'Could not download the file. Please check your permissions and network.',
+        });
+      }
+    },
+    [app, toast]
+  );
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
-    
-    const leadsWithFiles = leads.filter(lead => lead.isFinalProgram);
 
-    return leadsWithFiles.filter(lead => {
+    const leadsWithFiles = leads.filter((lead) => lead.isFinalProgram);
+
+    return leadsWithFiles.filter((lead) => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
-      const matchesSearch = searchTerm ?
-        (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
-        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
-        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
+
+      const matchesSearch = searchTerm
+        ? lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+          (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+          (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+          (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, '')))
         : true;
-      
+
       const joString = formatJoNumber(lead.joNumber);
       const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
 
       const lowercasedFileSearch = fileSearch.toLowerCase();
-      const matchesFile = fileSearch ? 
-        (lead.layouts?.[0]?.finalLogoDst?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
-         lead.layouts?.[0]?.finalBackDesignDst?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
-         lead.layouts?.[0]?.finalNamesDst?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
-         lead.layouts?.[0]?.finalLogoEmb?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
-         lead.layouts?.[0]?.finalBackDesignEmb?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)))
+      const matchesFile = fileSearch
+        ? lead.layouts?.[0]?.finalLogoDst?.some((f) => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+          lead.layouts?.[0]?.finalBackDesignDst?.some(
+            (f) => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)
+          ) ||
+          lead.layouts?.[0]?.finalNamesDst?.some((f) => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+          lead.layouts?.[0]?.finalLogoEmb?.some((f) => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+          lead.layouts?.[0]?.finalBackDesignEmb?.some(
+            (f) => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)
+          )
         : true;
-
 
       return matchesSearch && matchesJo && matchesFile;
     });
-
   }, [leads, searchTerm, joNumberSearch, fileSearch, formatJoNumber]);
 
   if (isLoading) {
@@ -177,6 +202,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                 A repository of all final program files for job orders.
               </CardDescription>
             </div>
+
             <div className="flex items-center gap-2">
               <div className="w-full max-w-sm">
                 <Input
@@ -186,6 +212,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                   className="bg-gray-100 text-black placeholder:text-gray-500"
                 />
               </div>
+
               <div className="w-full max-w-xs">
                 <Input
                   placeholder="Search by J.O. No..."
@@ -194,6 +221,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                   className="bg-gray-100 text-black placeholder:text-gray-500"
                 />
               </div>
+
               <div className="w-full max-w-xs">
                 <Input
                   placeholder="Search by DST/EMB Filename..."
@@ -205,6 +233,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
             </div>
           </div>
         </CardHeader>
+
         <CardContent className="flex-1 overflow-auto">
           <div className="border rounded-md h-full">
             <Table>
@@ -218,108 +247,193 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                   <TableHead className="text-white font-bold align-middle text-center">DST Files</TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {filteredLeads.length > 0 ? (
-                  filteredLeads.map(lead => (
+                  filteredLeads.map((lead) => (
                     <TableRow key={lead.id}>
                       <TableCell className="align-middle py-3 text-center">
                         <div className="font-bold">{toTitleCase(lead.customerName)}</div>
-                        <div className="text-xs text-gray-500">{lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : ''}</div>
+                        <div className="text-xs text-gray-500">
+                          {lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : ''}
+                        </div>
                         <div className="text-xs text-gray-500">{getContactDisplay(lead)}</div>
                       </TableCell>
+
                       <TableCell className="align-middle py-3 text-center text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
+
                       <TableCell className="align-middle py-3 text-center">
                         <div className="flex gap-2 justify-center">
-                          {lead.layouts?.[0]?.finalProgrammedLogo?.map((file, i) => file?.url && (
-                            <TooltipProvider key={`fp-logo-${i}`}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="relative w-16 h-16 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
-                                    <Image src={file.url} alt={`Final Program Logo ${i+1}`} layout="fill" objectFit="contain" />
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Final Program Logo {i+1}</p></TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ))}
-                          {lead.layouts?.[0]?.finalProgrammedBackDesign?.map((file, i) => file?.url && (
-                            <TooltipProvider key={`fp-back-${i}`}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="relative w-16 h-16 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
-                                    <Image src={file.url} alt={`Final Program Back Design ${i+1}`} layout="fill" objectFit="contain" />
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Final Program Back Design {i+1}</p></TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ))}
+                          {lead.layouts?.[0]?.finalProgrammedLogo?.map(
+                            (file, i) =>
+                              file?.url && (
+                                <TooltipProvider key={`fp-logo-${i}`}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div
+                                        className="relative w-16 h-16 border rounded-md cursor-pointer"
+                                        onClick={() => setImageInView(file.url)}
+                                      >
+                                        <Image src={file.url} alt={`Final Program Logo ${i + 1}`} layout="fill" objectFit="contain" />
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Final Program Logo {i + 1}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )
+                          )}
+
+                          {lead.layouts?.[0]?.finalProgrammedBackDesign?.map(
+                            (file, i) =>
+                              file?.url && (
+                                <TooltipProvider key={`fp-back-${i}`}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div
+                                        className="relative w-16 h-16 border rounded-md cursor-pointer"
+                                        onClick={() => setImageInView(file.url)}
+                                      >
+                                        <Image
+                                          src={file.url}
+                                          alt={`Final Program Back Design ${i + 1}`}
+                                          layout="fill"
+                                          objectFit="contain"
+                                        />
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Final Program Back Design {i + 1}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )
+                          )}
                         </div>
                       </TableCell>
+
                       <TableCell className="align-middle py-3 text-center">
                         <div className="flex gap-2 justify-center">
                           {lead.layouts?.[0]?.sequenceLogo?.map((file: any, i) => {
                             if (!file) return null;
                             const url = typeof file === 'string' ? file : file.url;
                             if (!url) return null;
+
                             return (
                               <TooltipProvider key={`seq-logo-${i}`}>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="relative w-16 h-16 border rounded-md cursor-pointer" onClick={() => setImageInView(url)}>
-                                      <Image src={url} alt={`Sequence Logo ${i+1}`} layout="fill" objectFit="contain" />
+                                    <div
+                                      className="relative w-16 h-16 border rounded-md cursor-pointer"
+                                      onClick={() => setImageInView(url)}
+                                    >
+                                      <Image src={url} alt={`Sequence Logo ${i + 1}`} layout="fill" objectFit="contain" />
                                     </div>
                                   </TooltipTrigger>
-                                  <TooltipContent><p>Sequence Logo {i+1}</p></TooltipContent>
+                                  <TooltipContent>
+                                    <p>Sequence Logo {i + 1}</p>
+                                  </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
                             );
                           })}
+
                           {lead.layouts?.[0]?.sequenceBackDesign?.map((file: any, i) => {
                             if (!file) return null;
                             const url = typeof file === 'string' ? file : file.url;
                             if (!url) return null;
+
                             return (
-                             <TooltipProvider key={`seq-back-${i}`}>
-                              <Tooltip>
+                              <TooltipProvider key={`seq-back-${i}`}>
+                                <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="relative w-16 h-16 border rounded-md cursor-pointer" onClick={() => setImageInView(url)}>
-                                      <Image src={url} alt={`Sequence Back Design ${i+1}`} layout="fill" objectFit="contain" />
+                                    <div
+                                      className="relative w-16 h-16 border rounded-md cursor-pointer"
+                                      onClick={() => setImageInView(url)}
+                                    >
+                                      <Image src={url} alt={`Sequence Back Design ${i + 1}`} layout="fill" objectFit="contain" />
                                     </div>
                                   </TooltipTrigger>
-                                  <TooltipContent><p>Sequence Back Design {i+1}</p></TooltipContent>
+                                  <TooltipContent>
+                                    <p>Sequence Back Design {i + 1}</p>
+                                  </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
                             );
                           })}
                         </div>
                       </TableCell>
+
                       <TableCell className="align-middle py-3 text-center">
                         <div className="flex flex-col gap-1 items-start mx-auto w-fit">
-                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, i) => file?.url && file?.name && (
-                            <Button key={`emb-logo-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
-                              <Download className="mr-1 h-3 w-3" /> {file.name}
-                            </Button>
-                          ))}
-                          {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, i) => file?.url && file?.name && (
-                            <Button key={`emb-back-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
-                               <Download className="mr-1 h-3 w-3" /> {file.name}
-                            </Button>
-                          ))}
+                          {lead.layouts?.[0]?.finalLogoEmb?.map(
+                            (file, i) =>
+                              file?.url &&
+                              file?.name && (
+                                <Button
+                                  key={`emb-logo-${i}`}
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs"
+                                  onClick={() => handleDownload(file.url, file.name)}
+                                >
+                                  <Download className="mr-1 h-3 w-3" /> {file.name}
+                                </Button>
+                              )
+                          )}
+
+                          {lead.layouts?.[0]?.finalBackDesignEmb?.map(
+                            (file, i) =>
+                              file?.url &&
+                              file?.name && (
+                                <Button
+                                  key={`emb-back-${i}`}
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs"
+                                  onClick={() => handleDownload(file.url, file.name)}
+                                >
+                                  <Download className="mr-1 h-3 w-3" /> {file.name}
+                                </Button>
+                              )
+                          )}
                         </div>
                       </TableCell>
+
                       <TableCell className="align-middle py-3 text-center">
                         <div className="flex flex-col gap-1 items-start mx-auto w-fit">
-                          {lead.layouts?.[0]?.finalLogoDst?.map((file, i) => file?.url && file?.name && (
-                            <Button key={`dst-logo-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
-                              <Download className="mr-1 h-3 w-3" /> {file.name}
-                            </Button>
-                          ))}
-                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, i) => file?.url && file?.name && (
-                            <Button key={`dst-back-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
-                               <Download className="mr-1 h-3 w-3" /> {file.name}
-                            </Button>
-                          ))}
+                          {lead.layouts?.[0]?.finalLogoDst?.map(
+                            (file, i) =>
+                              file?.url &&
+                              file?.name && (
+                                <Button
+                                  key={`dst-logo-${i}`}
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs"
+                                  onClick={() => handleDownload(file.url, file.name)}
+                                >
+                                  <Download className="mr-1 h-3 w-3" /> {file.name}
+                                </Button>
+                              )
+                          )}
+
+                          {lead.layouts?.[0]?.finalBackDesignDst?.map(
+                            (file, i) =>
+                              file?.url &&
+                              file?.name && (
+                                <Button
+                                  key={`dst-back-${i}`}
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs"
+                                  onClick={() => handleDownload(file.url, file.name)}
+                                >
+                                  <Download className="mr-1 h-3 w-3" /> {file.name}
+                                </Button>
+                              )
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -336,6 +450,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
           </div>
         </CardContent>
       </Card>
+
       {imageInView && (
         <div
           className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
@@ -344,13 +459,13 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
           <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
             <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
             <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setImageInView(null)}
-                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+              variant="ghost"
+              size="icon"
+              onClick={() => setImageInView(null)}
+              className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
-                <X className="h-6 w-6" />
-                <span className="sr-only">Close</span>
+              <X className="h-6 w-6" />
+              <span className="sr-only">Close</span>
             </Button>
           </div>
         </div>
@@ -358,5 +473,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
     </>
   );
 });
+
 ProgramFilesDatabaseTableMemo.displayName = 'ProgramFilesDatabaseTable';
+
 export { ProgramFilesDatabaseTableMemo as ProgramFilesDatabaseTable };
