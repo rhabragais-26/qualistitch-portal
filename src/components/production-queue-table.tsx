@@ -36,7 +36,8 @@ import { addDays, differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
+import { getStorage, ref, getBlob } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -290,14 +291,22 @@ ImageDisplayCard.displayName = 'ImageDisplayCard';
 const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { lead: Lead }) {
   const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
+  const app = useFirebaseApp();
 
   const handleDownload = useCallback(async (url: string, name: string) => {
+    if (!app) {
+        toast({
+            variant: "destructive",
+            title: "Download Failed",
+            description: "Firebase services are not available.",
+        });
+        return;
+    }
+    const storage = getStorage(app);
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-             throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const blob = await response.blob();
+        const fileRef = ref(storage, url);
+        const blob = await getBlob(fileRef);
+        
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
         link.download = name;
@@ -313,7 +322,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
             description: err.message || 'Could not download the file. Please check your permissions and network.',
         });
     }
-  }, [toast]);
+  }, [app, toast]);
 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
@@ -1206,7 +1215,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
               <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
                   productionQueue.map((lead) => {
-                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
+                   const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                     return (
                         <ProductionQueueTableRowGroup
                             key={lead.id}
@@ -1527,5 +1536,6 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
     
+
 
 
