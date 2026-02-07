@@ -294,19 +294,12 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const app = useFirebaseApp();
 
   const handleDownload = useCallback(async (url: string, name: string) => {
-    if (!app) {
-        toast({
-            variant: "destructive",
-            title: "Download Failed",
-            description: "Firebase services are not available.",
-        });
-        return;
-    }
-    const storage = getStorage(app);
     try {
-        const fileRef = ref(storage, url);
-        const blob = await getBlob(fileRef);
-        
+        const response = await fetch(url);
+        if (!response.ok) {
+             throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const blob = await response.blob();
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
         link.download = name;
@@ -314,15 +307,15 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(link.href);
-    } catch (err: any) {
+    } catch (err) {
         console.error('File download failed:', err);
         toast({
             variant: 'destructive',
             title: 'Download Failed',
-            description: err.message || 'Could not download the file. Please check your permissions and network.',
+            description: 'Could not download the file. Please check your network connection and CORS policy.',
         });
     }
-}, [app, toast]);
+  }, [toast]);
 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
@@ -696,41 +689,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
 });
 ProductionQueueTableRowGroup.displayName = 'ProductionQueueTableRowGroup';
 
-type ProductionQueueTableProps = {
-  isReadOnly: boolean;
-  filterType?: 'ONGOING' | 'COMPLETED';
-};
-
-type UserProfileInfo = {
-    uid: string;
-    firstName: string;
-    lastName: string;
-    nickname: string;
-  };
-
-type ProductionQueueTableRowGroupProps = {
-    lead: EnrichedLead;
-    isRepeat: boolean;
-    getContactDisplay: (lead: Lead) => string | null;
-    toggleCustomerDetails: (leadId: string) => void;
-    openCustomerDetails: string | null;
-    isReadOnly: boolean;
-    isCompleted: boolean;
-    activeCasesByJo: Map<string, string>;
-    formatJoNumber: (joNumber: number | undefined) => string;
-    handleCheckboxChange: (leadId: string, field: CheckboxField, checked: boolean) => void;
-    setLeadToEndorse: React.Dispatch<React.SetStateAction<Lead | null>>;
-    handleReopenCase: (lead: Lead) => void;
-    setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
-    openLeadId: string | null;
-    calculateProductionDeadline: (lead: Lead) => { text: React.ReactNode; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
-    handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
-    setViewingJoLead: React.Dispatch<React.SetStateAction<Lead | null>>;
-    getProductionStatusLabel: (lead: Lead) => { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" };
-    filterType?: 'ONGOING' | 'COMPLETED';
-};
-
-const ProductionQueueTableBase = React.memo(function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
+const ProductionQueueTableBase = React.memo(function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const { toast } = useToast();
@@ -1561,7 +1520,8 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTableBase({ 
       )}
     </>
   );
-}
+});
+ProductionQueueTableBase.displayName = 'ProductionQueueTableBase';
 
 const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
 ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
@@ -1570,6 +1530,7 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
     
+
 
 
 
