@@ -2128,7 +2128,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </ScrollArea>
                 </div>
             </DialogContent>
         </Dialog>
@@ -2136,6 +2135,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     </>
   );
 });
-ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
+DigitizingTableMemo.displayName = 'DigitizingTable';
 
-export { ProductionQueueTableMemo as ProductionQueueTable };
+export { DigitizingTableMemo as DigitizingTable };
