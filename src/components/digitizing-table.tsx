@@ -691,7 +691,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
           return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0);
         }, 0);
         
-        for (let i = 0; < sortedOrders.length; i++) {
+        for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
             const previousNonSampleOrders = sortedOrders.slice(0, i).filter(o => o.orderType !== 'Item Sample');
             enrichedLeads.push({
@@ -802,7 +802,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         setUncheckConfirmation(null);
         return;
     }
-
+    
     const optimisticUpdate: Partial<Lead> = {};
     const originalState: Partial<Lead> = {};
 
@@ -1389,7 +1389,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                         tabIndex={0}
                         className={cn(
                             "relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none",
-                            !isDisabled && "cursor-pointer"
+                            canEdit && "cursor-pointer"
                         )}
                         onClick={() => image && setImageInView(image)}
                         onDoubleClick={() => canEdit && !image && (document.getElementById(`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`)?.click())}
@@ -1891,8 +1891,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-y-auto pr-6">
-                    <ScrollArea>
+                <ScrollArea>
                     <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -1940,8 +1939,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                    </ScrollArea>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
