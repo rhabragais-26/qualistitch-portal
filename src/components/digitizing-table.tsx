@@ -2129,15 +2129,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         })()}
                     </div>
                 </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
     </>
   );
 });
-ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
+ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
-
-
-    
