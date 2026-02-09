@@ -363,12 +363,11 @@ const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, o
 ImageDisplayCard.displayName = 'ImageDisplayCard';
 
 
-const DigitizingTableBase = function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
+export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
   const firestore = useFirestore();
   const app = useFirebaseApp();
   const { toast } = useToast();
   const { userProfile, isAdmin } = useUser();
-  const canEdit = !isReadOnly;
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
@@ -1244,7 +1243,7 @@ const DigitizingTableBase = function DigitizingTable({ isReadOnly, filterType = 
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
   ]);
   
-  const isFinalProgramSaveDisabled = useMemo(() => {
+  const isSaveDisabled = useMemo(() => {
     if (uploadField !== 'isFinalProgram') return false;
 
     if (isNamesOnly) {
@@ -1605,7 +1604,7 @@ const DigitizingTableBase = function DigitizingTable({ isReadOnly, filterType = 
                   <DialogClose asChild>
                       <Button type="button" variant="outline"> Cancel </Button>
                   </DialogClose>
-                  <Button onClick={handleUploadDialogSave} disabled={isFinalProgramSaveDisabled || (isReadOnly || (filterType === 'COMPLETED' && !enableReupload))}>Save and Update Status</Button>
+                  <Button onClick={handleUploadDialogSave} disabled={isSaveDisabled || (isReadOnly || (filterType === 'COMPLETED' && !enableReupload))}>Save and Update Status</Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>
@@ -1880,7 +1879,7 @@ const DigitizingTableBase = function DigitizingTable({ isReadOnly, filterType = 
                   </React.Fragment>
                 );
                 })}
-                </TableBody>
+              </TableBody>
             </Table>
           </div>
       </CardContent>
@@ -2185,6 +2184,7 @@ const DigitizingTableBase = function DigitizingTable({ isReadOnly, filterType = 
                             )
                         })()}
                     </div>
+                </ScrollArea>
                 </div>
             </DialogContent>
         </Dialog>
@@ -2192,49 +2192,3 @@ const DigitizingTableBase = function DigitizingTable({ isReadOnly, filterType = 
     </>
   );
 }
-
-```
-- tsconfig.json:
-```json
-{
-  "compilerOptions": {
-    "target": "es5",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
-}
-```
