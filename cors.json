@@ -1,0 +1,12 @@
+[
+  {
+    "origin": [
+      "https://qualistitch-portal.com",
+      "https://www.qualistitch-portal.com",
+      "https://6000--firebase-studiov18-1769778712237.cluster-yylg2pipxrar4v4a72liastuqy.cloudworkstations.dev"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Disposition", "Content-Length", "Accept-Ranges", "Range"],
+    "maxAgeSeconds": 3600
+  }
+]

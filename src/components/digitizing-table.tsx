@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -483,7 +484,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
     const storage = getStorage(app);
     try {
-        // Manually parse the path from the URL
         const path = new URL(url).pathname.split('/o/')[1];
         if (!path) {
             throw new Error('Invalid Firebase Storage URL.');
@@ -1494,6 +1494,33 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
   ]);
   
+  const isSaveDisabled = useMemo(() => {
+    if (uploadField !== 'isFinalProgram') return false;
+
+    if (isNamesOnly) {
+      return finalNamesDst.every((f) => !f);
+    }
+    
+    const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
+    const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
+    const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
+    const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
+  
+    return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
+}, [
+    isNamesOnly,
+    finalNamesDst,
+    finalLogoEmb,
+    finalBackDesignEmb,
+    finalLogoDst,
+    finalBackDesignDst,
+    sequenceLogo,
+    sequenceBackDesign,
+    finalProgrammedLogo,
+    finalProgrammedBackDesign,
+    uploadField
+]);
+  
   if (isLoading) {
     return (
       <div className="p-4">
@@ -2174,7 +2201,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
