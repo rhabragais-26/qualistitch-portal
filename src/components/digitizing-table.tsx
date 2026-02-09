@@ -380,9 +380,9 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery);
+  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
 
   const isLoading = areLeadsLoading || areUsersLoading;
   const error = leadsError || usersError;
@@ -697,6 +697,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
             
+            // Count previous non-sample orders for this customer
             const previousNonSampleOrders = sortedOrders
                 .slice(0, i)
                 .filter(o => o.orderType !== 'Item Sample');
@@ -1335,7 +1336,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   };
 
   const renderUploadDialogContent = useCallback(() => {
-    const canEdit = !isReadOnly || (filterType === 'COMPLETED' && enableReupload);
     
     const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>, gridCols = "grid-cols-1") => {
       return (
@@ -1502,14 +1502,14 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     }
     return null;
   }, [
-      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly,
+      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly, canEdit,
       handleImagePaste, handleImageUpload, handleClearImage, 
       handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded,
-      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs, canEdit
+      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
   ]);
   
   if (isLoading) {
@@ -1898,7 +1898,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <ScrollArea>
+                <div className="flex-1 overflow-y-auto pr-6">
                     <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -1946,7 +1946,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
