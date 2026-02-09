@@ -444,6 +444,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
+  const canEdit = !isReadOnly;
 
   const allFinalFiles = useMemo(() => {
     if (!reviewConfirmLead || !reviewConfirmLead.layouts) return [];
@@ -1391,6 +1392,268 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             !isDisabled && "cursor-pointer"
                         )}
                         onClick={() => image && setImageInView(image)}
+                        onDoubleClick={() => !isReadOnly && !image && (document.getElementById(`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`)?.click())}
+                        onPaste={(e) => handleImagePaste(e, setter, index)}
+                        onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+                      >
+                          {image ? (<>
+                            <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
+                            {!isDisabled && (
+                                <Button
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClearImage(setter, index);
+                                }}
+                                >
+                                <Trash2 className="h-4 w-4" />
+                                </Button>
+                            )}
+                          </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isDisabled ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
+                          <input id={`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isDisabled}/>
+                      </div>
+                      {!isDisabled && index > 0 && displayImages.length > 1 && (
+                          <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive self-center"
+                              onClick={(e) => handleRemoveImage(e, setter, index)}
+                          >
+                              <X className="h-5 w-5" />
+                          </Button>
+                      )}
+                  </div>
+              ))}
+          </div>
+        );
+      };
+
+    if (uploadField === 'isUnderProgramming') {
+      return (
+        <div className="grid grid-cols-2 gap-4">
+            {renderUploadBoxes('Logo Left', initialLogoLeftImages, setInitialLogoLeftImages)}
+            {renderUploadBoxes('Logo Right', initialLogoRightImages, setInitialLogoRightImages)}
+            {renderUploadBoxes('Back Logo', initialBackLogoImages, setInitialBackLogoImages)}
+            {renderUploadBoxes('Back Design', initialBackDesignImages, setInitialBackDesignImages)}
+        </div>
+      );
+    } else if (uploadField === 'isLogoTesting') {
+       return (
+        <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+                {renderUploadBoxes('Logo Left', testLogoLeftImages, setTestLogoLeftImages)}
+                {renderUploadBoxes('Logo Right', testLogoRightImages, setTestLogoRightImages)}
+                {renderUploadBoxes('Back Logo', testBackLogoImages, setTestBackLogoImages)}
+                {renderUploadBoxes('Back Design', testBackDesignImages, setTestBackDesignImages)}
+            </div>
+            <div className="flex items-center space-x-2">
+                <Checkbox id="no-testing" checked={noTestingNeeded} onCheckedChange={(checked) => setNoTestingNeeded(!!checked)} disabled={isViewOnly} />
+                <Label htmlFor="no-testing">No need for testing</Label>
+            </div>
+        </div>
+      );
+    } else if (uploadField === 'isFinalProgram') {
+        return (
+            <div className="space-y-4">
+                <div>
+                    <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Program Files</h4>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                        {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                        {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                        {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+                        <div className="col-span-2">
+                            {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs, 'grid-cols-2')}
+                        </div>
+                    </div>
+                </div>
+                <Separator className="my-4" />
+                <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isDisabled} />
+                    <Label htmlFor="names-only">Customer wanted Names Only</Label>
+                </div>
+                <div>
+                    <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Sequence Images</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                        {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+                        {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+                    </div>
+                </div>
+                {isNamesOnly ? null : (
+                    <>
+                        <Separator className="my-4" />
+                        <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Final Programmed Images</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                            {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    }
+    return null;
+  }, [
+      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly,
+      handleImagePaste, handleImageUpload, handleClearImage, 
+      handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
+      initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
+      testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
+      finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
+      sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded,
+      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
+  ]);
+  
+  const isSaveDisabled = useMemo(() => {
+    if (uploadField !== 'isFinalProgram') return false;
+
+    if (isNamesOnly) {
+      return finalNamesDst.every((f) => !f);
+    }
+    
+    const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
+    const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
+    const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
+    const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
+  
+    return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
+  }, [
+    isNamesOnly,
+    finalNamesDst,
+    finalLogoEmb,
+    finalBackDesignEmb,
+    finalLogoDst,
+    finalBackDesignDst,
+    sequenceLogo,
+    sequenceBackDesign,
+    finalProgrammedLogo,
+    finalProgrammedBackDesign,
+    uploadField
+  ]);
+  
+
+  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    if (isViewOnly) return;
+    const file = e.clipboardData.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleImageUpload(file, setter, index);
+    }
+  };
+
+  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    e.stopPropagation();
+    setter(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addFile = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+      setter(prev => [...prev, null]);
+  };
+  
+  const handleMultipleFileUpload = (event: ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const newFiles = [...filesState];
+        if (e.target?.result) {
+            newFiles[index] = { name: file.name, url: e.target.result as string };
+            setter(newFiles);
+        }
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const addFileMultiple = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
+      setter(prev => [...prev, null]);
+  };
+
+  const removeFile = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    setter(prev => prev.filter((_, i) => i !== index));
+    if (refs.current[index]) {
+      refs.current[index]!.value = '';
+    }
+  };
+
+  const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+      const fileInput = document.getElementById(`file-input-job-order-${index}`) as HTMLInputElement;
+      if (fileInput) {
+          fileInput.value = '';
+      }
+      setter(prev => {
+          const newImages = [...prev];
+          newImages[index] = null;
+          return newImages;
+      });
+  };
+
+  const renderUploadDialogContent = useCallback(() => {
+    if (!uploadField || !uploadLeadId) return null;
+    const isDisabled = isReadOnly || (filterType === 'COMPLETED' && !enableReupload);
+    
+    const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>, gridCols = "grid-cols-1") => {
+      return (
+          <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-teal-600">{label}</h4>
+                  {!isDisabled && (
+                      <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFilesState)}>
+                          <PlusCircle className="h-4 w-4" />
+                      </Button>
+                  )}
+              </div>
+              <div className={cn("grid gap-2", gridCols)}>
+                  {(filesState.length > 0 ? filesState : [null]).map((file, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                          {file && file.name ? (
+                              <div className="flex items-center gap-2 flex-1 p-2 border rounded-md bg-gray-100 h-9">
+                                  <FileText className="h-4 w-4 text-gray-500" />
+                                  <span className="text-xs truncate font-medium text-blue-600">{file.name}</span>
+                              </div>
+                          ) : (
+                              <Input
+                                  ref={el => { if(refs.current) refs.current[index] = el }}
+                                  type="file"
+                                  className="text-xs flex-1 h-9"
+                                  onChange={(e) => handleMultipleFileUpload(e, setFilesState, filesState, index)}
+                                  disabled={isDisabled}
+                              />
+                          )}
+                          {!isDisabled && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFilesState, index, refs)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                      </div>
+                  ))}
+              </div>
+          </div>
+      );
+    };
+    
+    const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+        const displayImages = images.length > 0 ? images : [null];
+        return (
+          <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label>{label}</Label>
+                  {!isDisabled && (
+                    <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFile(setter)}>
+                        <PlusCircle className="h-4 w-4" />
+                    </Button>
+                  )}
+              </div>
+              {displayImages.map((image, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                      <div
+                        tabIndex={0}
+                        className={cn(
+                            "relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none",
+                            !isDisabled && "cursor-pointer"
+                        )}
+                        onClick={() => image && setImageInView(image)}
                         onDoubleClick={() => canEdit && !image && (document.getElementById(`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`)?.click())}
                         onPaste={(e) => handleImagePaste(e, setter, index)}
                         onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
@@ -1504,6 +1767,270 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded,
       finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
   ]);
+  
+  const isSaveDisabled = useMemo(() => {
+    if (uploadField !== 'isFinalProgram') return false;
+
+    if (isNamesOnly) {
+      return finalNamesDst.every((f) => !f);
+    }
+    
+    const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
+    const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
+    const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
+    const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
+  
+    return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
+  }, [
+    isNamesOnly,
+    finalNamesDst,
+    finalLogoEmb,
+    finalBackDesignEmb,
+    finalLogoDst,
+    finalBackDesignDst,
+    sequenceLogo,
+    sequenceBackDesign,
+    finalProgrammedLogo,
+    finalProgrammedBackDesign,
+    uploadField
+  ]);
+  
+
+  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    if (isViewOnly) return;
+    const file = e.clipboardData.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleImageUpload(file, setter, index);
+    }
+  };
+
+  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    e.stopPropagation();
+    setter(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addFile = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+      setter(prev => [...prev, null]);
+  };
+  
+  const handleMultipleFileUpload = (event: ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const newFiles = [...filesState];
+        if (e.target?.result) {
+            newFiles[index] = { name: file.name, url: e.target.result as string };
+            setter(newFiles);
+        }
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const addFileMultiple = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
+      setter(prev => [...prev, null]);
+  };
+
+  const removeFile = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    setter(prev => prev.filter((_, i) => i !== index));
+    if (refs.current[index]) {
+      refs.current[index]!.value = '';
+    }
+  };
+
+  const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+      const fileInput = document.getElementById(`file-input-job-order-${index}`) as HTMLInputElement;
+      if (fileInput) {
+          fileInput.value = '';
+      }
+      setter(prev => {
+          const newImages = [...prev];
+          newImages[index] = null;
+          return newImages;
+      });
+  };
+
+  const renderUploadDialogContent = useCallback(() => {
+    if (!uploadField || !uploadLeadId) return null;
+    const isDisabled = isReadOnly || (filterType === 'COMPLETED' && !enableReupload);
+    
+    const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>, gridCols = "grid-cols-1") => {
+      return (
+          <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-teal-600">{label}</h4>
+                  {!isDisabled && (
+                      <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFilesState)}>
+                          <PlusCircle className="h-4 w-4" />
+                      </Button>
+                  )}
+              </div>
+              <div className={cn("grid gap-2", gridCols)}>
+                  {(filesState.length > 0 ? filesState : [null]).map((file, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                          {file && file.name ? (
+                              <div className="flex items-center gap-2 flex-1 p-2 border rounded-md bg-gray-100 h-9">
+                                  <FileText className="h-4 w-4 text-gray-500" />
+                                  <span className="text-xs truncate font-medium text-blue-600">{file.name}</span>
+                              </div>
+                          ) : (
+                              <Input
+                                  ref={el => { if(refs.current) refs.current[index] = el }}
+                                  type="file"
+                                  className="text-xs flex-1 h-9"
+                                  onChange={(e) => handleMultipleFileUpload(e, setFilesState, filesState, index)}
+                                  disabled={isDisabled}
+                              />
+                          )}
+                          {!isDisabled && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFilesState, index, refs)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                      </div>
+                  ))}
+              </div>
+          </div>
+      );
+    };
+    
+    const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+        const displayImages = images.length > 0 ? images : [null];
+        return (
+          <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label>{label}</Label>
+                  {!isDisabled && (
+                    <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFile(setter)}>
+                        <PlusCircle className="h-4 w-4" />
+                    </Button>
+                  )}
+              </div>
+              {displayImages.map((image, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                      <div
+                        tabIndex={0}
+                        className={cn(
+                            "relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none",
+                            !isDisabled && "cursor-pointer"
+                        )}
+                        onClick={() => image && setImageInView(image)}
+                        onDoubleClick={() => canEdit && !image && (document.getElementById(`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`)?.click())}
+                        onPaste={(e) => handleImagePaste(e, setter, index)}
+                        onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+                      >
+                          {image ? (<>
+                            <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
+                            {!isDisabled && (
+                                <Button
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClearImage(setter, index);
+                                }}
+                                >
+                                <Trash2 className="h-4 w-4" />
+                                </Button>
+                            )}
+                          </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isDisabled ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
+                          <input id={`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isDisabled}/>
+                      </div>
+                      {!isDisabled && index > 0 && displayImages.length > 1 && (
+                          <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive self-center"
+                              onClick={(e) => handleRemoveImage(e, setter, index)}
+                          >
+                              <X className="h-5 w-5" />
+                          </Button>
+                      )}
+                  </div>
+              ))}
+          </div>
+        );
+      };
+
+    if (uploadField === 'isUnderProgramming') {
+      return (
+        <div className="grid grid-cols-2 gap-4">
+            {renderUploadBoxes('Logo Left', initialLogoLeftImages, setInitialLogoLeftImages)}
+            {renderUploadBoxes('Logo Right', initialLogoRightImages, setInitialLogoRightImages)}
+            {renderUploadBoxes('Back Logo', initialBackLogoImages, setInitialBackLogoImages)}
+            {renderUploadBoxes('Back Design', initialBackDesignImages, setInitialBackDesignImages)}
+        </div>
+      );
+    } else if (uploadField === 'isLogoTesting') {
+       return (
+        <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+                {renderUploadBoxes('Logo Left', testLogoLeftImages, setTestLogoLeftImages)}
+                {renderUploadBoxes('Logo Right', testLogoRightImages, setTestLogoRightImages)}
+                {renderUploadBoxes('Back Logo', testBackLogoImages, setTestBackLogoImages)}
+                {renderUploadBoxes('Back Design', testBackDesignImages, setTestBackDesignImages)}
+            </div>
+            <div className="flex items-center space-x-2">
+                <Checkbox id="no-testing" checked={noTestingNeeded} onCheckedChange={(checked) => setNoTestingNeeded(!!checked)} disabled={isViewOnly} />
+                <Label htmlFor="no-testing">No need for testing</Label>
+            </div>
+        </div>
+      );
+    } else if (uploadField === 'isFinalProgram') {
+        return (
+            <div className="space-y-4">
+                <div>
+                    <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Program Files</h4>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                        {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                        {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                        {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+                        <div className="col-span-2">
+                            {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs, 'grid-cols-2')}
+                        </div>
+                    </div>
+                </div>
+                <Separator className="my-4" />
+                <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isDisabled} />
+                    <Label htmlFor="names-only">Customer wanted Names Only</Label>
+                </div>
+                <div>
+                    <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Sequence Images</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                        {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+                        {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+                    </div>
+                </div>
+                {isNamesOnly ? null : (
+                    <>
+                        <Separator className="my-4" />
+                        <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Final Programmed Images</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                            {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    }
+    return null;
+  }, [
+      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly,
+      handleImagePaste, handleImageUpload, handleClearImage, 
+      handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
+      initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
+      testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
+      finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
+      sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded,
+      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
+  ]);
+  
+  // ... rest of the component
   
   if (isLoading) {
     return (
@@ -1890,8 +2417,8 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-y-auto">
-                <ScrollArea className="pr-6">
+                <div className="flex-1 overflow-y-auto pr-6">
+                    <ScrollArea>
                     <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -2184,7 +2711,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                </ScrollArea>
                 </div>
             </DialogContent>
         </Dialog>
