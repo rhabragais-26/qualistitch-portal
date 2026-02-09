@@ -368,6 +368,7 @@ const DigitizingTableBase = function DigitizingTable({ isReadOnly, filterType = 
   const app = useFirebaseApp();
   const { toast } = useToast();
   const { userProfile, isAdmin } = useUser();
+  const canEdit = !isReadOnly;
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
@@ -2184,7 +2185,6 @@ const DigitizingTableBase = function DigitizingTable({ isReadOnly, filterType = 
                             )
                         })()}
                     </div>
-                </ScrollArea>
                 </div>
             </DialogContent>
         </Dialog>
@@ -2193,7 +2193,48 @@ const DigitizingTableBase = function DigitizingTable({ isReadOnly, filterType = 
   );
 }
 
-const DigitizingTable = React.memo(DigitizingTableBase);
-DigitizingTable.displayName = 'DigitizingTable';
-
-export { DigitizingTable };
+```
+- tsconfig.json:
+```json
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+```
