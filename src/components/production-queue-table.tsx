@@ -9,6 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import {
   Card,
@@ -41,20 +42,20 @@ import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-type DesignDetails = {
-  left?: boolean;
-  right?: boolean;
-  backLogo?: boolean;
-  backText?: boolean;
-};
-
 type Order = {
   productType: string;
   color: string;
   size: string;
   quantity: number;
-  remarks?: string;
   design?: DesignDetails;
+  remarks?: string;
+}
+
+type DesignDetails = {
+  left?: boolean;
+  right?: boolean;
+  backLogo?: boolean;
+  backText?: boolean;
 };
 
 type NamedOrder = {
@@ -303,13 +304,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
     }
     const storage = getStorage(app);
     try {
-        // Manually parse the path from the URL
-        const path = new URL(url).pathname.split('/o/')[1];
-        if (!path) {
-            throw new Error('Invalid Firebase Storage URL.');
-        }
-        const decodedPath = decodeURIComponent(path);
-        const fileRef = ref(storage, decodedPath);
+        const fileRef = ref(storage, url);
         const blob = await getBlob(fileRef);
 
         const link = document.createElement('a');

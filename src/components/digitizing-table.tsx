@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -442,6 +443,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
+  const canEdit = !isReadOnly;
 
   const allFinalFiles = useMemo(() => {
     if (!reviewConfirmLead || !reviewConfirmLead.layouts) return [];
@@ -473,37 +475,32 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
   const handleDownload = useCallback(async (url: string, name: string) => {
     if (!app) {
-        toast({
-            variant: "destructive",
-            title: "Download Failed",
-            description: "Firebase app is not available.",
-        });
-        return;
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Firebase app is not available.",
+      });
+      return;
     }
     const storage = getStorage(app);
     try {
-        const path = new URL(url).pathname.split('/o/')[1];
-        if (!path) {
-            throw new Error('Invalid Firebase Storage URL.');
-        }
-        const decodedPath = decodeURIComponent(path);
-        const fileRef = ref(storage, decodedPath);
-        const blob = await getBlob(fileRef);
+      const fileRef = ref(storage, url);
+      const blob = await getBlob(fileRef);
 
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(link.href);
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
     } catch (error: any) {
-        console.error('File download failed:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Download Failed',
-            description: error.message || 'Could not download file. Please check permissions and network.',
-        });
+      console.error('File download failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Download Failed',
+        description: error.message || 'Could not download file. Please check permissions and network.',
+      });
     }
   }, [app, toast]);
 
@@ -1247,7 +1244,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   ]);
   
   const isSaveDisabled = useMemo(() => {
-    const canEdit = !isReadOnly;
     if (!canEdit) return true;
     if (uploadField !== 'isFinalProgram') return false;
 
@@ -1273,12 +1269,11 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     finalProgrammedLogo,
     finalProgrammedBackDesign,
     uploadField,
-    isReadOnly
+    canEdit
   ]);
   
 
   const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    const canEdit = !isReadOnly;
     if (!canEdit) return;
     const file = e.clipboardData.files[0];
     if (file && file.type.startsWith('image/')) {
@@ -1335,7 +1330,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
   const renderUploadDialogContent = useCallback(() => {
     
-    const canEdit = !isReadOnly;
     const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>, gridCols = "grid-cols-1") => {
       return (
           <div className="space-y-2">
@@ -1501,7 +1495,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     }
     return null;
   }, [
-      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly,
+      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly, canEdit,
       handleImagePaste, handleImageUpload, handleClearImage, 
       handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
@@ -1605,11 +1599,11 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                   {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
                   </DialogDescription>
               </DialogHeader>
-              <ScrollArea className="max-h-[70vh] modern-scrollbar">
-                <div className="py-4 pr-6">
+              <div className="py-4 pr-6">
+                <ScrollArea className="max-h-[70vh] modern-scrollbar">
                     {renderUploadDialogContent()}
-                </div>
-              </ScrollArea>
+                </ScrollArea>
+              </div>
               <DialogFooter>
                   <DialogClose asChild>
                       <Button type="button" variant="outline"> Cancel </Button>
@@ -1897,11 +1891,12 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       {viewingJoLead && (
         <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
             <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-                <DialogHeader>
+                <DialogHeader className="px-6 pt-6">
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="flex-1 modern-scrollbar pr-6">
+                <div className='flex-1 overflow-y-auto' data-vaul-drawer-visible>
+                <ScrollArea className="h-full pr-6">
                     <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -1983,26 +1978,27 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                           <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                              <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
+                                              <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.left} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.right} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backLogo} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backText} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5">
                                             <p className="text-xs">{order.remarks}</p>
                                           </TableCell>
                                         </TableRow>
                                       ))}
-                                       <TableRow>
-                                          <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
-                                          <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
-                                          <TableCell colSpan={5}></TableCell>
+
+                                      <TableRow>
+                                        <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
+                                        <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
+                                        <TableCell colSpan={5}></TableCell>
                                       </TableRow>
                                     </TableBody>
                                   </Table>
@@ -2156,6 +2152,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                         })()}
                     </div>
                 </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
@@ -2163,6 +2160,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   );
 }
 
-const ProductionQueueTableBase = React.memo(DigitizingTable);
-ProductionQueueTableBase.displayName = 'DigitizingTable';
-export { ProductionQueueTableBase as DigitizingTable };
+const DigitizingTableMemo = React.memo(DigitizingTable);
+DigitizingTableMemo.displayName = 'DigitizingTable';
+
+export { DigitizingTableMemo as DigitizingTable };
