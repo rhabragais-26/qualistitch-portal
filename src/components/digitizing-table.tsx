@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -36,7 +37,7 @@ import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
-import { getStorage, ref, uploadString, getDownloadURL, deleteObject, getBlob } from 'firebase/storage';
+import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
 import { Switch } from './ui/switch';
@@ -364,7 +365,6 @@ ImageDisplayCard.displayName = 'ImageDisplayCard';
 
 export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
   const firestore = useFirestore();
-  const app = useFirebaseApp();
   const { toast } = useToast();
   const { userProfile, isAdmin } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
@@ -442,8 +442,32 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   
   const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
   
-  const isViewOnly = isReadOnly || filterType === 'COMPLETED';
   const canEdit = !isReadOnly;
+
+  const handleDownload = useCallback(async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.statusText}`);
+      }
+      const blob = await response.blob();
+
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
+    } catch (error: any) {
+      console.error('File download failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Download Failed',
+        description: error.message || 'Could not download file. This may be a CORS issue or network problem.',
+      });
+    }
+  }, [toast]);
 
   const allFinalFiles = useMemo(() => {
     if (!reviewConfirmLead || !reviewConfirmLead.layouts) return [];
@@ -472,37 +496,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
     return files;
   }, [reviewConfirmLead]);
-
-  const handleDownload = useCallback(async (url: string, name: string) => {
-    if (!app) {
-      toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: "Firebase app is not available.",
-      });
-      return;
-    }
-    const storage = getStorage(app);
-    try {
-      const fileRef = ref(storage, url);
-      const blob = await getBlob(fileRef);
-
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
-    } catch (error: any) {
-      console.error('File download failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Download Failed',
-        description: error.message || 'Could not download file. Please check permissions and network.',
-      });
-    }
-  }, [app, toast]);
 
   const handleImageUpload = useCallback((file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     const reader = new FileReader();
@@ -871,7 +864,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
     const lead = displayedLeads?.find((l) => l.id === leadId);
     if (!lead) return;
-    const canEditThisRow = !isReadOnly;
     const isCurrentlyChecked = lead[field] as boolean | undefined || false;
 
     if (!checked && isCurrentlyChecked) {
@@ -1495,7 +1487,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     }
     return null;
   }, [
-      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly, canEdit,
+      uploadField, uploadLeadId, isReadOnly, filterType, enableReupload, canEdit,
       handleImagePaste, handleImageUpload, handleClearImage, 
       handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
@@ -2151,7 +2143,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                </ScrollArea>
                 </div>
             </DialogContent>
         </Dialog>
@@ -2164,3 +2155,4 @@ const DigitizingTableMemo = React.memo(DigitizingTable);
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+

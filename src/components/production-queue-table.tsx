@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -36,8 +37,7 @@ import { addDays, differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
-import { getStorage, ref, getBlob } from 'firebase/storage';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -291,38 +291,31 @@ ImageDisplayCard.displayName = 'ImageDisplayCard';
 const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { lead: Lead }) {
   const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
-  const app = useFirebaseApp();
 
   const handleDownload = useCallback(async (url: string, name: string) => {
-    if (!app) {
-        toast({
-            variant: "destructive",
-            title: "Download Failed",
-            description: "Firebase app is not available.",
-        });
-        return;
-    }
-    const storage = getStorage(app);
     try {
-        const fileRef = ref(storage, url);
-        const blob = await getBlob(fileRef);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.statusText}`);
+      }
+      const blob = await response.blob();
 
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(link.href);
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
     } catch (error: any) {
-        console.error('File download failed:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Download Failed',
-            description: error.message || 'Could not download file. Please check permissions and network.',
-        });
+      console.error('File download failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Download Failed',
+        description: error.message || 'Could not download file. This may be a CORS issue or network problem.',
+      });
     }
-  }, [app, toast]);
+  }, [toast]);
 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
@@ -1568,3 +1561,4 @@ const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
 ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
+

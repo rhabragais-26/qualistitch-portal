@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -8,7 +9,6 @@ import { Download, X } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
-import { getStorage, ref, getBlob } from 'firebase/storage';
 import { collection, query } from 'firebase/firestore';
 
 import {
@@ -65,7 +65,6 @@ type Lead = {
 
 const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTable() {
   const firestore = useFirestore();
-  const app = useFirebaseApp();
   const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -97,18 +96,12 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
   }, []);
 
   const handleDownload = useCallback(async (url: string, name: string) => {
-    if (!app) {
-      toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: "Firebase app is not available.",
-      });
-      return;
-    }
-    const storage = getStorage(app);
     try {
-      const fileRef = ref(storage, url);
-      const blob = await getBlob(fileRef);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.statusText}`);
+      }
+      const blob = await response.blob();
 
       const link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
@@ -122,10 +115,10 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
       toast({
         variant: 'destructive',
         title: 'Download Failed',
-        description: error.message || 'Could not download file. Please check permissions and network.',
+        description: error.message || 'Could not download file. This may be a CORS issue or network problem.',
       });
     }
-  }, [app, toast]);
+  }, [toast]);
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
