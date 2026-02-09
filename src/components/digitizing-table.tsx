@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -695,10 +693,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
-            
-            const previousNonSampleOrders = sortedOrders
-                .slice(0, i)
-                .filter(o => o.orderType !== 'Item Sample');
+            const previousNonSampleOrders = sortedOrders.slice(0, i).filter(o => o.orderType !== 'Item Sample');
             
             enrichedLeads.push({
                 ...lead,
@@ -1253,6 +1248,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   
   const isSaveDisabled = useMemo(() => {
     const canEdit = !isReadOnly;
+    if (!canEdit) return true;
     if (uploadField !== 'isFinalProgram') return false;
 
     if (isNamesOnly) {
@@ -1569,21 +1565,23 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                   Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
                 </DialogDescription>
               </DialogHeader>
-              <ScrollArea className="max-h-80 overflow-y-auto space-y-2 p-1">
-                {allFinalFiles.length > 0 ? (
-                    <div className="space-y-2">
-                    {allFinalFiles.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 rounded-md border text-sm">
-                        <span className="truncate pr-2"><strong>{file.type}:</strong> {file.name}</span>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => handleDownload(file.url, file.name)}>
-                            <Download className="h-4 w-4" />
-                        </Button>
-                        </div>
-                    ))}
-                    </div>
-                ) : (
-                    <p className="text-center text-muted-foreground py-4">There are no files uploaded for this project</p>
-                )}
+              <ScrollArea className="max-h-80 modern-scrollbar pr-6">
+                <div className="space-y-2 p-1">
+                  {allFinalFiles.length > 0 ? (
+                      <div className="space-y-2">
+                      {allFinalFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 rounded-md border text-sm">
+                          <span className="truncate pr-2"><strong>{file.type}:</strong> {file.name}</span>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => handleDownload(file.url, file.name)}>
+                              <Download className="h-4 w-4" />
+                          </Button>
+                          </div>
+                      ))}
+                      </div>
+                  ) : (
+                      <p className="text-center text-muted-foreground py-4">There are no files uploaded for this project</p>
+                  )}
+                </div>
               </ScrollArea>
               <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
@@ -1607,8 +1605,10 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                   {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
                   </DialogDescription>
               </DialogHeader>
-              <ScrollArea className="py-4 max-h-[70vh] overflow-y-auto modern-scrollbar">
-                {renderUploadDialogContent()}
+              <ScrollArea className="max-h-[70vh] modern-scrollbar">
+                <div className="py-4 pr-6">
+                    {renderUploadDialogContent()}
+                </div>
               </ScrollArea>
               <DialogFooter>
                   <DialogClose asChild>
@@ -1901,7 +1901,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-y-auto pr-6">
+                <ScrollArea className="flex-1 modern-scrollbar pr-6">
                     <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -2136,18 +2136,18 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                           </tr>
                                         </thead>
 
-                                        <tbody>
+                                        <TableBody>
                                           {layout.namedOrders?.map((order, orderIndex) => (
-                                            <tr key={orderIndex}>
-                                              <td className="border border-black p-1 text-center align-middle">{orderIndex + 1}</td>
-                                              <td className="border border-black p-1 text-center align-middle">{order.name}</td>
-                                              <td className="border border-black p-1 text-center align-middle">{order.color}</td>
-                                              <td className="border border-black p-1 text-center align-middle">{order.size}</td>
-                                              <td className="border border-black p-1 text-center align-middle">{order.quantity}</td>
-                                              <td className="border border-black p-1 text-center align-middle">{order.backText}</td>
-                                            </tr>
+                                            <TableRow key={orderIndex}>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
+                                            </TableRow>
                                           ))}
-                                        </tbody>
+                                        </TableBody>
                                       </table>
                                     </div>
                                   ))}
@@ -2155,7 +2155,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
@@ -2163,3 +2163,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   );
 }
 
+const ProductionQueueTableBase = React.memo(DigitizingTable);
+ProductionQueueTableBase.displayName = 'DigitizingTable';
+export { ProductionQueueTableBase as DigitizingTable };
