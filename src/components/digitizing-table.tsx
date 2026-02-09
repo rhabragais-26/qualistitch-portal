@@ -674,6 +674,9 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
     // Group all orders by customer
     leads.forEach(lead => {
+        if (!Array.isArray(lead.orders)) {
+            return; 
+        }
         const name = lead.customerName.toLowerCase();
         if (!customerOrderGroups[name]) {
             customerOrderGroups[name] = { orders: [] };
@@ -688,12 +691,16 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         
         const totalCustomerQuantity = orders.reduce((sum, o) => {
           if (!Array.isArray(o.orders)) return sum;
-          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0);
+          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
         }, 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
-            const previousNonSampleOrders = sortedOrders.slice(0, i).filter(o => o.orderType !== 'Item Sample');
+            
+            const previousNonSampleOrders = sortedOrders
+                .slice(0, i)
+                .filter(o => o.orderType !== 'Item Sample');
+            
             enrichedLeads.push({
                 ...lead,
                 orderNumber: previousNonSampleOrders.length,
@@ -1328,15 +1335,14 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   };
 
   const renderUploadDialogContent = useCallback(() => {
-    if (!uploadField || !uploadLeadId) return null;
-    const isDisabled = isReadOnly || (filterType === 'COMPLETED' && !enableReupload);
+    const canEdit = !isReadOnly || (filterType === 'COMPLETED' && enableReupload);
     
     const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>, gridCols = "grid-cols-1") => {
       return (
           <div className="space-y-2">
               <div className="flex items-center gap-2">
                   <h4 className="font-medium text-teal-600">{label}</h4>
-                  {!isDisabled && (
+                  {canEdit && (
                       <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFilesState)}>
                           <PlusCircle className="h-4 w-4" />
                       </Button>
@@ -1356,10 +1362,10 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                   type="file"
                                   className="text-xs flex-1 h-9"
                                   onChange={(e) => handleMultipleFileUpload(e, setFilesState, filesState, index)}
-                                  disabled={isDisabled}
+                                  disabled={!canEdit}
                               />
                           )}
-                          {!isDisabled && (
+                          {canEdit && (
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFilesState, index, refs)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -1377,7 +1383,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
           <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Label>{label}</Label>
-                  {!isDisabled && (
+                  {canEdit && (
                     <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFile(setter)}>
                         <PlusCircle className="h-4 w-4" />
                     </Button>
@@ -1398,7 +1404,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                       >
                           {image ? (<>
                             <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
-                            {!isDisabled && (
+                            {canEdit && (
                                 <Button
                                 variant="destructive"
                                 size="icon"
@@ -1411,10 +1417,10 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                 <Trash2 className="h-4 w-4" />
                                 </Button>
                             )}
-                          </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isDisabled ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                          <input id={`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isDisabled}/>
+                          </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{canEdit ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
+                          <input id={`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
                       </div>
-                      {!isDisabled && index > 0 && displayImages.length > 1 && (
+                      {canEdit && index > 0 && displayImages.length > 1 && (
                           <Button
                               variant="ghost"
                               size="icon"
@@ -1449,7 +1455,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 {renderUploadBoxes('Back Design', testBackDesignImages, setTestBackDesignImages)}
             </div>
             <div className="flex items-center space-x-2">
-                <Checkbox id="no-testing" checked={noTestingNeeded} onCheckedChange={(checked) => setNoTestingNeeded(!!checked)} disabled={isViewOnly} />
+                <Checkbox id="no-testing" checked={noTestingNeeded} onCheckedChange={(checked) => setNoTestingNeeded(!!checked)} disabled={!canEdit} />
                 <Label htmlFor="no-testing">No need for testing</Label>
             </div>
         </div>
@@ -1471,7 +1477,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 </div>
                 <Separator className="my-4" />
                 <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isDisabled} />
+                    <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={!canEdit} />
                     <Label htmlFor="names-only">Customer wanted Names Only</Label>
                 </div>
                 <div>
@@ -1496,14 +1502,14 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     }
     return null;
   }, [
-      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly, canEdit,
+      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly,
       handleImagePaste, handleImageUpload, handleClearImage, 
       handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded,
-      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
+      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs, canEdit
   ]);
   
   if (isLoading) {
@@ -1741,6 +1747,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
                   const isCompleted = filterType === 'COMPLETED';
                   const isJoHardcopyRequired = lead.orderType !== 'Stock (Jacket Only)' && lead.orderType !== 'Item Sample' && lead.orderType !== 'Stock Design';
+                  const canEditThisRow = !isReadOnly;
 
                   return (
                   <React.Fragment key={lead.id}>
@@ -1789,7 +1796,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             <Select 
                                 value={lead.assignedDigitizer || 'unassigned'}
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
-                                disabled={(isViewOnly && !isAdmin && filterType !== 'COMPLETED') || (filterType === 'COMPLETED' && !isAdmin)}
+                                disabled={(!canEditThisRow && !isAdmin && filterType !== 'COMPLETED') || (filterType === 'COMPLETED' && !isAdmin)}
                             >
                                 <SelectTrigger className={cn("text-xs h-7", getDigitizerColor(lead.assignedDigitizer))}>
                                   <span className="flex-1 text-center">
@@ -1807,7 +1814,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                         
                         {(['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'] as CheckboxField[]).map(field => {
                             const timestamp = lead[`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead] as string | undefined;
-                            let isDisabled = isReadOnly || (isCompleted && !(field === 'isFinalProgram' && enableReupload));
+                            let isDisabled = !canEditThisRow || (isCompleted && !(field === 'isFinalProgram' && enableReupload));
                             
                             const className = isDisabled ? 'disabled:opacity-100' : '';
                             return (
@@ -1854,8 +1861,8 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={isReadOnly || (isCompleted && !enableReupload) || !isJoHardcopyRequired}
-                                className={isReadOnly || (isCompleted && !enableReupload) ? 'disabled:opacity-100' : ''}
+                                disabled={!canEditThisRow || (isCompleted && !enableReupload) || !isJoHardcopyRequired}
+                                className={!canEditThisRow || (isCompleted && !enableReupload) ? 'disabled:opacity-100' : ''}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                             </div>
@@ -1868,7 +1875,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                     </div>
                                 )
                            ) : (
-                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={isReadOnly || !lead.isFinalProgram || !lead.isJoHardcopyReceived || lead.isDigitizingArchived}>
+                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={!canEditThisRow || !lead.isFinalProgram || !lead.isJoHardcopyReceived || lead.isDigitizingArchived}>
                                 Done
                             </Button>
                            )}
