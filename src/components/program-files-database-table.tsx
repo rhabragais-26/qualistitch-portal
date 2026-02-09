@@ -96,19 +96,24 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   }, []);
 
-  const handleDownload = useCallback(
-    async (url: string, name: string) => {
-      if (!app) {
+  const handleDownload = useCallback(async (url: string, name: string) => {
+    if (!app) {
         toast({
-          variant: "destructive",
-          title: "Download Failed",
-          description: "Firebase app is not available.",
+            variant: "destructive",
+            title: "Download Failed",
+            description: "Firebase app is not available.",
         });
         return;
-      }
-      const storage = getStorage(app);
-      try {
-        const fileRef = ref(storage, url);
+    }
+    const storage = getStorage(app);
+    try {
+        // Manually parse the path from the URL
+        const path = new URL(url).pathname.split('/o/')[1];
+        if (!path) {
+            throw new Error('Invalid Firebase Storage URL.');
+        }
+        const decodedPath = decodeURIComponent(path);
+        const fileRef = ref(storage, decodedPath);
         const blob = await getBlob(fileRef);
 
         const link = document.createElement('a');
@@ -118,20 +123,15 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(link.href);
-      } catch (error: any) {
+    } catch (error: any) {
         console.error('File download failed:', error);
         toast({
-          variant: 'destructive',
-          title: 'Download Failed',
-          description:
-            error.code === 'storage/object-not-found'
-              ? 'File not found. It may have been moved or deleted.'
-              : error.message || 'Could not download the file. Please check permissions and network.',
+            variant: 'destructive',
+            title: 'Download Failed',
+            description: error.message || 'Could not download file. Please check permissions and network.',
         });
-      }
-    },
-    [app, toast]
-  );
+    }
+  }, [app, toast]);
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
@@ -468,5 +468,3 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
 ProgramFilesDatabaseTableMemo.displayName = 'ProgramFilesDatabaseTable';
 
 export { ProgramFilesDatabaseTableMemo as ProgramFilesDatabaseTable };
-
-    

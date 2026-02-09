@@ -292,19 +292,24 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const { toast } = useToast();
   const app = useFirebaseApp();
 
-  const handleDownload = useCallback(
-    async (url: string, name: string) => {
-      if (!app) {
+  const handleDownload = useCallback(async (url: string, name: string) => {
+    if (!app) {
         toast({
-          variant: "destructive",
-          title: "Download Failed",
-          description: "Firebase app is not available.",
+            variant: "destructive",
+            title: "Download Failed",
+            description: "Firebase app is not available.",
         });
         return;
-      }
-      const storage = getStorage(app);
-      try {
-        const fileRef = ref(storage, url);
+    }
+    const storage = getStorage(app);
+    try {
+        // Manually parse the path from the URL
+        const path = new URL(url).pathname.split('/o/')[1];
+        if (!path) {
+            throw new Error('Invalid Firebase Storage URL.');
+        }
+        const decodedPath = decodeURIComponent(path);
+        const fileRef = ref(storage, decodedPath);
         const blob = await getBlob(fileRef);
 
         const link = document.createElement('a');
@@ -314,20 +319,15 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(link.href);
-      } catch (error: any) {
+    } catch (error: any) {
         console.error('File download failed:', error);
         toast({
-          variant: 'destructive',
-          title: 'Download Failed',
-          description:
-            error.code === 'storage/object-not-found'
-              ? 'File not found. It may have been moved or deleted.'
-              : error.message || 'Could not download the file. Please check permissions and network.',
+            variant: 'destructive',
+            title: 'Download Failed',
+            description: error.message || 'Could not download file. Please check permissions and network.',
         });
-      }
-    },
-    [app, toast]
-  );
+    }
+  }, [app, toast]);
 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
@@ -1347,7 +1347,7 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTable({ isRe
                                       <div className="space-y-1">
                                           <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
                                           <p><strong>Courier:</strong> {lead.courier}</p>
-                                          <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
+                                          <p><strong>Delivery Date:</strong> {deliveryDate || "N/A"}</p>
                                       </div>
                                   </div>
 
@@ -1379,147 +1379,181 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTable({ isRe
                                           <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                              <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
+                                              <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.left} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.right} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backLogo} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backText} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5">
                                             <p className="text-xs">{order.remarks}</p>
                                           </TableCell>
                                         </TableRow>
                                       ))}
-                                       <TableRow>
-                                          <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
-                                          <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
-                                          <TableCell colSpan={5}></TableCell>
+
+                                      <TableRow>
+                                        <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
+                                        <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
+                                        <TableCell colSpan={5}></TableCell>
                                       </TableRow>
                                     </TableBody>
                                   </Table>
+
                                   <div className="text-xs mb-2 pt-2">
                                     <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
                                   </div>
-                                  
+
+                                  {/* signatures kept as-is */}
                                   <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
-                                      <div className="space-y-1">
-                                          <p className="font-bold italic">Prepared by:</p>
-                                          <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
-                                          <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                       <div className="space-y-1">
-                                          <p className="font-bold italic">Noted by:</p>
-                                          <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
-                                          <p className="text-center font-bold">Sales Head</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
+                                    <div className="space-y-1">
+                                      <p className="font-bold italic">Prepared by:</p>
+                                      <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                                      <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
 
-                                      <div className="col-span-2 mt-0">
-                                          <p className="font-bold italic">Approved by:</p>
-                                      </div>
+                                    <div className="space-y-1">
+                                      <p className="font-bold italic">Noted by:</p>
+                                      <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
+                                      <p className="text-center font-bold">Sales Head</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
 
+                                    <div className="col-span-2 mt-0">
+                                      <p className="font-bold italic">Approved by:</p>
+                                    </div>
 
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Programming</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Inventory</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Production Line Leader</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Production Supervisor</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                       <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Quality Control</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Logistics</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                       <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Operations Supervisor</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Programming</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Inventory</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Production Line Leader</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Production Supervisor</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Quality Control</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Logistics</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Operations Supervisor</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
                                   </div>
                                 </div>
                                 {layoutsToPrint.map((layout, layoutIndex) => (
-                                    <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
+                                    <div
+                                      key={layoutIndex}
+                                      className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300"
+                                    >
                                       <div className="text-left mb-4">
-                                          <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
+                                        <p className="font-bold">
+                                          <span className="text-primary">J.O. No:</span>{" "}
+                                          <span className="inline-block border-b border-black">
+                                            {formatJoNumberUtil(lead.joNumber)}
+                                          </span>{" "}
+                                          - Layout {layoutIndex + 1}
+                                        </p>
                                       </div>
-                                      
-                                       {layout.layoutImage && (
-                                         <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
-                                            <Image 
-                                                src={layout.layoutImage} 
-                                                alt={`Layout ${layoutIndex + 1}`} 
-                                                layout="fill"
-                                                objectFit="contain"
-                                            />
-                                          </div>
-                                        )}
-                                      
+
+                                      {layout.layoutImage && (
+                                        <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
+                                          <Image
+                                            src={layout.layoutImage}
+                                            alt={`Layout ${layoutIndex + 1}`}
+                                            layout="fill"
+                                            objectFit="contain"
+                                          />
+                                        </div>
+                                      )}
+
                                       <h2 className="text-2xl font-bold text-center mb-4">
                                         {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
                                       </h2>
-                                        <table className="w-full border-collapse border border-black mb-6">
-                                            <tbody>
-                                                <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                            
-                                        <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
-                                        <table className="w-full border-collapse border border-black text-xs">
-                                          <thead>
-                                            <tr className="bg-gray-200">
-                                              <th className="border border-black p-1 text-center align-middle">No.</th>
-                                              <th className="border border-black p-1 text-center align-middle">Names</th>
-                                              <th className="border border-black p-1 text-center align-middle">Color</th>
-                                              <th className="border border-black p-1 text-center align-middle">Sizes</th>
-                                              <th className="border border-black p-1 text-center align-middle">Qty</th>
-                                              <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
-                                            </tr>
-                                          </thead>
-                                          <TableBody>
-                                            {layout.namedOrders?.map((order, orderIndex) => (
-                                              <TableRow key={orderIndex}>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
-                                              </TableRow>
-                                            ))}
-                                          </TableBody>
-                                        </table>
+
+                                      <table className="w-full border-collapse border border-black mb-6">
+                                        <tbody>
+                                          <tr>
+                                            <td className="border border-black p-2 w-1/2">
+                                              <strong>DST LOGO LEFT:</strong>
+                                              <p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p>
+                                            </td>
+                                            <td className="border border-black p-2 w-1/2">
+                                              <strong>DST BACK LOGO:</strong>
+                                              <p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p>
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td className="border border-black p-2 w-1/2">
+                                              <strong>DST LOGO RIGHT:</strong>
+                                              <p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p>
+                                            </td>
+                                            <td className="border border-black p-2 w-1/2">
+                                              <strong>DST BACK TEXT:</strong>
+                                              <p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p>
+                                            </td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+
+                                      <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
+
+                                      {/* Native table (do NOT mix Shadcn TableBody here) */}
+                                      <table className="w-full border-collapse border border-black text-xs">
+                                        <thead>
+                                          <tr className="bg-gray-200">
+                                            <th className="border border-black p-1 text-center align-middle">No.</th>
+                                            <th className="border border-black p-1 text-center align-middle">Names</th>
+                                            <th className="border border-black p-1 text-center align-middle">Color</th>
+                                            <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                                            <th className="border border-black p-1 text-center align-middle">Qty</th>
+                                            <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
+                                          </tr>
+                                        </thead>
+
+                                        <TableBody>
+                                          {layout.namedOrders?.map((order, orderIndex) => (
+                                            <TableRow key={orderIndex}>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
+                                              <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </table>
                                     </div>
                                   ))}
                               </>
@@ -1539,6 +1573,3 @@ const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
 ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
-    
-
-    
