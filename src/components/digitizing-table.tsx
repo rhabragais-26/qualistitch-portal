@@ -451,7 +451,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
-    } catch (error: any) => {
+    } catch (error: any) {
       console.error('File download failed:', error);
       toast({
         variant: 'destructive',
@@ -649,44 +649,46 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-
+  
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
-
+  
     leads.forEach(lead => {
-        if (!Array.isArray(lead.orders)) {
-            return; 
-        }
-        const name = lead.customerName.toLowerCase();
-        if (!customerOrderGroups[name]) {
-            customerOrderGroups[name] = { orders: [] };
-        }
-        customerOrderGroups[name].orders.push(lead);
+      if (!Array.isArray(lead.orders)) {
+        return;
+      }
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderGroups[name]) {
+        customerOrderGroups[name] = { orders: [] };
+      }
+      customerOrderGroups[name].orders.push(lead);
     });
-
+  
     const enrichedLeads: EnrichedLead[] = [];
-
+  
     Object.values(customerOrderGroups).forEach(({ orders }) => {
-        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-        
-        const totalCustomerQuantity = orders.reduce((sum, o) => {
-          if (!Array.isArray(o.orders)) return sum;
-          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
-        }, 0);
-        
-        for (let i = 0; i < sortedOrders.length; i++) {
-            const lead = sortedOrders[i];
-            const previousNonSampleOrders = sortedOrders.slice(0, i).filter(o => o.orderType !== 'Item Sample');
-            
-            enrichedLeads.push({
-                ...lead,
-                orderNumber: previousNonSampleOrders.length,
-                totalCustomerQuantity,
-            });
-        }
+      const sortedOrders = [...orders].sort(
+        (a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime()
+      );
+  
+      const totalCustomerQuantity = orders.reduce((sum, o) => {
+        if (!Array.isArray(o.orders)) return sum;
+        return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0);
+      }, 0);
+  
+      for (let i = 0; i < sortedOrders.length; i++) {
+        const lead = sortedOrders[i];
+        const previousNonSampleOrders = sortedOrders.slice(0, i).filter((o) => o.orderType !== 'Item Sample');
+  
+        enrichedLeads.push({
+          ...lead,
+          orderNumber: previousNonSampleOrders.length,
+          totalCustomerQuantity,
+        });
+      }
     });
-
+  
     return enrichedLeads;
-}, [leads]);
+  }, [leads]);
   
   const filteredLeads = React.useMemo(() => {
     if (!processedLeads) return [];
@@ -1313,6 +1315,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   };
 
   const renderUploadDialogContent = useCallback(() => {
+    const canEdit = !isReadOnly;
     
     const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>, gridCols = "grid-cols-1") => {
       return (
@@ -2135,8 +2138,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                  </ScrollArea>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
@@ -2148,6 +2150,7 @@ const DigitizingTableMemo = React.memo(DigitizingTable);
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -1151,15 +1152,15 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTable({ isRe
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-4">
                 <Input
-                  placeholder="Search customer, company or contact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
-                <Input
                   placeholder="Search by J.O. No..."
                   value={joNumberSearch}
                   onChange={(e) => setJoNumberSearch(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+                <Input
+                  placeholder="Search customer, company or contact..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500"
                 />
               </div>
@@ -1383,12 +1384,10 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTable({ isRe
                                       </TableRow>
                                     </TableBody>
                                   </Table>
-
                                   <div className="text-xs mb-2 pt-2">
                                     <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
                                   </div>
-
-                                  {/* signatures kept as-is */}
+                                  
                                   <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
                                     <div className="space-y-1">
                                       <p className="font-bold italic">Prepared by:</p>
@@ -1553,5 +1552,6 @@ const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
 ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
+
 
 
