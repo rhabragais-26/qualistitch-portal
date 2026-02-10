@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -237,14 +236,13 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
             },
             {
                 title: 'Reference Images',
-                images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
+                images: (lead.layouts || []).flatMap((layout) => {
                     const images: any[] = [];
                     const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                        const labelSuffix = '';
                         if (Array.isArray(pluralField)) {
-                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
                         } else if (singularField) {
-                            images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                            images.push({ src: singularField, label: `${labelPrefix}`, timestamp: singularTime, uploadedBy: singularUploader });
                         }
                     };
                     addImages((layout as any).refLogoLeftImages, layout.refLogoLeftImage, layout.refLogoLeftImageUploadTime, layout.refLogoLeftImageUploadedBy, 'Ref Logo Left');
@@ -256,14 +254,13 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
             },
             {
                 title: 'Initial Program Images',
-                images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
+                images: (lead.layouts || []).flatMap((layout) => {
                     const images: any[] = [];
                     const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                        const labelSuffix = '';
                         if (Array.isArray(pluralField)) {
-                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
                         } else if (singularField) {
-                            images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                            images.push({ src: singularField, label: `${labelPrefix}`, timestamp: singularTime, uploadedBy: singularUploader });
                         }
                     };
                     addImages((layout as any).logoLeftImages, layout.logoLeftImage, layout.logoLeftImageUploadTime, layout.logoLeftImageUploadedBy, 'Logo Left');
@@ -275,14 +272,13 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
             },
             {
                 title: 'Tested Images',
-                images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
+                images: (lead.layouts || []).flatMap((layout) => {
                     const images: any[] = [];
                     const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                         const labelSuffix = '';
                         if (Array.isArray(pluralField)) {
-                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
                         } else if (singularField) {
-                            images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                            images.push({ src: singularField, label: `${labelPrefix}`, timestamp: singularTime, uploadedBy: singularUploader });
                         }
                     };
                     addImages((layout as any).testLogoLeftImages, layout.testLogoLeftImage, layout.testLogoLeftImageUploadTime, layout.testLogoLeftImageUploadedBy, 'Test Logo Left');
@@ -294,14 +290,13 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
             },
             {
                 title: 'Final Program Files',
-                images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
+                images: (lead.layouts || []).flatMap((layout) => {
                     const images: any[] = [];
                     const addFiles = (files: (FileObject | null)[] | undefined, timestamps: (string | null)[] | undefined, uploaders: (string | null)[] | undefined, labelPrefix: string) => {
-                        const labelSuffix = '';
                         if (Array.isArray(files)) {
                             files.forEach((file, i) => {
                                 if (file?.url) {
-                                    images.push({ src: file.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: timestamps?.[i], uploadedBy: uploaders?.[i] });
+                                    images.push({ src: file.url, label: `${labelPrefix} ${i + 1}`, timestamp: timestamps?.[i], uploadedBy: uploaders?.[i] });
                                 }
                             });
                         }
@@ -358,7 +353,7 @@ const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, o
 ImageDisplayCard.displayName = 'ImageDisplayCard';
 
 
-export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
+export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETED' }: DigitizingTableProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const { userProfile, isAdmin } = useUser();
@@ -468,22 +463,21 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     const files: { name: string; url: string; type: string }[] = [];
 
     reviewConfirmLead.layouts.forEach((layout, layoutIndex) => {
-      const layoutLabel = '';
 
       (layout.finalLogoEmb || []).forEach(f => {
-        if (f) files.push({ ...f, type: `EMB Logo${layoutLabel}` });
+        if (f) files.push({ ...f, type: `EMB Logo` });
       });
       (layout.finalBackDesignEmb || []).forEach(f => {
-        if (f) files.push({ ...f, type: `EMB Back Design${layoutLabel}` });
+        if (f) files.push({ ...f, type: `EMB Back Design` });
       });
       (layout.finalLogoDst || []).forEach(f => {
-        if (f) files.push({ ...f, type: `DST Logo${layoutLabel}` });
+        if (f) files.push({ ...f, type: `DST Logo` });
       });
       (layout.finalBackDesignDst || []).forEach(f => {
-        if (f) files.push({ ...f, type: `DST Back Design${layoutLabel}` });
+        if (f) files.push({ ...f, type: `DST Back Design` });
       });
       (layout.finalNamesDst || []).forEach(f => {
-        if (f) files.push({ ...f, type: `DST Name${layoutLabel}` });
+        if (f) files.push({ ...f, type: `DST Name` });
       });
     });
 
@@ -659,7 +653,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         if (!customerOrderGroups[name]) {
             customerOrderGroups[name] = { orders: [] };
         }
-        customerOrderGroups[name].push(lead);
+        customerOrderGroups[name].orders.push(lead);
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -837,9 +831,11 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
           description: 'The status has been successfully reverted.',
         });
         refetch(); // Sync with DB state
-      } catch (e: any) {
+      } catch (e) {
         console.error(`Error unchecking '${field}'`, e);
-        toast({ variant: "destructive", title: "Update Failed", description: (e as Error).message || "Could not update the status." });
+        if (e instanceof Error) {
+            toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
+        }
   
         // Rollback UI on failure
         setOptimisticChanges(prev => ({
@@ -1188,17 +1184,16 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         case 'isFinalProgram':
             return (
                 <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
+                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <h4 className="font-semibold text-teal-600">EMB Files</h4>
                             {renderMultipleFileUploads('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
                         </div>
                         <div className="space-y-2">
-                            <h4 className="font-semibold text-teal-600">&nbsp;</h4>
+                             <h4 className="font-semibold text-teal-600">&nbsp;</h4>
                             {renderMultipleFileUploads('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
                         </div>
                     </div>
-
                     <div className="space-y-2 pt-4 border-t">
                         <h4 className="font-semibold text-teal-600">DST Files</h4>
                         <div className="grid grid-cols-2 gap-6">
@@ -1206,7 +1201,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             {renderMultipleFileUploads('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
                         </div>
                     </div>
-                     <div className="space-y-2 pt-4 border-t col-span-2">
+                    <div className="space-y-2 pt-4 border-t col-span-2">
                         <h4 className="font-semibold text-teal-600">Names (DST)</h4>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                             {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
@@ -1922,3 +1917,5 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     </>
   );
 }
+
+    
