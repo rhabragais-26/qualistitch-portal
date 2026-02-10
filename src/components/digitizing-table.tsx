@@ -228,7 +228,7 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
                 images: (lead.layouts || []).map((layout, layoutIndex) => (
                     layout.layoutImage ? { 
                         src: layout.layoutImage, 
-                        label: `Layout ${'\'\'\''}{layoutIndex + 1}{'\'\'\''}`, 
+                        label: `Layout ${layoutIndex + 1}`, 
                         timestamp: layout.layoutImageUploadTime, 
                         uploadedBy: layout.layoutImageUploadedBy 
                     } : null
@@ -239,11 +239,11 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
                 images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
                     const images: any[] = [];
                     const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${'\'\'\''}{layoutIndex + 1}{'\'\'\''}` : '';
+                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
                         if (Array.isArray(pluralField)) {
-                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${'\'\'\''}{labelPrefix} ${'\'\'\''}{i + 1}${'\'\'\''}{labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
                         } else if (singularField) {
-                            images.push({ src: singularField, label: `${'\'\'\''}{labelPrefix}${'\'\'\''}{labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                            images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
                         }
                     };
                     addImages((layout as any).refLogoLeftImages, layout.refLogoLeftImage, layout.refLogoLeftImageUploadTime, layout.refLogoLeftImageUploadedBy, 'Ref Logo Left');
@@ -258,11 +258,11 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
                 images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
                     const images: any[] = [];
                     const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${'\'\'\''}{layoutIndex + 1}{'\'\'\''}` : '';
+                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
                         if (Array.isArray(pluralField)) {
-                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${'\'\'\''}{labelPrefix} ${'\'\'\''}{i + 1}${'\'\'\''}{labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
                         } else if (singularField) {
-                            images.push({ src: singularField, label: `${'\'\'\''}{labelPrefix}${'\'\'\''}{labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                            images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
                         }
                     };
                     addImages((layout as any).logoLeftImages, layout.logoLeftImage, layout.logoLeftImageUploadTime, layout.logoLeftImageUploadedBy, 'Logo Left');
@@ -277,11 +277,11 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
                 images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
                     const images: any[] = [];
                     const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                         const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${'\'\'\''}{layoutIndex + 1}{'\'\'\''}` : '';
+                         const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
                         if (Array.isArray(pluralField)) {
-                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${'\'\'\''}{labelPrefix} ${'\'\'\''}{i + 1}${'\'\'\''}{labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
                         } else if (singularField) {
-                            images.push({ src: singularField, label: `${'\'\'\''}{labelPrefix}${'\'\'\''}{labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                            images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
                         }
                     };
                     addImages((layout as any).testLogoLeftImages, layout.testLogoLeftImage, layout.testLogoLeftImageUploadTime, layout.testLogoLeftImageUploadedBy, 'Test Logo Left');
@@ -296,11 +296,11 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
                 images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
                     const images: any[] = [];
                     const addFiles = (files: (FileObject | null)[] | undefined, timestamps: (string | null)[] | undefined, uploaders: (string | null)[] | undefined, labelPrefix: string) => {
-                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${'\'\'\''}{layoutIndex + 1}{'\'\'\''}` : '';
+                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
                         if (Array.isArray(files)) {
                             files.forEach((file, i) => {
                                 if (file?.url) {
-                                    images.push({ src: file.url, label: `${'\'\'\''}{labelPrefix} ${'\'\'\''}{i + 1}${'\'\'\''}{labelSuffix}`, timestamp: timestamps?.[i], uploadedBy: uploaders?.[i] });
+                                    images.push({ src: file.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: timestamps?.[i], uploadedBy: uploaders?.[i] });
                                 }
                             });
                         }
@@ -448,7 +448,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`Network response was not ok: ${'\'\'\''}response.statusText{'\'\'\''}`);
+        throw new Error(`Network response was not ok: ${response.statusText}`);
       }
       const blob = await response.blob();
 
@@ -475,22 +475,22 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     const files: { name: string; url: string; type: string }[] = [];
 
     reviewConfirmLead.layouts.forEach((layout, layoutIndex) => {
-      const layoutLabel = reviewConfirmLead.layouts!.length > 1 ? ` (Layout ${'\'\'\''}{layoutIndex + 1}{'\'\'\''})` : '';
+      const layoutLabel = reviewConfirmLead.layouts!.length > 1 ? ` (Layout ${layoutIndex + 1})` : '';
 
       (layout.finalLogoEmb || []).forEach(f => {
-        if (f) files.push({ ...f, type: `EMB Logo${'\'\'\''}{layoutLabel}` });
+        if (f) files.push({ ...f, type: `EMB Logo${layoutLabel}` });
       });
       (layout.finalBackDesignEmb || []).forEach(f => {
-        if (f) files.push({ ...f, type: `EMB Back Design${'\'\'\''}{layoutLabel}` });
+        if (f) files.push({ ...f, type: `EMB Back Design${layoutLabel}` });
       });
       (layout.finalLogoDst || []).forEach(f => {
-        if (f) files.push({ ...f, type: `DST Logo${'\'\'\''}{layoutLabel}` });
+        if (f) files.push({ ...f, type: `DST Logo${layoutLabel}` });
       });
       (layout.finalBackDesignDst || []).forEach(f => {
-        if (f) files.push({ ...f, type: `DST Back Design${'\'\'\''}{layoutLabel}` });
+        if (f) files.push({ ...f, type: `DST Back Design${layoutLabel}` });
       });
       (layout.finalNamesDst || []).forEach(f => {
-        if (f) files.push({ ...f, type: `DST Name${'\'\'\''}{layoutLabel}` });
+        if (f) files.push({ ...f, type: `DST Name${layoutLabel}` });
       });
     });
 
@@ -553,7 +553,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     }).then(() => {
         toast({
             title: 'Digitizer Assigned',
-            description: `'${'\'\'\''}{newValue || 'Unassigned'}{'\'\'\''}' has been assigned.`,
+            description: `'${newValue || 'Unassigned'}' has been assigned.`,
         });
     }).catch((e: any) => {
         toast({
@@ -576,7 +576,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
     if (mobile && landline) {
-      return `${'\'\'\''}{mobile} / ${'\'\'\''}{landline}`;
+      return `${mobile} / ${landline}`;
     }
     return mobile || landline || null;
   }, []);
@@ -595,19 +595,19 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         const completionDate = new Date(lead.digitizingArchivedTimestamp);
         const finalRemainingDays = differenceInDays(deadlineDate, completionDate);
         if (finalRemainingDays < 0) {
-            return { text: `Completed ${'\'\'\''}{Math.abs(finalRemainingDays)}{'\'\'\''}} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
+            return { text: <>Completed <span className="font-bold">{Math.abs(finalRemainingDays)} day(s)</span> late</>, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
         }
-        return { text: `Completed`, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
+        return { text: <>Completed</>, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
     }
     
     const remainingDays = differenceInDays(deadlineDate, new Date());
     
     if (remainingDays < 0) {
-      return { text: `${'\'\'\''}{Math.abs(remainingDays)}{'\'\'\''}} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+      return { text: <><span className="font-bold">{Math.abs(remainingDays)}</span> day(s) overdue</>, isOverdue: true, isUrgent: false, remainingDays };
     } else if (remainingDays <= 2) {
-      return { text: `${'\'\'\''}{remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
+      return { text: <><span className="font-bold">{remainingDays}</span> day(s) remaining</>, isOverdue: false, isUrgent: true, remainingDays };
     } else {
-      return { text: `${'\'\'\''}{remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+      return { text: <><span className="font-bold">{remainingDays}</span> day(s) remaining</>, isOverdue: false, isUrgent: false, remainingDays };
     }
   }, []);
   
@@ -617,7 +617,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     const leadDocRef = doc(firestore, 'leads', leadId);
     const now = new Date().toISOString();
 
-    const timestampField = `${'\'\'\''}{field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
+    const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
     
     const updateData: { [key: string]: any } = { 
         [field]: value,
@@ -633,7 +633,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 const nextField = sequence[i];
                 if (nextField) {
                   updateData[nextField] = false;
-                  const nextTimestampField = `${'\'\'\''}{nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
+                  const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
                   updateData[nextTimestampField] = null;
                 }
             }
@@ -798,7 +798,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     const originalState: Partial<Lead> = {};
 
     const processField = (fieldName: CheckboxField | 'isJoHardcopyReceived') => {
-        const timestampFieldName = `${'\'\'\''}{fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
+        const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
         
         optimisticUpdate[fieldName] = false;
         optimisticUpdate[timestampFieldName] = null;
@@ -843,7 +843,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
             });
             refetch(); // Sync with DB state
         } catch (e: any) {
-            console.error(`Error unchecking '${'\'\'\''}{field}'`, e);
+            console.error(`Error unchecking '${field}'`, e);
             toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
             
             // Rollback UI on failure
@@ -917,12 +917,12 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         }
         setIsUploadDialogOpen(true);
       } else {
-        const optimisticUpdate = { [field]: true, [`${'\'\'\''}{field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
+        const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
         setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
         updateStatus(leadId, field, true).catch(() => {
              toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
              setOptimisticChanges(prev => {
-                const { [field!]: _removed, [`${'\'\'\''}{field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
+                const { [field!]: _removed, [`${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
                 return { ...prev, [leadId]: rest };
              });
         });
@@ -951,7 +951,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         
         const deadlineInfo = calculateDigitizingDeadline(lead);
         const notification = {
-            id: `progress-${'\'\'\''}{lead.id}-${'\'\'\''}{new Date().toISOString()}`,
+            id: `progress-${lead.id}-${new Date().toISOString()}`,
             type: 'progress',
             leadId: lead.id,
             joNumber: formatJoNumberUtil(lead.joNumber),
@@ -989,20 +989,20 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay]);
 
 
-  const handleUploadDialogSave = useCallback(async () => {
+  const handleSaveImages = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads || !userProfile) return;
     
     if (uploadField === 'isLogoTesting' && noTestingNeeded) {
         const optimisticUpdate = {
             [uploadField]: true,
-            [`${'\'\'\''}{uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
+            [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
         };
         setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
         setIsUploadDialogOpen(false);
         updateStatus(uploadLeadId, uploadField, true).catch(() => {
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
             setOptimisticChanges(prev => {
-                const { [uploadField!]: _removed, [`${'\'\'\''}{uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
+                const { [uploadField!]: _removed, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
                 return { ...prev, [uploadLeadId]: rest };
              });
         });
@@ -1012,7 +1012,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     // Optimistic UI updates
     const optimisticUpdate = {
         [uploadField]: true,
-        [`${'\'\'\''}{uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
+        [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
     };
     setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
     setIsUploadDialogOpen(false); // Close dialog immediately
@@ -1023,21 +1023,21 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     const uploadAndGetURL = async (lead: Lead, imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
         if (!imageData) return null;
         if (imageData.startsWith('http')) {
-            const pluralFieldName = `${'\'\'\''}{fieldName}s`;
+            const pluralFieldName = `${fieldName}s`;
             const existingArray = (lead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
             const existingImageObject = existingArray.find(img => img.url === imageData);
             if (existingImageObject) return existingImageObject;
             
             if (lead.layouts?.[0]?.[fieldName as keyof Layout] === imageData) {
-                const timestamp = lead.layouts?.[0]?.[`${'\'\'\''}{fieldName}UploadTime` as keyof Layout] as string | null;
-                const uploader = lead.layouts?.[0]?.[`${'\'\'\''}{fieldName}UploadedBy` as keyof Layout] as string | null;
+                const timestamp = lead.layouts?.[0]?.[`${fieldName}UploadTime` as keyof Layout] as string | null;
+                const uploader = lead.layouts?.[0]?.[`${fieldName}UploadedBy` as keyof Layout] as string | null;
                 return { url: imageData, uploadTime: timestamp || now, uploadedBy: uploader || userProfile.nickname };
             }
             return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
         }
         if(!imageData.startsWith('data:')) return null;
 
-        const storageRef = ref(storage, `leads-images/${'\'\'\''}{uploadLeadId}/${'\'\'\''}{fieldName}_${'\'\'\''}{index}_${'\'\'\''}{Date.now()}`);
+        const storageRef = ref(storage, `leads-images/${uploadLeadId}/${fieldName}_${index}_${Date.now()}`);
         const snapshot = await uploadString(storageRef, imageData, 'data_url');
         const downloadURL = await getDownloadURL(snapshot.ref);
         return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
@@ -1047,7 +1047,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       return Promise.all(
         files.map(async (file, index) => {
           if (!file || !file.url.startsWith('data:')) return file;
-          const urlData = await uploadAndGetURL(lead, file.url, `${'\'\'\''}{folderName}/${'\'\'\''}{index}_${'\'\'\''}{file.name}`, index);
+          const urlData = await uploadAndGetURL(lead, file.url, `${folderName}/${index}_${file.name}`, index);
           return urlData ? { name: file.name, url: urlData.url } : null;
         })
       );
@@ -1062,7 +1062,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         const uploads = await Promise.all(images.map((img, i) => uploadAndGetURL(lead, img, fieldName, i)));
         const successfulUploads = uploads.filter((u): u is { url: string; uploadTime: string; uploadedBy: string } => !!u);
         return {
-            files: successfulUploads.map(u => ({ name: `${'\'\'\''}{fieldName}_${'\'\'\''}{Date.now()}.png`, url: u.url })),
+            files: successfulUploads.map(u => ({ name: `${fieldName}_${Date.now()}.png`, url: u.url })),
             timestamps: successfulUploads.map(u => u.uploadTime),
             uploaders: successfulUploads.map(u => u.uploadedBy)
         };
@@ -1200,7 +1200,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       currentLayouts[0] = updatedFirstLayout;
       const leadDocRef = doc(firestore, 'leads', uploadLeadId);
 
-      const timestampField = `${'\'\'\''}{uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`;
+      const timestampField = `${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`;
       const updatePayload = {
         layouts: currentLayouts,
         [uploadField]: true,
@@ -1219,7 +1219,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       console.error('Error saving images or status:', e);
       // Revert optimistic update
       setOptimisticChanges(prev => {
-        const { [uploadField!]: _removed, [`${'\'\'\''}{uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
+        const { [uploadField!]: _removed, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
         return { ...prev, [uploadLeadId]: rest };
       });
       toast({
@@ -1309,7 +1309,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   };
 
   const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-      const fileInput = document.getElementById(`file-input-job-order-${'\'\'\''}{index}`) as HTMLInputElement;
+      const fileInput = document.getElementById(`file-input-job-order-${index}`) as HTMLInputElement;
       if (fileInput) {
           fileInput.value = '';
       }
@@ -1383,12 +1383,12 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             canEdit && "cursor-pointer"
                         )}
                         onClick={() => image && setImageInView(image)}
-                        onDoubleClick={() => canEdit && !image && (document.getElementById(`file-input-job-order-${'\'\'\''}{label.replace(/\s+/g, '-')}-${'\'\'\''}{index}`)?.click())}
+                        onDoubleClick={() => canEdit && !image && (document.getElementById(`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`)?.click())}
                         onPaste={(e) => handleImagePaste(e, setter, index)}
                         onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                       >
                           {image ? (<>
-                            <Image src={image} alt={`${'\'\'\''}{label} ${'\'\'\''}{index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
+                            <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
                             {canEdit && (
                                 <Button
                                 variant="destructive"
@@ -1403,7 +1403,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                 </Button>
                             )}
                           </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{canEdit ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                          <input id={`file-input-job-order-${'\'\'\''}{label.replace(/\s+/g, '-')}-${'\'\'\''}{index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
+                          <input id={`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
                       </div>
                       {canEdit && index > 0 && displayImages.length > 1 && (
                           <Button
@@ -1591,11 +1591,11 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                   {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
                   </DialogDescription>
               </DialogHeader>
-              <div className="py-4 pr-6">
-                <ScrollArea className="max-h-[70vh] modern-scrollbar">
+              <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+                <div className="py-4">
                     {renderUploadDialogContent()}
-                </ScrollArea>
-              </div>
+                </div>
+              </ScrollArea>
               <DialogFooter>
                   <DialogClose asChild>
                       <Button type="button" variant="outline"> Cancel </Button>
@@ -1779,7 +1779,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                       <TableCell className="text-xs text-center align-middle">{formatJoNumber(lead.joNumber)}</TableCell>
                       <TableCell className={cn(
                           "text-center text-xs align-middle",
-                          deadlineInfo.isOverdue ? "text-red-500 font-bold" : (deadlineInfo.isUrgent ? "text-amber-600 font-bold" : "text-gray-500")
+                          deadlineInfo.isOverdue ? "text-red-500" : (deadlineInfo.isUrgent ? "text-amber-600" : "text-gray-500")
                         )}>{deadlineInfo.text}</TableCell>
                         <TableCell className="text-center align-middle">
                             <Select 
@@ -1802,7 +1802,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                         </TableCell>
                         
                         {(['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'] as CheckboxField[]).map(field => {
-                            const timestamp = lead[`${'\'\'\''}{field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead] as string | undefined;
+                            const timestamp = lead[`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead] as string | undefined;
                             let isDisabled = !canEditThisRow || (isCompleted && !(field === 'isFinalProgram' && enableReupload));
                             
                             const className = isDisabled ? 'disabled:opacity-100' : '';
@@ -1887,15 +1887,15 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <div className='flex-1 overflow-y-auto' data-vaul-drawer-visible>
-                  <ScrollArea className="h-full pr-6">
-                    <div className="p-4 bg-white text-black">
+                <div className='flex-1 min-h-0'>
+                  <ScrollArea className="h-full">
+                    <div className="p-4 pr-6 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
 
                             const scesProfile = usersData?.find((u) => u.nickname === lead.salesRepresentative);
                             const scesFullName = scesProfile?.firstName && scesProfile?.lastName
-                              ? toTitleCase(`${'\'\'\''}{scesProfile.firstName} ${'\'\'\''}{scesProfile.lastName}`)
+                              ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`)
                               : toTitleCase(lead.salesRepresentative);
 
                             const totalQuantity = (lead.orders || []).reduce((sum: number, order: any) => sum + (order.quantity || 0), 0);
@@ -2073,7 +2073,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                         <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
                                           <Image
                                             src={layout.layoutImage}
-                                            alt={`Layout ${'\'\'\''}{layoutIndex + 1}`}
+                                            alt={`Layout ${layoutIndex + 1}`}
                                             layout="fill"
                                             objectFit="contain"
                                           />
@@ -2081,7 +2081,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                       )}
 
                                       <h2 className="text-2xl font-bold text-center mb-4">
-                                        {layoutsToPrint.length > 1 ? `LAYOUT #${'\'\'\''}{layoutIndex + 1}` : "LAYOUT"}
+                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
                                       </h2>
 
                                       <table className="w-full border-collapse border border-black mb-6">
@@ -2156,5 +2156,6 @@ const DigitizingTableMemo = React.memo(DigitizingTable);
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
