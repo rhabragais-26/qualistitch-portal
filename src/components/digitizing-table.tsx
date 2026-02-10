@@ -414,7 +414,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   
   const [finalLogoEmb, setFinalLogoEmb] = useState<(FileObject | null)[]>([null]);
   const [finalBackDesignEmb, setFinalBackDesignEmb] = useState<(FileObject | null)[]>([null]);
-  const [finalLogoDst, setFinalLogoDst] = useState<(FileObject | null)[]>([null]);
+  const [finalLogoDst, setFinalLogoDst] = useState<(FileObject | null)[]>([]);
   const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(string | null)[]>([]);
@@ -834,7 +834,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 description: 'The status has been successfully reverted.',
             });
             refetch(); // Sync with DB state
-        } catch (e) {
+        } catch (e: any) {
             console.error(`Error unchecking '${field}'`, e);
             toast({ variant: "destructive", title: "Update Failed", description: (e as Error).message || "Could not update the status." });
             
@@ -1663,8 +1663,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="flex-1 min-h-0 modern-scrollbar">
-                    <div className="px-6 pb-6">
+                <ScrollArea className="flex-1 min-h-0 modern-scrollbar px-6 pb-6">
                         <div className="bg-white text-black">
                             {(() => {
                                 const lead = viewingJoLead;
@@ -1858,36 +1857,39 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                 
                                             <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
                                             <table className="w-full border-collapse border border-black text-xs">
-                                            <thead>
+                                              <thead>
                                                 <tr className="bg-gray-200">
-                                                <th className="border border-black p-1 text-center align-middle">No.</th>
-                                                <th className="border border-black p-1 text-center align-middle">Names</th>
-                                                <th className="border border-black p-1 text-center align-middle">Color</th>
-                                                <th className="border border-black p-1 text-center align-middle">Sizes</th>
-                                                <th className="border border-black p-1 text-center align-middle">Qty</th>
-                                                <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
+                                                  <th className="border border-black p-1 text-center align-middle">No.</th>
+                                                  <th className="border border-black p-1 text-center align-middle">Names</th>
+                                                  <th className="border border-black p-1 text-center align-middle">Color</th>
+                                                  <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                                                  <th className="border border-black p-1 text-center align-middle">Qty</th>
+                                                  <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
+                                              </thead>
+                                              <TableBody>
                                                 {layout.namedOrders?.map((order, orderIndex) => (
-                                                <tr key={orderIndex}>
+                                                  <TableRow key={orderIndex}>
                                                     <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
                                                     <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
                                                     <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
                                                     <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
                                                     <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
                                                     <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
-                                                </tr>
+                                                  </TableRow>
                                                 ))}
-                                            </tbody>
+                                              </TableBody>
                                             </table>
                                         </div>
                                     ))}
-                                </>
+                              </>
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
+              <DialogFooter>
+                <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+              </DialogFooter>
             </DialogContent>
         </Dialog>
       )}
@@ -1900,5 +1902,4 @@ DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
 
-
-  
+    
