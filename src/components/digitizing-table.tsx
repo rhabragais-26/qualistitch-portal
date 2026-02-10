@@ -842,7 +842,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 description: 'The status has been successfully reverted.',
             });
             refetch(); // Sync with DB state
-        } catch (e: any) => {
+        } catch (e: any) {
             console.error(`Error unchecking '${field}'`, e);
             toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
             
@@ -978,7 +978,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 : "The project has been moved to the Item Preparation queue.",
         });
         setReviewConfirmLead(null);
-    } catch (e: any) => {
+    } catch (e: any) {
         console.error('Error sending to production:', e);
         toast({
             variant: 'destructive',
@@ -1104,7 +1104,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     onDoubleClick={() => canEdit && !image && document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
                     onPaste={(e) => canEdit && handleImagePaste(e, setter, index)}
                     onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
-                    >
+                  >
                         {image ? (<>
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
                         {canEdit && (
@@ -1268,7 +1268,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     return (
       <div className="p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full mb-2" />
+          <Skeleton key={i} className="h-16 w-full" />
         ))}
       </div>
     );
@@ -1345,31 +1345,31 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       )}
 
     <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-        <DialogContent className="max-w-4xl p-0">
-            <DialogHeader className="p-6 pb-4 border-b">
-                <DialogTitle>
-                    {uploadField === 'isUnderProgramming' && 'Upload Initial Program Images'}
-                    {uploadField === 'isLogoTesting' && 'Upload Tested Images'}
-                    {uploadField === 'isFinalProgram' && 'Upload Final Program Files'}
-                </DialogTitle>
-                <DialogDescription>
-                    {uploadField === 'isUnderProgramming' && 'Upload the initial program images for client approval.'}
-                    {uploadField === 'isLogoTesting' && 'Upload images of the tested embroidery.'}
-                    {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
-                </DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="max-h-[70vh] modern-scrollbar">
-                <div className="px-6 py-4">
-                    {renderUploadDialogContent()}
-                </div>
-            </ScrollArea>
-            <DialogFooter className="p-6 pt-4 border-t">
-                <DialogClose asChild>
-                    <Button type="button" variant="outline"> Cancel </Button>
-                </DialogClose>
-                <Button onClick={handleSaveImages} disabled={isSaveDisabled}>Save and Update Status</Button>
-            </DialogFooter>
-        </DialogContent>
+      <DialogContent className="max-w-4xl p-0">
+          <DialogHeader className="p-6 pb-0">
+              <DialogTitle>
+                  {uploadField === 'isUnderProgramming' && 'Upload Initial Program Images'}
+                  {uploadField === 'isLogoTesting' && 'Upload Tested Images'}
+                  {uploadField === 'isFinalProgram' && 'Upload Final Program Files'}
+              </DialogTitle>
+              <DialogDescription>
+                  {uploadField === 'isUnderProgramming' && 'Upload the initial program images for client approval.'}
+                  {uploadField === 'isLogoTesting' && 'Upload images of the tested embroidery.'}
+                  {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
+              </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] modern-scrollbar">
+              <div className="px-6 py-4">
+                  {renderUploadDialogContent()}
+              </div>
+          </ScrollArea>
+          <DialogFooter className="p-6 pt-4 border-t">
+              <DialogClose asChild>
+                  <Button type="button" variant="outline"> Cancel </Button>
+              </DialogClose>
+              <Button onClick={handleSaveImages} disabled={isSaveDisabled}>Save and Update Status</Button>
+          </DialogFooter>
+      </DialogContent>
     </Dialog>
       {imageInView && (
         <div
@@ -1649,13 +1649,13 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       </CardContent>
       {viewingJoLead && (
         <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
-            <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+            <DialogContent className="max-w-4xl h-[90vh] p-0 flex flex-col">
                 <DialogHeader className="p-6 pb-2">
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="flex-1 min-h-0 modern-scrollbar">
-                  <div className="p-6">
+                  <div className="px-6 pb-6">
                     <div className="bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
