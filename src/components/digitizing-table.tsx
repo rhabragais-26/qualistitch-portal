@@ -240,7 +240,7 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
                 images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
                     const images: any[] = [];
                     const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
+                        const labelSuffix = '';
                         if (Array.isArray(pluralField)) {
                             pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
                         } else if (singularField) {
@@ -259,7 +259,7 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
                 images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
                     const images: any[] = [];
                     const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
+                        const labelSuffix = '';
                         if (Array.isArray(pluralField)) {
                             pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
                         } else if (singularField) {
@@ -278,7 +278,7 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
                 images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
                     const images: any[] = [];
                     const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                         const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
+                         const labelSuffix = '';
                         if (Array.isArray(pluralField)) {
                             pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
                         } else if (singularField) {
@@ -297,7 +297,7 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
                 images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
                     const images: any[] = [];
                     const addFiles = (files: (FileObject | null)[] | undefined, timestamps: (string | null)[] | undefined, uploaders: (string | null)[] | undefined, labelPrefix: string) => {
-                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
+                        const labelSuffix = '';
                         if (Array.isArray(files)) {
                             files.forEach((file, i) => {
                                 if (file?.url) {
@@ -659,7 +659,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         if (!customerOrderGroups[name]) {
             customerOrderGroups[name] = { orders: [] };
         }
-        customerOrderGroups[name].orders.push(lead);
+        customerOrderGroups[name].push(lead);
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -837,7 +837,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 description: 'The status has been successfully reverted.',
             });
             refetch(); // Sync with DB state
-        } catch (e: any) {
+        } catch (e) {
             console.error(`Error unchecking '${field}'`, e);
             toast({ variant: "destructive", title: "Update Failed", description: (e as Error).message || "Could not update the status." });
             
@@ -1208,10 +1208,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                         </div>
                     </div>
                      <div className="space-y-2 pt-4 border-t col-span-2">
-                        <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-teal-600">Names (DST)</h4>
-                            {canEdit && <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFinalNamesDst)}><PlusCircle className="h-4 w-4" /></Button>}
-                        </div>
+                        <h4 className="font-semibold text-teal-600">Names (DST)</h4>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                             {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
                                 <div key={index} className="flex items-center gap-2">
@@ -1225,6 +1222,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                     {canEdit && (finalNamesDst.length > 1 || file) && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFinalNamesDst, index, finalNamesDstUploadRefs)}><Trash2 className="h-4 w-4"/></Button>}
                                 </div>
                             ))}
+                             {canEdit && <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => addFileMultiple(setFinalNamesDst)}><PlusCircle className="mr-2 h-4 w-4"/>Add Name File</Button>}
                         </div>
                     </div>
                     <div className="flex items-center space-x-2 pt-2 col-span-2">
@@ -1703,7 +1701,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             const layoutsToPrint = lead.layouts?.filter((l) => hasLayoutContent(l as Layout)) || [];
 
                             return (
-                            <>
+                              <>
                                 <div className="p-10 mx-auto max-w-4xl print-page">
                                 <div className="text-left mb-4">
                                     <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span></p>
@@ -1769,7 +1767,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                             <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
                                         </TableCell>
                                         <TableCell className="border border-black p-0.5">
-                                            <p className="text-xs">{order.remarks}</p>
+                                           <p className="text-xs">{order.remarks}</p>
                                         </TableCell>
                                         </TableRow>
                                     ))}
@@ -1929,7 +1927,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                         </TableBody>
                                     </table>
                                     </div>
-                                ))}
+                                  ))}
                               </>
                             )
                         })()}
@@ -1940,11 +1938,12 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       )}
     </>
   );
-}
+});
+ProductionQueueTableBase.displayName = 'ProductionQueueTableBase';
 
-const DigitizingTableMemo = React.memo(DigitizingTable);
-DigitizingTableMemo.displayName = 'DigitizingTable';
+const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
+ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 
-export { DigitizingTableMemo as DigitizingTable };
+export { ProductionQueueTableMemo as ProductionQueueTable };
 
     
