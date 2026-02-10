@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -292,27 +291,20 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleDownload = useCallback(async (url: string, name: string) => {
+  const handleDownload = useCallback((url: string, name: string) => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
-      const blob = await response.blob();
-
       const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = name;
+      link.href = url;
+      link.setAttribute('download', name);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
+      link.parentNode?.removeChild(link);
     } catch (error: any) {
       console.error('File download failed:', error);
       toast({
         variant: 'destructive',
         title: 'Download Failed',
-        description: error.message || 'Could not download file. This may be a CORS issue or network problem.',
+        description: error.message || 'Could not download file.',
       });
     }
   }, [toast]);
@@ -1561,4 +1553,5 @@ const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
 ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
+
 

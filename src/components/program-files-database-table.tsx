@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -95,27 +94,20 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   }, []);
 
-  const handleDownload = useCallback(async (url: string, name: string) => {
+  const handleDownload = useCallback((url: string, name: string) => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
-      const blob = await response.blob();
-
       const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = name;
+      link.href = url;
+      link.setAttribute('download', name);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
+      link.parentNode?.removeChild(link);
     } catch (error: any) {
       console.error('File download failed:', error);
       toast({
         variant: 'destructive',
         title: 'Download Failed',
-        description: error.message || 'Could not download file. This may be a CORS issue or network problem.',
+        description: error.message || 'Could not download file.',
       });
     }
   }, [toast]);

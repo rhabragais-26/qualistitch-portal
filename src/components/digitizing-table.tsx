@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -444,27 +443,20 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   
   const canEdit = !isReadOnly;
 
-  const handleDownload = useCallback(async (url: string, name: string) => {
+  const handleDownload = useCallback((url: string, name: string) => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
-      const blob = await response.blob();
-
       const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = name;
+      link.href = url;
+      link.setAttribute('download', name);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
-    } catch (error: any) {
+      link.parentNode?.removeChild(link);
+    } catch (error: any) => {
       console.error('File download failed:', error);
       toast({
         variant: 'destructive',
         title: 'Download Failed',
-        description: error.message || 'Could not download file. This may be a CORS issue or network problem.',
+        description: error.message || 'Could not download file.',
       });
     }
   }, [toast]);
@@ -1591,7 +1583,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                   {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
                   </DialogDescription>
               </DialogHeader>
-              <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+              <ScrollArea className="max-h-[70vh] -mx-6 px-6 modern-scrollbar">
                 <div className="py-4">
                     {renderUploadDialogContent()}
                 </div>
@@ -2156,6 +2148,7 @@ const DigitizingTableMemo = React.memo(DigitizingTable);
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
