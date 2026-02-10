@@ -1,7 +1,7 @@
 
 'use client';
 
-import { doc, updateDoc, collection, query } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -9,6 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import {
   Card,
@@ -443,20 +444,26 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   
   const canEdit = !isReadOnly;
 
-  const handleDownload = useCallback((url: string, name: string) => {
+  const handleDownload = useCallback(async (url: string, name: string) => {
     try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.statusText}`);
+      }
+      const blob = await response.blob();
       const link = document.createElement('a');
-      link.href = url;
+      link.href = URL.createObjectURL(blob);
       link.setAttribute('download', name);
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
+      URL.revokeObjectURL(link.href);
     } catch (error: any) {
       console.error('File download failed:', error);
       toast({
         variant: 'destructive',
         title: 'Download Failed',
-        description: error.message || 'Could not download file.',
+        description: error.message || 'Could not download file. Please check the console for more details.',
       });
     }
   }, [toast]);
@@ -652,39 +659,39 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
   
+    // Group all orders by customer
     leads.forEach(lead => {
-      if (!Array.isArray(lead.orders)) {
-        return;
-      }
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderGroups[name]) {
-        customerOrderGroups[name] = { orders: [] };
-      }
-      customerOrderGroups[name].orders.push(lead);
+        const name = lead.customerName.toLowerCase();
+        if (!customerOrderGroups[name]) {
+            customerOrderGroups[name] = { orders: [] };
+        }
+        customerOrderGroups[name].orders.push(lead);
     });
   
     const enrichedLeads: EnrichedLead[] = [];
   
     Object.values(customerOrderGroups).forEach(({ orders }) => {
-      const sortedOrders = [...orders].sort(
-        (a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime()
-      );
-  
-      const totalCustomerQuantity = orders.reduce((sum, o) => {
-        if (!Array.isArray(o.orders)) return sum;
-        return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0);
-      }, 0);
-  
-      for (let i = 0; i < sortedOrders.length; i++) {
-        const lead = sortedOrders[i];
-        const previousNonSampleOrders = sortedOrders.slice(0, i).filter((o) => o.orderType !== 'Item Sample');
-  
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: previousNonSampleOrders.length,
-          totalCustomerQuantity,
-        });
-      }
+        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        
+        const totalCustomerQuantity = orders.reduce((sum, o) => {
+          if (!Array.isArray(o.orders)) return sum;
+          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
+        }, 0);
+        
+        for (let i = 0; i < sortedOrders.length; i++) {
+            const lead = sortedOrders[i];
+            
+            // Count previous non-sample orders for this customer
+            const previousNonSampleOrders = sortedOrders
+                .slice(0, i)
+                .filter(o => o.orderType !== 'Item Sample');
+            
+            enrichedLeads.push({
+                ...lead,
+                orderNumber: previousNonSampleOrders.length,
+                totalCustomerQuantity,
+            });
+        }
     });
   
     return enrichedLeads;
@@ -1586,11 +1593,11 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                   {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
                   </DialogDescription>
               </DialogHeader>
-              <ScrollArea className="max-h-[70vh] -mx-6 px-6 modern-scrollbar">
-                <div className="py-4">
-                    {renderUploadDialogContent()}
-                </div>
-              </ScrollArea>
+              <div className="py-4 pr-2">
+                <ScrollArea className="max-h-[70vh] -mx-6 px-6 modern-scrollbar">
+                  {renderUploadDialogContent()}
+                </ScrollArea>
+              </div>
               <DialogFooter>
                   <DialogClose asChild>
                       <Button type="button" variant="outline"> Cancel </Button>
@@ -1882,7 +1889,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <div className='flex-1 min-h-0'>
+                <div className='flex-1 min-h-0 pr-6'>
                   <ScrollArea className="h-full pr-4">
                     <div className="p-4 bg-white text-black">
                         {(() => {
@@ -2138,7 +2145,8 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                  </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
@@ -2150,9 +2158,3 @@ const DigitizingTableMemo = React.memo(DigitizingTable);
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-
-
-
-
-
