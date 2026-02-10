@@ -573,7 +573,7 @@ export function LeadForm({
   const isPolo = newOrderProductType.includes('Polo Shirt');
   const isPatches = newOrderProductType === 'Patches';
   const isClientOwned = newOrderProductType === 'Client Owned';
-  const showSingleQuantity = isPatches || isClientOwned;
+  const showSingleQuantity = isPatches || isClientOwned || isQuotationMode;
   const availableColors = isPolo ? poloShirtColors : jacketColors;
 
 
@@ -660,7 +660,7 @@ export function LeadForm({
         const orderToAdd: Order = {
           productType: newOrderProductType,
           color: newOrderColor || 'N/A',
-          size: 'N/A',
+          size: isQuotationMode && !isPatches && !isClientOwned ? 'Assorted' : 'N/A',
           quantity: singleQuantity,
           embroidery: newOrderEmbroidery,
         };
@@ -1520,5 +1520,3 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
-
-    
