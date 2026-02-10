@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -841,7 +842,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 description: 'The status has been successfully reverted.',
             });
             refetch(); // Sync with DB state
-        } catch (e: any) {
+        } catch (e: any) => {
             console.error(`Error unchecking '${field}'`, e);
             toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
             
@@ -977,7 +978,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 : "The project has been moved to the Item Preparation queue.",
         });
         setReviewConfirmLead(null);
-    } catch (e: any) {
+    } catch (e: any) => {
         console.error('Error sending to production:', e);
         toast({
             variant: 'destructive',
@@ -987,28 +988,27 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     }
   }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay]);
 
-
-  const handleSaveImages = useCallback(async () => {
+    const handleSaveImages = useCallback(async () => {
     // ... function content ...
-  }, [
+    }, [
     // ... dependencies ...
-  ]);
+    ]);
   
-  const isSaveDisabled = useMemo(() => {
+    const isSaveDisabled = useMemo(() => {
     if (!canEdit) return true;
     if (uploadField !== 'isFinalProgram') return false;
 
     if (isNamesOnly) {
-      return finalNamesDst.every((f) => !f);
+        return finalNamesDst.every((f) => !f);
     }
     
     const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
     const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
     const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
     const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
-  
+    
     return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
-  }, [
+    }, [
     isNamesOnly,
     finalNamesDst,
     finalLogoEmb,
@@ -1021,27 +1021,27 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     finalProgrammedBackDesign,
     uploadField,
     canEdit
-  ]);
+    ]);
   
 
-  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     if (!canEdit) return;
     const file = e.clipboardData.files[0];
     if (file && file.type.startsWith('image/')) {
         handleImageUpload(file, setter, index);
     }
-  };
+    };
   
-  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
     setter(prev => prev.filter((_, i) => i !== index));
-  };
+    };
 
-  const addFile = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
-      setter(prev => [...prev, null]);
-  };
-  
-  const handleMultipleFileUpload = (event: ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
+    const addFile = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+        setter(prev => [...prev, null]);
+    };
+    
+    const handleMultipleFileUpload = (event: ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -1054,46 +1054,46 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         }
     };
     reader.readAsDataURL(file);
-  };
-  
-  const addFileMultiple = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
-      setter(prev => [...prev, null]);
-  };
+    };
+    
+    const addFileMultiple = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
+        setter(prev => [...prev, null]);
+    };
 
-  const removeFile = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    const removeFile = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
     setter(prev => prev.filter((_, i) => i !== index));
     if (refs.current[index]) {
-      refs.current[index]!.value = '';
+        refs.current[index]!.value = '';
     }
-  };
+    };
 
-  const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-      const fileInput = document.getElementById(`file-input-job-order-${index}`) as HTMLInputElement;
-      if (fileInput) {
-          fileInput.value = '';
-      }
-      setter(prev => {
-          const newImages = [...prev];
-          newImages[index] = null;
-          return newImages;
-      });
-  };
+    const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+        const fileInput = document.getElementById(`file-input-job-order-${index}`) as HTMLInputElement;
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        setter(prev => {
+            const newImages = [...prev];
+            newImages[index] = null;
+            return newImages;
+        });
+    };
 
-  const renderUploadBoxes = useCallback((label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+    const renderUploadBoxes = useCallback((label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
     const displayImages = images.length > 0 ? images : [null];
     return (
-      <div className="space-y-2">
-          <div className="flex items-center gap-2">
+        <div className="space-y-2">
+            <div className="flex items-center gap-2">
             <Label>{label}</Label>
             {canEdit && (
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={(e) => { e.stopPropagation(); setter(prev => [...prev, null]); }}>
-                  <PlusCircle className="h-4 w-4" />
-              </Button>
+                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={(e) => { e.stopPropagation(); setter(prev => [...prev, null]); }}>
+                    <PlusCircle className="h-4 w-4" />
+                </Button>
             )}
-          </div>
-          {displayImages.map((image, index) => (
-              <div key={index} className="flex items-center gap-2">
-                  <div
+            </div>
+            {displayImages.map((image, index) => (
+                <div key={index} className="flex items-center gap-2">
+                    <div
                     tabIndex={0}
                     className={cn(
                         "relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center",
@@ -1104,8 +1104,8 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     onDoubleClick={() => canEdit && !image && document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
                     onPaste={(e) => canEdit && handleImagePaste(e, setter, index)}
                     onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
-                  >
-                      {image ? (<>
+                    >
+                        {image ? (<>
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
                         {canEdit && (
                             <Button
@@ -1120,48 +1120,48 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             <Trash2 className="h-4 w-4" />
                             </Button>
                         )}
-                      </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{canEdit ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
-                  </div>
-                  {canEdit && displayImages.length > 1 && (
-                      <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive self-center"
-                          onClick={(e) => handleRemoveImage(e, setter, index)}
-                      >
-                          <X className="h-5 w-5" />
-                      </Button>
-                  )}
-              </div>
-          ))}
-      </div>
+                        </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{canEdit ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
+                        <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
+                    </div>
+                    {canEdit && displayImages.length > 1 && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive self-center"
+                            onClick={(e) => handleRemoveImage(e, setter, index)}
+                        >
+                            <X className="h-5 w-5" />
+                        </Button>
+                    )}
+                </div>
+            ))}
+        </div>
     );
-  }, [canEdit, handleClearImage, handleImagePaste, handleImageUpload, handleRemoveImage, setImageInView]);
+    }, [canEdit, handleClearImage, handleImagePaste, handleImageUpload, handleRemoveImage, setImageInView]);
 
-  const renderMultipleFileUploads = useCallback((label: string, files: (FileObject | null)[], setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    const renderMultipleFileUploads = useCallback((label: string, files: (FileObject | null)[], setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
     const displayFiles = files.length > 0 ? files : [null];
     return (
-      <div className="space-y-2">
+        <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Label>{label}</Label>
-          {canEdit && <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setter)}><PlusCircle className="h-4 w-4" /></Button>}
+            <Label>{label}</Label>
+            {canEdit && <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setter)}><PlusCircle className="h-4 w-4" /></Button>}
         </div>
         {displayFiles.map((file, index) => (
-          <div key={index} className="flex items-center gap-2">
+            <div key={index} className="flex items-center gap-2">
             <Input
-              type="file"
-              className="h-9 text-xs"
-              ref={el => refs.current[index] = el}
-              onChange={(e) => handleMultipleFileUpload(e, setter, files, index)}
-              disabled={!canEdit}
+                type="file"
+                className="h-9 text-xs"
+                ref={el => refs.current[index] = el}
+                onChange={(e) => handleMultipleFileUpload(e, setter, files, index)}
+                disabled={!canEdit}
             />
             {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index, refs)}><Trash2 className="h-4 w-4"/></Button>}
-          </div>
+            </div>
         ))}
-      </div>
+        </div>
     );
-  }, [canEdit, handleMultipleFileUpload, removeFile]);
+    }, [canEdit, handleMultipleFileUpload, removeFile]);
   
   const renderUploadDialogContent = useCallback(() => {
     switch (uploadField) {
@@ -1178,7 +1178,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         return (
           <div className="space-y-6">
              <div className="flex items-center space-x-2">
-                <Checkbox id="no-testing-needed" checked={noTestingNeeded} onCheckedChange={setNoTestingNeeded} />
+                <Checkbox id="no-testing-needed" checked={noTestingNeeded} onCheckedChange={(checked) => setNoTestingNeeded(!!checked)} />
                 <Label htmlFor="no-testing-needed">No testing needed for this J.O.</Label>
             </div>
             {!noTestingNeeded && (
@@ -1193,50 +1193,48 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
         );
       case 'isFinalProgram':
         return (
-          <div className="space-y-6">
-             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="names-only-checkbox"
-                checked={isNamesOnly}
-                onCheckedChange={setIsNamesOnly}
-              />
-              <Label htmlFor="names-only-checkbox">This order is for names only</Label>
+            <div className="space-y-6">
+                <div className="flex items-center space-x-2">
+                <Checkbox
+                    id="names-only-checkbox"
+                    checked={isNamesOnly}
+                    onCheckedChange={(checked) => setIsNamesOnly(!!checked)}
+                />
+                <Label htmlFor="names-only-checkbox">This order is for names only</Label>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        {!isNamesOnly && (
+                            <>
+                            <h4 className="font-semibold mb-2">EMB Files</h4>
+                            {renderMultipleFileUploads('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                            {renderMultipleFileUploads('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                            
+                            <h4 className="font-semibold mb-2 pt-4">Sequence Images</h4>
+                            {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+                            {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+                            </>
+                        )}
+                    </div>
+                    <div className="space-y-4">
+                        {!isNamesOnly && (
+                           <>
+                            <h4 className="font-semibold mb-2">DST Files</h4>
+                            {renderMultipleFileUploads('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                            {renderMultipleFileUploads('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+
+                            <h4 className="font-semibold mb-2 pt-4">Final Program Images</h4>
+                            {renderUploadBoxes('Final Program Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                            {renderUploadBoxes('Final Program Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                           </>
+                        )}
+                    </div>
+                </div>
+                <div className="space-y-4 pt-4 border-t">
+                    <h4 className="font-semibold mb-2">Names (DST)</h4>
+                    {renderMultipleFileUploads('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
+                </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {!isNamesOnly && (
-                <>
-                  <div>
-                    <h4 className="font-semibold mb-2">EMB Files</h4>
-                    {renderMultipleFileUploads('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                    {renderMultipleFileUploads('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">DST Files</h4>
-                    {renderMultipleFileUploads('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-                    {renderMultipleFileUploads('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-                  </div>
-                </>
-              )}
-              <div>
-                <h4 className="font-semibold mb-2">Names (DST)</h4>
-                {renderMultipleFileUploads('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
-              </div>
-              {!isNamesOnly && (
-                <>
-                  <div>
-                    <h4 className="font-semibold mb-2">Sequence Images</h4>
-                    {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
-                    {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Final Program Images</h4>
-                    {renderUploadBoxes('Final Program Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
-                    {renderUploadBoxes('Final Program Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
         );
       default:
         return null;
@@ -1348,7 +1346,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
     <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
         <DialogContent className="max-w-4xl p-0">
-            <DialogHeader className="p-6 pb-4">
+            <DialogHeader className="p-6 pb-4 border-b">
                 <DialogTitle>
                     {uploadField === 'isUnderProgramming' && 'Upload Initial Program Images'}
                     {uploadField === 'isLogoTesting' && 'Upload Tested Images'}
@@ -1360,12 +1358,12 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
                 </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="max-h-[70vh] modern-scrollbar border-y">
+            <ScrollArea className="max-h-[70vh] modern-scrollbar">
                 <div className="px-6 py-4">
                     {renderUploadDialogContent()}
                 </div>
             </ScrollArea>
-            <DialogFooter className="p-6 pt-4">
+            <DialogFooter className="p-6 pt-4 border-t">
                 <DialogClose asChild>
                     <Button type="button" variant="outline"> Cancel </Button>
                 </DialogClose>
@@ -1652,12 +1650,13 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       {viewingJoLead && (
         <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
             <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
-                <DialogHeader className="p-6 pb-2 flex-shrink-0">
+                <DialogHeader className="p-6 pb-2">
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="flex-1 min-h-0 modern-scrollbar">
-                    <div className="px-6 py-4 bg-white text-black">
+                  <div className="p-6">
+                    <div className="bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
 
@@ -1910,7 +1909,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
@@ -1926,3 +1925,6 @@ export { DigitizingTableMemo as DigitizingTable };
 
     
 
+
+
+    
