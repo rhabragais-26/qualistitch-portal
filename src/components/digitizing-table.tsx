@@ -961,7 +961,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
             message: isClientOrPatchOnly 
               ? 'Order endorsed to Production.' 
               : 'Order endorsed to Inventory for item preparation.',
-            overdueStatus: deadlineInfo.text,
+            overdueStatus: typeof deadlineInfo.text === 'string' ? deadlineInfo.text : 'Status unavailable',
             isRead: false,
             timestamp: new Date().toISOString(),
             isDisapproved: false
@@ -1551,7 +1551,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                   Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
                 </DialogDescription>
               </DialogHeader>
-              <ScrollArea className="max-h-80 modern-scrollbar pr-6">
+              <ScrollArea className="max-h-80 modern-scrollbar pr-4">
                 <div className="space-y-2 p-1">
                   {allFinalFiles.length > 0 ? (
                       <div className="space-y-2">
@@ -1600,7 +1600,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                   <DialogClose asChild>
                       <Button type="button" variant="outline"> Cancel </Button>
                   </DialogClose>
-                  <Button onClick={handleUploadDialogSave} disabled={isSaveDisabled}>Save and Update Status</Button>
+                  <Button onClick={handleSaveImages} disabled={isSaveDisabled}>Save and Update Status</Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>
@@ -1779,7 +1779,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                       <TableCell className="text-xs text-center align-middle">{formatJoNumber(lead.joNumber)}</TableCell>
                       <TableCell className={cn(
                           "text-center text-xs align-middle",
-                          deadlineInfo.isOverdue ? "text-red-500" : (deadlineInfo.isUrgent ? "text-amber-600" : "text-gray-500")
+                          deadlineInfo.isOverdue ? "text-red-500 font-bold" : (deadlineInfo.isUrgent ? "text-amber-600 font-bold" : "")
                         )}>{deadlineInfo.text}</TableCell>
                         <TableCell className="text-center align-middle">
                             <Select 
@@ -1888,8 +1888,8 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
                 <div className='flex-1 min-h-0'>
-                  <ScrollArea className="h-full">
-                    <div className="p-4 pr-6 bg-white text-black">
+                  <ScrollArea className="h-full pr-4">
+                    <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
 
@@ -2156,6 +2156,7 @@ const DigitizingTableMemo = React.memo(DigitizingTable);
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
