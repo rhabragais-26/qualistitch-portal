@@ -38,7 +38,7 @@ import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
-import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
 import { Switch } from './ui/switch';
@@ -1574,7 +1574,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                           </TableCell>
                                         </TableRow>
                                       ))}
-
                                       <TableRow>
                                         <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
                                         <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
@@ -1731,7 +1730,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
@@ -1746,3 +1745,4 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
