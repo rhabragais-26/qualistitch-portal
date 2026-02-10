@@ -1,4 +1,3 @@
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -37,7 +36,7 @@ import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
-import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, uploadString, getDownloadURL, deleteObject, getBlob } from 'firebase/storage';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
 import { Switch } from './ui/switch';
@@ -134,7 +133,7 @@ type Layout = {
   sequenceLogoUploadedBy?: (string | null)[];
   sequenceBackDesign?: (FileObject | null)[];
   sequenceBackDesignUploadTimes?: (string | null)[];
-  sequenceBackDesignUploadedBy?: (string | null)[];
+  sequenceBackDesignUploadedBy?: string | null;
   finalProgrammedLogo?: (FileObject | null)[];
   finalProgrammedLogoUploadTimes?: (string | null)[];
   finalProgrammedLogoUploadedBy?: (string | null)[];
@@ -321,14 +320,8 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
             <TableCell colSpan={15}>
                  <div className="p-2 bg-gray-50 rounded-md my-2">
                     <div className="flex flex-wrap gap-4 p-2 justify-center">
-                        {allImages.map(group => (
-                            <ImageDisplayCard 
-                                key={group.title}
-                                title={group.title}
-                                images={group.images as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]} 
-                                onImageClick={setImageInView} 
-                            />
-                        ))}
+                        {allImages.map(group => <ImageDisplayCard key={group.title} title={group.title} images={group.images as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]} onImageClick={setImageInView} />
+                        )}
                     </div>
                 </div>
             </TableCell>
@@ -432,7 +425,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>(([]);
+  const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalNamesDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -446,23 +439,22 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
   const handleDownload = useCallback(async (url: string, name: string) => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
-      const blob = await response.blob();
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', name);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      URL.revokeObjectURL(link.href);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+        const blob = await response.blob();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', name);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode?.removeChild(link);
     } catch (error: any) {
-        console.error('File download failed:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Download Failed',
-            description: error.message || 'Could not download file. Please check the console for more details.',
-        });
+      console.error('File download failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Download Failed',
+        description: error.message || 'Could not download file. Please check the console for more details.',
+      });
     }
   }, [toast]);
 
@@ -841,9 +833,9 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                 description: 'The status has been successfully reverted.',
             });
             refetch(); // Sync with DB state
-        } catch (e: any) {
+        } catch (e) {
             console.error(`Error unchecking '${field}'`, e);
-            toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
+            toast({ variant: "destructive", title: "Update Failed", description: (e as Error).message || "Could not update the status." });
             
             // Rollback UI on failure
             setOptimisticChanges(prev => ({
@@ -1711,3 +1703,5 @@ const DigitizingTableMemo = React.memo(DigitizingTable);
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
+    
