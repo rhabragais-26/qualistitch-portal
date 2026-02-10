@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -440,9 +441,11 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
   const handleDownload = useCallback(async (url: string, name: string) => {
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
-        const blob = await response.blob();
+        const app = useFirebaseApp();
+        const storage = getStorage(app);
+        const fileRef = ref(storage, url);
+        const blob = await getBlob(fileRef);
+        
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.setAttribute('download', name);
@@ -454,10 +457,10 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       toast({
         variant: 'destructive',
         title: 'Download Failed',
-        description: (error as Error).message || 'Could not download file. Please check the console for more details.',
+        description: (error as Error).message || 'Could not download file. Please check permissions and network.',
       });
     }
-  }, [toast]);
+  }, [toast, useFirebaseApp]);
 
   const allFinalFiles = useMemo(() => {
     if (!reviewConfirmLead || !reviewConfirmLead.layouts) return [];
@@ -1135,142 +1138,151 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     const displayFiles = files.length > 0 ? files : [null];
     return (
         <div className="space-y-2">
-        <div className="flex items-center gap-2">
-            <Label>{label}</Label>
-            {canEdit && <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setter)}><PlusCircle className="h-4 w-4" /></Button>}
-        </div>
-        {displayFiles.map((file, index) => (
-            <div key={index} className="flex items-center gap-2">
-            <Input
-                type="file"
-                className="h-9 text-xs"
-                ref={el => refs.current[index] = el}
-                onChange={(e) => handleMultipleFileUpload(e, setter, files, index)}
-                disabled={!canEdit}
-            />
-            {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index, refs)}><Trash2 className="h-4 w-4"/></Button>}
+            <div className="flex items-center gap-2">
+                <Label>{label}</Label>
+                {canEdit && <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setter)}><PlusCircle className="h-4 w-4" /></Button>}
             </div>
-        ))}
+            {displayFiles.map((file, index) => (
+                <div key={index} className="flex items-center gap-2">
+                <Input
+                    type="file"
+                    className="h-9 text-xs"
+                    ref={el => refs.current[index] = el}
+                    onChange={(e) => handleMultipleFileUpload(e, setter, files, index)}
+                    disabled={!canEdit}
+                />
+                {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index, refs)}><Trash2 className="h-4 w-4"/></Button>}
+                </div>
+            ))}
         </div>
     );
     }, [canEdit, handleMultipleFileUpload, removeFile]);
   
     const renderUploadDialogContent = useCallback(() => {
-        switch (uploadField) {
-            case 'isUnderProgramming':
-                return (
+    switch (uploadField) {
+        case 'isUnderProgramming':
+            return (
+                <div className="grid grid-cols-2 gap-6">
+                    {renderUploadBoxes('Logo Left', initialLogoLeftImages, setInitialLogoLeftImages)}
+                    {renderUploadBoxes('Logo Right', initialLogoRightImages, setInitialLogoRightImages)}
+                    {renderUploadBoxes('Back Logo', initialBackLogoImages, setInitialBackLogoImages)}
+                    {renderUploadBoxes('Back Design', initialBackDesignImages, setInitialBackDesignImages)}
+                </div>
+            );
+        case 'isLogoTesting':
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox id="no-testing-needed" checked={noTestingNeeded} onCheckedChange={(checked) => setNoTestingNeeded(!!checked)} />
+                        <Label htmlFor="no-testing-needed">No testing needed for this J.O.</Label>
+                    </div>
+                    {!noTestingNeeded && (
+                        <div className="grid grid-cols-2 gap-6">
+                            {renderUploadBoxes('Test Logo Left', testLogoLeftImages, setTestLogoLeftImages)}
+                            {renderUploadBoxes('Test Logo Right', testLogoRightImages, setTestLogoRightImages)}
+                            {renderUploadBoxes('Test Back Logo', testBackLogoImages, setTestBackLogoImages)}
+                            {renderUploadBoxes('Test Back Design', testBackDesignImages, setTestBackDesignImages)}
+                        </div>
+                    )}
+                </div>
+            );
+        case 'isFinalProgram':
+            return (
+                <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-6">
-                        {renderUploadBoxes('Logo Left', initialLogoLeftImages, setInitialLogoLeftImages)}
-                        {renderUploadBoxes('Logo Right', initialLogoRightImages, setInitialLogoRightImages)}
-                        {renderUploadBoxes('Back Logo', initialBackLogoImages, setInitialBackLogoImages)}
-                        {renderUploadBoxes('Back Design', initialBackDesignImages, setInitialBackDesignImages)}
-                    </div>
-                );
-            case 'isLogoTesting':
-                return (
-                    <div className="space-y-6">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="no-testing-needed" checked={noTestingNeeded} onCheckedChange={(checked) => setNoTestingNeeded(!!checked)} />
-                            <Label htmlFor="no-testing-needed">No testing needed for this J.O.</Label>
+                        <div className="space-y-2">
+                            <h4 className="font-semibold text-teal-600">EMB Files</h4>
+                            {renderMultipleFileUploads('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
                         </div>
-                        {!noTestingNeeded && (
-                            <div className="grid grid-cols-2 gap-6">
-                                {renderUploadBoxes('Test Logo Left', testLogoLeftImages, setTestLogoLeftImages)}
-                                {renderUploadBoxes('Test Logo Right', testLogoRightImages, setTestLogoRightImages)}
-                                {renderUploadBoxes('Test Back Logo', testBackLogoImages, setTestBackLogoImages)}
-                                {renderUploadBoxes('Test Back Design', testBackDesignImages, setTestBackDesignImages)}
-                            </div>
-                        )}
-                    </div>
-                );
-            case 'isFinalProgram':
-                return (
-                    <div className="space-y-6">
-                        {!isNamesOnly && (
-                            <>
-                                <div className="space-y-2">
-                                    <h4 className="font-semibold text-teal-600">EMB Files</h4>
-                                    <div className="grid grid-cols-2 gap-6">
-                                        {renderMultipleFileUploads('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                                        {renderMultipleFileUploads('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-                                    </div>
-                                </div>
-            
-                                <div className="space-y-2 pt-4 border-t">
-                                    <h4 className="font-semibold text-teal-600">DST Files</h4>
-                                    <div className="grid grid-cols-2 gap-6">
-                                        {renderMultipleFileUploads('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-                                        {renderMultipleFileUploads('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                        
-                        <div className="space-y-2 pt-4 border-t">
-                            <h4 className="font-semibold text-teal-600">Names (DST)</h4>
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="col-span-2">
-                                    {renderMultipleFileUploads('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
-                                </div>
-                            </div>
+                        <div className="space-y-2">
+                            <h4 className="font-semibold text-teal-600">&nbsp;</h4>
+                            {renderMultipleFileUploads('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
                         </div>
+                    </div>
 
-                        <div className="flex items-center space-x-2 pt-2">
-                            <Checkbox
-                                id="names-only-checkbox"
-                                checked={isNamesOnly}
-                                onCheckedChange={(checked) => setIsNamesOnly(!!checked)}
-                            />
-                            <Label htmlFor="names-only-checkbox">This order is for names only</Label>
+                    <div className="space-y-2 pt-4 border-t">
+                        <h4 className="font-semibold text-teal-600">DST Files</h4>
+                        <div className="grid grid-cols-2 gap-6">
+                            {renderMultipleFileUploads('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                            {renderMultipleFileUploads('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
                         </div>
-            
-                        {!isNamesOnly && (
-                            <>
-                                <div className="space-y-2 pt-4 border-t">
-                                    <h4 className="font-semibold text-teal-600">Sequence Images</h4>
-                                    <div className="grid grid-cols-2 gap-6">
-                                        {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
-                                        {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
-                                    </div>
-                                </div>
-            
-                                <div className="space-y-2 pt-4 border-t">
-                                    <h4 className="font-semibold text-teal-600">Final Program Images</h4>
-                                    <div className="grid grid-cols-2 gap-6">
-                                        {renderUploadBoxes('Final Program Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
-                                        {renderUploadBoxes('Final Program Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
-                                    </div>
-                                </div>
-                            </>
-                        )}
                     </div>
-                );
-            default:
-                return null;
-        }
+                     <div className="space-y-2 pt-4 border-t col-span-2">
+                        <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-teal-600">Names (DST)</h4>
+                            {canEdit && <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFinalNamesDst)}><PlusCircle className="h-4 w-4" /></Button>}
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                            {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                    <Input
+                                        type="file"
+                                        className="h-9 text-xs"
+                                        ref={el => finalNamesDstUploadRefs.current[index] = el}
+                                        onChange={(e) => handleMultipleFileUpload(e, setFinalNamesDst, finalNamesDst, index)}
+                                        disabled={!canEdit}
+                                    />
+                                    {canEdit && (finalNamesDst.length > 1 || file) && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFinalNamesDst, index, finalNamesDstUploadRefs)}><Trash2 className="h-4 w-4"/></Button>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-2 pt-2 col-span-2">
+                        <Checkbox
+                            id="names-only-checkbox"
+                            checked={isNamesOnly}
+                            onCheckedChange={(checked) => setIsNamesOnly(!!checked)}
+                        />
+                        <Label htmlFor="names-only-checkbox">This order is for names only</Label>
+                    </div>
+
+                    {!isNamesOnly && (
+                        <>
+                            <div className="space-y-2 pt-4 border-t">
+                                <h4 className="font-semibold text-teal-600">Sequence Images</h4>
+                                <div className="grid grid-cols-2 gap-6">
+                                    {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+                                    {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+                                </div>
+                            </div>
+        
+                            <div className="space-y-2 pt-4 border-t">
+                                <h4 className="font-semibold text-teal-600">Final Program Images</h4>
+                                <div className="grid grid-cols-2 gap-6">
+                                    {renderUploadBoxes('Final Program Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                                    {renderUploadBoxes('Final Program Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            );
+        default:
+            return null;
+    }
     }, [
-        uploadField, 
-        initialLogoLeftImages, 
-        initialLogoRightImages, 
-        initialBackLogoImages, 
-        initialBackDesignImages,
-        testLogoLeftImages,
-        testLogoRightImages,
-        testBackLogoImages,
-        testBackDesignImages,
-        finalLogoEmb,
-        finalBackDesignEmb,
-        finalLogoDst,
-        finalBackDesignDst,
-        finalNamesDst,
-        sequenceLogo,
-        sequenceBackDesign,
-        finalProgrammedLogo,
-        finalProgrammedBackDesign,
-        noTestingNeeded,
-        isNamesOnly,
-        renderUploadBoxes,
-        renderMultipleFileUploads,
+    uploadField, 
+    initialLogoLeftImages, 
+    initialLogoRightImages, 
+    initialBackLogoImages, 
+    initialBackDesignImages,
+    testLogoLeftImages,
+    testLogoRightImages,
+    testBackLogoImages,
+    testBackDesignImages,
+    finalLogoEmb,
+    finalBackDesignEmb,
+    finalLogoDst,
+    finalBackDesignDst,
+    finalNamesDst,
+    sequenceLogo,
+    sequenceBackDesign,
+    finalProgrammedLogo,
+    finalProgrammedBackDesign,
+    noTestingNeeded,
+    isNamesOnly,
+    renderUploadBoxes,
+    renderMultipleFileUploads,
     ]);
   
   if (isLoading) {
@@ -1663,233 +1675,266 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="flex-1 min-h-0 modern-scrollbar px-6 pb-6">
-                        <div className="bg-white text-black">
-                            {(() => {
-                                const lead = viewingJoLead;
+                <ScrollArea className="flex-1 min-h-0 modern-scrollbar">
+                    <div className="p-6">
+                        {(() => {
+                            const lead = viewingJoLead;
 
-                                const scesProfile = usersData?.find((u) => u.nickname === lead.salesRepresentative);
-                                const scesFullName = scesProfile?.firstName && scesProfile?.lastName
-                                ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`)
-                                : toTitleCase(lead.salesRepresentative);
+                            const scesProfile = usersData?.find((u) => u.nickname === lead.salesRepresentative);
+                            const scesFullName = scesProfile?.firstName && scesProfile?.lastName
+                            ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`)
+                            : toTitleCase(lead.salesRepresentative);
 
-                                const totalQuantity = (lead.orders || []).reduce((sum: number, order: any) => sum + (order.quantity || 0), 0);
-                                const contactDisplay = getContactDisplay(lead);
+                            const totalQuantity = (lead.orders || []).reduce((sum: number, order: any) => sum + (order.quantity || 0), 0);
+                            const contactDisplay = getContactDisplay(lead);
 
-                                const fallbackDeliveryDate = format(
-                                addDays(new Date(lead.submissionDateTime), lead.priorityType === "Rush" ? 7 : 22),
-                                "MMM dd, yyyy"
-                                );
+                            const fallbackDeliveryDate = format(
+                            addDays(new Date(lead.submissionDateTime), lead.priorityType === "Rush" ? 7 : 22),
+                            "MMM dd, yyyy"
+                            );
 
-                                const deliveryDate =
-                                (lead as any).adjustedDeliveryDate
-                                    ? format(new Date((lead as any).adjustedDeliveryDate), "MMM dd, yyyy")
-                                    : lead.deliveryDate
-                                    ? format(new Date(lead.deliveryDate), "MMM dd, yyyy")
-                                    : fallbackDeliveryDate;
+                            const deliveryDate =
+                            (lead as any).adjustedDeliveryDate
+                                ? format(new Date((lead as any).adjustedDeliveryDate), "MMM dd, yyyy")
+                                : lead.deliveryDate
+                                ? format(new Date(lead.deliveryDate), "MMM dd, yyyy")
+                                : fallbackDeliveryDate;
 
-                                const layoutsToPrint = lead.layouts?.filter((l) => hasLayoutContent(l as Layout)) || [];
+                            const layoutsToPrint = lead.layouts?.filter((l) => hasLayoutContent(l as Layout)) || [];
 
-                                return (
-                                <>
-                                    <div className="p-10 mx-auto max-w-4xl print-page">
+                            return (
+                            <>
+                                <div className="p-10 mx-auto max-w-4xl print-page">
+                                <div className="text-left mb-4">
+                                    <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span></p>
+                                </div>
+                                <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
+
+                                <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
+                                    <div className="space-y-1">
+                                        <p><strong>Client Name:</strong> {lead.customerName}</p>
+                                        <p><strong>Contact No:</strong> {contactDisplay}</p>
+                                        <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
+                                        <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                                        <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+                                        <p><strong>SCES Name:</strong> {scesFullName}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
+                                        <p><strong>Courier:</strong> {lead.courier}</p>
+                                        <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
+                                    </div>
+                                </div>
+
+                                <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
+                                <Table>
+                                    <TableHeader>
+                                    <TableRow className="bg-gray-200">
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={3}>Item Description</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Qty</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Front Design</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Back Design</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Remarks</TableHead>
+                                      </TableRow>
+                                      <TableRow className="bg-gray-200">
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Type of Product</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Color</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Size</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Left</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Right</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Logo</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Text</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {lead.orders.map((order: any, index: number) => (
+                                        <TableRow key={index}>
+                                        <TableCell className="border border-black p-0.5 text-center align-middle">{order.productType}</TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center align-middle">{order.color}</TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
+                                        </TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
+                                        </TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
+                                        </TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
+                                        </TableCell>
+                                        <TableCell className="border border-black p-0.5">
+                                            <p className="text-xs">{order.remarks}</p>
+                                        </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
+                                        <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
+                                        <TableCell colSpan={5}></TableCell>
+                                    </TableRow>
+                                    </TableBody>
+                                </Table>
+                                <div className="text-xs mb-2 pt-2">
+                                    <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
+                                    <div className="space-y-1">
+                                        <p className="font-bold italic">Prepared by:</p>
+                                        <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                                        <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="font-bold italic">Noted by:</p>
+                                        <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
+                                        <p className="text-center font-bold">Sales Head</p>
+                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="col-span-2 mt-0">
+                                        <p className="font-bold italic">Approved by:</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <p className="pt-8 border-b border-black"></p>
+                                        <p className="text-center font-semibold">Programming</p>
+                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <p className="pt-8 border-b border-black"></p>
+                                        <p className="text-center font-semibold">Inventory</p>
+                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <p className="pt-8 border-b border-black"></p>
+                                        <p className="text-center font-semibold">Production Line Leader</p>
+                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <p className="pt-8 border-b border-black"></p>
+                                        <p className="text-center font-semibold">Production Supervisor</p>
+                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <p className="pt-8 border-b border-black"></p>
+                                        <p className="text-center font-semibold">Quality Control</p>
+                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <p className="pt-8 border-b border-black"></p>
+                                        <p className="text-center font-semibold">Logistics</p>
+                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
+                                        <p className="pt-8 border-b border-black"></p>
+                                        <p className="text-center font-semibold">Operations Supervisor</p>
+                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+                                </div>
+                                </div>
+                                {layoutsToPrint.map((layout, layoutIndex) => (
+                                    <div
+                                    key={layoutIndex}
+                                    className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300"
+                                    >
                                     <div className="text-left mb-4">
-                                        <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span></p>
-                                    </div>
-                                    <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
-
-                                    <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
-                                        <div className="space-y-1">
-                                            <p><strong>Client Name:</strong> {lead.customerName}</p>
-                                            <p><strong>Contact No:</strong> {contactDisplay}</p>
-                                            <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
-                                            <p><strong>Type of Order:</strong> {lead.orderType}</p>
-                                            <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                                            <p><strong>SCES Name:</strong> {scesFullName}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
-                                            <p><strong>Courier:</strong> {lead.courier}</p>
-                                            <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
-                                        </div>
+                                        <p className="font-bold">
+                                        <span className="text-primary">J.O. No:</span>{" "}
+                                        <span className="inline-block border-b border-black">
+                                            {formatJoNumberUtil(lead.joNumber)}
+                                        </span>{" "}
+                                        - Layout {layoutIndex + 1}
+                                        </p>
                                     </div>
 
-                                    <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
-                                    <Table>
-                                        <TableHeader>
-                                        <TableRow className="bg-gray-200">
-                                            <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={3}>Item Description</TableHead>
-                                            <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Qty</TableHead>
-                                            <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Front Design</TableHead>
-                                            <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Back Design</TableHead>
-                                            <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Remarks</TableHead>
-                                        </TableRow>
-                                        <TableRow className="bg-gray-200">
-                                            <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Type of Product</TableHead>
-                                            <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Color</TableHead>
-                                            <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Size</TableHead>
-                                            <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Left</TableHead>
-                                            <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Right</TableHead>
-                                            <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Logo</TableHead>
-                                            <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Text</TableHead>
-                                        </TableRow>
-                                        </TableHeader>
+                                    {layout.layoutImage && (
+                                        <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
+                                        <Image
+                                            src={layout.layoutImage}
+                                            alt={`Layout ${layoutIndex + 1}`}
+                                            layout="fill"
+                                            objectFit="contain"
+                                        />
+                                        </div>
+                                    )}
+
+                                    <h2 className="text-2xl font-bold text-center mb-4">
+                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
+                                    </h2>
+
+                                    <table className="w-full border-collapse border border-black mb-6">
+                                        <tbody>
+                                        <tr>
+                                            <td className="border border-black p-2 w-1/2">
+                                            <strong>DST LOGO LEFT:</strong>
+                                            <p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p>
+                                            </td>
+                                            <td className="border border-black p-2 w-1/2">
+                                            <strong>DST BACK LOGO:</strong>
+                                            <p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="border border-black p-2 w-1/2">
+                                            <strong>DST LOGO RIGHT:</strong>
+                                            <p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p>
+                                            </td>
+                                            <td className="border border-black p-2 w-1/2">
+                                            <strong>DST BACK TEXT:</strong>
+                                            <p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
+
+                                    {/* Native table (do NOT mix Shadcn TableBody here) */}
+                                    <table className="w-full border-collapse border border-black text-xs">
+                                        <thead>
+                                        <tr className="bg-gray-200">
+                                            <th className="border border-black p-1 text-center align-middle">No.</th>
+                                            <th className="border border-black p-1 text-center align-middle">Names</th>
+                                            <th className="border border-black p-1 text-center align-middle">Color</th>
+                                            <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                                            <th className="border border-black p-1 text-center align-middle">Qty</th>
+                                            <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
+                                        </tr>
+                                        </thead>
+
                                         <TableBody>
-                                        {lead.orders.map((order: any, index: number) => (
-                                            <TableRow key={index}>
-                                            <TableCell className="border border-black p-0.5 text-center align-middle">{order.productType}</TableCell>
-                                            <TableCell className="border border-black p-0.5 text-center align-middle">{order.color}</TableCell>
-                                            <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
-                                            <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
-                                            <TableCell className="border border-black p-0.5 text-center">
-                                                <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
-                                            </TableCell>
-                                            <TableCell className="border border-black p-0.5 text-center">
-                                                <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
-                                            </TableCell>
-                                            <TableCell className="border border-black p-0.5 text-center">
-                                                <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
-                                            </TableCell>
-                                            <TableCell className="border border-black p-0.5 text-center">
-                                                <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
-                                            </TableCell>
-                                            <TableCell className="border border-black p-0.5">
-                                                <p className="text-xs">{order.remarks}</p>
-                                            </TableCell>
+                                        {layout.namedOrders?.map((order, orderIndex) => (
+                                            <TableRow key={orderIndex}>
+                                            <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
+                                            <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
+                                            <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
+                                            <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
+                                            <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
+                                            <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
                                             </TableRow>
                                         ))}
-                                        <TableRow>
-                                            <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
-                                            <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
-                                            <TableCell colSpan={5}></TableCell>
-                                        </TableRow>
                                         </TableBody>
-                                    </Table>
-                                    <div className="text-xs mb-2 pt-2">
-                                        <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+                                    </table>
                                     </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
-                                        <div className="space-y-1">
-                                            <p className="font-bold italic">Prepared by:</p>
-                                            <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
-                                            <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
-                                            <p className="text-center">(Name &amp; Signature, Date)</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="font-bold italic">Noted by:</p>
-                                            <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
-                                            <p className="text-center font-bold">Sales Head</p>
-                                            <p className="text-center">(Name &amp; Signature, Date)</p>
-                                        </div>
-
-                                        <div className="col-span-2 mt-0">
-                                            <p className="font-bold italic">Approved by:</p>
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <p className="pt-8 border-b border-black"></p>
-                                            <p className="text-center font-semibold">Programming</p>
-                                            <p className="text-center">(Name &amp; Signature, Date)</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="pt-8 border-b border-black"></p>
-                                            <p className="text-center font-semibold">Inventory</p>
-                                            <p className="text-center">(Name &amp; Signature, Date)</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="pt-8 border-b border-black"></p>
-                                            <p className="text-center font-semibold">Production Line Leader</p>
-                                            <p className="text-center">(Name &amp; Signature, Date)</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="pt-8 border-b border-black"></p>
-                                            <p className="text-center font-semibold">Production Supervisor</p>
-                                            <p className="text-center">(Name &amp; Signature, Date)</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="pt-8 border-b border-black"></p>
-                                            <p className="text-center font-semibold">Quality Control</p>
-                                            <p className="text-center">(Name &amp; Signature, Date)</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="pt-8 border-b border-black"></p>
-                                            <p className="text-center font-semibold">Logistics</p>
-                                            <p className="text-center">(Name &amp; Signature, Date)</p>
-                                        </div>
-                                        <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
-                                            <p className="pt-8 border-b border-black"></p>
-                                            <p className="text-center font-semibold">Operations Supervisor</p>
-                                            <p className="text-center">(Name &amp; Signature, Date)</p>
-                                        </div>
-                                    </div>
-                                    </div>
-                                    {layoutsToPrint.map((layout, layoutIndex) => (
-                                        <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
-                                        <div className="text-left mb-4">
-                                            <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
-                                        </div>
-                                        
-                                        {layout.layoutImage && (
-                                            <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
-                                                <Image src={layout.layoutImage} alt={`Layout ${layoutIndex + 1}`} layout="fill" objectFit="contain" />
-                                            </div>
-                                            )}
-                                        
-                                        <h2 className="text-2xl font-bold text-center mb-4">
-                                            {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
-                                        </h2>
-                                            <table className="w-full border-collapse border border-black mb-6">
-                                                <tbody>
-                                                    <tr>
-                                                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
-                                                        <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
-                                                        <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                
-                                            <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
-                                            <table className="w-full border-collapse border border-black text-xs">
-                                              <thead>
-                                                <tr className="bg-gray-200">
-                                                  <th className="border border-black p-1 text-center align-middle">No.</th>
-                                                  <th className="border border-black p-1 text-center align-middle">Names</th>
-                                                  <th className="border border-black p-1 text-center align-middle">Color</th>
-                                                  <th className="border border-black p-1 text-center align-middle">Sizes</th>
-                                                  <th className="border border-black p-1 text-center align-middle">Qty</th>
-                                                  <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
-                                                </tr>
-                                              </thead>
-                                              <TableBody>
-                                                {layout.namedOrders?.map((order, orderIndex) => (
-                                                  <TableRow key={orderIndex}>
-                                                    <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
-                                                    <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
-                                                    <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
-                                                    <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
-                                                    <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
-                                                    <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
-                                                  </TableRow>
-                                                ))}
-                                              </TableBody>
-                                            </table>
-                                        </div>
-                                    ))}
+                                ))}
                               </>
                             )
                         })()}
                     </div>
                 </ScrollArea>
-              <DialogFooter>
-                <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-              </DialogFooter>
             </DialogContent>
         </Dialog>
       )}
