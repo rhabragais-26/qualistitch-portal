@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -38,7 +37,7 @@ import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
 import { Switch } from './ui/switch';
@@ -1080,10 +1079,191 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       });
   };
 
+  const renderUploadBoxes = useCallback((label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+    const displayImages = images.length > 0 ? images : [null];
+    return (
+      <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Label>{label}</Label>
+            {canEdit && (
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={(e) => { e.stopPropagation(); setter(prev => [...prev, null]); }}>
+                  <PlusCircle className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          {displayImages.map((image, index) => (
+              <div key={index} className="flex items-center gap-2">
+                  <div
+                    tabIndex={0}
+                    className={cn(
+                        "relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center",
+                        canEdit && "cursor-pointer",
+                        "focus:outline-none focus:border-solid focus:border-teal-500 select-none"
+                    )}
+                    onClick={() => image && setImageInView(image)}
+                    onDoubleClick={() => canEdit && !image && document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
+                    onPaste={(e) => canEdit && handleImagePaste(e, setter, index)}
+                    onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+                  >
+                      {image ? (<>
+                        <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
+                        {canEdit && (
+                            <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleClearImage(setter, index);
+                            }}
+                            >
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        )}
+                      </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{canEdit ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
+                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
+                  </div>
+                  {canEdit && displayImages.length > 1 && (
+                      <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive self-center"
+                          onClick={(e) => handleRemoveImage(e, setter, index)}
+                      >
+                          <X className="h-5 w-5" />
+                      </Button>
+                  )}
+              </div>
+          ))}
+      </div>
+    );
+  }, [canEdit, handleClearImage, handleImagePaste, handleImageUpload, handleRemoveImage, setImageInView]);
+
+  const renderMultipleFileUploads = useCallback((label: string, files: (FileObject | null)[], setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    const displayFiles = files.length > 0 ? files : [null];
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Label>{label}</Label>
+          {canEdit && <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setter)}><PlusCircle className="h-4 w-4" /></Button>}
+        </div>
+        {displayFiles.map((file, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <Input
+              type="file"
+              className="h-9 text-xs"
+              ref={el => refs.current[index] = el}
+              onChange={(e) => handleMultipleFileUpload(e, setter, files, index)}
+              disabled={!canEdit}
+            />
+            {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index, refs)}><Trash2 className="h-4 w-4"/></Button>}
+          </div>
+        ))}
+      </div>
+    );
+  }, [canEdit, handleMultipleFileUpload, removeFile]);
+  
   const renderUploadDialogContent = useCallback(() => {
-    // ... function content ...
+    switch (uploadField) {
+      case 'isUnderProgramming':
+        return (
+          <div className="grid grid-cols-2 gap-6">
+            {renderUploadBoxes('Logo Left', initialLogoLeftImages, setInitialLogoLeftImages)}
+            {renderUploadBoxes('Logo Right', initialLogoRightImages, setInitialLogoRightImages)}
+            {renderUploadBoxes('Back Logo', initialBackLogoImages, setInitialBackLogoImages)}
+            {renderUploadBoxes('Back Design', initialBackDesignImages, setInitialBackDesignImages)}
+          </div>
+        );
+      case 'isLogoTesting':
+        return (
+          <div className="space-y-6">
+             <div className="flex items-center space-x-2">
+                <Checkbox id="no-testing-needed" checked={noTestingNeeded} onCheckedChange={setNoTestingNeeded} />
+                <Label htmlFor="no-testing-needed">No testing needed for this J.O.</Label>
+            </div>
+            {!noTestingNeeded && (
+                <div className="grid grid-cols-2 gap-6">
+                    {renderUploadBoxes('Test Logo Left', testLogoLeftImages, setTestLogoLeftImages)}
+                    {renderUploadBoxes('Test Logo Right', testLogoRightImages, setTestLogoRightImages)}
+                    {renderUploadBoxes('Test Back Logo', testBackLogoImages, setTestBackLogoImages)}
+                    {renderUploadBoxes('Test Back Design', testBackDesignImages, setTestBackDesignImages)}
+                </div>
+            )}
+          </div>
+        );
+      case 'isFinalProgram':
+        return (
+          <div className="space-y-6">
+             <div className="flex items-center space-x-2">
+              <Checkbox
+                id="names-only-checkbox"
+                checked={isNamesOnly}
+                onCheckedChange={setIsNamesOnly}
+              />
+              <Label htmlFor="names-only-checkbox">This order is for names only</Label>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {!isNamesOnly && (
+                <>
+                  <div>
+                    <h4 className="font-semibold mb-2">EMB Files</h4>
+                    {renderMultipleFileUploads('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                    {renderMultipleFileUploads('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">DST Files</h4>
+                    {renderMultipleFileUploads('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                    {renderMultipleFileUploads('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+                  </div>
+                </>
+              )}
+              <div>
+                <h4 className="font-semibold mb-2">Names (DST)</h4>
+                {renderMultipleFileUploads('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
+              </div>
+              {!isNamesOnly && (
+                <>
+                  <div>
+                    <h4 className="font-semibold mb-2">Sequence Images</h4>
+                    {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+                    {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Final Program Images</h4>
+                    {renderUploadBoxes('Final Program Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                    {renderUploadBoxes('Final Program Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
   }, [
-    // ... dependencies ...
+    uploadField, 
+    initialLogoLeftImages, 
+    initialLogoRightImages, 
+    initialBackLogoImages, 
+    initialBackDesignImages,
+    testLogoLeftImages,
+    testLogoRightImages,
+    testBackLogoImages,
+    testBackDesignImages,
+    finalLogoEmb,
+    finalBackDesignEmb,
+    finalLogoDst,
+    finalBackDesignDst,
+    finalNamesDst,
+    sequenceLogo,
+    sequenceBackDesign,
+    finalProgrammedLogo,
+    finalProgrammedBackDesign,
+    noTestingNeeded,
+    isNamesOnly,
+    renderUploadBoxes,
+    renderMultipleFileUploads,
   ]);
   
   if (isLoading) {
