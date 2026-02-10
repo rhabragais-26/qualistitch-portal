@@ -40,7 +40,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { addDays, format } from 'date-fns';
 
 type Order = { productType: string; color: string; size: string; quantity: number; };
-type Lead = { id: string; customerName: string; companyName?: string; contactNumber: string; landlineNumber?: string; orders: Order[]; joNumber?: number; orderType: string; submissionDateTime: string; isDigitizingArchived?: boolean; isJoHardcopyReceived?: boolean; joHardcopyReceivedTimestamp?: string; isPreparedForProduction?: boolean; isSentToProduction?: boolean; endorsedToLogisticsTimestamp?: string; isEndorsedToLogistics?: boolean; forceNewCustomer?: boolean; lastModifiedBy?: string; endorsedToLogisticsBy?: string; };
+type Lead = { id: string; customerName: string; companyName?: string; contactNumber: string; landlineNumber?: string; orders: Order[]; joNumber?: number; orderType: string; submissionDateTime: string; isDigitizingArchived?: boolean; isJoHardcopyReceived?: boolean; joHardcopyReceivedTimestamp?: string; isPreparedForProduction?: boolean; isSentToProduction?: boolean; endorsedToLogisticsTimestamp?: string; isEndorsedToLogistics?: boolean; forceNewCustomer?: boolean; lastModifiedBy?: string; endorsedToLogisticsBy?: string; priorityType: 'Rush' | 'Regular'; };
 type EnrichedLead = Lead & {
   orderNumber: number;
   totalCustomerQuantity: number;
@@ -103,6 +103,13 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                     </TableCell>
                   )}
                   {orderIndex === 0 && <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center"><Badge variant={programmingStatus.variant}>{programmingStatus.text}</Badge></TableCell>}
+                  {orderIndex === 0 && (
+                    <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center">
+                        <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                            {lead.priorityType}
+                        </Badge>
+                    </TableCell>
+                  )}
                   {orderIndex === 0 && (
                       <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
                           <div className="flex flex-col items-center justify-center gap-1">
@@ -474,6 +481,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                 <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Programming Status</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
                 <TableHead className="text-white font-bold text-xs">Product Type</TableHead>
                 <TableHead className="text-white font-bold text-xs">Color</TableHead>
@@ -507,7 +515,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground text-xs">
                     No items in the audit queue.
                   </TableCell>
                 </TableRow>
@@ -597,6 +605,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTableMemo';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
 
 
 
