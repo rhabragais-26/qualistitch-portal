@@ -37,7 +37,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from './ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { addDays } from 'date-fns';
+import { addDays, format } from 'date-fns';
 
 type Order = { productType: string; color: string; size: string; quantity: number; };
 type Lead = { id: string; customerName: string; companyName?: string; contactNumber: string; landlineNumber?: string; orders: Order[]; joNumber?: number; orderType: string; submissionDateTime: string; isDigitizingArchived?: boolean; isJoHardcopyReceived?: boolean; joHardcopyReceivedTimestamp?: string; isPreparedForProduction?: boolean; isSentToProduction?: boolean; endorsedToLogisticsTimestamp?: string; isEndorsedToLogistics?: boolean; forceNewCustomer?: boolean; lastModifiedBy?: string; endorsedToLogisticsBy?: string; };
@@ -96,7 +96,12 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                           </div>
                       </TableCell>
                   )}
-                  {orderIndex === 0 && <TableCell rowSpan={numOrders + 1} className="text-xs align-middle py-3 text-black border-b-2 border-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>}
+                  {orderIndex === 0 && (
+                    <TableCell rowSpan={numOrders + 1} className="text-xs align-middle py-3 text-black border-b-2 border-black text-center">
+                      <div>{formatJoNumber(lead.joNumber)}</div>
+                      <div className="text-gray-500 text-sm font-bold mt-1">{lead.orderType}</div>
+                    </TableCell>
+                  )}
                   {orderIndex === 0 && <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center"><Badge variant={programmingStatus.variant}>{programmingStatus.text}</Badge></TableCell>}
                   {orderIndex === 0 && (
                       <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
@@ -423,41 +428,29 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 
   return (
     <>
-      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Endorsements' : 'Item Preparation'}</CardTitle>
-              <CardDescription className="text-gray-600">
-                {filterType === 'COMPLETED' ? 'Job orders that have been endorsed.' : 'Job orders ready for item preparation.'}
-              </CardDescription>
-            </div>
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black border-none">
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Endorsements' : 'Item Preparation'}</CardTitle>
+            <CardDescription className="text-gray-600">
+              {filterType === 'COMPLETED' ? 'Job orders that have been endorsed.' : 'Job orders ready for item preparation.'}
+            </CardDescription>
+          </div>
             <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Filter Program Status:</span>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
-                            <SelectValue placeholder="Filter by Status" />
-                        </SelectTrigger>
-                    </Select>
-                    </div>
-                    <div className="w-full max-w-lg">
                     <Input
-                        placeholder="Search customer, company, contact..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-gray-100 text-black placeholder:text-gray-500"
-                    />
-                    </div>
-                    <div className="w-full max-w-xs">
-                    <Input
-                        placeholder="Search by J.O. No..."
+                        placeholder="Search J.O. No..."
                         value={joNumberSearch}
                         onChange={(e) => setJoNumberSearch(e.target.value)}
                         className="bg-gray-100 text-black placeholder:text-gray-500"
                     />
-                    </div>
+                    <Input
+                        placeholder="Search Customer, Company, Contact..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
                 </div>
                  <div className="w-full text-right">
                 {filterType === 'COMPLETED' ? (
@@ -471,52 +464,60 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                 )}
               </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader className="bg-neutral-800">
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader className="bg-neutral-800">
+              <TableRow>
+                <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Programming Status</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
+                <TableHead className="text-white font-bold text-xs">Product Type</TableHead>
+                <TableHead className="text-white font-bold text-xs">Color</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Size</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Qty</TableHead>
+                <TableHead className="text-white font-bold text-center">Preparation Status</TableHead>
+                <TableHead className="text-white font-bold text-center">Endorsement</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {jobOrders && jobOrders.length > 0 ? (
+                 jobOrders.map(lead => {
+                   const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
+                   return (
+                      <ItemPreparationTableRowGroup
+                        key={lead.id}
+                        lead={lead}
+                        isRepeat={isRepeat}
+                        getProgrammingStatus={getProgrammingStatus}
+                        formatJoNumber={formatJoNumber}
+                        getContactDisplay={getContactDisplay}
+                        handleJoReceivedChange={handleJoReceivedChange}
+                        handleOpenPreparedDialog={handleOpenPreparedDialog}
+                        setLeadToSend={setLeadToSend}
+                        isReadOnly={isReadOnly}
+                        filterType={filterType}
+                        openCustomerDetails={openCustomerDetails}
+                        toggleCustomerDetails={toggleCustomerDetails}
+                      />
+                   )
+                 })
+              ) : (
                 <TableRow>
-                  <TableHead className="text-white font-bold text-xs">Customer</TableHead>
-                  <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
-                  <TableHead className="text-white font-bold text-xs text-center">Programming Status</TableHead>
-                  <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
-                  <TableHead className="text-white font-bold text-xs">Product Type</TableHead>
-                  <TableHead className="text-white font-bold text-xs">Color</TableHead>
-                  <TableHead className="text-white font-bold text-xs text-center">Size</TableHead>
-                  <TableHead className="text-white font-bold text-xs text-center">Qty</TableHead>
-                  <TableHead className="text-white font-bold text-center">Preparation Status</TableHead>
-                  <TableHead className="text-white font-bold text-center">Endorsement</TableHead>
+                  <TableCell colSpan={9} className="text-center text-muted-foreground text-xs">
+                    No items in the audit queue.
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {jobOrders?.map((lead) => {
-                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
-                  return (
-                    <ItemPreparationTableRowGroup
-                      key={lead.id}
-                      lead={lead}
-                      isRepeat={isRepeat}
-                      getProgrammingStatus={getProgrammingStatus}
-                      formatJoNumber={formatJoNumber}
-                      getContactDisplay={getContactDisplay}
-                      handleJoReceivedChange={handleJoReceivedChange}
-                      handleOpenPreparedDialog={handleOpenPreparedDialog}
-                      setLeadToSend={setLeadToSend}
-                      isReadOnly={isReadOnly}
-                      filterType={filterType}
-                      openCustomerDetails={openCustomerDetails}
-                      toggleCustomerDetails={toggleCustomerDetails}
-                    />
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-      <AlertDialog open={!!confirmingLead} onOpenChange={() => setConfirmingLead(null)}>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+    <AlertDialog open={!!confirmingLead} onOpenChange={() => setConfirmingLead(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are the prepared items correct?</AlertDialogTitle>
@@ -596,5 +597,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTableMemo';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
 
 
