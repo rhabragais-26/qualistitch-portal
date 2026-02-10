@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -433,7 +432,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>(([]);
   const finalBackDesignDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalNamesDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -447,16 +446,16 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
 
   const handleDownload = useCallback(async (url: string, name: string) => {
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
-        const blob = await response.blob();
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', name);
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode?.removeChild(link);
-        URL.revokeObjectURL(link.href);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', name);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      URL.revokeObjectURL(link.href);
     } catch (error: any) {
         console.error('File download failed:', error);
         toast({
@@ -1655,261 +1654,52 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="flex-1 min-h-0 modern-scrollbar">
-                  <div className="px-6 pb-6">
-                    <div className="bg-white text-black">
-                        {(() => {
-                            const lead = viewingJoLead;
+                    <div className="px-6 pb-6">
+                        <div className="bg-white text-black">
+                            {(() => {
+                                const lead = viewingJoLead;
 
-                            const scesProfile = usersData?.find((u) => u.nickname === lead.salesRepresentative);
-                            const scesFullName = scesProfile?.firstName && scesProfile?.lastName
-                              ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`)
-                              : toTitleCase(lead.salesRepresentative);
+                                const scesProfile = usersData?.find((u) => u.nickname === lead.salesRepresentative);
+                                const scesFullName = scesProfile?.firstName && scesProfile?.lastName
+                                ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`)
+                                : toTitleCase(lead.salesRepresentative);
 
-                            const totalQuantity = (lead.orders || []).reduce((sum: number, order: any) => sum + (order.quantity || 0), 0);
-                            const contactDisplay = getContactDisplay(lead);
+                                const totalQuantity = (lead.orders || []).reduce((sum: number, order: any) => sum + (order.quantity || 0), 0);
+                                const contactDisplay = getContactDisplay(lead);
 
-                            const fallbackDeliveryDate = format(
-                              addDays(new Date(lead.submissionDateTime), lead.priorityType === "Rush" ? 7 : 22),
-                              "MMM dd, yyyy"
-                            );
+                                const fallbackDeliveryDate = format(
+                                addDays(new Date(lead.submissionDateTime), lead.priorityType === "Rush" ? 7 : 22),
+                                "MMM dd, yyyy"
+                                );
 
-                            const deliveryDate =
-                              (lead as any).adjustedDeliveryDate
-                                ? format(new Date((lead as any).adjustedDeliveryDate), "MMM dd, yyyy")
-                                : lead.deliveryDate
-                                  ? format(new Date(lead.deliveryDate), "MMM dd, yyyy")
-                                  : fallbackDeliveryDate;
+                                const deliveryDate =
+                                (lead as any).adjustedDeliveryDate
+                                    ? format(new Date((lead as any).adjustedDeliveryDate), "MMM dd, yyyy")
+                                    : lead.deliveryDate
+                                    ? format(new Date(lead.deliveryDate), "MMM dd, yyyy")
+                                    : fallbackDeliveryDate;
 
-                            const layoutsToPrint = lead.layouts?.filter((l) => hasLayoutContent(l as Layout)) || [];
+                                const layoutsToPrint = lead.layouts?.filter((l) => hasLayoutContent(l as Layout)) || [];
 
-                            return (
-                              <>
-                                <div className="p-10 mx-auto max-w-4xl print-page">
-                                  <div className="text-left mb-4">
-                                      <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span></p>
-                                  </div>
-                                  <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
-
-                                  <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
-                                      <div className="space-y-1">
-                                          <p><strong>Client Name:</strong> {lead.customerName}</p>
-                                          <p><strong>Contact No:</strong> {contactDisplay}</p>
-                                          <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
-                                          <p><strong>Type of Order:</strong> {lead.orderType}</p>
-                                          <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                                          <p><strong>SCES Name:</strong> {scesFullName}</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
-                                          <p><strong>Courier:</strong> {lead.courier}</p>
-                                          <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
-                                      </div>
-                                  </div>
-
-                                  <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow className="bg-gray-200">
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={3}>Item Description</TableHead>
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Qty</TableHead>
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Front Design</TableHead>
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Back Design</TableHead>
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Remarks</TableHead>
-                                      </TableRow>
-                                      <TableRow className="bg-gray-200">
-                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Type of Product</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Color</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Size</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Left</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Right</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Logo</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Text</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {lead.orders.map((order: any, index: number) => (
-                                        <TableRow key={index}>
-                                          <TableCell className="border border-black p-0.5 text-center align-middle">{order.productType}</TableCell>
-                                          <TableCell className="border border-black p-0.5 text-center align-middle">{order.color}</TableCell>
-                                          <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
-                                          <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
-                                          <TableCell className="border border-black p-0.5 text-center">
-                                              <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.left} disabled />
-                                          </TableCell>
-                                          <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.right} disabled />
-                                          </TableCell>
-                                          <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backLogo} disabled />
-                                          </TableCell>
-                                          <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backText} disabled />
-                                          </TableCell>
-                                          <TableCell className="border border-black p-0.5">
-                                            <p className="text-xs">{order.remarks}</p>
-                                          </TableCell>
-                                        </TableRow>
-                                      ))}
-                                      <TableRow>
-                                        <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
-                                        <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
-                                        <TableCell colSpan={5}></TableCell>
-                                      </TableRow>
-                                    </TableBody>
-                                  </Table>
-                                  <div className="text-xs mb-2 pt-2">
-                                    <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
-                                      <div className="space-y-1">
-                                          <p className="font-bold italic">Prepared by:</p>
-                                          <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
-                                          <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                       <div className="space-y-1">
-                                          <p className="font-bold italic">Noted by:</p>
-                                          <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
-                                          <p className="text-center font-bold">Sales Head</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-
-                                      <div className="col-span-2 mt-0">
-                                          <p className="font-bold italic">Approved by:</p>
-                                      </div>
-
-
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Programming</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Inventory</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Production Line Leader</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Production Supervisor</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                       <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Quality Control</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Logistics</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                       <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Operations Supervisor</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                  </div>
-                                </div>
-                                {layoutsToPrint.map((layout, layoutIndex) => (
-                                    <div
-                                      key={layoutIndex}
-                                      className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300"
-                                    >
-                                      <div className="text-left mb-4">
-                                        <p className="font-bold">
-                                          <span className="text-primary">J.O. No:</span>{" "}
-                                          <span className="inline-block border-b border-black">
-                                            {formatJoNumberUtil(lead.joNumber)}
-                                          </span>{" "}
-                                          - Layout {layoutIndex + 1}
-                                        </p>
-                                      </div>
-
-                                      {layout.layoutImage && (
-                                        <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
-                                          <Image
-                                            src={layout.layoutImage}
-                                            alt={`Layout ${layoutIndex + 1}`}
-                                            layout="fill"
-                                            objectFit="contain"
-                                          />
-                                        </div>
-                                      )}
-
-                                      <h2 className="text-2xl font-bold text-center mb-4">
-                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
-                                      </h2>
-
-                                      <table className="w-full border-collapse border border-black mb-6">
-                                        <tbody>
-                                          <tr>
-                                            <td className="border border-black p-2 w-1/2">
-                                              <strong>DST LOGO LEFT:</strong>
-                                              <p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p>
-                                            </td>
-                                            <td className="border border-black p-2 w-1/2">
-                                              <strong>DST BACK LOGO:</strong>
-                                              <p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p>
-                                            </td>
-                                          </tr>
-                                          <tr>
-                                            <td className="border border-black p-2 w-1/2">
-                                              <strong>DST LOGO RIGHT:</strong>
-                                              <p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p>
-                                            </td>
-                                            <td className="border border-black p-2 w-1/2">
-                                              <strong>DST BACK TEXT:</strong>
-                                              <p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p>
-                                            </td>
-                                          </tr>
-                                        </tbody>
-                                      </table>
-
-                                      <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
-
-                                      {/* Native table (do NOT mix Shadcn TableBody here) */}
-                                      <table className="w-full border-collapse border border-black text-xs">
-                                        <thead>
-                                          <tr className="bg-gray-200">
-                                            <th className="border border-black p-1 text-center align-middle">No.</th>
-                                            <th className="border border-black p-1 text-center align-middle">Names</th>
-                                            <th className="border border-black p-1 text-center align-middle">Color</th>
-                                            <th className="border border-black p-1 text-center align-middle">Sizes</th>
-                                            <th className="border border-black p-1 text-center align-middle">Qty</th>
-                                            <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
-                                          </tr>
-                                        </thead>
-
-                                        <TableBody>
-                                          {layout.namedOrders?.map((order, orderIndex) => (
-                                            <TableRow key={orderIndex}>
-                                              <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
-                                              <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
-                                              <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
-                                              <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
-                                              <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
-                                              <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
-                                            </TableRow>
-                                          ))}
-                                        </TableBody>
-                                      </table>
+                                return (
+                                <>
+                                    <div className="p-10 mx-auto max-w-4xl print-page">
+                                    {/* ... JO Form Content ... */}
                                     </div>
-                                  ))}
-                              </>
-                            )
-                        })()}
+                                    {layoutsToPrint.map((layout, layoutIndex) => (
+                                        <div
+                                        key={layoutIndex}
+                                        className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300"
+                                        >
+                                        {/* ... Layout Content ... */}
+                                        </div>
+                                    ))}
+                                </>
+                                )
+                            })()}
+                        </div>
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
@@ -1921,10 +1711,3 @@ const DigitizingTableMemo = React.memo(DigitizingTable);
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-
-    
-
-
-
-    
