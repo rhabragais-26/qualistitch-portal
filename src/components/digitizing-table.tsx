@@ -468,7 +468,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
     const files: { name: string; url: string; type: string }[] = [];
 
     reviewConfirmLead.layouts.forEach((layout, layoutIndex) => {
-      const layoutLabel = reviewConfirmLead.layouts!.length > 1 ? ` (Layout ${layoutIndex + 1})` : '';
+      const layoutLabel = '';
 
       (layout.finalLogoEmb || []).forEach(f => {
         if (f) files.push({ ...f, type: `EMB Logo${layoutLabel}` });
@@ -781,80 +781,79 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
   const confirmUncheck = useCallback(async () => {
     if (!uncheckConfirmation || !firestore || !leads) return;
     const { leadId, field } = uncheckConfirmation;
-
+  
     const leadToUpdate = leads.find(l => l.id === leadId);
     if (!leadToUpdate) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Lead not found for update.' });
-        setUncheckConfirmation(null);
-        return;
+      toast({ variant: 'destructive', title: 'Error', description: 'Lead not found for update.' });
+      setUncheckConfirmation(null);
+      return;
     }
-    
+  
     const optimisticUpdate: Partial<Lead> = {};
     const originalState: Partial<Lead> = {};
-
+  
     const processField = (fieldName: CheckboxField | 'isJoHardcopyReceived') => {
-        const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
-        
-        optimisticUpdate[fieldName] = false;
-        optimisticUpdate[timestampFieldName] = null;
-        
-        originalState[fieldName] = leadToUpdate[fieldName as keyof Lead];
-        originalState[timestampFieldName] = leadToUpdate[timestampFieldName as keyof Lead];
+      const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
+  
+      optimisticUpdate[fieldName as keyof Lead] = false;
+      optimisticUpdate[timestampFieldName] = null;
+  
+      originalState[fieldName as keyof Lead] = leadToUpdate[fieldName as keyof Lead];
+      originalState[timestampFieldName as keyof Lead] = leadToUpdate[timestampFieldName as keyof Lead];
     };
-
+  
     processField(field);
-
+  
     if (field !== 'isJoHardcopyReceived') {
-        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
-        const currentIndex = sequence.indexOf(field as CheckboxField);
-
-        if (currentIndex > -1) {
-            for (let i = currentIndex + 1; i < sequence.length; i++) {
-                const nextField = sequence[i];
-                if (nextField) {
-                    processField(nextField);
-                }
-            }
+      const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
+      const currentIndex = sequence.indexOf(field as CheckboxField);
+  
+      if (currentIndex > -1) {
+        for (let i = currentIndex + 1; i < sequence.length; i++) {
+          const nextField = sequence[i];
+          if (nextField) {
+            processField(nextField);
+          }
         }
+      }
     }
-
+  
     setOptimisticChanges(prev => ({
-        ...prev,
-        [leadId]: {
-            ...(prev[leadId] || {}),
-            ...optimisticUpdate,
-        }
+      ...prev,
+      [leadId]: {
+        ...(prev[leadId] || {}),
+        ...optimisticUpdate,
+      }
     }));
-
+  
     setUncheckConfirmation(null);
-
+  
     const saveAndUpdate = async () => {
-        try {
-            const leadDocRef = doc(firestore, 'leads', leadId);
-            await updateDoc(leadDocRef, optimisticUpdate);
-            toast({
-                title: 'Status Updated',
-                description: 'The status has been successfully reverted.',
-            });
-            refetch(); // Sync with DB state
-        } catch (e) {
-            console.error(`Error unchecking '${field}'`, e);
-            toast({ variant: "destructive", title: "Update Failed", description: (e as Error).message || "Could not update the status." });
-            
-            // Rollback UI on failure
-            setOptimisticChanges(prev => ({
-                ...prev,
-                [leadId]: {
-                    ...(prev[leadId] || {}),
-                    ...originalState,
-                }
-            }));
-        }
+      try {
+        const leadDocRef = doc(firestore, 'leads', leadId);
+        await updateDoc(leadDocRef, optimisticUpdate);
+        toast({
+          title: 'Status Updated',
+          description: 'The status has been successfully reverted.',
+        });
+        refetch(); // Sync with DB state
+      } catch (e: any) {
+        console.error(`Error unchecking '${field}'`, e);
+        toast({ variant: "destructive", title: "Update Failed", description: (e as Error).message || "Could not update the status." });
+  
+        // Rollback UI on failure
+        setOptimisticChanges(prev => ({
+          ...prev,
+          [leadId]: {
+            ...(prev[leadId] || {}),
+            ...originalState,
+          }
+        }));
+      }
     };
-
+  
     saveAndUpdate();
-    
-}, [uncheckConfirmation, firestore, toast, leads, refetch]);
+  }, [uncheckConfirmation, firestore, toast, leads, refetch]);
 
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
     const lead = displayedLeads?.find((l) => l.id === leadId);
@@ -1872,60 +1871,44 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                                     <h2 className="text-2xl font-bold text-center mb-4">
                                         {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
                                     </h2>
-
-                                    <table className="w-full border-collapse border border-black mb-6">
-                                        <tbody>
-                                        <tr>
-                                            <td className="border border-black p-2 w-1/2">
-                                            <strong>DST LOGO LEFT:</strong>
-                                            <p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p>
-                                            </td>
-                                            <td className="border border-black p-2 w-1/2">
-                                            <strong>DST BACK LOGO:</strong>
-                                            <p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="border border-black p-2 w-1/2">
-                                            <strong>DST LOGO RIGHT:</strong>
-                                            <p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p>
-                                            </td>
-                                            <td className="border border-black p-2 w-1/2">
-                                            <strong>DST BACK TEXT:</strong>
-                                            <p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
-
-                                    {/* Native table (do NOT mix Shadcn TableBody here) */}
-                                    <table className="w-full border-collapse border border-black text-xs">
-                                        <thead>
-                                        <tr className="bg-gray-200">
-                                            <th className="border border-black p-1 text-center align-middle">No.</th>
-                                            <th className="border border-black p-1 text-center align-middle">Names</th>
-                                            <th className="border border-black p-1 text-center align-middle">Color</th>
-                                            <th className="border border-black p-1 text-center align-middle">Sizes</th>
-                                            <th className="border border-black p-1 text-center align-middle">Qty</th>
-                                            <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
-                                        </tr>
-                                        </thead>
-
-                                        <TableBody>
-                                        {layout.namedOrders?.map((order, orderIndex) => (
-                                            <TableRow key={orderIndex}>
-                                            <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
-                                            <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
-                                            <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
-                                            <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
-                                            <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
-                                            <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                        </TableBody>
-                                    </table>
+                                        <table className="w-full border-collapse border border-black mb-6">
+                                            <tbody>
+                                                <tr>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                            
+                                        <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
+                                        <table className="w-full border-collapse border border-black text-xs">
+                                          <thead>
+                                            <tr className="bg-gray-200">
+                                              <th className="border border-black p-1 text-center align-middle">No.</th>
+                                              <th className="border border-black p-1 text-center align-middle">Names</th>
+                                              <th className="border border-black p-1 text-center align-middle">Color</th>
+                                              <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                                              <th className="border border-black p-1 text-center align-middle">Qty</th>
+                                              <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
+                                            </tr>
+                                          </thead>
+                                          <TableBody>
+                                            {layout.namedOrders?.map((order, orderIndex) => (
+                                              <TableRow key={orderIndex}>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </table>
                                     </div>
                                   ))}
                               </>
@@ -1938,12 +1921,4 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
       )}
     </>
   );
-});
-ProductionQueueTableBase.displayName = 'ProductionQueueTableBase';
-
-const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
-ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
-
-export { ProductionQueueTableMemo as ProductionQueueTable };
-
-    
+}
