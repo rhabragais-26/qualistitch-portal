@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -1475,8 +1476,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <div className='flex-1 min-h-0'>
-                  <ScrollArea className="h-full modern-scrollbar">
+                <ScrollArea className="flex-1 min-h-0 modern-scrollbar">
                     <div className="px-6 py-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -1731,7 +1731,6 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: Digitizi
                             )
                         })()}
                     </div>
-                  </ScrollArea>
                 </div>
             </DialogContent>
         </Dialog>
