@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -1081,7 +1080,8 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTableBase({ 
     
     let relevantLeads;
     if (filterType === 'COMPLETED') {
-      relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics);
+      const orderTypesToSkip = ['Item Sample', 'Stock (Jacket Only)', 'Stock Design'];
+      relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics && !orderTypesToSkip.includes(lead.orderType));
     } else { // ONGOING
       relevantLeads = processedLeads.filter(lead => 
         lead.isSentToProduction && 
@@ -1523,4 +1523,4 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
 
     
 
-
+    
