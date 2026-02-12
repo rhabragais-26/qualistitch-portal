@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -1202,23 +1203,29 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                         </div>
                     </div>
                     <div className="space-y-2 pt-4 border-t col-span-2">
-                        <h4 className="font-semibold text-teal-600">Names (DST)</h4>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                            {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
-                                <div key={index} className="flex items-center gap-2">
-                                    <Input
-                                        type="file"
-                                        className="h-9 text-xs"
-                                        ref={el => finalNamesDstUploadRefs.current[index] = el}
-                                        onChange={(e) => handleMultipleFileUpload(e, setFinalNamesDst, finalNamesDst, index)}
-                                        disabled={!canEdit}
-                                    />
-                                    {canEdit && (finalNamesDst.length > 1 || file) && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFinalNamesDst, index, finalNamesDstUploadRefs)}><Trash2 className="h-4 w-4"/></Button>}
-                                </div>
-                            ))}
-                             {canEdit && <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => addFileMultiple(setFinalNamesDst)}><PlusCircle className="mr-2 h-4 w-4"/>Add Name File</Button>}
-                        </div>
-                    </div>
+                      <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-teal-600">Names (DST)</h4>
+                          {canEdit && (
+                              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFinalNamesDst)}>
+                                  <PlusCircle className="h-4 w-4" />
+                              </Button>
+                          )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                          {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                  <Input
+                                      type="file"
+                                      className="h-9 text-xs"
+                                      ref={el => finalNamesDstUploadRefs.current[index] = el}
+                                      onChange={(e) => handleMultipleFileUpload(e, setFinalNamesDst, finalNamesDst, index)}
+                                      disabled={!canEdit}
+                                  />
+                                  {canEdit && (finalNamesDst.length > 1 || file) && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFinalNamesDst, index, finalNamesDstUploadRefs)}><Trash2 className="h-4 w-4"/></Button>}
+                              </div>
+                          ))}
+                      </div>
+                  </div>
                     <div className="flex items-center space-x-2 pt-2 col-span-2">
                         <Checkbox
                             id="names-only-checkbox"
@@ -1749,16 +1756,16 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                                         <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
                                         <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
                                         <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.left} disabled />
                                         </TableCell>
                                         <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.right} disabled />
                                         </TableCell>
                                         <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backLogo} disabled />
                                         </TableCell>
                                         <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backText} disabled />
                                         </TableCell>
                                         <TableCell className="border border-black p-0.5">
                                            <p className="text-xs">{order.remarks}</p>
@@ -1910,12 +1917,10 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
     </>
   );
 }
-
-    
