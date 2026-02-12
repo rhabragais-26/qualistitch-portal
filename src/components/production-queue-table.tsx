@@ -578,7 +578,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
                     <Select value={lead.productionType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)} disabled={!lead.isCutting || isReadOnly || isCompleted}>
-                        <SelectTrigger className={cn("text-xs h-7", getStatusColor(lead.productionType))}>
+                        <SelectTrigger className={cn("text-xs h-7", getStatusColor(lead.productionType), isCompleted && "disabled:opacity-100")}>
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -601,7 +601,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
                     <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)} disabled={!lead.isEmbroideryDone || lead.sewerType === 'Not Applicable' || isReadOnly || isCompleted}>
-                         <SelectTrigger className={cn("text-xs h-7 justify-center", getStatusColor(lead.sewerType))}>
+                         <SelectTrigger className={cn("text-xs h-7 justify-center", getStatusColor(lead.sewerType), isCompleted && "disabled:opacity-100")}>
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1522,3 +1522,4 @@ ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 export { ProductionQueueTableMemo as ProductionQueueTable };
 
     
+
