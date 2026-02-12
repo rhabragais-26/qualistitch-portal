@@ -596,7 +596,6 @@ const JoPreviewContent = ({ viewingJoLead, usersData, getContactDisplay, formatJ
                             )
                         })()}
                     </div>
-                </div>
             </ScrollArea>
         </DialogContent>
     );
@@ -1920,11 +1919,9 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
       </CardContent>
       {viewingJoLead && (
         <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
-            <JoPreviewContent getContactDisplay={getContactDisplay} formatJoNumberUtil={formatJoNumber} viewingJoLead={viewingJoLead} usersData={usersData} />
+            <JoPreviewContent getContactDisplay={getContactDisplay} formatJoNumberUtil={formatJoNumberUtil} viewingJoLead={viewingJoLead} usersData={usersData} />
         </Dialog>
       )}
     </>
   );
 }
-
-```
