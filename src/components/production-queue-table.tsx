@@ -1075,10 +1075,12 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTableBase({ 
   const productionQueue = useMemo(() => {
     if (!processedLeads) return [];
     
+    const orderTypesToSkip = ['Item Sample', 'Stock (Jacket Only)', 'Stock Design'];
+
     let relevantLeads;
     if (filterType === 'COMPLETED') {
       relevantLeads = processedLeads.filter(lead => 
-        lead.isEndorsedToLogistics
+        lead.isEndorsedToLogistics && !orderTypesToSkip.includes(lead.orderType)
       );
     } else { // ONGOING
       relevantLeads = processedLeads.filter(lead => 
