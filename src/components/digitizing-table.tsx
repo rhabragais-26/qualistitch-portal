@@ -595,6 +595,7 @@ const JoPreviewContent = ({ viewingJoLead, usersData, getContactDisplay, formatJ
                               </>
                             )
                         })()}
+                    </div>
                 </div>
             </ScrollArea>
         </DialogContent>
@@ -938,19 +939,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
     
     const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
 
-    const leadsQuery = useMemoFirebase(
-      () =>
-        firestore
-          ? query(
-              collection(firestore, 'leads'),
-            )
-          : null,
-      [firestore]
-    );
-
-    const { data: leads } = useCollection<Lead>(leadsQuery);
-
-    const leadsWithJo = (leads || []).filter(lead => {
+    const leadsWithJo = processedLeads.filter(lead => {
         if (filterType === 'ONGOING' && orderTypesToSkip.includes(lead.orderType)) {
             return false;
         }
@@ -992,7 +981,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueStatusFilter, digitizerFilter, formatJoNumber, calculateDigitizingDeadline, filterType, firestore]);
+  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueStatusFilter, digitizerFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
 
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -1937,3 +1926,5 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
     </>
   );
 }
+
+```
