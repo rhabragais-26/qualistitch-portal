@@ -595,13 +595,11 @@ const JoPreviewContent = ({ viewingJoLead, usersData, getContactDisplay, formatJ
                               </>
                             )
                         })()}
-                    </div>
                 </div>
             </ScrollArea>
         </DialogContent>
     );
 };
-
 
 export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETED' }: DigitizingTableProps) {
   const firestore = useFirestore();
@@ -617,10 +615,11 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
 
-  const { data: allLeads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]));
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: allLeads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery);
+  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
 
   const isLoading = areLeadsLoading || areUsersLoading;
   const error = leadsError || usersError;
@@ -934,12 +933,24 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
     return enrichedLeads;
   }, [allLeads]);
   
-  const filteredLeads = React.useMemo(() => {
+  const filteredLeads = useMemo(() => {
     if (!processedLeads) return [];
     
     const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
 
-    const leadsWithJo = processedLeads.filter(lead => {
+    const leadsQuery = useMemoFirebase(
+      () =>
+        firestore
+          ? query(
+              collection(firestore, 'leads'),
+            )
+          : null,
+      [firestore]
+    );
+
+    const { data: leads } = useCollection<Lead>(leadsQuery);
+
+    const leadsWithJo = (leads || []).filter(lead => {
         if (filterType === 'ONGOING' && orderTypesToSkip.includes(lead.orderType)) {
             return false;
         }
@@ -981,7 +992,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueStatusFilter, digitizerFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
+  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueStatusFilter, digitizerFilter, formatJoNumber, calculateDigitizingDeadline, filterType, firestore]);
 
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -1378,27 +1389,55 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
     }, [canEdit, handleClearImage, handleImagePaste, handleImageUpload, handleRemoveImage, setImageInView]);
 
     const renderMultipleFileUploads = useCallback((label: string, files: (FileObject | null)[], setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
-    const displayFiles = files.length > 0 ? files : [null];
-    return (
-        <div className="space-y-2">
+      const displayFiles = files.length > 0 ? files : [null];
+      if (label === 'Names (DST)') {
+        return (
+          <div className="space-y-2 pt-4 border-t col-span-2">
             <div className="flex items-center gap-2">
-                <Label>{label}</Label>
-                {canEdit && label !== 'Names (DST)' && <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setter)}><PlusCircle className="h-4 w-4" /></Button>}
+              <h4 className="font-semibold text-teal-600">Names (DST)</h4>
+              {canEdit && (
+                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setter)}>
+                  <PlusCircle className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-            {displayFiles.map((file, index) => (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              {files.map((file, index) => (
                 <div key={index} className="flex items-center gap-2">
-                <Input
+                  <Input
                     type="file"
                     className="h-9 text-xs"
                     ref={el => refs.current[index] = el}
                     onChange={(e) => handleMultipleFileUpload(e, setter, files, index)}
                     disabled={!canEdit}
-                />
-                {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index, refs)}><Trash2 className="h-4 w-4"/></Button>}
+                  />
+                  {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index, refs)}><Trash2 className="h-4 w-4"/></Button>}
                 </div>
-            ))}
-        </div>
-    );
+              ))}
+            </div>
+          </div>
+        );
+      }
+      return (
+          <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                  <Label>{label}</Label>
+                  {canEdit && <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setter)}><PlusCircle className="h-4 w-4" /></Button>}
+              </div>
+              {displayFiles.map((file, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                  <Input
+                      type="file"
+                      className="h-9 text-xs"
+                      ref={el => refs.current[index] = el}
+                      onChange={(e) => handleMultipleFileUpload(e, setter, files, index)}
+                      disabled={!canEdit}
+                  />
+                  {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index, refs)}><Trash2 className="h-4 w-4"/></Button>}
+                  </div>
+              ))}
+          </div>
+      );
     }, [canEdit, handleMultipleFileUpload, removeFile]);
   
     const renderUploadDialogContent = useCallback(() => {
@@ -1449,30 +1488,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                             {renderMultipleFileUploads('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
                         </div>
                     </div>
-                     <div className="space-y-2 pt-4 border-t col-span-2">
-                       <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-teal-600">Names (DST)</h4>
-                            {canEdit && (
-                                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFinalNamesDst)}>
-                                    <PlusCircle className="h-4 w-4" />
-                                </Button>
-                            )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                            {finalNamesDst.map((file, index) => (
-                                <div key={index} className="flex items-center gap-2">
-                                    <Input
-                                        type="file"
-                                        className="h-9 text-xs"
-                                        ref={el => finalNamesDstUploadRefs.current[index] = el}
-                                        onChange={(e) => handleMultipleFileUpload(e, setFinalNamesDst, finalNamesDst, index)}
-                                        disabled={!canEdit}
-                                    />
-                                    {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFinalNamesDst, index, finalNamesDstUploadRefs)}><Trash2 className="h-4 w-4"/></Button>}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    {renderMultipleFileUploads('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
                     <div className="flex items-center space-x-2 pt-2 col-span-2">
                         <Checkbox
                             id="names-only-checkbox"
@@ -1668,7 +1684,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
             <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-4">
                     <div className='flex items-center gap-2'>
-                        <span className="text-sm font-medium">Filter by Priority Type:</span>
+                        <span className="text-sm font-medium text-card-foreground">Priority:</span>
                         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Select Priority" />
@@ -1681,7 +1697,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                         </Select>
                     </div>
                     <div className='flex items-center gap-2'>
-                        <span className="text-sm font-medium">Filter Overdue Status:</span>
+                        <span className="text-sm font-medium text-card-foreground">Overdue Status:</span>
                         <Select value={overdueStatusFilter} onValueChange={setOverdueStatusFilter}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Select Status" />
@@ -1694,7 +1710,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                         </Select>
                     </div>
                     <div className='flex items-center gap-2'>
-                        <span className="text-sm font-medium">Filter by Digitizer:</span>
+                        <span className="text-sm font-medium text-card-foreground">Digitizer:</span>
                         <Select value={digitizerFilter} onValueChange={setDigitizerFilter}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Select Digitizer" />
@@ -1921,5 +1937,3 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
     </>
   );
 }
-
-```
