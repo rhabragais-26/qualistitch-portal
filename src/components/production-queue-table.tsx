@@ -395,16 +395,18 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
             <h3 className="font-bold text-lg text-primary">Final Program Files (DST)</h3>
             <div className="space-y-2">
                 {finalDstFiles.length > 0 ? (
-                    finalDstFiles.map((file, index) => (
-                        file && file.url && file.name && (
-                            <div key={index} className="flex items-center justify-between p-2 bg-white rounded-md border text-sm">
-                                <span className="truncate pr-2"><strong>{file.type}:</strong> {file.name}</span>
-                                <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-7 w-7 text-primary">
-                                    <Download className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )
-                    ))
+                    <div className="grid grid-cols-1 gap-2">
+                        {finalDstFiles.map((file, index) => (
+                            file && file.url && file.name && (
+                                <div key={index} className="flex items-center justify-between p-2 bg-white rounded-md border text-sm">
+                                    <span className="truncate pr-2"><strong>{file.type}:</strong> {file.name}</span>
+                                    <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-7 w-7 text-primary">
+                                        <Download className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )
+                        ))}
+                    </div>
                 ) : <p className="text-xs text-muted-foreground">No DST files available.</p>}
             </div>
         </div>
@@ -422,18 +424,6 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   );
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
-
-type ProductionQueueTableProps = {
-  isReadOnly: boolean;
-  filterType?: 'ONGOING' | 'COMPLETED';
-};
-
-type UserProfileInfo = {
-    uid: string;
-    firstName: string;
-    lastName: string;
-    nickname: string;
-  };
 
 type ProductionQueueTableRowGroupProps = {
     lead: EnrichedLead;
@@ -653,7 +643,6 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                                 Endorsed
                            </Button>
                            <span className="text-xs text-gray-500">{lead.endorsedToLogisticsTimestamp ? formatDateTime(lead.endorsedToLogisticsTimestamp).dateTimeShort : ''}</span>
-                           {lead.endorsedToLogisticsBy && <span className="font-bold text-xs">by {lead.endorsedToLogisticsBy}</span>}
                            <Button size="sm" variant="outline" className="h-7 text-xs mt-1" onClick={() => handleReopenCase(lead)}>
                                 <RefreshCcw className="mr-2 h-4 w-4" /> Reopen
                            </Button>
@@ -682,7 +671,12 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
 });
 ProductionQueueTableRowGroup.displayName = 'ProductionQueueTableRowGroup';
 
-const ProductionQueueTableBase = React.memo(function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
+type ProductionQueueTableBaseProps = {
+  isReadOnly: boolean;
+  filterType?: 'ONGOING' | 'COMPLETED';
+};
+
+const ProductionQueueTableBase = React.memo(function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableBaseProps) {
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const { toast } = useToast();
@@ -701,7 +695,7 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTable({ isRe
   const isCompleted = filterType === 'COMPLETED';
   
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, {listen: false});
 
   const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
   const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery);
@@ -1081,18 +1075,15 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTable({ isRe
   const productionQueue = useMemo(() => {
     if (!processedLeads) return [];
     
-    const orderTypesToExclude = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'];
     let relevantLeads;
     if (filterType === 'COMPLETED') {
       relevantLeads = processedLeads.filter(lead => 
-        lead.isEndorsedToLogistics && 
-        !orderTypesToExclude.includes(lead.orderType)
+        lead.isEndorsedToLogistics
       );
     } else { // ONGOING
       relevantLeads = processedLeads.filter(lead => 
         lead.isSentToProduction && 
-        !lead.isEndorsedToLogistics && 
-        !orderTypesToExclude.includes(lead.orderType)
+        !lead.isEndorsedToLogistics
       );
     }
     
@@ -1257,7 +1248,7 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTable({ isRe
           <AlertDialog open={!!leadToEndorse} onOpenChange={() => setLeadToEndorse(null)}>
               <AlertDialogContent>
                   <AlertDialogHeader>
-                      <AlertDialogTitle>Confirm Endorsement</AlertDialogTitle>
+                      <AlertDialogTitle>Confirm Handover</AlertDialogTitle>
                       <AlertDialogDescription>
                           This will endorse the order for J.O. {formatJoNumberUtil(leadToEndorse.joNumber)} to Logistics. Are you sure?
                       </AlertDialogDescription>
