@@ -26,7 +26,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, ChevronUp, X, Eye, FileText, Download } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, ChevronUp, X, FileText, Download } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
@@ -600,8 +600,8 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                     </div>
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
-                    <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)} disabled={!lead.isEmbroideryDone || isReadOnly || isCompleted}>
-                         <SelectTrigger className={cn("text-xs h-7", getStatusColor(lead.sewerType))}>
+                    <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)} disabled={!lead.isEmbroideryDone || lead.sewerType === 'Not Applicable' || isReadOnly || isCompleted}>
+                         <SelectTrigger className={cn("text-xs h-7 justify-center", getStatusColor(lead.sewerType))}>
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
