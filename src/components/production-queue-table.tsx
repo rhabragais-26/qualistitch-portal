@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -579,7 +578,9 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                 <TableCell className="text-center align-middle py-2">
                     <Select value={lead.productionType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)} disabled={!lead.isCutting || isReadOnly || isCompleted}>
                         <SelectTrigger className={cn("text-xs h-7", getStatusColor(lead.productionType), isCompleted && "disabled:opacity-100")}>
+                          <span className="flex-1 text-center">
                             <SelectValue />
+                          </span>
                         </SelectTrigger>
                         <SelectContent>
                             {productionOptions.map(opt => (
@@ -600,7 +601,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                     </div>
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
-                    <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)} disabled={!lead.isEmbroideryDone || lead.sewerType === 'Not Applicable' || isReadOnly || isCompleted}>
+                    <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)} disabled={!lead.isEmbroideryDone || isReadOnly || isCompleted}>
                          <SelectTrigger className={cn("text-xs h-7 justify-center", getStatusColor(lead.sewerType), isCompleted && "disabled:opacity-100")}>
                             <SelectValue />
                         </SelectTrigger>
@@ -1522,4 +1523,5 @@ ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 export { ProductionQueueTableMemo as ProductionQueueTable };
 
     
+
 
