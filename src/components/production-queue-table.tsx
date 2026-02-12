@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -474,7 +475,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     return (
         <React.Fragment>
             <TableRow>
-                 <TableCell className="text-xs text-center align-middle">
+                 <TableCell className="text-xs text-center align-middle px-1">
                     <div className="flex items-center justify-center">
                         <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                         {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -498,7 +499,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                                 </Tooltip>
                                 </TooltipProvider>
                             ) : (
-                                <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                <div className="text-xs text-blue-600 font-semibold">New Customer</div>
                             )}
                             {openCustomerDetails === lead.id && (
                                 <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
@@ -603,7 +604,9 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                 <TableCell className="text-center align-middle py-2">
                     <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)} disabled={!lead.isEmbroideryDone || isReadOnly || isCompleted}>
                          <SelectTrigger className={cn("text-xs h-7 justify-center", getStatusColor(lead.sewerType), isCompleted && "disabled:opacity-100")}>
-                            <SelectValue />
+                            <span className="flex-1 text-center">
+                                <SelectValue />
+                            </span>
                         </SelectTrigger>
                         <SelectContent>
                             {sewerOptions.map(opt => (
@@ -1076,13 +1079,9 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTableBase({ 
   const productionQueue = useMemo(() => {
     if (!processedLeads) return [];
     
-    const orderTypesToSkip = ['Item Sample', 'Stock (Jacket Only)', 'Stock Design'];
-
     let relevantLeads;
     if (filterType === 'COMPLETED') {
-      relevantLeads = processedLeads.filter(lead => 
-        lead.isEndorsedToLogistics && !orderTypesToSkip.includes(lead.orderType)
-      );
+      relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics);
     } else { // ONGOING
       relevantLeads = processedLeads.filter(lead => 
         lead.isSentToProduction && 
@@ -1177,15 +1176,15 @@ const ProductionQueueTableBase = React.memo(function ProductionQueueTableBase({ 
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                  <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center px-1">Customer</TableHead>
                   <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Overdue Status</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Production Documents</TableHead>
                   <TableHead className="text-center text-white font-bold text-xs">Start Production</TableHead>
-                  <TableHead className="text-center text-white font-bold text-xs">Production Category</TableHead>
+                  <TableHead className="text-center text-white font-bold text-xs w-[150px]">Production Category</TableHead>
                   <TableHead className="text-center text-white font-bold text-xs">Done Embroidery</TableHead>
-                  <TableHead className="text-white font-bold text-xs text-center">Sewing Category</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center w-[150px]">Sewing Category</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Done Sewing</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Trimming/Cleaning</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Production Status</TableHead>
