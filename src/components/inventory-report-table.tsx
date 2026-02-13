@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -72,9 +71,9 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
   }, [firestore, user]);
 
   const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || reportType !== 'priority') return null;
+    if (!firestore || !user) return null;
     return query(collection(firestore, 'leads'));
-  }, [firestore, user, reportType]);
+  }, [firestore, user]);
 
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
@@ -83,31 +82,38 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
     if (!inventoryItems) return { headers: [], rows: [] };
     
     let processedItems: {productType: string, color: string, size: string, count: number}[];
+    
+    const soldQuantities = new Map<string, number>();
+    if (leads) {
+        leads.forEach(lead => {
+            if (lead.orders) {
+                lead.orders.forEach(order => {
+                    const key = `${order.productType}-${order.color}-${order.size}`;
+                    soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
+                });
+            }
+        });
+    }
 
     if (reportType === 'priority') {
       if (!leads) return { headers: [], rows: [] };
 
-      const soldQuantities = new Map<string, number>();
-      leads.forEach(lead => {
-          if (lead.orders) {
-              lead.orders.forEach(order => {
-                  const key = `${order.productType}-${order.color}-${order.size}`;
-                  soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
-              });
-          }
-      });
-      
       processedItems = inventoryItems.map(item => {
         const key = `${item.productType}-${item.color}-${item.size}`;
         const sold = soldQuantities.get(key) || 0;
         return { ...item, count: item.stock - sold };
       }).filter(item => item.count <= 10);
-    } else {
-      processedItems = inventoryItems.map(item => ({...item, count: item.stock}));
+
+    } else { // 'inventory' reportType
+      processedItems = inventoryItems.map(item => {
+        const key = `${item.productType}-${item.color}-${item.size}`;
+        const sold = soldQuantities.get(key) || 0;
+        return {...item, count: item.stock - sold};
+      });
     }
 
     let filteredItems = processedItems;
-    if (productTypeFilter) {
+    if (productTypeFilter && productTypeFilter !== 'All') {
         filteredItems = filteredItems.filter(item => item.productType === productTypeFilter);
     }
     
@@ -131,6 +137,10 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
       });
       return { color, ...sizeData };
     }).filter(row => {
+        // Only include rows that have at least one size with a count
+        if(reportType === 'priority') {
+            return sizes.some(size => row[size] !== null && row[size]! <= 10);
+        }
         return sizes.some(size => row[size] !== null);
     });
     
@@ -138,13 +148,13 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
 
   }, [inventoryItems, leads, productTypeFilter, reportType]);
 
-  const isLoading = isAuthLoading || isInventoryLoading || (reportType === 'priority' && areLeadsLoading);
-  const error = inventoryError || (reportType === 'priority' && leadsError);
+  const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
+  const error = inventoryError || leadsError;
 
   const title = reportType === 'priority' ? 'For Priority Purchase' : 'Inventory Report';
   const description = reportType === 'priority' 
-    ? 'Items with low or negative stock levels.'
-    : 'Stock quantity breakdown by color and size.';
+    ? 'Items with low or negative stock levels (10 or less remaining).'
+    : 'Remaining stock quantity breakdown by color and size.';
     
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
@@ -156,18 +166,21 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
               {description}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-4">
-            <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
-              <SelectTrigger className="w-[220px] bg-gray-100 text-black placeholder:text-gray-500">
-                <SelectValue placeholder="Filter by Product Type" />
-              </SelectTrigger>
-              <SelectContent>
-                {allProductTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {reportType === 'inventory' && (
+            <div className="flex items-center gap-4">
+              <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
+                <SelectTrigger className="w-[220px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Filter by Product Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Products</SelectItem>
+                  {allProductTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
@@ -209,14 +222,12 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
                         {reportData.headers.map(size => {
                           const stockCount = (row as any)[size];
                           let cellClass = "text-black";
-                          if (reportType === 'priority') {
-                            if (stockCount < 0) cellClass = 'text-destructive font-bold';
-                            else if (stockCount >= 0 && stockCount <= 10) cellClass = 'text-orange-500 font-bold';
-                          }
+                          if (stockCount < 0) cellClass = 'text-destructive font-bold';
+                          else if (stockCount >= 0 && stockCount <= 10) cellClass = 'text-orange-500 font-bold';
 
                           return (
                           <TableCell key={size} className={cn("text-center font-medium text-xs align-middle py-2", cellClass)}>
-                            {stockCount !== null ? (reportType === 'inventory' && stockCount <= 0 ? '-' : stockCount) : '-'}
+                            {stockCount !== null ? stockCount : '-'}
                           </TableCell>
                         )})}
                       </TableRow>
