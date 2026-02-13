@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -23,6 +21,7 @@ import { Skeleton } from './ui/skeleton';
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 type InventoryItem = {
   id: string;
@@ -32,7 +31,16 @@ type InventoryItem = {
   stock: number;
 };
 
-const productTypes = [
+type Lead = {
+  orders: {
+    productType: string;
+    color: string;
+    size: string;
+    quantity: number;
+  }[];
+};
+
+const allProductTypes = [
   'Executive Jacket 1',
   'Executive Jacket v2 (with lines)',
   'Turtle Neck Jacket',
@@ -48,27 +56,66 @@ const productTypes = [
 
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
-export function InventoryReportTable() {
+type InventoryReportTableProps = {
+    reportType?: 'inventory' | 'priority';
+}
+
+export function InventoryReportTable({ reportType = 'inventory' }: InventoryReportTableProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
-  const [productTypeFilter, setProductTypeFilter] = React.useState(productTypes[0]);
+  const [productTypeFilter, setProductTypeFilter] = React.useState(reportType === 'priority' ? 'All' : allProductTypes[0]);
+
+  const productTypes = reportType === 'priority' ? ['All', ...allProductTypes] : allProductTypes;
 
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, 'inventory'));
   }, [firestore, user]);
 
+  const leadsQuery = useMemoFirebase(() => {
+    if (!firestore || !user || reportType !== 'priority') return null;
+    return query(collection(firestore, 'leads'));
+  }, [firestore, user, reportType]);
+
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const reportData = React.useMemo(() => {
     if (!inventoryItems) return { headers: [], rows: [] };
+    
+    let processedItems: {productType: string, color: string, size: string, count: number}[];
 
-    const filtered = inventoryItems.filter(item => item.productType === productTypeFilter);
+    if (reportType === 'priority') {
+      if (!leads) return { headers: [], rows: [] };
 
-    if (filtered.length === 0) return { headers: [], rows: [] };
+      const soldQuantities = new Map<string, number>();
+      leads.forEach(lead => {
+          if (lead.orders) {
+              lead.orders.forEach(order => {
+                  const key = `${order.productType}-${order.color}-${order.size}`;
+                  soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
+              });
+          }
+      });
+      
+      processedItems = inventoryItems.map(item => {
+        const key = `${item.productType}-${item.color}-${item.size}`;
+        const sold = soldQuantities.get(key) || 0;
+        return { ...item, count: item.stock - sold };
+      }).filter(item => item.count <= 10);
+    } else {
+      processedItems = inventoryItems.map(item => ({...item, count: item.stock}));
+    }
 
-    const colors = [...new Set(filtered.map(item => item.color))].sort();
-    const sizes = [...new Set(filtered.map(item => item.size))].sort((a, b) => {
+    let filteredItems = processedItems;
+    if (productTypeFilter !== 'All') {
+        filteredItems = filteredItems.filter(item => item.productType === productTypeFilter);
+    }
+    
+    if (filteredItems.length === 0) return { headers: [], rows: [] };
+
+    const colors = [...new Set(filteredItems.map(item => item.color))].sort();
+    const sizes = [...new Set(filteredItems.map(item => item.size))].sort((a, b) => {
         const indexA = sizeOrder.indexOf(a);
         const indexB = sizeOrder.indexOf(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
@@ -78,29 +125,36 @@ export function InventoryReportTable() {
     });
 
     const rows = colors.map(color => {
-      const sizeData: { [size: string]: number } = {};
+      const sizeData: { [size: string]: number | null } = {};
       sizes.forEach(size => {
-        const item = filtered.find(i => i.color === color && i.size === size);
-        sizeData[size] = item ? item.stock : 0;
+        const item = filteredItems.find(i => i.color === color && i.size === size);
+        sizeData[size] = item ? item.count : null;
       });
       return { color, ...sizeData };
+    }).filter(row => {
+        return sizes.some(size => row[size] !== null);
     });
     
     return { headers: sizes, rows };
 
-  }, [inventoryItems, productTypeFilter]);
+  }, [inventoryItems, leads, productTypeFilter, reportType]);
 
-  const isLoading = isAuthLoading || isInventoryLoading;
-  const error = inventoryError;
+  const isLoading = isAuthLoading || isInventoryLoading || (reportType === 'priority' && areLeadsLoading);
+  const error = inventoryError || (reportType === 'priority' && leadsError);
 
+  const title = reportType === 'priority' ? 'For Priority Purchase' : 'Inventory Report';
+  const description = reportType === 'priority' 
+    ? 'Items with low or negative stock levels.'
+    : 'Stock quantity breakdown by color and size.';
+    
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-black">Inventory Report</CardTitle>
+            <CardTitle className="text-black">{title}</CardTitle>
             <CardDescription className="text-gray-600">
-              Stock quantity breakdown by color and size.
+              {description}
             </CardDescription>
           </div>
           <div className="flex items-center gap-4">
@@ -146,18 +200,26 @@ export function InventoryReportTable() {
                   {reportData.rows.length === 0 ? (
                     <TableRow>
                         <TableCell colSpan={reportData.headers.length + 1} className="text-center text-muted-foreground align-middle">
-                            No inventory data for the selected product type.
+                            {reportType === 'priority' ? 'No items require priority purchase.' : 'No inventory data for the selected product type.'}
                         </TableCell>
                     </TableRow>
                   ) : (
                     reportData.rows.map((row) => (
                       <TableRow key={row.color}>
                         <TableCell className="font-medium text-xs align-middle py-2 text-black">{row.color}</TableCell>
-                        {reportData.headers.map(size => (
-                          <TableCell key={size} className="text-center font-medium text-xs align-middle py-2 text-black">
-                            {(row as any)[size] > 0 ? (row as any)[size] : '-'}
+                        {reportData.headers.map(size => {
+                          const stockCount = (row as any)[size];
+                          let cellClass = "text-black";
+                          if (reportType === 'priority') {
+                            if (stockCount < 0) cellClass = 'text-destructive font-bold';
+                            else if (stockCount >= 0 && stockCount <= 10) cellClass = 'text-orange-500 font-bold';
+                          }
+
+                          return (
+                          <TableCell key={size} className={cn("text-center font-medium text-xs align-middle py-2", cellClass)}>
+                            {stockCount !== null ? (reportType === 'inventory' && stockCount <= 0 ? '-' : stockCount) : '-'}
                           </TableCell>
-                        ))}
+                        )})}
                       </TableRow>
                     ))
                   )}

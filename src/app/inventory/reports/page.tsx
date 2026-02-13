@@ -9,8 +9,8 @@ export default function InventoryReportsPage() {
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <div className="grid grid-cols-1 gap-8 items-start">
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-                <InventoryReportTable />
-                <InventoryReportTable />
+                <InventoryReportTable reportType="inventory" />
+                <InventoryReportTable reportType="priority" />
             </div>
             <OperationalCasesSummary />
         </div>
