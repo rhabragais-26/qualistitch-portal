@@ -242,34 +242,58 @@ export function InventorySummaryTable() {
                     An overview of all product variants and their stock levels.
                 </CardDescription>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pt-4">
-                    <Card className="bg-blue-500 text-white">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Variants</CardTitle>
-                            <Boxes className="h-4 w-4" />
-                        </CardHeader>
-                        <CardContent><div className="text-2xl font-bold">{summaryData.total}</div></CardContent>
-                    </Card>
-                    <Card className="bg-yellow-500 text-white">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
-                            <Shirt className="h-4 w-4" />
-                        </CardHeader>
-                        <CardContent><div className="text-2xl font-bold">{summaryData.low}</div></CardContent>
-                    </Card>
-                    <Card className="bg-red-500 text-white">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
-                            <PackageX className="h-4 w-4" />
-                        </CardHeader>
-                        <CardContent><div className="text-2xl font-bold">{summaryData.outOfStock}</div></CardContent>
-                    </Card>
-                    <Card className="bg-red-600 text-white">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Negative Stock</CardTitle>
-                            <MinusCircle className="h-4 w-4" />
-                        </CardHeader>
-                        <CardContent><div className="text-2xl font-bold">{summaryData.negative}</div></CardContent>
-                    </Card>
+                  <Card
+                      onClick={() => setStatusFilter('All Statuses')}
+                      className={cn(
+                          "bg-blue-500 text-white cursor-pointer transition-transform hover:scale-105",
+                          statusFilter === 'All Statuses' && "ring-2 ring-offset-2 ring-blue-300"
+                      )}
+                  >
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Total Variants</CardTitle>
+                          <Boxes className="h-4 w-4" />
+                      </CardHeader>
+                      <CardContent><div className="text-2xl font-bold">{summaryData.total}</div></CardContent>
+                  </Card>
+                  <Card
+                      onClick={() => setStatusFilter('Low Stock')}
+                      className={cn(
+                          "bg-yellow-500 text-white cursor-pointer transition-transform hover:scale-105",
+                          statusFilter === 'Low Stock' && "ring-2 ring-offset-2 ring-yellow-300"
+                      )}
+                  >
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+                          <Shirt className="h-4 w-4" />
+                      </CardHeader>
+                      <CardContent><div className="text-2xl font-bold">{summaryData.low}</div></CardContent>
+                  </Card>
+                  <Card
+                      onClick={() => setStatusFilter('Out of Stock')}
+                      className={cn(
+                          "bg-red-500 text-white cursor-pointer transition-transform hover:scale-105",
+                          statusFilter === 'Out of Stock' && "ring-2 ring-offset-2 ring-red-300"
+                      )}
+                  >
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+                          <PackageX className="h-4 w-4" />
+                      </CardHeader>
+                      <CardContent><div className="text-2xl font-bold">{summaryData.outOfStock}</div></CardContent>
+                  </Card>
+                  <Card
+                      onClick={() => setStatusFilter('Negative Stock')}
+                      className={cn(
+                          "bg-red-600 text-white cursor-pointer transition-transform hover:scale-105",
+                          statusFilter === 'Negative Stock' && "ring-2 ring-offset-2 ring-red-400"
+                      )}
+                  >
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Negative Stock</CardTitle>
+                          <MinusCircle className="h-4 w-4" />
+                      </CardHeader>
+                      <CardContent><div className="text-2xl font-bold">{summaryData.negative}</div></CardContent>
+                  </Card>
                 </div>
              </>
            )}
