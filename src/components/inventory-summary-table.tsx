@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -20,10 +19,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
+import { Input } from './ui/input';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
+import { Button } from './ui/button';
+import { Boxes, Shirt, PackageX, MinusCircle, Download } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Order = {
   productType: string;
@@ -75,7 +80,7 @@ const poloShirtColors = [
 
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
-const statusOptions = ['All Statuses', 'In Stock', 'Low Stock', 'Need to Reorder'];
+const statusOptions = ['All Statuses', 'In Stock', 'Low Stock', 'Out of Stock', 'Negative Stock'];
 
 export function InventorySummaryTable() {
   const firestore = useFirestore();
@@ -83,7 +88,9 @@ export function InventorySummaryTable() {
   const [productTypeFilter, setProductTypeFilter] = React.useState('All');
   const [colorFilter, setColorFilter] = React.useState('All');
   const [statusFilter, setStatusFilter] = React.useState('All Statuses');
-  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sizeFilter, setSizeFilter] = useState('All');
+
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, 'inventory'), orderBy('productType', 'asc'));
@@ -99,19 +106,32 @@ export function InventorySummaryTable() {
 
   const availableColors = React.useMemo(() => {
     if (productTypeFilter === 'All') {
-      return [...new Set([...jacketColors, ...poloShirtColors])].sort();
+      return ['All', ...[...new Set([...jacketColors, ...poloShirtColors])].sort()];
     }
     const isPolo = productTypeFilter.includes('Polo Shirt');
-    return isPolo ? poloShirtColors : jacketColors;
+    return ['All', ...(isPolo ? poloShirtColors : jacketColors)];
   }, [productTypeFilter]);
+  
+  const availableSizes = useMemo(() => {
+      if (!inventoryItems) return ['All'];
+      const sizes = [...new Set(inventoryItems.map(item => item.size))].sort((a, b) => {
+        const indexA = sizeOrder.indexOf(a);
+        const indexB = sizeOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+      });
+      return ['All', ...sizes];
+  }, [inventoryItems]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (colorFilter !== 'All' && !availableColors.includes(colorFilter)) {
       setColorFilter('All');
     }
   }, [availableColors, colorFilter]);
 
-  const filteredItems = useMemo(() => {
+  const enrichedItems = useMemo(() => {
     if (!inventoryItems || !leads) return [];
     
     const soldQuantities = new Map<string, number>();
@@ -122,7 +142,7 @@ export function InventorySummaryTable() {
         });
     });
 
-    const enrichedItems: EnrichedInventoryItem[] = inventoryItems.map(item => {
+    return inventoryItems.map(item => {
         const key = `${item.productType}-${item.color}-${item.size}`;
         const sold = soldQuantities.get(key) || 0;
         return {
@@ -131,47 +151,70 @@ export function InventorySummaryTable() {
             remaining: item.stock - sold,
         };
     });
-    
-    const filtered = enrichedItems.filter(item => {
+  }, [inventoryItems, leads]);
+  
+  const filteredItems = useMemo(() => {
+    return enrichedItems.filter(item => {
       const matchesProductType = productTypeFilter === 'All' || item.productType === productTypeFilter;
       const matchesColor = colorFilter === 'All' || item.color === colorFilter;
+      const matchesSize = sizeFilter === 'All' || item.size === sizeFilter;
       
-      let matchesStatus = true;
-      if (statusFilter !== 'All Statuses') {
-        if (statusFilter === 'Need to Reorder') {
-          matchesStatus = item.remaining <= 5;
-        } else if (statusFilter === 'Low Stock') {
-          matchesStatus = item.remaining > 5 && item.remaining <= 10;
-        } else if (statusFilter === 'In Stock') {
-          matchesStatus = item.remaining > 10;
-        }
+      let status = '';
+      if (item.remaining < 0) status = 'Negative Stock';
+      else if (item.remaining === 0) status = 'Out of Stock';
+      else if (item.remaining <= 10) status = 'Low Stock';
+      else status = 'In Stock';
+      
+      const matchesStatus = statusFilter === 'All Statuses' || status === statusFilter;
+      
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      const matchesSearch = searchTerm ? item.productType.toLowerCase().includes(lowercasedSearchTerm) : true;
+      
+      return matchesProductType && matchesColor && matchesSize && matchesStatus && matchesSearch;
+    }).sort((a, b) => {
+      const productTypeComparison = a.productType.localeCompare(b.productType);
+      if (productTypeComparison !== 0) {
+          return productTypeComparison;
       }
+
+      const colorComparison = a.color.localeCompare(b.color);
+      if (colorComparison !== 0) {
+          return colorComparison;
+      }
+
+      const sizeAIndex = sizeOrder.indexOf(a.size);
+      const sizeBIndex = sizeOrder.indexOf(b.size);
+
+      if (sizeAIndex === -1 && sizeBIndex === -1) return a.size.localeCompare(b.size);
+      if (sizeAIndex === -1) return 1;
+      if (sizeBIndex === -1) return -1;
       
-      return matchesProductType && matchesColor && matchesStatus;
+      return sizeAIndex - sizeBIndex;
     });
 
-    return filtered.sort((a, b) => {
-        const productTypeComparison = a.productType.localeCompare(b.productType);
-        if (productTypeComparison !== 0) {
-            return productTypeComparison;
+  }, [enrichedItems, productTypeFilter, colorFilter, statusFilter, searchTerm, sizeFilter]);
+
+  const summaryData = useMemo(() => {
+    if (!enrichedItems) return { total: 0, low: 0, outOfStock: 0, negative: 0 };
+    return enrichedItems.reduce((acc, item) => {
+        acc.total++;
+        if (item.remaining < 0) {
+            acc.negative++;
+        } else if (item.remaining === 0) {
+            acc.outOfStock++;
+        } else if (item.remaining > 0 && item.remaining <= 10) {
+            acc.low++;
         }
+        return acc;
+    }, { total: 0, low: 0, outOfStock: 0, negative: 0 });
+  }, [enrichedItems]);
 
-        const colorComparison = a.color.localeCompare(b.color);
-        if (colorComparison !== 0) {
-            return colorComparison;
-        }
-
-        const sizeAIndex = sizeOrder.indexOf(a.size);
-        const sizeBIndex = sizeOrder.indexOf(b.size);
-
-        if (sizeAIndex === -1 && sizeBIndex === -1) return a.size.localeCompare(b.size);
-        if (sizeAIndex === -1) return 1;
-        if (sizeBIndex === -1) return -1;
-        
-        return sizeAIndex - sizeBIndex;
-    });
-
-  }, [inventoryItems, leads, productTypeFilter, colorFilter, statusFilter]);
+  const getStatusBadge = (remaining: number) => {
+    if (remaining < 0) return <Badge variant="destructive" className="bg-red-600">Negative Stock</Badge>;
+    if (remaining === 0) return <Badge variant="destructive">Out of Stock</Badge>;
+    if (remaining <= 10) return <Badge variant="warning">Low Stock</Badge>;
+    return <Badge variant="success">In Stock</Badge>;
+  };
 
   const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
   const error = inventoryError || leadsError;
@@ -179,48 +222,100 @@ export function InventorySummaryTable() {
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
       <CardHeader>
-        <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-black">Inventory Summary</CardTitle>
-              <CardDescription className="text-gray-600">
-                Number of stocks by Product Type, Color and Size.
-              </CardDescription>
+          <CardTitle className="text-black">Inventory Summary</CardTitle>
+           {isLoading ? (
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pt-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                </div>
             </div>
-             <div className="flex items-center gap-4">
-                <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
-                    <SelectTrigger className="w-[220px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by Product Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    <SelectItem value="All">All Product Types</SelectItem>
-                    {productTypes.map(type => (
+           ) : error ? (
+            <CardDescription className="text-destructive">Could not load summary data.</CardDescription>
+           ) : (
+             <>
+                <CardDescription className="text-gray-600">
+                    An overview of all product variants and their stock levels.
+                </CardDescription>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pt-4">
+                    <Card className="bg-blue-500 text-white">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total Variants</CardTitle>
+                            <Boxes className="h-4 w-4" />
+                        </CardHeader>
+                        <CardContent><div className="text-2xl font-bold">{summaryData.total}</div></CardContent>
+                    </Card>
+                    <Card className="bg-yellow-500 text-white">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+                            <Shirt className="h-4 w-4" />
+                        </CardHeader>
+                        <CardContent><div className="text-2xl font-bold">{summaryData.low}</div></CardContent>
+                    </Card>
+                    <Card className="bg-red-500 text-white">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+                            <PackageX className="h-4 w-4" />
+                        </CardHeader>
+                        <CardContent><div className="text-2xl font-bold">{summaryData.outOfStock}</div></CardContent>
+                    </Card>
+                    <Card className="bg-red-600 text-white">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Negative Stock</CardTitle>
+                            <MinusCircle className="h-4 w-4" />
+                        </CardHeader>
+                        <CardContent><div className="text-2xl font-bold">{summaryData.negative}</div></CardContent>
+                    </Card>
+                </div>
+             </>
+           )}
+          <div className="flex items-center gap-2 pt-4">
+              <Input
+                  placeholder="Search item..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500 max-w-xs"
+              />
+              <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
+                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Item: All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">Item: All</SelectItem>
+                    {[...new Set(inventoryItems?.map(i => i.productType) || [])].sort().map(type => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
-                    </SelectContent>
-                </Select>
-                <Select value={colorFilter} onValueChange={setColorFilter}>
-                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by Color" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    <SelectItem value="All">All Colors</SelectItem>
+                  </SelectContent>
+              </Select>
+              <Select value={colorFilter} onValueChange={setColorFilter}>
+                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Color: All" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {availableColors.map(color => (
-                        <SelectItem key={color} value={color}>{color}</SelectItem>
+                        <SelectItem key={color} value={color}>{color === 'All' ? 'Color: All' : color}</SelectItem>
                     ))}
-                    </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    {statusOptions.map(status => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
+                  </SelectContent>
+              </Select>
+               <Select value={sizeFilter} onValueChange={setSizeFilter}>
+                  <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Size: All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                     {availableSizes.map(size => (
+                        <SelectItem key={size} value={size}>{size === 'All' ? 'Size: All' : size}</SelectItem>
+                     ))}
+                  </SelectContent>
+              </Select>
+              <div className="flex items-center space-x-2">
+                  <Switch id="include-confirmed" />
+                  <Label htmlFor="include-confirmed" className="text-xs">Include CONFIRMED Orders</Label>
+              </div>
+              <Button className="ml-auto bg-blue-500 hover:bg-blue-600"><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
+          </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
         {isLoading ? (
@@ -239,11 +334,10 @@ export function InventorySummaryTable() {
                 <Table>
                   <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="text-white font-bold align-middle">Product Type</TableHead>
+                      <TableHead className="text-white font-bold align-middle">Item</TableHead>
                       <TableHead className="text-white font-bold align-middle">Color</TableHead>
                       <TableHead className="text-white font-bold align-middle">Size</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Stock</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Sold</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Sold Qty</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Remaining</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Status</TableHead>
                     </TableRow>
@@ -254,17 +348,10 @@ export function InventorySummaryTable() {
                             <TableCell className="font-medium text-xs align-middle py-2 text-black">{item.productType}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{item.color}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{item.size}</TableCell>
-                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.stock}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.sold}</TableCell>
-                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.remaining}</TableCell>
+                            <TableCell className={cn("text-center font-bold text-xs align-middle py-2", item.remaining < 0 && "text-destructive")}>{item.remaining}</TableCell>
                             <TableCell className="text-center align-middle py-2">
-                              {item.remaining <= 5 ? (
-                                <Badge variant="destructive">Need to Reorder</Badge>
-                              ) : item.remaining <= 10 ? (
-                                <Badge variant="warning">Low Stock</Badge>
-                              ) : (
-                                <Badge variant="secondary">In Stock</Badge>
-                              )}
+                              {getStatusBadge(item.remaining)}
                             </TableCell>
                         </TableRow>
                     ))}
@@ -277,4 +364,5 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
+
     
