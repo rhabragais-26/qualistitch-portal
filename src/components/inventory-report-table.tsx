@@ -96,8 +96,6 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
     }
 
     if (reportType === 'priority') {
-      if (!leads) return { headers: [], rows: [] };
-
       processedItems = inventoryItems.map(item => {
         const key = `${item.productType}-${item.color}-${item.size}`;
         const sold = soldQuantities.get(key) || 0;
@@ -166,21 +164,19 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
               {description}
             </CardDescription>
           </div>
-          {reportType === 'inventory' && (
-            <div className="flex items-center gap-4">
-              <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
-                <SelectTrigger className="w-[220px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by Product Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Products</SelectItem>
-                  {allProductTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
+              <SelectTrigger className="w-[220px] bg-gray-100 text-black placeholder:text-gray-500">
+                <SelectValue placeholder="Filter by Product Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Products</SelectItem>
+                {allProductTypes.map(type => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
