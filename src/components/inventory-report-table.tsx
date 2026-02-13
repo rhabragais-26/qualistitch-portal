@@ -151,7 +151,7 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
   const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
   const error = inventoryError || leadsError;
 
-  const title = reportType === 'priority' ? 'For Priority Purchase' : 'Inventory Report';
+  const title = reportType === 'priority' ? 'For Priority Purchase' : 'Remaining Stocks';
   const description = reportType === 'priority' 
     ? 'Items with low or negative stock levels (10 or less remaining).'
     : 'Remaining stock quantity breakdown by color and size.';
