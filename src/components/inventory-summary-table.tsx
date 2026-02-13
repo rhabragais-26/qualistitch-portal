@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -310,11 +311,6 @@ export function InventorySummaryTable() {
                      ))}
                   </SelectContent>
               </Select>
-              <div className="flex items-center space-x-2">
-                  <Switch id="include-confirmed" />
-                  <Label htmlFor="include-confirmed" className="text-xs">Include CONFIRMED Orders</Label>
-              </div>
-              <Button className="ml-auto bg-blue-500 hover:bg-blue-600"><Download className="mr-2 h-4 w-4" /> Export CSV</Button>
           </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
@@ -364,5 +360,3 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
-
-    
