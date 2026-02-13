@@ -333,6 +333,7 @@ export function InventorySummaryTable() {
                       <TableHead className="text-white font-bold align-middle">Item</TableHead>
                       <TableHead className="text-white font-bold align-middle">Color</TableHead>
                       <TableHead className="text-white font-bold align-middle">Size</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Stocks</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Sold Qty</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Remaining</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Status</TableHead>
@@ -344,6 +345,7 @@ export function InventorySummaryTable() {
                             <TableCell className="font-medium text-xs align-middle py-2 text-black">{item.productType}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{item.color}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{item.size}</TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.stock}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.sold}</TableCell>
                             <TableCell className={cn("text-center font-bold text-xs align-middle py-2", item.remaining < 0 && "text-destructive")}>{item.remaining}</TableCell>
                             <TableCell className="text-center align-middle py-2">
