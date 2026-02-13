@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -63,9 +64,7 @@ type InventoryReportTableProps = {
 export function InventoryReportTable({ reportType = 'inventory' }: InventoryReportTableProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
-  const [productTypeFilter, setProductTypeFilter] = React.useState(reportType === 'priority' ? 'All' : allProductTypes[0]);
-
-  const productTypes = reportType === 'priority' ? ['All', ...allProductTypes] : allProductTypes;
+  const [productTypeFilter, setProductTypeFilter] = React.useState(allProductTypes[0]);
 
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -108,7 +107,7 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
     }
 
     let filteredItems = processedItems;
-    if (productTypeFilter !== 'All') {
+    if (productTypeFilter) {
         filteredItems = filteredItems.filter(item => item.productType === productTypeFilter);
     }
     
@@ -163,7 +162,7 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
                 <SelectValue placeholder="Filter by Product Type" />
               </SelectTrigger>
               <SelectContent>
-                {productTypes.map(type => (
+                {allProductTypes.map(type => (
                   <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
               </SelectContent>
