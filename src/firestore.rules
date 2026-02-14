@@ -4,6 +4,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    function isFinance() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.position == 'Finance';
+    }
+
+    function isFinanceOrCEO() {
+      let userPosition = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.position;
+      return request.auth != null && (userPosition == 'Finance' || userPosition == 'CEO');
+    }
+
     // User profile documents
     match /users/{userId} {
       // Admins can perform any action on any user document.
@@ -96,5 +105,28 @@ service cloud.firestore {
     match /counters/{counterId} {
       allow write: if request.auth != null;
     }
+
+    // Finance Forecast Rules
+    match /financeCategories/{categoryId} {
+        allow read: if isFinanceOrCEO();
+        allow write: if isFinance();
+    }
+    match /financeAssumptions/{assumptionId} {
+        allow read: if isFinanceOrCEO();
+        allow write: if isFinance();
+    }
+    match /financeForecastMonthly/{monthlyId} {
+        allow read: if isFinanceOrCEO();
+        allow write: if isFinance();
+    }
+    match /financeForecastScheduled/{scheduledId} {
+        allow read: if isFinanceOrCEO();
+        allow write: if isFinance();
+    }
+    match /financeForecastRollups/{rollupId} {
+        allow read: if isFinanceOrCEO();
+        allow write: if isFinance(); // Should be updated by cloud function in real app
+    }
   }
 }
+

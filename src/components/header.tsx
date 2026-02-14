@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -43,6 +44,7 @@ import {
   Camera,
   Gift,
   Newspaper,
+  Target,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -301,6 +303,10 @@ const HeaderMemo = React.memo(function Header({
                       <DropdownMenuItem onClick={() => handleNavigation('/finance/receivables')}>
                         <Receipt className="mr-2" />
                         Receivables
+                      </DropdownMenuItem>
+                       <DropdownMenuItem onClick={() => handleNavigation('/finance/financial-forecast')}>
+                        <Target className="mr-2" />
+                        Financial Forecast
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleNavigation('/finance/operational-expenses')}>
                         <FileText className="mr-2" />
@@ -645,3 +651,4 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
+

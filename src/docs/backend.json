@@ -2,6 +2,70 @@
 
 {
   "entities": {
+    "FinanceCategory": {
+        "title": "FinanceCategory",
+        "type": "object",
+        "description": "Represents a category for financial entries, like Payroll or Utilities.",
+        "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "group": { "type": "string", "enum": ["Fixed", "Variable", "One-Time"] }
+        },
+        "required": ["id", "name", "group"]
+    },
+    "FinanceAssumption": {
+        "title": "FinanceAssumption",
+        "type": "object",
+        "description": "Stores key assumptions for financial forecasting.",
+        "properties": {
+            "grossMarginPercent": { "type": "number", "description": "The target gross margin percentage." },
+            "desiredProfit": { "type": "number", "description": "The desired monthly profit target." },
+            "contingencyPercent": { "type": "number", "description": "A buffer percentage for unexpected expenses." }
+        },
+        "required": ["grossMarginPercent", "desiredProfit", "contingencyPercent"]
+    },
+    "FinanceForecastMonthly": {
+        "title": "FinanceForecastMonthly",
+        "type": "object",
+        "description": "A single forecasted expense for a specific month and category.",
+        "properties": {
+            "id": { "type": "string" },
+            "month": { "type": "string", "format": "yyyy-MM", "description": "The month of the forecast (e.g., '2024-08')." },
+            "categoryId": { "type": "string", "description": "Reference to the FinanceCategory." },
+            "amount": { "type": "number" },
+            "notes": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "month", "categoryId", "amount"]
+    },
+    "FinanceForecastScheduled": {
+        "title": "FinanceForecastScheduled",
+        "type": "object",
+        "description": "A recurring or one-time scheduled expense.",
+        "properties": {
+            "id": { "type": "string" },
+            "date": { "type": "string", "format": "date-time", "description": "The start date or due date of the expense." },
+            "categoryId": { "type": "string", "description": "Reference to the FinanceCategory." },
+            "amount": { "type": "number" },
+            "recurrence": { "type": "string", "enum": ["None", "Monthly", "Quarterly", "Annually"] },
+            "notes": { "type": "string" }
+        },
+        "required": ["id", "date", "categoryId", "amount", "recurrence"]
+    },
+    "FinanceForecastRollup": {
+        "title": "FinanceForecastRollup",
+        "type": "object",
+        "description": "Aggregated monthly forecast data for quick dashboard loading.",
+        "properties": {
+            "month": { "type": "string", "format": "yyyy-MM", "description": "The month of the rollup (e.g., '2024-08')." },
+            "totalForecastExpense": { "type": "number" },
+            "totalsByCategory": {
+                "type": "object",
+                "additionalProperties": { "type": "number" }
+            }
+        },
+        "required": ["month", "totalForecastExpense", "totalsByCategory"]
+    },
     "EmbroideryLog": {
       "title": "EmbroideryLog",
       "type": "object",
@@ -1002,6 +1066,46 @@
   "firestore": {
     "structure": [
       {
+        "path": "/financeCategories/{categoryId}",
+        "definition": {
+          "entityName": "FinanceCategory",
+          "schema": { "$ref": "#/backend/entities/FinanceCategory" },
+          "description": "Stores financial categories."
+        }
+      },
+      {
+        "path": "/financeAssumptions/{assumptionId}",
+        "definition": {
+          "entityName": "FinanceAssumption",
+          "schema": { "$ref": "#/backend/entities/FinanceAssumption" },
+          "description": "Stores financial forecasting assumptions. A single document with a known ID 'current' is used."
+        }
+      },
+      {
+        "path": "/financeForecastMonthly/{monthlyId}",
+        "definition": {
+          "entityName": "FinanceForecastMonthly",
+          "schema": { "$ref": "#/backend/entities/FinanceForecastMonthly" },
+          "description": "Stores individual monthly forecast entries."
+        }
+      },
+      {
+        "path": "/financeForecastScheduled/{scheduledId}",
+        "definition": {
+          "entityName": "FinanceForecastScheduled",
+          "schema": { "$ref": "#/backend/entities/FinanceForecastScheduled" },
+          "description": "Stores scheduled and recurring expenses."
+        }
+      },
+      {
+        "path": "/financeForecastRollups/{rollupId}",
+        "definition": {
+          "entityName": "FinanceForecastRollup",
+          "schema": { "$ref": "#/backend/entities/FinanceForecastRollup" },
+          "description": "Stores aggregated monthly rollup data for dashboards."
+        }
+      },
+      {
         "path": "/embroidery_logs/{logId}",
         "definition": {
           "entityName": "EmbroideryLog",
@@ -1292,3 +1396,4 @@
     "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\\n\\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\\n\\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
   }
 }
+
