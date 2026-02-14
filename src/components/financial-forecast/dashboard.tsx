@@ -8,14 +8,17 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
   LineChart,
   Line,
+  LabelList,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
   Select,
   SelectContent,
@@ -177,7 +180,7 @@ export function FinancialForecastDashboard() {
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="month" tickFormatter={(value) => value.substring(5)} />
                 <YAxis tickFormatter={(value) => `${value / 1000}k`} />
-                <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                 <Line type="monotone" dataKey="totalForecastExpense" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{r: 5}}/>
               </LineChart>
             </ResponsiveContainer>
@@ -192,7 +195,7 @@ export function FinancialForecastDashboard() {
                 <BarChart data={filteredData} layout="vertical" stackOffset="expand">
                     <XAxis type="number" hide />
                     <YAxis dataKey="month" type="category" tickFormatter={(value) => value.substring(5)} hide />
-                    <Tooltip content={<ChartTooltipContent formatter={(value, name, item) => `${(item.payload[name] / item.payload.totalForecastExpense * 100).toFixed(0)}% (${formatCurrency(item.payload[name])})` } />} />
+                    <ChartTooltip content={<ChartTooltipContent formatter={(value, name, item) => `${(item.payload[name] / item.payload.totalForecastExpense * 100).toFixed(0)}% (${formatCurrency(item.payload[name])})` } />} />
                     <Legend />
                     {Object.entries(CATEGORY_COLORS).map(([category, color]) => (
                         <Bar key={category} dataKey={`totalsByCategory.${category}`} stackId="a" fill={color} name={category} />
@@ -211,4 +214,3 @@ export function FinancialForecastDashboard() {
     </div>
   );
 }
-
