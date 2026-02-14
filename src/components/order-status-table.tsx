@@ -486,7 +486,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
           onClick={() => setImageInView(null)}
         >
           <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
-            <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
+            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
              <Button
                 variant="ghost"
                 size="icon"
@@ -574,23 +574,23 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                           <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                              <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
+                                              <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.left} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.right} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backLogo} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backText} disabled />
                                           </TableCell>
                                           <TableCell className="border border-black p-0.5">
                                             <p className="text-xs">{order.remarks}</p>
                                           </TableCell>
                                         </TableRow>
                                       ))}
-                                       <TableRow>
+                                      <TableRow>
                                           <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
                                           <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
                                           <TableCell colSpan={5}></TableCell>
@@ -602,59 +602,65 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                   </div>
                                   
                                   <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
-                                      <div className="space-y-1">
-                                          <p className="font-bold italic">Prepared by:</p>
-                                          <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
-                                          <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                       <div className="space-y-1">
-                                          <p className="font-bold italic">Noted by:</p>
-                                          <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
-                                          <p className="text-center font-bold">Sales Head</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
+                                    <div className="space-y-1">
+                                      <p className="font-bold italic">Prepared by:</p>
+                                      <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                                      <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
 
-                                      <div className="col-span-2 mt-0">
-                                          <p className="font-bold italic">Approved by:</p>
-                                      </div>
+                                    <div className="space-y-1">
+                                      <p className="font-bold italic">Noted by:</p>
+                                      <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
+                                      <p className="text-center font-bold">Sales Head</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
 
+                                    <div className="col-span-2 mt-0">
+                                      <p className="font-bold italic">Approved by:</p>
+                                    </div>
 
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Programming</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Inventory</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Production Line Leader</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Production Supervisor</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                       <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Quality Control</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                      <div className="space-y-1">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Logistics</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
-                                       <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
-                                          <p className="pt-8 border-b border-black"></p>
-                                          <p className="text-center font-semibold">Operations Supervisor</p>
-                                          <p className="text-center">(Name &amp; Signature, Date)</p>
-                                      </div>
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Programming</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Inventory</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Production Line Leader</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Production Supervisor</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Quality Control</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Logistics</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
+
+                                    <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
+                                      <p className="pt-8 border-b border-black"></p>
+                                      <p className="text-center font-semibold">Operations Supervisor</p>
+                                      <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    </div>
                                   </div>
                                 </div>
                                 {layoutsToPrint.map((layout, layoutIndex) => (
@@ -1021,58 +1027,61 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                         {isCollapsibleOpen && (
                           <TableRow>
                               <TableCell colSpan={13} className="p-0">
-                                <div className="p-4 bg-blue-50 rounded-md my-2 grid grid-cols-2 gap-4 max-w-4xl mx-auto">
-                                    <div>
-                                      <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
-                                      <Table>
-                                        <TableHeader>
-                                          <TableRow>
-                                            <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
-                                            <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
-                                            <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
-                                            <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
-                                          </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                          {lead.orders.map((order, index) => (
-                                            <TableRow key={index} className="border-0">
-                                              <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.productType}</TableCell>
-                                              <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.color}</TableCell>
-                                              <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.size}</TableCell>
-                                              <TableCell className="py-1 px-2 text-xs text-black text-right align-middle">{order.quantity}</TableCell>
-                                            </TableRow>
-                                          ))}
-                                        </TableBody>
-                                        {lead.orders && lead.orders.length > 1 && (
-                                          <TableFooter>
-                                              <TableRow>
-                                              <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
-                                              <TableCell className="font-bold text-black text-right pt-1 px-2">{totalQuantity}</TableCell>
-                                              </TableRow>
-                                          </TableFooter>
-                                        )}
-                                      </Table>
-                                    </div>
-                                    {(finalProgrammedLogo?.some(f => f?.url) || finalProgrammedBackDesign?.some(f => f?.url)) && (
-                                        <div>
-                                            <h4 className="font-semibold text-black mb-2 text-center">Final Programmed Designs</h4>
-                                            <div className="flex gap-2 flex-wrap justify-center">
-                                                {finalProgrammedLogo?.map((file, index) => file?.url && (
-                                                    <div key={`fp-logo-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
-                                                        <Image src={file.url} alt={`Final Programmed Logo ${index + 1}`} layout="fill" objectFit="contain" />
-                                                    </div>
-                                                ))}
-                                                {finalProgrammedBackDesign?.map((file, index) => file?.url && (
-                                                    <div key={`fp-back-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
-                                                        <Image src={file.url} alt={`Final Programmed Back Design ${index + 1}`} layout="fill" objectFit="contain" />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                  <div className={cn(
+                                      "p-4 bg-blue-50 rounded-md my-2 grid gap-4 max-w-4xl mx-auto",
+                                      (finalProgrammedLogo?.some(f => f?.url) || finalProgrammedBackDesign?.some(f => f?.url)) ? "grid-cols-2" : "grid-cols-1"
+                                  )}>
+                                      <div>
+                                          <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
+                                          <Table>
+                                              <TableHeader>
+                                                  <TableRow>
+                                                      <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
+                                                      <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
+                                                      <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
+                                                      <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
+                                                  </TableRow>
+                                              </TableHeader>
+                                              <TableBody>
+                                                  {lead.orders.map((order, index) => (
+                                                      <TableRow key={index} className="border-0">
+                                                          <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.productType}</TableCell>
+                                                          <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.color}</TableCell>
+                                                          <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.size}</TableCell>
+                                                          <TableCell className="py-1 px-2 text-xs text-black text-right align-middle">{order.quantity}</TableCell>
+                                                      </TableRow>
+                                                  ))}
+                                              </TableBody>
+                                              {lead.orders && lead.orders.length > 1 && (
+                                                  <TableFooter>
+                                                      <TableRow>
+                                                          <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
+                                                          <TableCell className="font-bold text-black text-right pt-1 px-2">{totalQuantity}</TableCell>
+                                                      </TableRow>
+                                                  </TableFooter>
+                                              )}
+                                          </Table>
+                                      </div>
+                                      {(finalProgrammedLogo?.some(f => f?.url) || finalProgrammedBackDesign?.some(f => f?.url)) && (
+                                          <div>
+                                              <h4 className="font-semibold text-black mb-2 text-center">Final Programmed Designs</h4>
+                                              <div className="flex gap-2 flex-wrap justify-center">
+                                                  {finalProgrammedLogo?.map((file, index) => file?.url && (
+                                                      <div key={`fp-logo-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
+                                                          <Image src={file.url} alt={`Final Programmed Logo ${index + 1}`} layout="fill" objectFit="contain" />
+                                                      </div>
+                                                  ))}
+                                                  {finalProgrammedBackDesign?.map((file, index) => file?.url && (
+                                                      <div key={`fp-back-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
+                                                          <Image src={file.url} alt={`Final Programmed Back Design ${index + 1}`} layout="fill" objectFit="contain" />
+                                                      </div>
+                                                  ))}
+                                              </div>
+                                          </div>
+                                      )}
+                                  </div>
                               </TableCell>
-                            </TableRow>
+                          </TableRow>
                         )}
                     </React.Fragment>
                   );
@@ -1086,4 +1095,4 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   );
 }
 
-    
+```
