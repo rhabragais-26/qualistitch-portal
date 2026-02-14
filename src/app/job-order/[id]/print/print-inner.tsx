@@ -180,7 +180,7 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
             } else {
                 img.onload = () => resolve();
                 img.onerror = () => {
-                    console.error(`Image failed to load for printing: ${img.src}`);
+                    console.error(`Image failed to load for printing: ${'\'\'\''}img.src{'\'\'\''}`);
                     resolve();
                 };
             }
@@ -414,7 +414,7 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
             {lead.importantNotes && (
                 <div className="mt-4 mb-4">
                     <p className="text-red-500 font-bold">Important Notes:</p>
-                    <p className="font-bold whitespace-pre-wrap">{lead.importantNotes}</p>
+                    <p className="font-bold whitespace-pre-wrap pl-4">{lead.importantNotes}</p>
                 </div>
             )}
 
