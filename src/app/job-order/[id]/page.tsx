@@ -79,6 +79,7 @@
       dstBackLogo?: string;
       dstBackText?: string;
       namedOrders?: NamedOrder[];
+      importantNotes?: string;
       logoLeftImage?: string | null;
       logoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
       logoLeftImageUploadTime?: string | null;
@@ -163,7 +164,6 @@
       layouts?: Layout[];
       publiclyPrintable?: boolean;
       lastModifiedBy?: string;
-      importantNotes?: string;
     };
 
     const courierOptions = ['Lalamove', 'J&T', 'LBC', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
@@ -295,7 +295,6 @@
           return {
             ...l,
             recipientName: l.recipientName || '',
-            importantNotes: l.importantNotes || '',
             orders: (l.orders || []).map(o => ({
               productType: o.productType,
               color: o.color,
@@ -318,6 +317,7 @@
                 dstLogoRight: layout.dstLogoRight || '',
                 dstBackLogo: layout.dstBackLogo || '',
                 dstBackText: layout.dstBackText || '',
+                importantNotes: layout.importantNotes || '',
                 namedOrders: (layout.namedOrders || []).map(no => ({
                     id: no.id,
                     name: no.name || '',
@@ -359,10 +359,10 @@
           }));
           
           const initializedLayouts = fetchedLead.layouts && fetchedLead.layouts.length > 0 
-            ? fetchedLead.layouts.map(l => ({ ...l, namedOrders: l.namedOrders || [], id: l.id || uuidv4(), layoutImageUploadTime: l.layoutImageUploadTime || null, layoutImageUploadedBy: l.layoutImageUploadedBy || null }))
-            : [{ id: uuidv4(), layoutImage: '', layoutImageUploadTime: null, layoutImageUploadedBy: null, dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
+            ? fetchedLead.layouts.map(l => ({ ...l, namedOrders: l.namedOrders || [], id: l.id || uuidv4(), importantNotes: l.importantNotes || '', layoutImageUploadTime: l.layoutImageUploadTime || null, layoutImageUploadedBy: l.layoutImageUploadedBy || null }))
+            : [{ id: uuidv4(), layoutImage: '', layoutImageUploadTime: null, layoutImageUploadedBy: null, dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [], importantNotes: '' }];
 
-          setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up', layouts: initializedLayouts, importantNotes: fetchedLead.importantNotes || '' });
+          setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up', layouts: initializedLayouts });
 
           let initialDate;
           if (fetchedLead.deliveryDate) {
@@ -511,7 +511,6 @@
             lastModifiedBy: userProfile.nickname,
             layouts: layoutsToSave,
             publiclyPrintable: true,
-            importantNotes: lead.importantNotes || '',
         };
 
         try {
@@ -617,7 +616,7 @@
 
       const addLayout = () => {
         if (lead) {
-          const newLayouts = [...(lead.layouts || []), { id: uuidv4(), layoutImage: '', layoutImageUploadTime: null, dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
+          const newLayouts = [...(lead.layouts || []), { id: uuidv4(), layoutImage: '', layoutImageUploadTime: null, dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [], importantNotes: '' }];
           setLead({ ...lead, layouts: newLayouts });
           setCurrentPage(newLayouts.length);
         }
@@ -1026,20 +1025,12 @@
                 </tbody>
             </table>
             
-            <div className="mt-6 mb-4">
+             <div className="mt-6 mb-4">
                 <label htmlFor="important-notes" className="text-red-500 font-bold no-print">Important Notes:</label>
-                <div className="print-only">
-                    {lead.importantNotes && (
-                        <>
-                            <p className="text-red-500 font-bold">Important Notes:</p>
-                            <p className="font-bold whitespace-pre-wrap pl-12">{lead.importantNotes}</p>
-                        </>
-                    )}
-                </div>
                 <Textarea
                     id="important-notes"
-                    value={lead.importantNotes || ''}
-                    onChange={(e) => setLead(currentLead => currentLead ? ({ ...currentLead, importantNotes: e.target.value }) : null)}
+                    value={currentLayout.importantNotes || ''}
+                    onChange={(e) => handleLayoutChange(currentLayoutIndex, 'importantNotes', e.target.value)}
                     className="mt-1 no-print"
                     readOnly={!canEdit}
                 />

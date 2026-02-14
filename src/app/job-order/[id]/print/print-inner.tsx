@@ -42,6 +42,7 @@ type Layout = {
   dstLogoRight?: string;
   dstBackLogo?: string;
   dstBackText?: string;
+  importantNotes?: string;
   namedOrders: NamedOrder[];
 }
 
@@ -65,7 +66,6 @@ type Lead = {
   joNumber?: number;
   layouts?: Layout[];
   publiclyPrintable?: boolean;
-  importantNotes?: string;
 };
 
 export default function JobOrderPrintPage({ id: _id }: { id: string }) {
@@ -229,6 +229,7 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
            layout.dstLogoRight || 
            layout.dstBackLogo || 
            layout.dstBackText || 
+           layout.importantNotes ||
            (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
   };
   
@@ -409,10 +410,10 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
                 </tbody>
             </table>
 
-            {lead.importantNotes && (
-                <div className="mt-4 mb-4">
-                    <p className="font-bold" style={{ color: 'red' }}>Important Notes:</p>
-                    <p className="font-bold whitespace-pre-wrap pl-12">{lead.importantNotes}</p>
+            {layout.importantNotes && (
+                <div className="mt-4 mb-4 flex items-baseline">
+                    <p className="font-bold shrink-0" style={{ color: 'red' }}>Important Notes:&nbsp;</p>
+                    <p className="font-bold whitespace-pre-wrap">{layout.importantNotes}</p>
                 </div>
             )}
 
