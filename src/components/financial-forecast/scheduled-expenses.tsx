@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -158,10 +157,10 @@ export function ScheduledExpenses() {
     const canEdit = isAdmin || userProfile?.position === 'Finance';
 
     const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeCategories'), orderBy('name')) : null, [firestore]);
-    const { data: categories, isLoading: categoriesLoading } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
+    const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
 
     const scheduledQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeForecastScheduled'), orderBy('date', 'desc')) : null, [firestore]);
-    const { data: scheduledExpenses, isLoading: expensesLoading, refetch } = useCollection<FinanceForecastScheduled>(scheduledQuery, undefined, { listen: false });
+    const { data: scheduledExpenses, isLoading: expensesLoading, error: expensesError, refetch } = useCollection<FinanceForecastScheduled>(scheduledQuery, undefined, { listen: false });
 
     const handleSave = async (data: FinanceForecastScheduled) => {
         if (!firestore) return;
@@ -215,6 +214,7 @@ export function ScheduledExpenses() {
     };
 
     const isLoading = categoriesLoading || expensesLoading;
+    const error = categoriesError || expensesError;
 
     return (
         <div className="mt-6">
@@ -270,7 +270,12 @@ export function ScheduledExpenses() {
             </Card>
 
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                 <ScheduledExpenseForm onSave={handleSave} existingRecord={editingRecord} onClose={() => setIsFormOpen(false)} />
+                <DialogContent>
+                    <DialogHeader>
+                         <DialogTitle>{editingRecord ? 'Edit Scheduled Expense' : 'Add Scheduled Expense'}</DialogTitle>
+                    </DialogHeader>
+                    <ScheduledExpenseForm onSave={handleSave} existingRecord={editingRecord} onClose={() => setIsFormOpen(false)} />
+                </DialogContent>
             </Dialog>
 
             <AlertDialog open={!!deletingRecord} onOpenChange={() => setDeletingRecord(null)}>
