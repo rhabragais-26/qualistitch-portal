@@ -203,6 +203,7 @@ export function FinancialForecastDashboard() {
         <Card className="lg:col-span-3 rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle>Forecasted Expenses Trend</CardTitle>
+            <CardDescription>Monthly forecasted expense trend.</CardDescription>
           </CardHeader>
           <CardContent className="h-[350px] w-full">
             <ChartContainer config={chartConfig} className="w-full h-full">
@@ -219,6 +220,7 @@ export function FinancialForecastDashboard() {
         <Card className="lg:col-span-2 rounded-2xl shadow-sm">
           <CardHeader>
             <CardTitle>Expense Breakdown by Category</CardTitle>
+            <CardDescription>Breakdown of expenses for the selected period.</CardDescription>
           </CardHeader>
           <CardContent className="h-[350px] w-full">
              <ChartContainer config={chartConfig} className="w-full h-full">
@@ -237,9 +239,9 @@ export function FinancialForecastDashboard() {
       </div>
       
        <Card className="rounded-2xl shadow-sm bg-primary text-primary-foreground text-center p-6">
-        <h3 className="text-lg font-semibold uppercase tracking-wider">Minimum Monthly Sales Target</h3>
-        <p className="text-5xl font-bold my-2">{formatCurrency(revenueTarget / (filteredData.length || 1))}</p>
-        <p className="text-sm opacity-80">Required Revenue to Meet Profit Goals</p>
+        <h3 className="text-base font-semibold uppercase tracking-wider">Minimum Monthly Sales Target</h3>
+        <p className="text-4xl font-bold my-2">{formatCurrency(revenueTarget / (filteredData.length || 1))}</p>
+        <p className="text-xs opacity-80">Required Revenue to Meet Profit Goals</p>
       </Card>
     </div>
   );
