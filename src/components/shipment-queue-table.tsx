@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, setDoc, getDocs, where } from 'firebase/firestore';
@@ -127,6 +126,7 @@ type ShipmentQueueTableRowGroupProps = {
   packingLead: { lead: Lead; isPacking: boolean } | null;
   setPackingLead: React.Dispatch<React.SetStateAction<{ lead: Lead; isPacking: boolean; } | null>>;
   handleWaybillPrintedChange: (leadId: string, checked: boolean) => void;
+  handleJoReceivedChange: (leadId: string, checked: boolean) => void;
   handleOpenWaybillDialog: (lead: Lead) => void;
   waybillNumbers: Record<string, string[]>;
   setShippingLead: React.Dispatch<React.SetStateAction<Lead | null>>;
@@ -151,6 +151,7 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
     packingLead,
     setPackingLead,
     handleWaybillPrintedChange,
+    handleJoReceivedChange,
     handleOpenWaybillDialog,
     waybillNumbers,
     setShippingLead,
@@ -232,10 +233,10 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
                 <TableCell className="text-center align-middle py-2">
                     <div className="flex flex-col items-center justify-center gap-1">
                         <Checkbox
-                        checked={lead.isJoHardcopyReceived || false}
-                        onCheckedChange={(checked) => handleWaybillPrintedChange(lead.id, !!checked)}
-                        disabled={isReadOnly || isCompleted}
-                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
+                            checked={lead.isJoHardcopyReceived || false}
+                            onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                            disabled={isReadOnly || isCompleted}
+                            className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                         />
                         {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                     </div>
@@ -375,7 +376,7 @@ const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary"
 export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: ShipmentQueueTableProps) {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads } = useCollection<Lead>(leadsQuery);
+  const { data: leads, refetch: refetchLeads } = useCollection<Lead>(leadsQuery);
 
   const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
   const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery);
@@ -457,6 +458,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
       await updateDoc(leadDocRef, {
         isWaybillPrinted: checked,
       });
+      refetchLeads();
     } catch (e: any) {
       console.error("Error updating waybill status:", e);
       toast({
@@ -533,6 +535,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
             isSalesAuditRequested: true,
             salesAuditRequestedTimestamp: new Date().toISOString(),
         });
+        refetchLeads();
         toast({
             title: 'Sales Audit Requested',
             description: `Order for J.O. ${formatJoNumber(lead.joNumber)} has been sent for sales audit.`,
@@ -556,6 +559,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
         qualityApprovedTimestamp: new Date().toISOString(),
         isRecheckingQuality: false,
       });
+      refetchLeads();
       toast({
         title: 'Quality Approved',
         description: `Order for J.O. ${formatJoNumber(lead.joNumber)} has been approved.`,
@@ -606,6 +610,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
       }
 
       await updateDoc(leadDocRef, updateData);
+      refetchLeads();
     } catch (e: any) {
       console.error("Error updating packed status:", e);
       toast({
@@ -616,7 +621,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     } finally {
         setPackingLead(null);
     }
-  }, [firestore, toast]);
+  }, [firestore, toast, refetchLeads]);
 
   const handleConfirmShip = async () => {
     if (!shippingLead || !firestore) return;
@@ -640,6 +645,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
         shipmentStatus: 'Shipped',
         shippedTimestamp: new Date().toISOString(),
       });
+      refetchLeads();
       toast({
         title: 'Order Shipped',
         description: `Order for J.O. ${formatJoNumber(shippingLead.joNumber)} has been marked as shipped.`,
@@ -664,6 +670,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
         shipmentStatus: 'Delivered',
         deliveredTimestamp: new Date().toISOString(),
       });
+      refetchLeads();
       toast({
         title: 'Order Delivered',
         description: `Order for J.O. ${formatJoNumber(deliveringLead.joNumber)} has been marked as delivered.`,
@@ -699,13 +706,15 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                 isJoHardcopyReceived: true,
                 joHardcopyReceivedTimestamp: new Date().toISOString()
             });
+            refetchLeads();
+            toast({ title: 'Status Updated' });
         } catch (e: any) {
             console.error("Error updating J.O. receipt status:", e);
             toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
         } finally {
             setJoReceivedConfirmation(null);
         }
-    }, [joReceivedConfirmation, firestore, toast]);
+    }, [joReceivedConfirmation, firestore, toast, refetchLeads]);
 
     const confirmUncheck = useCallback(async () => {
         if (!uncheckConfirmation || !firestore) return;
@@ -714,13 +723,15 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
         try {
             const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
             await updateDoc(leadDocRef, { [field]: false, [timestampField]: null });
+            refetchLeads();
+            toast({ title: 'Status Reverted' });
         } catch (e: any) {
             console.error(`Error unchecking ${field}:`, e);
             toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
         } finally {
             setUncheckConfirmation(null);
         }
-    }, [uncheckConfirmation, firestore, toast]);
+    }, [uncheckConfirmation, firestore, toast, refetchLeads]);
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -887,6 +898,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                           packingLead={packingLead}
                           setPackingLead={setPackingLead}
                           handleWaybillPrintedChange={handleWaybillPrintedChange}
+                          handleJoReceivedChange={handleJoReceivedChange}
                           handleOpenWaybillDialog={handleOpenWaybillDialog}
                           waybillNumbers={waybillNumbers}
                           setShippingLead={setShippingLead}
