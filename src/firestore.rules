@@ -108,25 +108,24 @@ service cloud.firestore {
 
     // Finance Forecast Rules
     match /financeCategories/{categoryId} {
-        allow read: if isFinanceOrCEO();
+        allow read: if request.auth != null;
         allow write: if isFinance();
     }
     match /financeAssumptions/{assumptionId} {
-        allow read: if isFinanceOrCEO();
+        allow read: if request.auth != null;
         allow write: if isFinance();
     }
     match /financeForecastMonthly/{monthlyId} {
-        allow read: if isFinanceOrCEO();
+        allow read: if request.auth != null;
         allow write: if isFinance();
     }
     match /financeForecastScheduled/{scheduledId} {
-        allow read: if isFinanceOrCEO();
+        allow read: if request.auth != null;
         allow write: if isFinance();
     }
     match /financeForecastRollups/{rollupId} {
-        allow read: if isFinanceOrCEO();
+        allow read: if request.auth != null;
         allow write: if isFinance(); // Should be updated by cloud function in real app
     }
   }
 }
-
