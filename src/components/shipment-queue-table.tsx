@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, setDoc, getDocs, where } from 'firebase/firestore';
@@ -298,7 +299,7 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
                 <TableCell className="text-xs text-center">{lead.courier}</TableCell>
                 <TableCell className="text-center">
                     <Checkbox
-                        checked={lead.isWaybillPrinted}
+                        checked={lead.isWaybillPrinted && lead.isSalesAuditComplete}
                         onCheckedChange={(checked) => handleWaybillPrintedChange(lead.id, !!checked)}
                         disabled={isReadOnly || isCompleted || !lead.isSalesAuditComplete}
                         className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
@@ -376,10 +377,10 @@ const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary"
 export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: ShipmentQueueTableProps) {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, refetch: refetchLeads } = useCollection<Lead>(leadsQuery);
+  const { data: leads, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
-  const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery);
+  const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery, undefined, { listen: false });
 
   const { toast } = useToast();
   const router = useRouter();
@@ -1080,3 +1081,5 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     </>
   );
 }
+
+    
