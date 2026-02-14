@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Edit, Trash2, PlusCircle, Checkbox, X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
@@ -211,7 +211,7 @@ export function ScheduledExpenses() {
         if (isPast(new Date(record.date))) {
           return <Badge variant="destructive">Overdue</Badge>;
         }
-        return <Badge variant="success">Upcoming</Badge>;
+        return <Badge className="bg-green-600">Upcoming</Badge>;
     };
 
     const isLoading = categoriesLoading || expensesLoading;
@@ -288,5 +288,3 @@ export function ScheduledExpenses() {
         </div>
     );
 }
-
-    
