@@ -583,7 +583,7 @@
         if (lead && lead.layouts) {
             const newLayouts = [...lead.layouts];
             if (newLayouts[layoutIndex] && newLayouts[layoutIndex].namedOrders) {
-                const newNamedOrders = [...newLayouts[layoutIndex].namedOrders];
+                const newNamedOrders = [...newLayouts[layoutIndex].namedOrders!];
                 if (newNamedOrders[orderIndex]) {
                     (newNamedOrders[orderIndex] as any)[field] = value;
                     newLayouts[layoutIndex] = { ...newLayouts[layoutIndex], namedOrders: newNamedOrders };
@@ -608,7 +608,7 @@
          if (lead && lead.layouts) {
             const newLayouts = [...lead.layouts];
             if (newLayouts[layoutIndex] && newLayouts[layoutIndex].namedOrders) {
-                const newNamedOrders = newLayouts[layoutIndex].namedOrders.filter((_, i) => i !== orderIndex);
+                const newNamedOrders = newLayouts[layoutIndex].namedOrders!.filter((_, i) => i !== orderIndex);
                 newLayouts[layoutIndex] = { ...newLayouts[layoutIndex], namedOrders: newNamedOrders };
                 setLead({ ...lead, layouts: newLayouts });
             }
@@ -1029,8 +1029,12 @@
             <div className="mt-6 mb-4">
                 <label htmlFor="important-notes" className="text-red-500 font-bold no-print">Important Notes:</label>
                 <div className="print-only">
-                    <p className="text-red-500 font-bold">Important Notes:</p>
-                    <p className="font-bold whitespace-pre-wrap">{lead.importantNotes}</p>
+                    {lead.importantNotes && (
+                        <>
+                            <p className="text-red-500 font-bold">Important Notes:</p>
+                            <p className="font-bold whitespace-pre-wrap pl-12">{lead.importantNotes}</p>
+                        </>
+                    )}
                 </div>
                 <Textarea
                     id="important-notes"
@@ -1092,10 +1096,6 @@
             margin-top: 0 !important;
             padding: 1rem !important;
             max-width: 100% !important;
-            color: black !important;
-          }
-          .printable-area * {
-            color: black !important;
           }
           .print-only {
             display: inline-block !important;
@@ -1121,5 +1121,3 @@
     </div>
   );
 }
-
-    

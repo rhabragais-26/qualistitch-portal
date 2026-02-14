@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useFirestore } from '@/firebase';
@@ -180,7 +178,7 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
             } else {
                 img.onload = () => resolve();
                 img.onerror = () => {
-                    console.error(`Image failed to load for printing: ${'\'\'\''}img.src{'\'\'\''}`);
+                    console.error(`Image failed to load for printing: '${'\'\''}${img.src}${'\'\''}`);
                     resolve();
                 };
             }
@@ -413,8 +411,8 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
 
             {lead.importantNotes && (
                 <div className="mt-4 mb-4">
-                    <p className="text-red-500 font-bold">Important Notes:</p>
-                    <p className="font-bold whitespace-pre-wrap pl-4">{lead.importantNotes}</p>
+                    <p className="font-bold" style={{ color: 'red' }}>Important Notes:</p>
+                    <p className="font-bold whitespace-pre-wrap pl-12">{lead.importantNotes}</p>
                 </div>
             )}
 
@@ -458,10 +456,6 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
             margin: 0 !important;
             padding: 0 !important;
             max-width: 100% !important;
-            color: black !important;
-          }
-          .printable-area *, .printable-area h1, .printable-area p, .printable-area th, .printable-area td {
-            color: black !important;
           }
           .bg-gray-200 {
             background-color: #e5e7eb !important;
@@ -481,8 +475,3 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
     </div>
   );
 }
-
-
-
-
-    
