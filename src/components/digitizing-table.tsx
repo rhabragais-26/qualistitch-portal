@@ -542,68 +542,67 @@ const JoPreviewContent = React.memo(({ viewingJoLead, usersData, getContactDispl
                                 <p className="text-center">(Name &amp; Signature, Date)</p>
                             </div>
                         </div>
-                        </div>
-                        {layoutsToPrint.map((layout, layoutIndex) => (
-                            <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
-                                <div className="text-left mb-4">
-                                    <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
-                                </div>
-                                
-                                    {layout.layoutImage && (
-                                    <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
-                                    <Image 
-                                        src={layout.layoutImage} 
-                                        alt={`Layout ${layoutIndex + 1}`} 
-                                        layout="fill"
-                                        objectFit="contain"
-                                    />
-                                    </div>
-                                )}
-                                
-                                <h2 className="text-2xl font-bold text-center mb-4">
-                                {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
-                                </h2>
-                                <table className="w-full border-collapse border border-black mb-6">
-                                    <tbody>
-                                        <tr>
-                                            <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
-                                            <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
-                                        </tr>
-                                        <tr>
-                                            <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
-                                            <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                    
-                                <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
-                                <table className="w-full border-collapse border border-black text-xs">
-                                    <thead>
-                                    <tr className="bg-gray-200">
-                                        <th className="border border-black p-1 text-center align-middle">No.</th>
-                                        <th className="border border-black p-1 text-center align-middle">Names</th>
-                                        <th className="border border-black p-1 text-center align-middle">Color</th>
-                                        <th className="border border-black p-1 text-center align-middle">Sizes</th>
-                                        <th className="border border-black p-1 text-center align-middle">Qty</th>
-                                        <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
-                                    </tr>
-                                    </thead>
-                                    <TableBody>
-                                    {layout.namedOrders?.map((order, orderIndex) => (
-                                        <TableRow key={orderIndex}>
-                                        <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
-                                        <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
-                                        <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
-                                        <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
-                                        <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
-                                        <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                    </TableBody>
-                                </table>
-                            </div>
-                            ))}
                     </div>
+                    {layoutsToPrint.map((layout, layoutIndex) => (
+                        <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
+                            <div className="text-left mb-4">
+                                <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
+                            </div>
+                            
+                                {layout.layoutImage && (
+                                <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
+                                <Image 
+                                    src={layout.layoutImage} 
+                                    alt={`Layout ${layoutIndex + 1}`} 
+                                    layout="fill"
+                                    objectFit="contain"
+                                />
+                                </div>
+                            )}
+                            
+                            <h2 className="text-2xl font-bold text-center mb-4">
+                            {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
+                            </h2>
+                            <table className="w-full border-collapse border border-black mb-6">
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
+                                        <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
+                                        <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                
+                            <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
+                            <table className="w-full border-collapse border border-black text-xs">
+                                <thead>
+                                <tr className="bg-gray-200">
+                                    <th className="border border-black p-1 text-center align-middle">No.</th>
+                                    <th className="border border-black p-1 text-center align-middle">Names</th>
+                                    <th className="border border-black p-1 text-center align-middle">Color</th>
+                                    <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                                    <th className="border border-black p-1 text-center align-middle">Qty</th>
+                                    <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
+                                </tr>
+                                </thead>
+                                <TableBody>
+                                {layout.namedOrders?.map((order, orderIndex) => (
+                                    <TableRow key={orderIndex}>
+                                    <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
+                                    <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
+                                    <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
+                                    <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
+                                    <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
+                                    <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
+                                    </TableRow>
+                                ))}
+                                </TableBody>
+                            </table>
+                        </div>
+                        ))}
                 </div>
             </ScrollArea>
         </DialogContent>
@@ -2062,9 +2061,10 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
       </CardContent>
       {viewingJoLead && (
         <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
-            <JoPreviewContent getContactDisplay={getContactDisplay} formatJoNumberUtil={formatJoNumber} viewingJoLead={viewingJoLead} usersData={usersData} />
+            <JoPreviewContent getContactDisplay={getContactDisplay} formatJoNumberUtil={formatJoNumberUtil} viewingJoLead={viewingJoLead} usersData={usersData} />
         </Dialog>
       )}
     </>
   );
 }
+
