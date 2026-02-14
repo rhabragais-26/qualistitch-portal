@@ -831,7 +831,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                         />
                     </div>
                 </div>
-                <div className="w-full text-right">
+                 <div className="w-full text-right">
                   {filterType === 'COMPLETED' ? (
                       <Link href="/logistics/shipment-queue" className="text-sm text-primary hover:underline">
                           View Shipment Queue
@@ -850,7 +850,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
             <Table>
               <TableHeader className="bg-neutral-800">
                 <TableRow>
-                  <TableHead className="text-white font-bold text-xs text-center align-middle">Customer</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
                   <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
