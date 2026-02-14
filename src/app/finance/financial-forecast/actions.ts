@@ -2,8 +2,8 @@
 'use server';
 
 import { firestore } from '@/firebase/admin';
-import { collection, query, where, getDocs, doc, setDoc, getDocs as getClientDocs, collection as clientCollection, Query, Timestamp } from 'firebase/firestore';
-import { startOfMonth, endOfMonth, addMonths, isBefore, isEqual, addWeeks, format } from 'date-fns';
+import { collection, query, where, getDocs, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { startOfMonth, endOfMonth, addMonths, isBefore, isEqual, addWeeks, format, parse } from 'date-fns';
 
 type FinanceForecastMonthly = {
   month: string;
@@ -28,7 +28,7 @@ type FinanceForecastScheduled = {
  */
 export async function updateMonthlyForecastRollup(month: string): Promise<void> {
   try {
-    const monthStart = startOfMonth(new Date(`${month}-02`)); // Use day 2 to avoid timezone issues
+    const monthStart = startOfMonth(parse(month, 'yyyy-MM', new Date()));
     const monthEnd = endOfMonth(monthStart);
 
     // --- 1. Fetch Manual Monthly Entries ---
@@ -108,3 +108,5 @@ export async function updateMonthlyForecastRollup(month: string): Promise<void> 
     throw new Error('Failed to update financial rollup data.');
   }
 }
+
+    

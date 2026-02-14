@@ -31,8 +31,8 @@ import { Banknote, TrendingUp, PiggyBank, Percent, Download } from 'lucide-react
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, limit } from 'firebase/firestore';
-import { format, subMonths, addMonths } from 'date-fns';
+import { collection, doc, query, where, orderBy, limit } from 'firebase/firestore';
+import { format, addMonths } from 'date-fns';
 
 type FinanceAssumption = {
   grossMarginPercent: number;
@@ -77,8 +77,6 @@ export function FinancialForecastDashboard() {
       if (!firestore) return null;
       const months = parseInt(dateRange, 10);
       const startMonth = format(new Date(), 'yyyy-MM');
-      // We fetch one extra month in case the last month has recurring expenses affecting the rollup
-      const endMonth = format(addMonths(new Date(), months), 'yyyy-MM'); 
       return query(
           collection(firestore, 'financeForecastRollups'),
           where('month', '>=', startMonth),
@@ -213,13 +211,15 @@ export function FinancialForecastDashboard() {
           </CardHeader>
           <CardContent className="h-[350px] w-full">
             <ChartContainer config={chartConfig} className="w-full h-full">
-              <LineChart data={filteredData}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" tickFormatter={(value) => format(new Date(`${value}-02`), 'MMM')} />
-                <YAxis tickFormatter={(value) => `${value / 1000}k`} />
-                <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
-                <Line type="monotone" dataKey="combinedForecastExpense" name="Total Expense" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{r: 5}}/>
-              </LineChart>
+                <ResponsiveContainer>
+                    <LineChart data={filteredData}>
+                        <CartesianGrid vertical={false} />
+                        <XAxis dataKey="month" tickFormatter={(value) => format(new Date(`${value}-02`), 'MMM')} />
+                        <YAxis tickFormatter={(value) => `${value / 1000}k`} />
+                        <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                        <Line type="monotone" dataKey="combinedForecastExpense" name="Total Expense" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{r: 5}}/>
+                    </LineChart>
+                </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -230,15 +230,17 @@ export function FinancialForecastDashboard() {
           </CardHeader>
           <CardContent className="h-[350px] w-full">
              <ChartContainer config={chartConfig} className="w-full h-full">
-                <BarChart data={filteredData} layout="vertical" stackOffset="expand">
-                    <XAxis type="number" hide />
-                    <YAxis dataKey="month" type="category" tickFormatter={(value) => format(new Date(`${value}-02`), 'MMM')} hide />
-                    <ChartTooltip content={<ChartTooltipContent formatter={(value, name, item) => `${item.payload.totalsByCategory[name] ? (item.payload.totalsByCategory[name] / item.payload.combinedForecastExpense * 100).toFixed(0) : 0}% (${formatCurrency(item.payload.totalsByCategory[name] || 0)})` } />} />
-                    <Legend />
-                    {Object.entries(CATEGORY_COLORS).map(([category, color]) => (
-                        <Bar key={category} dataKey={`totalsByCategory.${category}`} stackId="a" fill={color} name={category} />
-                    ))}
-                </BarChart>
+                <ResponsiveContainer>
+                    <BarChart data={filteredData} layout="vertical" stackOffset="expand">
+                        <XAxis type="number" hide />
+                        <YAxis dataKey="month" type="category" tickFormatter={(value) => format(new Date(`${value}-02`), 'MMM')} hide />
+                        <ChartTooltip content={<ChartTooltipContent formatter={(value, name, item) => `${item.payload.totalsByCategory[name] ? (item.payload.totalsByCategory[name] / item.payload.combinedForecastExpense * 100).toFixed(0) : 0}% (${formatCurrency(item.payload.totalsByCategory[name] || 0)})` } />} />
+                        <Legend />
+                        {Object.entries(CATEGORY_COLORS).map(([category, color]) => (
+                            <Bar key={category} dataKey={`totalsByCategory.${category}`} stackId="a" fill={color} name={category} />
+                        ))}
+                    </BarChart>
+                </ResponsiveContainer>
              </ChartContainer>
           </CardContent>
         </Card>
@@ -252,3 +254,5 @@ export function FinancialForecastDashboard() {
     </div>
   );
 }
+
+    
