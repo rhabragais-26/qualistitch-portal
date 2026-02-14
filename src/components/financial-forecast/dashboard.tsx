@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -58,6 +57,37 @@ const CATEGORY_COLORS = {
   Logistics: "hsl(var(--chart-4))",
   'Mgr.': "hsl(var(--chart-5))",
   Other: "hsl(var(--muted))",
+};
+
+const chartConfig = {
+  totalForecastExpense: {
+    label: "Total Expense",
+    color: "hsl(var(--chart-1))",
+  },
+  Payroll: {
+    label: "Payroll",
+    color: "hsl(var(--chart-1))",
+  },
+  Materials: {
+    label: "Materials",
+    color: "hsl(var(--chart-2))",
+  },
+  Marketing: {
+    label: "Marketing",
+    color: "hsl(var(--chart-3))",
+  },
+  Logistics: {
+    label: "Logistics",
+    color: "hsl(var(--chart-4))",
+  },
+  "Mgr.": {
+    label: "Mgr.",
+    color: "hsl(var(--chart-5))",
+  },
+  Other: {
+    label: "Other",
+    color: "hsl(var(--muted))",
+  },
 };
 
 
@@ -175,7 +205,7 @@ export function FinancialForecastDashboard() {
             <CardTitle>Forecasted Expenses Trend</CardTitle>
           </CardHeader>
           <CardContent className="h-[350px] w-full">
-            <ResponsiveContainer>
+            <ChartContainer config={chartConfig} className="w-full h-full">
               <LineChart data={filteredData}>
                 <CartesianGrid vertical={false} />
                 <XAxis dataKey="month" tickFormatter={(value) => value.substring(5)} />
@@ -183,7 +213,7 @@ export function FinancialForecastDashboard() {
                 <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                 <Line type="monotone" dataKey="totalForecastExpense" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{r: 5}}/>
               </LineChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
         <Card className="lg:col-span-2 rounded-2xl shadow-sm">
@@ -191,17 +221,17 @@ export function FinancialForecastDashboard() {
             <CardTitle>Expense Breakdown by Category</CardTitle>
           </CardHeader>
           <CardContent className="h-[350px] w-full">
-             <ResponsiveContainer>
+             <ChartContainer config={chartConfig} className="w-full h-full">
                 <BarChart data={filteredData} layout="vertical" stackOffset="expand">
                     <XAxis type="number" hide />
                     <YAxis dataKey="month" type="category" tickFormatter={(value) => value.substring(5)} hide />
-                    <ChartTooltip content={<ChartTooltipContent formatter={(value, name, item) => `${(item.payload[name] / item.payload.totalForecastExpense * 100).toFixed(0)}% (${formatCurrency(item.payload[name])})` } />} />
+                    <ChartTooltip content={<ChartTooltipContent formatter={(value, name, item) => `${(item.payload.totalsByCategory[name] / item.payload.totalForecastExpense * 100).toFixed(0)}% (${formatCurrency(item.payload.totalsByCategory[name])})` } />} />
                     <Legend />
                     {Object.entries(CATEGORY_COLORS).map(([category, color]) => (
                         <Bar key={category} dataKey={`totalsByCategory.${category}`} stackId="a" fill={color} name={category} />
                     ))}
                 </BarChart>
-             </ResponsiveContainer>
+             </ChartContainer>
           </CardContent>
         </Card>
       </div>
