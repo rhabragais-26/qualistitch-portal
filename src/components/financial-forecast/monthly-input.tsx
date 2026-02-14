@@ -47,17 +47,17 @@ export function MonthlyForecastInput() {
   const [editingRecord, setEditingRecord] = useState<FinanceForecastMonthly | null>(null);
   const [deletingRecord, setDeletingRecord] = useState<FinanceForecastMonthly | null>(null);
   
-  const [monthFilter, setMonthFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
 
   const canEdit = isAdmin || userProfile?.position === 'Finance';
   
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeCategories'), orderBy('name')) : null, [firestore]);
-  const { data: categories, isLoading: categoriesLoading } = useCollection<FinanceCategory>(categoriesQuery);
+  const { data: categories, isLoading: categoriesLoading } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
 
   const forecastQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeForecastMonthly'), orderBy('month', 'desc'), orderBy('updatedAt', 'desc')) : null, [firestore]);
-  const { data: forecasts, isLoading: forecastsLoading, refetch } = useCollection<FinanceForecastMonthly>(forecastQuery);
+  const { data: forecasts, isLoading: forecastsLoading, refetch } = useCollection<FinanceForecastMonthly>(forecastQuery, undefined, { listen: false });
 
   const form = useForm<ForecastFormValues>({
     resolver: zodResolver(forecastSchema),
@@ -127,7 +127,7 @@ export function MonthlyForecastInput() {
   const filteredForecasts = useMemo(() => {
     if (!forecasts) return [];
     return forecasts.filter(f => 
-        (monthFilter === '' || f.month === monthFilter) &&
+        (monthFilter === 'all' || f.month === monthFilter) &&
         (categoryFilter === 'All' || f.categoryId === categoryFilter) &&
         (searchTerm === '' || 
             categories?.find(c => c.id === f.categoryId)?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -223,7 +223,7 @@ export function MonthlyForecastInput() {
                         <Select value={monthFilter} onValueChange={setMonthFilter}>
                             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by Month" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Months</SelectItem>
+                                <SelectItem value="all">All Months</SelectItem>
                                 {monthOptions.map(m => <SelectItem key={m} value={m}>{format(parse(m, 'yyyy-MM', new Date()), 'MMMM yyyy')}</SelectItem>)}
                             </SelectContent>
                         </Select>
