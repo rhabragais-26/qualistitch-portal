@@ -4,8 +4,8 @@
 import { Header } from '@/components/header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FinancialForecastDashboard } from '@/components/financial-forecast/dashboard';
+import { MonthlyForecastInput } from '@/components/financial-forecast/monthly-input';
 // Placeholders for the other components
-// import { MonthlyForecastInput } from '@/components/financial-forecast/monthly-input';
 // import { ScheduledExpenses } from '@/components/financial-forecast/scheduled-expenses';
 // import { Assumptions } from '@/components/financial-forecast/assumptions';
 
@@ -24,7 +24,7 @@ export default function FinancialForecastPage() {
             <FinancialForecastDashboard />
           </TabsContent>
           <TabsContent value="monthly-input">
-            <div className="flex items-center justify-center p-8 text-center text-muted-foreground">Monthly Forecast Input - Coming Soon</div>
+            <MonthlyForecastInput />
           </TabsContent>
           <TabsContent value="scheduled-expenses">
              <div className="flex items-center justify-center p-8 text-center text-muted-foreground">Scheduled Expenses - Coming Soon</div>
