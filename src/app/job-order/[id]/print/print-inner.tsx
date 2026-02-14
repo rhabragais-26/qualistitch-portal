@@ -66,6 +66,7 @@ type Lead = {
   joNumber?: number;
   layouts?: Layout[];
   publiclyPrintable?: boolean;
+  importantNotes?: string;
 };
 
 export default function JobOrderPrintPage({ id: _id }: { id: string }) {
@@ -409,6 +410,13 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
                 </tbody>
             </table>
 
+            {lead.importantNotes && (
+                <div className="mt-4 mb-4">
+                    <p className="text-red-500 font-bold">Important Notes:</p>
+                    <p className="font-bold whitespace-pre-wrap">{lead.importantNotes}</p>
+                </div>
+            )}
+
             <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
             <table className="w-full border-collapse border border-black text-xs">
               <thead>
@@ -472,4 +480,5 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
     </div>
   );
 }
+
 

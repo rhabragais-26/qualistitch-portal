@@ -130,7 +130,7 @@
       sequenceLogoUploadedBy?: (string | null)[];
       sequenceBackDesign?: (FileObject | null)[];
       sequenceBackDesignUploadTimes?: (string | null)[];
-      sequenceBackDesignUploadedBy?: (string | null)[];
+      sequenceBackDesignUploadedBy?: string | null;
       finalProgrammedLogo?: (FileObject | null)[];
       finalProgrammedLogoUploadTimes?: (string | null)[];
       finalProgrammedLogoUploadedBy?: (string | null)[];
@@ -162,6 +162,7 @@
       layouts?: Layout[];
       publiclyPrintable?: boolean;
       lastModifiedBy?: string;
+      importantNotes?: string;
     };
 
     const courierOptions = ['Lalamove', 'J&T', 'LBC', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
@@ -293,6 +294,7 @@
           return {
             ...l,
             recipientName: l.recipientName || '',
+            importantNotes: l.importantNotes || '',
             orders: (l.orders || []).map(o => ({
               productType: o.productType,
               color: o.color,
@@ -359,7 +361,7 @@
             ? fetchedLead.layouts.map(l => ({ ...l, namedOrders: l.namedOrders || [], id: l.id || uuidv4(), layoutImageUploadTime: l.layoutImageUploadTime || null, layoutImageUploadedBy: l.layoutImageUploadedBy || null }))
             : [{ id: uuidv4(), layoutImage: '', layoutImageUploadTime: null, layoutImageUploadedBy: null, dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
 
-          setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up', layouts: initializedLayouts });
+          setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up', layouts: initializedLayouts, importantNotes: fetchedLead.importantNotes || '' });
 
           let initialDate;
           if (fetchedLead.deliveryDate) {
@@ -508,6 +510,7 @@
             lastModifiedBy: userProfile.nickname,
             layouts: layoutsToSave,
             publiclyPrintable: true,
+            importantNotes: lead.importantNotes || '',
         };
 
         try {
@@ -1021,6 +1024,21 @@
                     </tr>
                 </tbody>
             </table>
+            
+            <div className="mt-6 mb-4">
+                <label htmlFor="important-notes" className="text-red-500 font-bold no-print">Important Notes:</label>
+                <div className="print-only">
+                    <p className="text-red-500 font-bold">Important Notes:</p>
+                    <p className="font-bold whitespace-pre-wrap">{lead.importantNotes}</p>
+                </div>
+                <Textarea
+                    id="important-notes"
+                    value={lead.importantNotes || ''}
+                    onChange={(e) => setLead(currentLead => currentLead ? ({ ...currentLead, importantNotes: e.target.value }) : null)}
+                    className="mt-1 no-print"
+                    readOnly={!canEdit}
+                />
+            </div>
 
             <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
             <table className="w-full border-collapse border border-black text-xs">

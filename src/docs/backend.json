@@ -452,6 +452,10 @@
           "type": "string",
           "description": "Sales Representative associated with the lead."
         },
+        "assignedDigitizer": {
+          "type": "string",
+          "description": "The nickname of the digitizer assigned to this lead."
+        },
         "scesFullName": {
           "type": "string",
           "description": "The full name of the sales representative."
@@ -604,6 +608,8 @@
         "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },
         "doneProductionTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the production is marked as done." },
         "isEndorsedToLogistics": { "type": "boolean", "description": "Indicates if the order has been endorsed to logistics." },
+        "endorsedToLogisticsTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the order was endorsed to logistics." },
+        "endorsedToLogisticsBy": { "type": "string", "description": "Nickname of the user who endorsed the order to logistics." },
         "deliveredTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the order was delivered." },
         "isDigitizingArchived": {
           "type": "boolean",
@@ -676,6 +682,10 @@
           "type": "string",
           "format": "date-time",
           "description": "Timestamp for when the order was packed."
+        },
+        "importantNotes": {
+          "type": "string",
+          "description": "Important notes for the job order, displayed on the printout."
         },
         "orders": {
           "type": "array",
@@ -805,6 +815,27 @@
           "type": "object",
           "description": "Discounts applied to the order, grouped by product type."
         },
+        "editedUnitPrices": {
+            "type": "object",
+            "description": "Stores manually overridden unit prices, keyed by product group and embroidery type.",
+            "additionalProperties": { "type": "number" }
+        },
+        "editedAddOnPrices": {
+            "type": "object",
+            "description": "Stores manually overridden add-on prices, keyed by product group and add-on type.",
+            "additionalProperties": { "type": "number" }
+        },
+        "editedProgrammingFees": {
+            "type": "object",
+            "description": "Stores manually overridden programming fees, keyed by product group.",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "logoFee": { "type": "number" },
+                    "backTextFee": { "type": "number" }
+                }
+            }
+        },
         "payments": {
           "type": "array",
           "description": "Payments made for the order.",
@@ -819,7 +850,8 @@
                   "timestamp": { "type": "string", "format": "date-time" },
                   "verified": { "type": "boolean", "description": "Indicates if the payment has been verified by finance." },
                   "verifiedBy": { "type": "string", "description": "The nickname of the user who verified the payment." },
-                  "verifiedTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp of when the payment was verified." }
+                  "verifiedTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp of when the payment was verified." },
+                  "actualTransactionDate": { "type": "string", "format": "date-time", "description": "The actual date the transaction occurred, adjustable by finance." }
               }
           }
         }
