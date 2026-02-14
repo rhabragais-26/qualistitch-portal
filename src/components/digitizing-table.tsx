@@ -42,6 +42,8 @@ import { getStorage, ref, uploadString, getDownloadURL, deleteObject, getBlob } 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
 import { Switch } from './ui/switch';
+import { z, ZodError } from 'zod';
+import { useRouter } from 'next/navigation';
 
 type NamedOrder = {
   id: string;
@@ -144,46 +146,59 @@ type Layout = {
   finalProgrammedBackDesignUploadedBy?: (string | null)[];
 };
 
-type Lead = {
-  id: string;
-  customerName: string;
-  companyName?: string;
-  contactNumber: string;
-  landlineNumber?: string;
-  salesRepresentative: string;
-  orderType: string;
-  priorityType: 'Rush' | 'Regular';
-  submissionDateTime: string;
-  orders: { productType: string, design?: { left?: boolean, right?: boolean, backLogo?: boolean, backText?: boolean }, quantity: number, color: string, size: string, remarks?: string }[];
-  joNumber?: number;
-  isJoPrinted?: boolean;
-  isJoHardcopyReceived?: boolean;
-  joHardcopyReceivedTimestamp?: string;
-  isUnderProgramming?: boolean;
-  isInitialApproval?: boolean;
-  isLogoTesting?: boolean;
-  isRevision?: boolean;
-  isFinalApproval?: boolean;
-  isFinalProgram?: boolean;
-  isDigitizingArchived?: boolean;
-  layouts?: Layout[];
-  assignedDigitizer?: string | null;
-  underProgrammingTimestamp?: string;
-  initialApprovalTimestamp?: string;
-  logoTestingTimestamp?: string;
-  revisionTimestamp?: string;
-  finalApprovalTimestamp?: string;
-  finalProgramTimestamp?: string;
-  digitizingArchivedTimestamp?: string;
-  isPreparedForProduction?: boolean;
-  isSentToProduction?: boolean;
-  forceNewCustomer?: boolean;
-  location?: string;
-  recipientName?: string;
-  courier?: string;
-  deliveryDate?: string;
-  paymentType?: string;
-}
+const leadSchema = z.object({
+  id: z.string(),
+  customerName: z.string(),
+  companyName: z.string().optional(),
+  contactNumber: z.string().optional(),
+  landlineNumber: z.string().optional(),
+  salesRepresentative: z.string(),
+  orderType: z.string(),
+  priorityType: z.enum(['Rush', 'Regular']),
+  submissionDateTime: z.string(),
+  orders: z.array(z.object({
+      productType: z.string(),
+      design: z.object({
+        left: z.boolean().optional(),
+        right: z.boolean().optional(),
+        backLogo: z.boolean().optional(),
+        backText: z.boolean().optional(),
+      }).optional(),
+      quantity: z.number(),
+      color: z.string(),
+      size: z.string(),
+      remarks: z.string().optional(),
+  })),
+  joNumber: z.number().optional(),
+  isJoPrinted: z.boolean().optional(),
+  isJoHardcopyReceived: z.boolean().optional(),
+  joHardcopyReceivedTimestamp: z.string().nullable().optional(),
+  isUnderProgramming: z.boolean().optional(),
+  isInitialApproval: z.boolean().optional(),
+  isLogoTesting: z.boolean().optional(),
+  isRevision: z.boolean().optional(),
+  isFinalApproval: z.boolean().optional(),
+  isFinalProgram: z.boolean().optional(),
+  isDigitizingArchived: z.boolean().optional(),
+  layouts: z.array(z.any()).optional(),
+  assignedDigitizer: z.string().nullable().optional(),
+  underProgrammingTimestamp: z.string().nullable().optional(),
+  initialApprovalTimestamp: z.string().nullable().optional(),
+  logoTestingTimestamp: z.string().nullable().optional(),
+  revisionTimestamp: z.string().nullable().optional(),
+  finalApprovalTimestamp: z.string().nullable().optional(),
+  finalProgramTimestamp: z.string().nullable().optional(),
+  digitizingArchivedTimestamp: z.string().nullable().optional(),
+  isPreparedForProduction: z.boolean().optional(),
+  isSentToProduction: z.boolean().optional(),
+  forceNewCustomer: z.boolean().optional(),
+  location: z.string().optional(),
+  recipientName: z.string().optional(),
+  courier: z.string().optional(),
+  deliveryDate: z.string().optional(),
+  paymentType: z.string().optional(),
+});
+type Lead = z.infer<typeof leadSchema>;
 
 type EnrichedLead = Lead & {
   orderNumber: number;
@@ -353,258 +368,254 @@ const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, o
 });
 ImageDisplayCard.displayName = 'ImageDisplayCard';
 
-const JoPreviewContent = ({ viewingJoLead, usersData, getContactDisplay, formatJoNumberUtil }: { viewingJoLead: Lead | null, usersData: UserProfileInfo[] | null, getContactDisplay: (lead: Lead) => string | null, formatJoNumberUtil: (joNumber: number | undefined) => string }) => {
+const JoPreviewContent = React.memo(({ viewingJoLead, usersData, getContactDisplay, formatJoNumberUtil }: { viewingJoLead: Lead | null, usersData: UserProfileInfo[] | null, getContactDisplay: (lead: Lead) => string | null, formatJoNumberUtil: (joNumber: number | undefined) => string }) => {
     if (!viewingJoLead) return null;
+
+    const lead = viewingJoLead;
+    const scesProfile = usersData?.find((u) => u.nickname === lead.salesRepresentative);
+    const scesFullName = scesProfile?.firstName && scesProfile?.lastName
+        ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`)
+        : toTitleCase(lead.salesRepresentative);
+
+    const totalQuantity = (lead.orders || []).reduce((sum: number, order: any) => sum + (order.quantity || 0), 0);
+    const contactDisplay = getContactDisplay(lead);
     
+    const fallbackDeliveryDate = format(
+        addDays(new Date(lead.submissionDateTime), lead.priorityType === "Rush" ? 7 : 22),
+        "MMM dd, yyyy"
+    );
+
+    const deliveryDate =
+        (lead as any).adjustedDeliveryDate
+            ? format(new Date((lead as any).adjustedDeliveryDate), "MMM dd, yyyy")
+            : lead.deliveryDate
+            ? format(new Date(lead.deliveryDate), "MMM dd, yyyy")
+            : fallbackDeliveryDate;
+
+    const layoutsToPrint = lead.layouts?.filter((l) => hasLayoutContent(l as Layout)) || [];
+
     return (
         <DialogContent className="max-w-4xl h-[90vh] p-0 flex flex-col">
             <DialogHeader className="p-6 pb-2">
-                <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
+                <DialogTitle>Job Order: {formatJoNumberUtil(lead.joNumber)}</DialogTitle>
                 <DialogDescription>Read-only view of the job order form.</DialogDescription>
             </DialogHeader>
             <ScrollArea className="flex-1 min-h-0 modern-scrollbar">
                 <div className="p-6">
-                    {(() => {
-                        const lead = viewingJoLead;
+                    <div className="p-10 mx-auto max-w-4xl print-page">
+                        <div className="text-left mb-4">
+                            <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span></p>
+                        </div>
+                        <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
-                        const scesProfile = usersData?.find((u) => u.nickname === lead.salesRepresentative);
-                        const scesFullName = scesProfile?.firstName && scesProfile?.lastName
-                        ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`)
-                        : toTitleCase(lead.salesRepresentative);
+                        <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
+                            <div className="space-y-1">
+                                <p><strong>Client Name:</strong> {lead.customerName}</p>
+                                <p><strong>Contact No:</strong> {contactDisplay}</p>
+                                <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
+                            </div>
+                            <div className="space-y-1">
+                                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
+                                <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+                                <p><strong>SCES Name:</strong> {scesFullName}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
+                                <p><strong>Courier:</strong> {lead.courier}</p>
+                                <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
+                            </div>
+                        </div>
 
-                        const totalQuantity = (lead.orders || []).reduce((sum: number, order: any) => sum + (order.quantity || 0), 0);
-                        const contactDisplay = getContactDisplay(lead);
+                        <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
+                        <Table>
+                            <TableHeader>
+                            <TableRow className="bg-gray-200">
+                                <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={3}>Item Description</TableHead>
+                                <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Qty</TableHead>
+                                <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Front Design</TableHead>
+                                <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Back Design</TableHead>
+                                <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Remarks</TableHead>
+                                </TableRow>
+                                <TableRow className="bg-gray-200">
+                                <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Type of Product</TableHead>
+                                <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Color</TableHead>
+                                <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Size</TableHead>
+                                <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Left</TableHead>
+                                <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Right</TableHead>
+                                <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Logo</TableHead>
+                                <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Text</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {lead.orders.map((order: any, index: number) => (
+                                <TableRow key={index}>
+                                <TableCell className="border border-black p-0.5 text-center align-middle">{order.productType}</TableCell>
+                                <TableCell className="border border-black p-0.5 text-center align-middle">{order.color}</TableCell>
+                                <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
+                                <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
+                                <TableCell className="border border-black p-0.5 text-center">
+                                    <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.left} disabled />
+                                </TableCell>
+                                <TableCell className="border border-black p-0.5 text-center">
+                                    <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.right} disabled />
+                                </TableCell>
+                                <TableCell className="border border-black p-0.5 text-center">
+                                    <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backLogo} disabled />
+                                </TableCell>
+                                <TableCell className="border border-black p-0.5 text-center">
+                                    <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backText} disabled />
+                                </TableCell>
+                                <TableCell className="border border-black p-0.5">
+                                    <p className="text-xs">{order.remarks}</p>
+                                </TableCell>
+                                </TableRow>
+                            ))}
+                            <TableRow>
+                                <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
+                                <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
+                                <TableCell colSpan={5}></TableCell>
+                            </TableRow>
+                            </TableBody>
+                        </Table>
+                        <div className="text-xs mb-2 pt-2">
+                            <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
+                            <div className="space-y-1">
+                                <p className="font-bold italic">Prepared by:</p>
+                                <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                                <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+                                <p className="text-center">(Name &amp; Signature, Date)</p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="font-bold italic">Noted by:</p>
+                                <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
+                                <p className="text-center font-bold">Sales Head</p>
+                                <p className="text-center">(Name &amp; Signature, Date)</p>
+                            </div>
 
-                        const fallbackDeliveryDate = format(
-                        addDays(new Date(lead.submissionDateTime), lead.priorityType === "Rush" ? 7 : 22),
-                        "MMM dd, yyyy"
-                        );
+                            <div className="col-span-2 mt-0">
+                                <p className="font-bold italic">Approved by:</p>
+                            </div>
 
-                        const deliveryDate =
-                        (lead as any).adjustedDeliveryDate
-                            ? format(new Date((lead as any).adjustedDeliveryDate), "MMM dd, yyyy")
-                            : lead.deliveryDate
-                            ? format(new Date(lead.deliveryDate), "MMM dd, yyyy")
-                            : fallbackDeliveryDate;
+                            <div className="space-y-1">
+                                <p className="pt-8 border-b border-black"></p>
+                                <p className="text-center font-semibold">Programming</p>
+                                <p className="text-center">(Name &amp; Signature, Date)</p>
+                            </div>
 
-                        const layoutsToPrint = lead.layouts?.filter((l) => hasLayoutContent(l as Layout)) || [];
+                            <div className="space-y-1">
+                                <p className="pt-8 border-b border-black"></p>
+                                <p className="text-center font-semibold">Inventory</p>
+                                <p className="text-center">(Name &amp; Signature, Date)</p>
+                            </div>
 
-                        return (
-                          <>
-                            <div className="p-10 mx-auto max-w-4xl print-page">
+                            <div className="space-y-1">
+                                <p className="pt-8 border-b border-black"></p>
+                                <p className="text-center font-semibold">Production Line Leader</p>
+                                <p className="text-center">(Name &amp; Signature, Date)</p>
+                            </div>
+
+                            <div className="space-y-1">
+                                <p className="pt-8 border-b border-black"></p>
+                                <p className="text-center font-semibold">Production Supervisor</p>
+                                <p className="text-center">(Name &amp; Signature, Date)</p>
+                            </div>
+
+                                <div className="space-y-1">
+                                <p className="pt-8 border-b border-black"></p>
+                                <p className="text-center font-semibold">Quality Control</p>
+                                <p className="text-center">(Name &amp; Signature, Date)</p>
+                            </div>
+
+                            <div className="space-y-1">
+                                <p className="pt-8 border-b border-black"></p>
+                                <p className="text-center font-semibold">Logistics</p>
+                                <p className="text-center">(Name &amp; Signature, Date)</p>
+                            </div>
+
+                                <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
+                                <p className="pt-8 border-b border-black"></p>
+                                <p className="text-center font-semibold">Operations Supervisor</p>
+                                <p className="text-center">(Name &amp; Signature, Date)</p>
+                            </div>
+                        </div>
+                        </div>
+                        {layoutsToPrint.map((layout, layoutIndex) => (
+                            <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
                                 <div className="text-left mb-4">
-                                    <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span></p>
-                                </div>
-                                <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
-
-                                <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
-                                    <div className="space-y-1">
-                                        <p><strong>Client Name:</strong> {lead.customerName}</p>
-                                        <p><strong>Contact No:</strong> {contactDisplay}</p>
-                                        <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
-                                        <p><strong>Type of Order:</strong> {lead.orderType}</p>
-                                        <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                                        <p><strong>SCES Name:</strong> {scesFullName}</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
-                                        <p><strong>Courier:</strong> {lead.courier}</p>
-                                        <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
-                                    </div>
-                                </div>
-
-                                <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
-                                <Table>
-                                    <TableHeader>
-                                    <TableRow className="bg-gray-200">
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={3}>Item Description</TableHead>
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Qty</TableHead>
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Front Design</TableHead>
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Back Design</TableHead>
-                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Remarks</TableHead>
-                                      </TableRow>
-                                      <TableRow className="bg-gray-200">
-                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Type of Product</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Color</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Size</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Left</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Right</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Logo</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Text</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                    {lead.orders.map((order: any, index: number) => (
-                                        <TableRow key={index}>
-                                        <TableCell className="border border-black p-0.5 text-center align-middle">{order.productType}</TableCell>
-                                        <TableCell className="border border-black p-0.5 text-center align-middle">{order.color}</TableCell>
-                                        <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
-                                        <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
-                                        <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.left} disabled />
-                                        </TableCell>
-                                        <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.right} disabled />
-                                        </TableCell>
-                                        <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backLogo} disabled />
-                                        </TableCell>
-                                        <TableCell className="border border-black p-0.5 text-center">
-                                            <Checkbox className="mx-auto disabled:opacity-100" checked={!!order.design?.backText} disabled />
-                                        </TableCell>
-                                        <TableCell className="border border-black p-0.5">
-                                           <p className="text-xs">{order.remarks}</p>
-                                        </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    <TableRow>
-                                        <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
-                                        <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
-                                        <TableCell colSpan={5}></TableCell>
-                                    </TableRow>
-                                    </TableBody>
-                                </Table>
-                                <div className="text-xs mb-2 pt-2">
-                                    <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+                                    <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
-                                    <div className="space-y-1">
-                                        <p className="font-bold italic">Prepared by:</p>
-                                        <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
-                                        <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
-                                        <p className="text-center">(Name &amp; Signature, Date)</p>
+                                    {layout.layoutImage && (
+                                    <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
+                                    <Image 
+                                        src={layout.layoutImage} 
+                                        alt={`Layout ${layoutIndex + 1}`} 
+                                        layout="fill"
+                                        objectFit="contain"
+                                    />
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="font-bold italic">Noted by:</p>
-                                        <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
-                                        <p className="text-center font-bold">Sales Head</p>
-                                        <p className="text-center">(Name &amp; Signature, Date)</p>
-                                    </div>
-
-                                    <div className="col-span-2 mt-0">
-                                        <p className="font-bold italic">Approved by:</p>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <p className="pt-8 border-b border-black"></p>
-                                        <p className="text-center font-semibold">Programming</p>
-                                        <p className="text-center">(Name &amp; Signature, Date)</p>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <p className="pt-8 border-b border-black"></p>
-                                        <p className="text-center font-semibold">Inventory</p>
-                                        <p className="text-center">(Name &amp; Signature, Date)</p>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <p className="pt-8 border-b border-black"></p>
-                                        <p className="text-center font-semibold">Production Line Leader</p>
-                                        <p className="text-center">(Name &amp; Signature, Date)</p>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <p className="pt-8 border-b border-black"></p>
-                                        <p className="text-center font-semibold">Production Supervisor</p>
-                                        <p className="text-center">(Name &amp; Signature, Date)</p>
-                                    </div>
-
-                                     <div className="space-y-1">
-                                        <p className="pt-8 border-b border-black"></p>
-                                        <p className="text-center font-semibold">Quality Control</p>
-                                        <p className="text-center">(Name &amp; Signature, Date)</p>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <p className="pt-8 border-b border-black"></p>
-                                        <p className="text-center font-semibold">Logistics</p>
-                                        <p className="text-center">(Name &amp; Signature, Date)</p>
-                                    </div>
-
-                                     <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
-                                        <p className="pt-8 border-b border-black"></p>
-                                        <p className="text-center font-semibold">Operations Supervisor</p>
-                                        <p className="text-center">(Name &amp; Signature, Date)</p>
-                                    </div>
-                                </div>
-                                </div>
-                                {layoutsToPrint.map((layout, layoutIndex) => (
-                                    <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
-                                      <div className="text-left mb-4">
-                                          <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
-                                      </div>
-                                      
-                                       {layout.layoutImage && (
-                                         <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
-                                            <Image 
-                                                src={layout.layoutImage} 
-                                                alt={`Layout ${layoutIndex + 1}`} 
-                                                layout="fill"
-                                                objectFit="contain"
-                                            />
-                                          </div>
-                                        )}
-                                      
-                                      <h2 className="text-2xl font-bold text-center mb-4">
-                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
-                                      </h2>
-                                        <table className="w-full border-collapse border border-black mb-6">
-                                            <tbody>
-                                                <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
-                                                </tr>
-                                                <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                            
-                                        <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
-                                        <table className="w-full border-collapse border border-black text-xs">
-                                          <thead>
-                                            <tr className="bg-gray-200">
-                                              <th className="border border-black p-1 text-center align-middle">No.</th>
-                                              <th className="border border-black p-1 text-center align-middle">Names</th>
-                                              <th className="border border-black p-1 text-center align-middle">Color</th>
-                                              <th className="border border-black p-1 text-center align-middle">Sizes</th>
-                                              <th className="border border-black p-1 text-center align-middle">Qty</th>
-                                              <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
-                                            </tr>
-                                          </thead>
-                                          <TableBody>
-                                            {layout.namedOrders?.map((order, orderIndex) => (
-                                              <TableRow key={orderIndex}>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
-                                                <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
-                                              </TableRow>
-                                            ))}
-                                          </TableBody>
-                                        </table>
-                                    </div>
-                                  ))}
-                              </>
-                            )
-                        })()}
+                                )}
+                                
+                                <h2 className="text-2xl font-bold text-center mb-4">
+                                {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
+                                </h2>
+                                <table className="w-full border-collapse border border-black mb-6">
+                                    <tbody>
+                                        <tr>
+                                            <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
+                                            <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
+                                        </tr>
+                                        <tr>
+                                            <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
+                                            <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                    
+                                <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
+                                <table className="w-full border-collapse border border-black text-xs">
+                                    <thead>
+                                    <tr className="bg-gray-200">
+                                        <th className="border border-black p-1 text-center align-middle">No.</th>
+                                        <th className="border border-black p-1 text-center align-middle">Names</th>
+                                        <th className="border border-black p-1 text-center align-middle">Color</th>
+                                        <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                                        <th className="border border-black p-1 text-center align-middle">Qty</th>
+                                        <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
+                                    </tr>
+                                    </thead>
+                                    <TableBody>
+                                    {layout.namedOrders?.map((order, orderIndex) => (
+                                        <TableRow key={orderIndex}>
+                                        <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
+                                        <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
+                                        <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
+                                        <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
+                                        <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
+                                        <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    </TableBody>
+                                </table>
+                            </div>
+                            ))}
                     </div>
+                </div>
             </ScrollArea>
         </DialogContent>
     );
-};
+});
+JoPreviewContent.displayName = 'JoPreviewContent';
 
 export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETED' }: DigitizingTableProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const { userProfile, isAdmin } = useUser();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
@@ -616,7 +627,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: allLeads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: allLeads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
   
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
@@ -790,6 +801,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
             title: 'Digitizer Assigned',
             description: `'${newValue || 'Unassigned'}' has been assigned.`,
         });
+        refetch();
     }).catch((e: any) => {
         toast({
             variant: 'destructive',
@@ -1215,6 +1227,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                 : "The project has been moved to the Item Preparation queue.",
         });
         setReviewConfirmLead(null);
+        refetch();
     } catch (e: any) {
         console.error('Error sending to production:', e);
         toast({
@@ -1223,45 +1236,175 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
             description: e.message || 'Could not send the project to production.',
         });
     }
-  }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay]);
+  }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay, refetch]);
+    
+  const handleSaveImages = useCallback(async () => {
+  if (!uploadLeadId || !uploadField || !firestore || !userProfile) return;
 
-    const handleSaveImages = useCallback(async () => {
-    // ... function content ...
-    }, [
-    // ... dependencies ...
-    ]);
-  
-    const isSaveDisabled = useMemo(() => {
-    if (!canEdit) return true;
-    if (uploadField !== 'isFinalProgram') return false;
+  const leadDocRef = doc(firestore, 'leads', uploadLeadId);
+  const lead = allLeads?.find((l) => l.id === uploadLeadId);
+  if (!lead) return;
 
-    if (isNamesOnly) {
-        return finalNamesDst.every((f) => !f);
+  const layouts = lead.layouts?.length ? JSON.parse(JSON.stringify(lead.layouts)) : [{}];
+  let existingLayout = layouts[0] || {};
+  const now = new Date().toISOString();
+  const storage = getStorage();
+
+  const uploadAndGetURL = async (imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
+    if (!imageData) return null;
+
+    // If it's already a Firebase URL, just return it with new metadata if it's considered a "new" upload in this session
+    if (imageData.startsWith('https://firebasestorage.googleapis.com')) {
+      const pluralFieldName = `${fieldName}s`;
+      const existingArray = (lead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
+      const existingImageObject = existingArray.find(img => img.url === imageData);
+      if (existingImageObject) {
+          return existingImageObject; // Keep old metadata if image is unchanged
+      }
+      return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
     }
     
-    const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
-    const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
-    const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
-    const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
-    
-    return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
-    }, [
-    isNamesOnly,
-    finalNamesDst,
-    finalLogoEmb,
-    finalBackDesignEmb,
-    finalLogoDst,
-    finalBackDesignDst,
-    sequenceLogo,
-    sequenceBackDesign,
-    finalProgrammedLogo,
-    finalProgrammedBackDesign,
-    uploadField,
-    canEdit
-    ]);
-  
+    if (!imageData.startsWith('data:')) return null;
 
-    const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    const storageRef = ref(storage, `leads-images/${uploadLeadId}/${fieldName}_${index}_${Date.now()}`);
+    const snapshot = await uploadString(storageRef, imageData, 'data_url');
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
+  };
+
+  const uploadFileAndGetURL = async (fileData: FileObject | null, fieldName: string, index: number): Promise<FileObject | null> => {
+      if (!fileData || !fileData.url || !fileData.name) return null;
+
+      // If it's already a Firebase URL, just return it
+      if (fileData.url.startsWith('https://firebasestorage.googleapis.com')) {
+          return fileData;
+      }
+
+      if (!fileData.url.startsWith('data:')) return null;
+
+      const storageRef = ref(storage, `leads-files/${uploadLeadId}/${fieldName}_${index}_${fileData.name}`);
+      const snapshot = await uploadString(storageRef, fileData.url, 'data_url');
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return { name: fileData.name, url: downloadURL };
+  };
+
+  try {
+      let updateData: Partial<Layout> = {};
+
+      if (uploadField === 'isUnderProgramming') {
+          const [left, right, backLogo, backDesign] = await Promise.all([
+              Promise.all(initialLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'logoLeftImage', i))),
+              Promise.all(initialLogoRightImages.map((img, i) => uploadAndGetURL(img, 'logoRightImage', i))),
+              Promise.all(initialBackLogoImages.map((img, i) => uploadAndGetURL(img, 'backLogoImage', i))),
+              Promise.all(initialBackDesignImages.map((img, i) => uploadAndGetURL(img, 'backDesignImage', i))),
+          ]);
+          updateData = { logoLeftImages: left.filter(Boolean) as any, logoRightImages: right.filter(Boolean) as any, backLogoImages: backLogoImages.filter(Boolean) as any, backDesignImages: backDesign.filter(Boolean) as any };
+      } else if (uploadField === 'isLogoTesting') {
+          if (!noTestingNeeded) {
+              const [left, right, backLogo, backDesign] = await Promise.all([
+                  Promise.all(testLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'testLogoLeftImage', i))),
+                  Promise.all(testLogoRightImages.map((img, i) => uploadAndGetURL(img, 'testLogoRightImage', i))),
+                  Promise.all(testBackLogoImages.map((img, i) => uploadAndGetURL(img, 'testBackLogoImage', i))),
+                  Promise.all(testBackDesignImages.map((img, i) => uploadAndGetURL(img, 'testBackDesignImage', i))),
+              ]);
+              updateData = { testLogoLeftImages: left.filter(Boolean) as any, testLogoRightImages: right.filter(Boolean) as any, testBackLogoImages: backLogoImages.filter(Boolean) as any, testBackDesignImages: backDesign.filter(Boolean) as any };
+          }
+      } else if (uploadField === 'isFinalProgram') {
+          const [embLogo, embBack, dstLogo, dstBack, dstNames, seqLogo, seqBack, finalLogo, finalBack] = await Promise.all([
+              Promise.all(finalLogoEmb.map((f, i) => uploadFileAndGetURL(f, 'finalLogoEmb', i))),
+              Promise.all(finalBackDesignEmb.map((f, i) => uploadFileAndGetURL(f, 'finalBackDesignEmb', i))),
+              Promise.all(finalLogoDst.map((f, i) => uploadFileAndGetURL(f, 'finalLogoDst', i))),
+              Promise.all(finalBackDesignDst.map((f, i) => uploadFileAndGetURL(f, 'finalBackDesignDst', i))),
+              Promise.all(finalNamesDst.map((f, i) => uploadFileAndGetURL(f, 'finalNamesDst', i))),
+              Promise.all(sequenceLogo.map((img, i) => uploadAndGetURL(img, 'sequenceLogo', i))),
+              Promise.all(sequenceBackDesign.map((img, i) => uploadAndGetURL(img, 'sequenceBackDesign', i))),
+              Promise.all(finalProgrammedLogo.map((img, i) => uploadAndGetURL(img, 'finalProgrammedLogo', i))),
+              Promise.all(finalProgrammedBackDesign.map((img, i) => uploadAndGetURL(img, 'finalProgrammedBackDesign', i))),
+          ]);
+          
+          updateData = {
+              finalLogoEmb: embLogo, finalLogoEmbUploadTimes: embLogo.map(f => f ? now : null), finalLogoEmbUploadedBy: embLogo.map(f => f ? userProfile.nickname : null),
+              finalBackDesignEmb: embBack, finalBackDesignEmbUploadTimes: embBack.map(f => f ? now : null), finalBackDesignEmbUploadedBy: embBack.map(f => f ? userProfile.nickname : null),
+              finalLogoDst: dstLogo, finalLogoDstUploadTimes: dstLogo.map(f => f ? now : null), finalLogoDstUploadedBy: dstLogo.map(f => f ? userProfile.nickname : null),
+              finalBackDesignDst: dstBack, finalBackDesignDstUploadTimes: dstBack.map(f => f ? now : null), finalBackDesignDstUploadedBy: dstBack.map(f => f ? userProfile.nickname : null),
+              finalNamesDst: dstNames, finalNamesDstUploadTimes: dstNames.map(f => f ? now : null), finalNamesDstUploadedBy: dstNames.map(f => f ? userProfile.nickname : null),
+              sequenceLogo: seqLogo.filter(Boolean) as any, sequenceLogoUploadTimes: seqLogo.map(f => f ? now : null), sequenceLogoUploadedBy: seqLogo.map(f => f ? userProfile.nickname : null),
+              sequenceBackDesign: seqBack.filter(Boolean) as any, sequenceBackDesignUploadTimes: seqBack.map(f => f ? now : null), sequenceBackDesignUploadedBy: seqBack.map(f => f ? userProfile.nickname : null),
+              finalProgrammedLogo: finalLogo.filter(Boolean) as any, finalProgrammedLogoUploadTimes: finalLogo.map(f => f ? now : null), finalProgrammedLogoUploadedBy: finalLogo.map(f => f ? userProfile.nickname : null),
+              finalProgrammedBackDesign: finalBack.filter(Boolean) as any, finalProgrammedBackDesignUploadTimes: finalBack.map(f => f ? now : null), finalProgrammedBackDesignUploadedBy: finalBack.map(f => f ? userProfile.nickname : null),
+          };
+      }
+
+      const newLayouts = [...layouts];
+      newLayouts[0] = { ...existingLayout, ...updateData };
+      
+      const finalUpdateData: any = {
+          layouts: newLayouts,
+          lastModified: new Date().toISOString(),
+          lastModifiedBy: userProfile.nickname,
+      };
+
+      await updateDoc(leadDocRef, finalUpdateData);
+      await updateStatus(uploadLeadId, uploadField, true);
+
+      toast({
+          title: 'Success!',
+          description: 'Files saved and status updated.',
+      });
+      setIsUploadDialogOpen(false);
+      refetch();
+  } catch (e: any) {
+      console.error("Error saving images: ", e);
+      toast({
+          variant: "destructive",
+          title: "Save Failed",
+          description: e.message || "Could not save files.",
+      });
+  }
+}, [
+    uploadLeadId, uploadField, firestore, userProfile, allLeads, toast, refetch, updateStatus,
+    initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages,
+    testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, noTestingNeeded,
+    finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst,
+    sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
+]);
+  
+  const isSaveDisabled = useMemo(() => {
+    if (!canEdit) return true;
+    if (uploadField === 'isUnderProgramming') {
+      return initialLogoLeftImages.every(img => !img) &&
+             initialLogoRightImages.every(img => !img) &&
+             initialBackLogoImages.every(img => !img) &&
+             initialBackDesignImages.every(img => !img);
+    }
+    if (uploadField === 'isLogoTesting') {
+      if (noTestingNeeded) return false;
+      return testLogoLeftImages.every(img => !img) &&
+             testLogoRightImages.every(img => !img) &&
+             testBackLogoImages.every(img => !img) &&
+             testBackDesignImages.every(img => !img);
+    }
+    if (uploadField === 'isFinalProgram') {
+      if (isNamesOnly) {
+          return finalNamesDst.every((f) => !f);
+      }
+      const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
+      const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
+      const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
+      const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
+      
+      return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
+    }
+    return true;
+  }, [
+    canEdit, uploadField, 
+    initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages,
+    noTestingNeeded, testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages,
+    isNamesOnly, finalNamesDst, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst,
+    sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
+  ]);
+  
+  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     if (!canEdit) return;
     const file = e.clipboardData.files[0];
     if (file && file.type.startsWith('image/')) {
@@ -1919,7 +2062,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
       </CardContent>
       {viewingJoLead && (
         <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
-            <JoPreviewContent getContactDisplay={getContactDisplay} formatJoNumberUtil={formatJoNumberUtil} viewingJoLead={viewingJoLead} usersData={usersData} />
+            <JoPreviewContent getContactDisplay={getContactDisplay} formatJoNumberUtil={formatJoNumber} viewingJoLead={viewingJoLead} usersData={usersData} />
         </Dialog>
       )}
     </>
