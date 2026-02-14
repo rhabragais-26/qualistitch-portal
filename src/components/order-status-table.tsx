@@ -861,7 +861,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                             </Tooltip>
                                             </TooltipProvider>
                                         ) : (
-                                            <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                            <div className="text-xs text-blue-600 font-semibold">New Customer</div>
                                         )}
                                         {openCustomerDetails === lead.id && (
                                             <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
@@ -1027,11 +1027,11 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                         {isCollapsibleOpen && (
                           <TableRow>
                               <TableCell colSpan={13} className="p-0">
-                                  <div className={cn(
-                                      "p-4 bg-blue-50 rounded-md my-2 grid gap-4 max-w-4xl mx-auto",
-                                      (finalProgrammedLogo?.some(f => f?.url) || finalProgrammedBackDesign?.some(f => f?.url)) ? "grid-cols-2" : "grid-cols-1"
-                                  )}>
-                                      <div>
+                                <div className={cn(
+                                    "p-4 bg-blue-50 rounded-md my-2 grid gap-4 max-w-4xl mx-auto",
+                                    (finalProgrammedLogo?.some(f => f?.url) || finalProgrammedBackDesign?.some(f => f?.url)) ? "grid-cols-2" : "grid-cols-1"
+                                )}>
+                                      <div className={cn(!finalProgrammedLogo && !finalProgrammedBackDesign && "col-span-2")}>
                                           <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                           <Table>
                                               <TableHeader>
@@ -1095,4 +1095,4 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   );
 }
 
-```
+    
