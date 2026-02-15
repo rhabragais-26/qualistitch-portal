@@ -19,6 +19,7 @@ import { format, addMonths } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Save, RefreshCw, Info, TrendingUp, Banknote, PiggyBank, ShieldCheck } from 'lucide-react';
 import { Separator } from '../ui/separator';
+import { Label } from '@/components/ui/label';
 
 const assumptionsSchema = z.object({
   grossMarginPercent: z.coerce.number().min(0, "Cannot be negative").max(100, "Cannot exceed 100"),
