@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -76,12 +75,13 @@ const renderAmountLabel = (props: any) => {
   
     return (
       <g>
+        <rect x={x - 35} y={y - 22} width={70} height={18} fill="hsl(var(--chart-2))" fillOpacity={0.6} rx={4} ry={4} />
         <text 
           x={x} 
-          y={y - 12} 
+          y={y - 13} 
           textAnchor="middle" 
           dominantBaseline="middle" 
-          fill="hsl(var(--chart-2))"
+          fill="black"
           fontSize={12} 
           fontWeight="bold"
         >
@@ -453,7 +453,7 @@ export function ReportsSummary() {
         </Card>
       </div>
       <div className="mt-8">
-         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
             <CardTitle>Daily Sales Performance</CardTitle>
             <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
