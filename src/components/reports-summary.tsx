@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -75,7 +76,7 @@ const renderAmountLabel = (props: any) => {
   
     return (
       <g>
-        <rect x={x - 35} y={y - 22} width={70} height={18} fill="hsl(var(--chart-2))" fillOpacity={0.6} rx={4} ry={4} />
+        <rect x={x - 35} y={y - 22} width={70} height={18} fill="hsl(var(--chart-2), 0.6)" rx={4} ry={4} />
         <text 
           x={x} 
           y={y - 13} 
@@ -305,8 +306,8 @@ export function ReportsSummary() {
       <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-            <CardTitle>CSR Performance</CardTitle>
-            <CardDescription>Total quantity of orders and number of customers by each CSR.</CardDescription>
+            <CardTitle>SCES Performance</CardTitle>
+            <CardDescription>Total quantity of orders and number of customers by each SCES.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '250px' }}>
@@ -315,7 +316,7 @@ export function ReportsSummary() {
                   <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis yAxisId="left" orientation="left" stroke="#00008b" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="#008080" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="right" orientation="right" stroke="#800080" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
@@ -324,9 +325,9 @@ export function ReportsSummary() {
                     
                     <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]}>
                        {salesRepData.map((entry, index) => (
-                        <Cell key={`cell-qty-${index}`} fill={'#00008b'} />
+                        <Cell key={`cell-qty-${index}`} fill={'#008080'} />
                       ))}
-                       <LabelList dataKey="quantity" position="top" fill={'#00008b'} fontSize={12} />
+                       <LabelList dataKey="quantity" position="top" fill={'#008080'} fontSize={12} />
                     </Bar>
                     <Bar yAxisId="right" dataKey="customerCount" name="Customers" radius={[4, 4, 0, 0]}>
                       {salesRepData.map((entry, index) => (
@@ -342,7 +343,7 @@ export function ReportsSummary() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs p-1">CSR</TableHead>
+                    <TableHead className="text-xs p-1">SCES</TableHead>
                     <TableHead className="text-right text-xs p-1">Quantity</TableHead>
                     <TableHead className="text-right text-xs p-1">Customers</TableHead>
                   </TableRow>
@@ -351,7 +352,7 @@ export function ReportsSummary() {
                   {salesRepData.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium flex items-center text-xs p-1">
-                         <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: '#00008b' }}></span>
+                         <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: '#008080' }}></span>
                         {item.name}
                       </TableCell>
                       <TableCell className="text-right text-xs p-1">{item.quantity}</TableCell>
