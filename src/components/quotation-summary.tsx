@@ -30,9 +30,10 @@ type QuotationSummaryProps = {
   removedFees: Record<string, { logo?: boolean; backText?: boolean }>;
   quotationNumber: string | null;
   setQuotationNumber: React.Dispatch<React.SetStateAction<string | null>>;
+  editedUnitPrices: Record<string, number>;
 };
 
-export function QuotationSummary({ orders, orderType, addOns, discounts, grandTotal, removedFees = {}, quotationNumber, setQuotationNumber }: QuotationSummaryProps) {
+export function QuotationSummary({ orders, orderType, addOns, discounts, grandTotal, removedFees = {}, quotationNumber, setQuotationNumber, editedUnitPrices = {} }: QuotationSummaryProps) {
     const { watch } = useFormContext<QuotationFormValues>();
     const customerName = watch('customerName');
     const { userProfile } = useUser();
@@ -279,7 +280,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         const isClientOwned = groupData.productType === 'Client Owned';
                                         const isPatches = groupData.productType === 'Patches';
                                         const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
-                                        const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig, patchPrice, orderType);
+                                        const calculatedUnitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig, patchPrice, orderType);
+                                        const unitPrice = editedUnitPrices[groupKey] ?? calculatedUnitPrice;
                                         const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
                                         const itemsSubtotal = groupData.totalQuantity * unitPrice;
                                         

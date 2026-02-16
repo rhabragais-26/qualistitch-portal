@@ -312,7 +312,7 @@ export function ReportsSummary() {
       <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-            <CardTitle>SCES Performance</CardTitle>
+            <CardTitle>No. of Customers vs Quantity Sold</CardTitle>
             <CardDescription>Total quantity of orders and number of customers by each SCES.</CardDescription>
           </CardHeader>
           <CardContent>

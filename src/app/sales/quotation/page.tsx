@@ -160,6 +160,7 @@ export default function QuotationPage() {
                 removedFees={removedFees}
                 quotationNumber={quotationNumber}
                 setQuotationNumber={setQuotationNumber}
+                editedUnitPrices={editedUnitPrices}
               />
               <div className="flex justify-end">
                 <Button onClick={handleReset}>Create Another Quotation</Button>
