@@ -111,7 +111,7 @@ export function TodaysPerformanceCard() {
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={todaysSalesData} margin={{ top: 20 }}>
                         <CartesianGrid vertical={false} />
-                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black' }} />
                         <YAxis
                             yAxisId="left"
                             orientation="left"
@@ -134,10 +134,10 @@ export function TodaysPerformanceCard() {
                         />
                         <Legend />
                         <Bar yAxisId="left" dataKey="amount" name="Sales Amount" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="amount" position="top" formatter={(value: number) => formatCurrency(value, { notation: 'compact', maximumFractionDigits: 0 })} fontSize={10} />
+                            <LabelList dataKey="amount" position="top" formatter={(value: number) => formatCurrency(value, { notation: 'compact', maximumFractionDigits: 0 })} fontSize={10} fill="black" />
                         </Bar>
                         <Bar yAxisId="right" dataKey="quantity" name="Items Sold" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="quantity" position="top" fontSize={10} />
+                            <LabelList dataKey="quantity" position="top" fontSize={10} fill="black" />
                         </Bar>
                     </BarChart>
                 </ResponsiveContainer>
