@@ -4,11 +4,12 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { useMemo } from 'react';
-import { format, startOfDay, endOfDay } from 'date-fns';
+import React, { useMemo, useState } from 'react';
+import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { Button } from './ui/button';
 
 type Order = {
   quantity: number;
@@ -62,23 +63,26 @@ export function TodaysPerformanceCard() {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
-  const todaysSalesData = useMemo(() => {
+  const [timeRange, setTimeRange] = useState<'today' | 'yesterday'>('today');
+
+  const salesData = useMemo(() => {
     if (!leads) return [];
 
-    const todayStart = startOfDay(new Date());
-    const todayEnd = endOfDay(new Date());
+    const targetDate = timeRange === 'today' ? new Date() : subDays(new Date(), 1);
+    const rangeStart = startOfDay(targetDate);
+    const rangeEnd = endOfDay(targetDate);
     
-    const todaysLeads = leads.filter(lead => {
+    const filteredLeads = leads.filter(lead => {
         try {
             const submissionDate = new Date(lead.submissionDateTime);
-            return submissionDate >= todayStart && submissionDate <= todayEnd;
+            return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
             console.warn(`Invalid date format for lead ${lead.id}: ${lead.submissionDateTime}`);
             return false;
         }
     });
 
-    const salesByRep = todaysLeads.reduce((acc, lead) => {
+    const salesByRep = filteredLeads.reduce((acc, lead) => {
       const rep = lead.salesRepresentative;
       if (!acc[rep]) {
         acc[rep] = { amount: 0, quantity: 0 };
@@ -92,7 +96,7 @@ export function TodaysPerformanceCard() {
     return Object.entries(salesByRep)
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.amount - a.amount);
-  }, [leads]);
+  }, [leads, timeRange]);
   
   if (isLoading) {
       return (
@@ -127,15 +131,23 @@ export function TodaysPerformanceCard() {
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
       <CardHeader>
-        <CardTitle>Today's Performance</CardTitle>
-        <CardDescription>Total sales amount and items sold by SCES for {format(new Date(), 'MMMM dd, yyyy')}.</CardDescription>
+        <div className="flex justify-between items-start">
+            <div>
+                <CardTitle>{timeRange === 'today' ? "Today's" : "Yesterday's"} Performance</CardTitle>
+                <CardDescription>Total sales amount and items sold by SCES for {format(timeRange === 'today' ? new Date() : subDays(new Date(), 1), 'MMMM dd, yyyy')}.</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                <Button variant={timeRange === 'today' ? 'default' : 'outline'} onClick={() => setTimeRange('today')}>Today</Button>
+                <Button variant={timeRange === 'yesterday' ? 'default' : 'outline'} onClick={() => setTimeRange('yesterday')}>Yesterday</Button>
+            </div>
+        </div>
       </CardHeader>
       <CardContent>
-        {todaysSalesData.length > 0 ? (
+        {salesData.length > 0 ? (
             <div style={{ height: '300px' }}>
              <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={todaysSalesData} margin={{ top: 30 }}>
+                    <BarChart data={salesData} margin={{ top: 30 }}>
                         <CartesianGrid vertical={false} />
                         <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                         <YAxis
@@ -159,13 +171,13 @@ export function TodaysPerformanceCard() {
                             />}
                         />
                         <Bar yAxisId="left" dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
-                            {todaysSalesData.map((entry, index) => (
+                            {salesData.map((entry, index) => (
                                 <Cell key={`cell-amount-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-2))'} />
                             ))}
                             <LabelList dataKey="amount" content={renderAmountLabel} />
                         </Bar>
                         <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
-                            {todaysSalesData.map((entry, index) => (
+                            {salesData.map((entry, index) => (
                                 <Cell key={`cell-quantity-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-4))' : 'hsl(var(--chart-5))'} />
                             ))}
                             <LabelList dataKey="quantity" content={renderQuantityLabel} />
@@ -176,7 +188,7 @@ export function TodaysPerformanceCard() {
             </div>
         ) : (
             <div className="flex items-center justify-center h-[300px]">
-                <p className="text-muted-foreground">No sales recorded today.</p>
+                <p className="text-muted-foreground">No sales recorded for {timeRange === 'today' ? 'today' : 'yesterday'}.</p>
             </div>
         )}
       </CardContent>
