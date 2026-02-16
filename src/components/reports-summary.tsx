@@ -82,7 +82,7 @@ const renderAmountLabel = (props: any) => {
   
     return (
       <g>
-        <rect x={x - rectWidth / 2} y={y - rectHeight - 8} width={rectWidth} height={rectHeight} fill="hsl(var(--chart-2))" fillOpacity={0.6} rx={4} ry={4} />
+        <rect x={x - rectWidth / 2} y={y - rectHeight - 8} width={rectWidth} height={rectHeight} fill="hsl(var(--chart-2), 0.4)" rx={4} ry={4} />
         <text 
           x={x} 
           y={y - rectHeight/2 - 8}
@@ -477,7 +477,7 @@ export function ReportsSummary() {
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                     <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12 }} />
-                    <YAxis yAxisId="left" orientation="left" stroke="#add8e6" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="right" orientation="right" stroke="var(--color-amount)" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
@@ -487,7 +487,7 @@ export function ReportsSummary() {
                       }} />}
                     />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#add8e6">
+                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
                        <LabelList dataKey="quantity" content={renderQuantityLabel} />
                     </Bar>
                     <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="var(--color-amount)" strokeWidth={2}>
