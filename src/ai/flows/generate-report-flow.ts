@@ -48,7 +48,10 @@ const GenerateReportInputSchema = z.object({
   selectedYear: z.string().describe('The selected year for the report.'),
   selectedMonth: z.string().describe('The selected month for the report.'),
   selectedWeek: z.string().optional().describe('The selected week for the report (e.g., "mm.dd-mm.dd").'),
-  selectedDate: z.string().optional().describe('The selected date for the report (e.g., "yyyy-MM-dd").'),
+  dateRange: z.object({
+      from: z.string().optional(),
+      to: z.string().optional(),
+  }).optional(),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
@@ -95,7 +98,7 @@ const generateReportFlow = ai.defineFlow(
     inputSchema: GenerateReportInputSchema,
     outputSchema: GenerateReportOutputSchema,
   },
-  async ({ leads, selectedYear, selectedMonth, selectedWeek, selectedDate }) => {
+  async ({ leads, selectedYear, selectedMonth, selectedWeek, dateRange }) => {
     const typedLeads = leads as Lead[];
 
     const availableYears = Array.from(
@@ -121,10 +124,20 @@ const generateReportFlow = ai.defineFlow(
     });
 
     const filteredLeads = (() => {
-      if (selectedDate && isValid(parseISO(selectedDate))) {
-        const targetDate = parseISO(selectedDate);
-        return typedLeads.filter(lead => isSameDay(new Date(lead.submissionDateTime), targetDate));
-      }
+        if (dateRange && (dateRange.from || dateRange.to)) {
+            const fromDate = dateRange.from ? parseISO(dateRange.from) : null;
+            const toDate = dateRange.to ? parseISO(dateRange.to) : fromDate;
+
+            if(fromDate && toDate) {
+                 return typedLeads.filter(lead => {
+                    const submissionDate = new Date(lead.submissionDateTime);
+                    return isWithinInterval(submissionDate, { start: startOfDay(fromDate), end: endOfDay(toDate) });
+                });
+            }
+             if (fromDate) { // Only from date is selected, same as single day
+                return typedLeads.filter(lead => isSameDay(new Date(lead.submissionDateTime), fromDate));
+            }
+        }
 
       if (selectedWeek) {
         const [startStr, endStr] = selectedWeek.split('-');
