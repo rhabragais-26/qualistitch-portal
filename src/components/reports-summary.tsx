@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart } from 'recharts';
+import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -47,11 +47,9 @@ type GenerateReportOutput = {
 const chartConfig = {
   quantity: {
     label: 'Quantity',
-    color: '#00008b', // Dark Blue
   },
   customerCount: {
     label: 'Customers',
-    color: '#800080', // Violet
   },
   amount: {
     label: "Amount"
@@ -74,7 +72,7 @@ const COLORS = [
 ];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, width, value, index } = props;
+    const { x, y, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
     const formattedValue = formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -86,7 +84,7 @@ const renderAmountLabel = (props: any) => {
           y={y - 4} 
           textAnchor="middle" 
           dominantBaseline="middle" 
-          fill="black"
+          fill="hsl(var(--chart-2))"
           fontSize={12} 
           fontWeight="bold"
         >
@@ -308,8 +306,8 @@ export function ReportsSummary() {
                   <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis yAxisId="left" orientation="left" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="#00008b" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="right" orientation="right" stroke="#800080" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
@@ -463,7 +461,7 @@ export function ReportsSummary() {
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                     <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold' }} />
-                    <YAxis yAxisId="left" orientation="left" stroke="#00008b" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="#87CEEB" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
@@ -473,8 +471,8 @@ export function ReportsSummary() {
                       }} />}
                     />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#00008b">
-                       <LabelList dataKey="quantity" position="center" fill="white" fontSize={12} />
+                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#87CEEB">
+                       <LabelList dataKey="quantity" position="center" fill="black" fontSize={12} />
                     </Bar>
                     <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
                        <LabelList content={renderAmountLabel} dataKey="amount" />
