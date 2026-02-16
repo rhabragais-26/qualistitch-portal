@@ -184,10 +184,10 @@ const leadSchema = z.object({
   assignedDigitizer: z.string().nullable().optional(),
   underProgrammingTimestamp: z.string().nullable().optional(),
   initialApprovalTimestamp: z.string().nullable().optional(),
-  logoTestingTimestamp: z.string().nullable().optional(),
-  revisionTimestamp: z.string().nullable().optional(),
-  finalApprovalTimestamp: z.string().nullable().optional(),
-  finalProgramTimestamp: z.string().nullable().optional(),
+  logoTestingTimestamp: z.union([z.string(), z.boolean()]).nullable().optional(),
+  revisionTimestamp: z.union([z.string(), z.boolean()]).nullable().optional(),
+  finalApprovalTimestamp: z.union([z.string(), z.boolean()]).nullable().optional(),
+  finalProgramTimestamp: z.union([z.string(), z.boolean()]).nullable().optional(),
   digitizingArchivedTimestamp: z.string().nullable().optional(),
   isPreparedForProduction: z.boolean().optional(),
   isSentToProduction: z.boolean().optional(),
@@ -421,9 +421,9 @@ const JoPreviewContent = React.memo(({ viewingJoLead, usersData, getContactDispl
                                 <p><strong>SCES Name:</strong> {scesFullName}</p>
                             </div>
                             <div className="space-y-1">
-                                <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
-                                <p><strong>Courier:</strong> {lead.courier}</p>
-                                <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
+                              <p><strong>Recipient&apos;s Name:</strong> {lead.recipientName || lead.customerName}</p>
+                              <p><strong>Courier:</strong> {lead.courier}</p>
+                              <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
                             </div>
                         </div>
 
@@ -589,7 +589,7 @@ const JoPreviewContent = React.memo(({ viewingJoLead, usersData, getContactDispl
                                 </tr>
                                 </thead>
                                 <TableBody>
-                                {layout.namedOrders?.map((order, orderIndex) => (
+                                {layout.namedOrders?.map((order: NamedOrder, orderIndex: number) => (
                                     <TableRow key={orderIndex}>
                                     <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
                                     <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
@@ -610,7 +610,18 @@ const JoPreviewContent = React.memo(({ viewingJoLead, usersData, getContactDispl
 });
 JoPreviewContent.displayName = 'JoPreviewContent';
 
-export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETED' }: DigitizingTableProps) {
+export function DigitizingTable({
+  isReadOnly,
+  filterType = 'ONGOING',
+}: DigitizingTableProps) {
+
+  const [pendingCheckbox, setPendingCheckbox] = useState<{
+    leadId: string;
+    field: CheckboxField;
+    checked: boolean;
+  } | null>(null);
+
+  const firebaseApp = useFirebaseApp();
   const firestore = useFirestore();
   const { toast } = useToast();
   const { userProfile, isAdmin } = useUser();
@@ -625,6 +636,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
 
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: allLeads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
   
@@ -694,8 +706,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
 
   const handleDownload = useCallback(async (url: string, name: string) => {
     try {
-        const app = useFirebaseApp();
-        const storage = getStorage(app);
+        const storage = getStorage(firebaseApp);
         const fileRef = ref(storage, url);
         const blob = await getBlob(fileRef);
         
@@ -713,7 +724,7 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
         description: (error as Error).message || 'Could not download file. Please check permissions and network.',
       });
     }
-  }, [toast, useFirebaseApp]);
+  }, [toast, firebaseApp]);
 
   const allFinalFiles = useMemo(() => {
     if (!reviewConfirmLead || !reviewConfirmLead.layouts) return [];
@@ -722,19 +733,19 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
 
     reviewConfirmLead.layouts.forEach((layout, layoutIndex) => {
 
-      (layout.finalLogoEmb || []).forEach(f => {
+      (layout.finalLogoEmb || []).forEach((f: FileObject | null) => {
         if (f) files.push({ ...f, type: `EMB Logo` });
       });
-      (layout.finalBackDesignEmb || []).forEach(f => {
+      (layout.finalBackDesignEmb || []).forEach((f: FileObject | null) => {
         if (f) files.push({ ...f, type: `EMB Back Design` });
       });
-      (layout.finalLogoDst || []).forEach(f => {
+      (layout.finalLogoDst || []).forEach((f: FileObject | null) => {
         if (f) files.push({ ...f, type: `DST Logo` });
       });
-      (layout.finalBackDesignDst || []).forEach(f => {
+      (layout.finalBackDesignDst || []).forEach((f: FileObject | null) => {
         if (f) files.push({ ...f, type: `DST Back Design` });
       });
-      (layout.finalNamesDst || []).forEach(f => {
+      (layout.finalNamesDst || []).forEach((f: FileObject | null) => {
         if (f) files.push({ ...f, type: `DST Name` });
       });
     });
@@ -1048,11 +1059,11 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
     const processField = (fieldName: CheckboxField | 'isJoHardcopyReceived') => {
       const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
   
-      optimisticUpdate[fieldName as keyof Lead] = false;
-      optimisticUpdate[timestampFieldName] = null;
+      (optimisticUpdate as any)[fieldName] = false;
+      (optimisticUpdate as any)[timestampFieldName] = null;
   
-      originalState[fieldName as keyof Lead] = leadToUpdate[fieldName as keyof Lead];
-      originalState[timestampFieldName as keyof Lead] = leadToUpdate[timestampFieldName as keyof Lead];
+      (originalState as any)[fieldName] = leadToUpdate[fieldName as keyof Lead];
+      (originalState as any)[timestampFieldName] = leadToUpdate[timestampFieldName as keyof Lead];
     };
   
     processField(field);
@@ -1109,49 +1120,63 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
     saveAndUpdate();
   }, [uncheckConfirmation, firestore, toast, allLeads]);
 
-  const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
+  const handleCheckboxChange = useCallback(
+  (leadId: string, field: CheckboxField, checked: boolean) => {
     const lead = displayedLeads?.find((l) => l.id === leadId);
     if (!lead) return;
-    const isCurrentlyChecked = lead[field] as boolean | undefined || false;
 
+    const isCurrentlyChecked = (lead[field] as boolean | undefined) || false;
+
+    // Uncheck flow stays the same
     if (!checked && isCurrentlyChecked) {
       setUncheckConfirmation({ leadId, field });
-    } else if (checked && !isCurrentlyChecked) {
+      return;
+    }
+
+    // Checking flow
+    if (checked && !isCurrentlyChecked) {
+      // ✅ For fields that require upload dialog:
       if (field === 'isUnderProgramming' || field === 'isLogoTesting' || field === 'isFinalProgram') {
+        // ✅ store intent, but DO NOT check yet
+        setPendingCheckbox({ leadId, field, checked: true });
+
         setUploadLeadId(leadId);
         setUploadField(field);
+
         const layout = lead.layouts?.[0];
-        
-        const getInitialImages = (pluralField: ({ url: string } | null)[] | undefined, singularField: string | null | undefined): (string | null)[] => {
-            const images: (string | null)[] = [];
-            if (pluralField && pluralField.length > 0) {
-                images.push(...pluralField.map(i => i?.url || null));
-            } else if (singularField) {
-                images.push(singularField);
-            }
-            if (images.length === 0) {
-                return [null];
-            }
-            return images;
+
+        const getInitialImages = (
+          pluralField: ({ url: string } | null)[] | undefined,
+          singularField: string | null | undefined
+        ): (string | null)[] => {
+          const images: (string | null)[] = [];
+          if (pluralField && pluralField.length > 0) {
+            images.push(...pluralField.map((i) => i?.url || null));
+          } else if (singularField) {
+            images.push(singularField);
+          }
+          if (images.length === 0) return [null];
+          return images;
         };
 
-        const getInitialSequenceImages = (files?: (FileObject | null)[]): (string|null)[] => {
-            if (!files || files.length === 0) return [null];
-            return files.map(f => f?.url || null);
-        }
+        const getInitialSequenceImages = (files?: (FileObject | null)[]): (string | null)[] => {
+          if (!files || files.length === 0) return [null];
+          return files.map((f) => f?.url || null);
+        };
 
         if (field === 'isUnderProgramming') {
-            setInitialLogoLeftImages(getInitialImages((layout as any)?.logoLeftImages, layout?.logoLeftImage));
-            setInitialLogoRightImages(getInitialImages((layout as any)?.logoRightImages, layout?.logoRightImage));
-            setInitialBackLogoImages(getInitialImages((layout as any)?.backLogoImages, layout?.backLogoImage));
-            setInitialBackDesignImages(getInitialImages((layout as any)?.backDesignImages, layout?.backDesignImage));
+          setInitialLogoLeftImages(getInitialImages((layout as any)?.logoLeftImages, layout?.logoLeftImage));
+          setInitialLogoRightImages(getInitialImages((layout as any)?.logoRightImages, layout?.logoRightImage));
+          setInitialBackLogoImages(getInitialImages((layout as any)?.backLogoImages, layout?.backLogoImage));
+          setInitialBackDesignImages(getInitialImages((layout as any)?.backDesignImages, layout?.backDesignImage));
         } else if (field === 'isLogoTesting') {
-            setNoTestingNeeded(false);
-            setTestLogoLeftImages(getInitialImages((layout as any)?.testLogoLeftImages, layout?.testLogoLeftImage));
-            setTestLogoRightImages(getInitialImages((layout as any)?.testLogoRightImages, layout?.testLogoRightImage));
-            setTestBackLogoImages(getInitialImages((layout as any)?.testBackLogoImages, layout?.testBackLogoImage));
-            setTestBackDesignImages(getInitialImages((layout as any)?.testBackDesignImages, layout?.testBackDesignImage));
-        } else { // isFinalProgram
+          setNoTestingNeeded(false);
+          setTestLogoLeftImages(getInitialImages((layout as any)?.testLogoLeftImages, layout?.testLogoLeftImage));
+          setTestLogoRightImages(getInitialImages((layout as any)?.testLogoRightImages, layout?.testLogoRightImage));
+          setTestBackLogoImages(getInitialImages((layout as any)?.testBackLogoImages, layout?.testBackLogoImage));
+          setTestBackDesignImages(getInitialImages((layout as any)?.testBackDesignImages, layout?.testBackDesignImage));
+        } else {
+          // isFinalProgram
           setIsNamesOnly(false);
           setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
           setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
@@ -1163,21 +1188,39 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
           setFinalProgrammedLogo(getInitialImages((layout as any)?.finalProgrammedLogo, undefined));
           setFinalProgrammedBackDesign(getInitialImages((layout as any)?.finalProgrammedBackDesign, undefined));
         }
-        setIsUploadDialogOpen(true);
-      } else {
-        const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
-        setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
-        updateStatus(leadId, field, true).catch(() => {
-             toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
-             setOptimisticChanges(prev => {
-                const { [field!]: _removed, [`${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
-                return { ...prev, [leadId]: rest };
-             });
-        });
-      }
-    }
-  }, [displayedLeads, updateStatus, toast, isReadOnly]);
 
+        setIsUploadDialogOpen(true);
+        return; // ✅ IMPORTANT: stop here (checkbox stays unchecked until Save)
+      }
+
+      // ✅ Non-upload fields: keep instant optimistic update
+      const optimisticUpdate = {
+        [field]: true,
+        [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]:
+          new Date().toISOString(),
+      };
+
+      setOptimisticChanges((prev) => ({
+        ...prev,
+        [leadId]: { ...prev[leadId], ...optimisticUpdate },
+      }));
+
+      updateStatus(leadId, field, true).catch(() => {
+        toast({
+          variant: 'destructive',
+          title: 'Update Failed',
+          description: 'Changes could not be saved.',
+        });
+        setOptimisticChanges((prev) => {
+          const tsKey = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
+          const { [field as string]: _removed, [tsKey]: _removedTs, ...rest } = (prev[leadId] as any) || {};
+          return { ...prev, [leadId]: rest };
+        });
+      });
+    }
+  },
+  [displayedLeads, updateStatus, toast, setPendingCheckbox]
+);
   const handleConfirmReview = useCallback(async () => {
     if (!reviewConfirmLead || !firestore) return;
     try {
@@ -1288,70 +1331,125 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
   };
 
   try {
-      let updateData: Partial<Layout> = {};
-
-      if (uploadField === 'isUnderProgramming') {
-          const [left, right, backLogo, backDesign] = await Promise.all([
-              Promise.all(initialLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'logoLeftImage', i))),
-              Promise.all(initialLogoRightImages.map((img, i) => uploadAndGetURL(img, 'logoRightImage', i))),
-              Promise.all(initialBackLogoImages.map((img, i) => uploadAndGetURL(img, 'backLogoImage', i))),
-              Promise.all(initialBackDesignImages.map((img, i) => uploadAndGetURL(img, 'backDesignImage', i))),
-          ]);
-          updateData = { logoLeftImages: left.filter(Boolean) as any, logoRightImages: right.filter(Boolean) as any, backLogoImages: backLogoImages.filter(Boolean) as any, backDesignImages: backDesign.filter(Boolean) as any };
-      } else if (uploadField === 'isLogoTesting') {
-          if (!noTestingNeeded) {
-              const [left, right, backLogo, backDesign] = await Promise.all([
-                  Promise.all(testLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'testLogoLeftImage', i))),
-                  Promise.all(testLogoRightImages.map((img, i) => uploadAndGetURL(img, 'testLogoRightImage', i))),
-                  Promise.all(testBackLogoImages.map((img, i) => uploadAndGetURL(img, 'testBackLogoImage', i))),
-                  Promise.all(testBackDesignImages.map((img, i) => uploadAndGetURL(img, 'testBackDesignImage', i))),
-              ]);
-              updateData = { testLogoLeftImages: left.filter(Boolean) as any, testLogoRightImages: right.filter(Boolean) as any, testBackLogoImages: backLogoImages.filter(Boolean) as any, testBackDesignImages: backDesign.filter(Boolean) as any };
-          }
-      } else if (uploadField === 'isFinalProgram') {
-          const [embLogo, embBack, dstLogo, dstBack, dstNames, seqLogo, seqBack, finalLogo, finalBack] = await Promise.all([
-              Promise.all(finalLogoEmb.map((f, i) => uploadFileAndGetURL(f, 'finalLogoEmb', i))),
-              Promise.all(finalBackDesignEmb.map((f, i) => uploadFileAndGetURL(f, 'finalBackDesignEmb', i))),
-              Promise.all(finalLogoDst.map((f, i) => uploadFileAndGetURL(f, 'finalLogoDst', i))),
-              Promise.all(finalBackDesignDst.map((f, i) => uploadFileAndGetURL(f, 'finalBackDesignDst', i))),
-              Promise.all(finalNamesDst.map((f, i) => uploadFileAndGetURL(f, 'finalNamesDst', i))),
-              Promise.all(sequenceLogo.map((img, i) => uploadAndGetURL(img, 'sequenceLogo', i))),
-              Promise.all(sequenceBackDesign.map((img, i) => uploadAndGetURL(img, 'sequenceBackDesign', i))),
-              Promise.all(finalProgrammedLogo.map((img, i) => uploadAndGetURL(img, 'finalProgrammedLogo', i))),
-              Promise.all(finalProgrammedBackDesign.map((img, i) => uploadAndGetURL(img, 'finalProgrammedBackDesign', i))),
-          ]);
-          
-          updateData = {
-              finalLogoEmb: embLogo, finalLogoEmbUploadTimes: embLogo.map(f => f ? now : null), finalLogoEmbUploadedBy: embLogo.map(f => f ? userProfile.nickname : null),
-              finalBackDesignEmb: embBack, finalBackDesignEmbUploadTimes: embBack.map(f => f ? now : null), finalBackDesignEmbUploadedBy: embBack.map(f => f ? userProfile.nickname : null),
-              finalLogoDst: dstLogo, finalLogoDstUploadTimes: dstLogo.map(f => f ? now : null), finalLogoDstUploadedBy: dstLogo.map(f => f ? userProfile.nickname : null),
-              finalBackDesignDst: dstBack, finalBackDesignDstUploadTimes: dstBack.map(f => f ? now : null), finalBackDesignDstUploadedBy: dstBack.map(f => f ? userProfile.nickname : null),
-              finalNamesDst: dstNames, finalNamesDstUploadTimes: dstNames.map(f => f ? now : null), finalNamesDstUploadedBy: dstNames.map(f => f ? userProfile.nickname : null),
-              sequenceLogo: seqLogo.filter(Boolean) as any, sequenceLogoUploadTimes: seqLogo.map(f => f ? now : null), sequenceLogoUploadedBy: seqLogo.map(f => f ? userProfile.nickname : null),
-              sequenceBackDesign: seqBack.filter(Boolean) as any, sequenceBackDesignUploadTimes: seqBack.map(f => f ? now : null), sequenceBackDesignUploadedBy: seqBack.map(f => f ? userProfile.nickname : null),
-              finalProgrammedLogo: finalLogo.filter(Boolean) as any, finalProgrammedLogoUploadTimes: finalLogo.map(f => f ? now : null), finalProgrammedLogoUploadedBy: finalLogo.map(f => f ? userProfile.nickname : null),
-              finalProgrammedBackDesign: finalBack.filter(Boolean) as any, finalProgrammedBackDesignUploadTimes: finalBack.map(f => f ? now : null), finalProgrammedBackDesignUploadedBy: finalBack.map(f => f ? userProfile.nickname : null),
-          };
-      }
-
-      const newLayouts = [...layouts];
-      newLayouts[0] = { ...existingLayout, ...updateData };
-      
-      const finalUpdateData: any = {
-          layouts: newLayouts,
-          lastModified: new Date().toISOString(),
-          lastModifiedBy: userProfile.nickname,
+    let updateData: Partial<Layout> = {};
+  
+    if (uploadField === 'isUnderProgramming') {
+      const [left, right, backLogo, backDesign] = await Promise.all([
+        Promise.all(initialLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'logoLeftImage', i))),
+        Promise.all(initialLogoRightImages.map((img, i) => uploadAndGetURL(img, 'logoRightImage', i))),
+        Promise.all(initialBackLogoImages.map((img, i) => uploadAndGetURL(img, 'backLogoImage', i))),
+        Promise.all(initialBackDesignImages.map((img, i) => uploadAndGetURL(img, 'backDesignImage', i))),
+      ]);
+  
+      updateData = {
+        logoLeftImages: left.filter(Boolean) as any,
+        logoRightImages: right.filter(Boolean) as any,
+        backLogoImages: backLogo.filter(Boolean) as any, // ✅ FIXED
+        backDesignImages: backDesign.filter(Boolean) as any,
       };
+  
+    } else if (uploadField === 'isLogoTesting') {
+      if (!noTestingNeeded) {
+        const [left, right, backLogo, backDesign] = await Promise.all([
+          Promise.all(testLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'testLogoLeftImage', i))),
+          Promise.all(testLogoRightImages.map((img, i) => uploadAndGetURL(img, 'testLogoRightImage', i))),
+          Promise.all(testBackLogoImages.map((img, i) => uploadAndGetURL(img, 'testBackLogoImage', i))),
+          Promise.all(testBackDesignImages.map((img, i) => uploadAndGetURL(img, 'testBackDesignImage', i))),
+        ]);
+  
+        updateData = {
+          testLogoLeftImages: left.filter(Boolean) as any,
+          testLogoRightImages: right.filter(Boolean) as any,
+          testBackLogoImages: backLogo.filter(Boolean) as any, // ✅ FIXED
+          testBackDesignImages: backDesign.filter(Boolean) as any,
+        };
+      }
+  
+    } else if (uploadField === 'isFinalProgram') {
+      const [embLogo, embBack, dstLogo, dstBack, dstNames, seqLogo, seqBack, finalLogo, finalBack] = await Promise.all([
+        Promise.all(finalLogoEmb.map((f, i) => uploadFileAndGetURL(f, 'finalLogoEmb', i))),
+        Promise.all(finalBackDesignEmb.map((f, i) => uploadFileAndGetURL(f, 'finalBackDesignEmb', i))),
+        Promise.all(finalLogoDst.map((f, i) => uploadFileAndGetURL(f, 'finalLogoDst', i))),
+        Promise.all(finalBackDesignDst.map((f, i) => uploadFileAndGetURL(f, 'finalBackDesignDst', i))),
+        Promise.all(finalNamesDst.map((f, i) => uploadFileAndGetURL(f, 'finalNamesDst', i))),
+        Promise.all(sequenceLogo.map((img, i) => uploadAndGetURL(img, 'sequenceLogo', i))),
+        Promise.all(sequenceBackDesign.map((img, i) => uploadAndGetURL(img, 'sequenceBackDesign', i))),
+        Promise.all(finalProgrammedLogo.map((img, i) => uploadAndGetURL(img, 'finalProgrammedLogo', i))),
+        Promise.all(finalProgrammedBackDesign.map((img, i) => uploadAndGetURL(img, 'finalProgrammedBackDesign', i))),
+      ]);
+  
+      updateData = {
+        finalLogoEmb: embLogo,
+        finalLogoEmbUploadTimes: embLogo.map(f => f ? now : null),
+        finalLogoEmbUploadedBy: embLogo.map(f => f ? userProfile.nickname : null),
+  
+        finalBackDesignEmb: embBack,
+        finalBackDesignEmbUploadTimes: embBack.map(f => f ? now : null),
+        finalBackDesignEmbUploadedBy: embBack.map(f => f ? userProfile.nickname : null),
+  
+        finalLogoDst: dstLogo,
+        finalLogoDstUploadTimes: dstLogo.map(f => f ? now : null),
+        finalLogoDstUploadedBy: dstLogo.map(f => f ? userProfile.nickname : null),
+  
+        finalBackDesignDst: dstBack,
+        finalBackDesignDstUploadTimes: dstBack.map(f => f ? now : null),
+        finalBackDesignDstUploadedBy: dstBack.map(f => f ? userProfile.nickname : null),
+  
+        finalNamesDst: dstNames,
+        finalNamesDstUploadTimes: dstNames.map(f => f ? now : null),
+        finalNamesDstUploadedBy: dstNames.map(f => f ? userProfile.nickname : null),
+  
+        sequenceLogo: seqLogo.filter(Boolean) as any,
+        sequenceLogoUploadTimes: seqLogo.map(f => f ? now : null),
+        sequenceLogoUploadedBy: seqLogo.map(f => f ? userProfile.nickname : null),
+  
+        sequenceBackDesign: seqBack.filter(Boolean) as any,
+        sequenceBackDesignUploadTimes: seqBack.map(f => f ? now : null),
+        sequenceBackDesignUploadedBy: userProfile.nickname,
+  
+        finalProgrammedLogo: finalLogo.filter(Boolean) as any,
+        finalProgrammedLogoUploadTimes: finalLogo.map(f => f ? now : null),
+        finalProgrammedLogoUploadedBy: finalLogo.map(f => f ? userProfile.nickname : null),
+  
+        finalProgrammedBackDesign: finalBack.filter(Boolean) as any,
+        finalProgrammedBackDesignUploadTimes: finalBack.map(f => f ? now : null),
+        finalProgrammedBackDesignUploadedBy: finalBack.map(f => f ? userProfile.nickname : null),
+      };
+    }
+  
+    const newLayouts = [...layouts];
+    newLayouts[0] = { ...existingLayout, ...updateData };
+  
+    const finalUpdateData: any = {
+      layouts: newLayouts,
+      lastModified: new Date().toISOString(),
+      lastModifiedBy: userProfile.nickname,
+    };
+  
+    await updateDoc(leadDocRef, finalUpdateData);
+    await updateStatus(uploadLeadId, uploadField, true);
 
-      await updateDoc(leadDocRef, finalUpdateData);
-      await updateStatus(uploadLeadId, uploadField, true);
-
-      toast({
-          title: 'Success!',
-          description: 'Files saved and status updated.',
-      });
-      setIsUploadDialogOpen(false);
-      refetch();
+    if (pendingCheckbox && pendingCheckbox.leadId === uploadLeadId && pendingCheckbox.field === (uploadField as CheckboxField)) {
+      const tsKey = `${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`;
+      setOptimisticChanges((prev) => ({
+        ...prev,
+        [uploadLeadId]: {
+          ...prev[uploadLeadId],
+          [uploadField]: true,
+          [tsKey]: new Date().toISOString(),
+        },
+      }));
+      setPendingCheckbox(null);
+    }
+  
+    toast({
+      title: 'Success!',
+      description: 'Files saved and status updated.',
+    });
+  
+    setIsUploadDialogOpen(false);
+    refetch();
+  
   } catch (e: any) {
       console.error("Error saving images: ", e);
       toast({
@@ -1403,60 +1501,103 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
     sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
   ]);
   
-  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    if (!canEdit) return;
-    const file = e.clipboardData.files[0];
-    if (file && file.type.startsWith('image/')) {
-        handleImageUpload(file, setter, index);
-    }
-    };
+  const handleImagePaste = useCallback(
+    (
+      e: React.ClipboardEvent<HTMLDivElement>,
+      setter: React.Dispatch<React.SetStateAction<(string | null)[]>>,
+      index: number
+    ) => {
+      if (!canEdit) return;
   
-    const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    e.stopPropagation();
-    setter(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const addFile = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
-        setter(prev => [...prev, null]);
-    };
-    
-    const handleMultipleFileUpload = (event: ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
+      const file = e.clipboardData.files[0];
+      if (file && file.type.startsWith('image/')) {
+        handleImageUpload(file, setter, index);
+      }
+    },
+    [canEdit, handleImageUpload]
+  );
+  
+  const handleRemoveImage = useCallback(
+    (
+      e: React.MouseEvent,
+      setter: React.Dispatch<React.SetStateAction<(string | null)[]>>,
+      index: number
+    ) => {
+      e.stopPropagation();
+      setter((prev) => prev.filter((_, i) => i !== index));
+    },
+    []
+  );
+  
+  const addFile = useCallback(
+    (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
+      setter((prev) => [...prev, null]);
+    },
+    []
+  );
+  
+  const handleMultipleFileUpload = useCallback(
+    (
+      event: ChangeEvent<HTMLInputElement>,
+      setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>,
+      filesState: (FileObject | null)[],
+      index: number
+    ) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+  
+      const reader = new FileReader();
+      reader.onload = (e) => {
         const newFiles = [...filesState];
         if (e.target?.result) {
-            newFiles[index] = { name: file.name, url: e.target.result as string };
-            setter(newFiles);
+          newFiles[index] = { name: file.name, url: e.target.result as string };
+          setter(newFiles);
         }
-    };
-    reader.readAsDataURL(file);
-    };
-    
-    const addFileMultiple = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
-        setter(prev => [...prev, null]);
-    };
-
-    const removeFile = (setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
-    setter(prev => prev.filter((_, i) => i !== index));
-    if (refs.current[index]) {
+      };
+      reader.readAsDataURL(file);
+    },
+    []
+  );
+  
+  const addFileMultiple = useCallback(
+    (setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>) => {
+      setter((prev) => [...prev, null]);
+    },
+    []
+  );
+  
+  const removeFile = useCallback(
+    (setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number) => {
+      setter((prev) => prev.filter((_, i) => i !== index));
+      if (refs.current[index]) {
         refs.current[index]!.value = '';
-    }
-    };
-
-    const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-        const fileInput = document.getElementById(`file-input-job-order-${index}`) as HTMLInputElement;
-        if (fileInput) {
-            fileInput.value = '';
-        }
-        setter(prev => {
-            const newImages = [...prev];
-            newImages[index] = null;
-            return newImages;
-        });
-    };
+      }
+    },
+    [refs]
+  );
+  
+  const handleClearImage = useCallback(
+    (
+      setter: React.Dispatch<React.SetStateAction<(string | null)[]>>,
+      index: number
+    ) => {
+      const fileInput = document.getElementById(
+        `file-input-job-order-${index}`
+      ) as HTMLInputElement;
+  
+      if (fileInput) {
+        fileInput.value = '';
+      }
+  
+      setter((prev) => {
+        const newImages = [...prev];
+        newImages[index] = null;
+        return newImages;
+      });
+    },
+    []
+  );
+  
 
     const renderUploadBoxes = useCallback((label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
     const displayImages = images.length > 0 ? images : [null];
@@ -1537,11 +1678,13 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                   <Input
                     type="file"
                     className="h-9 text-xs"
-                    ref={el => refs.current[index] = el}
+                    ref={(el) => {
+                      refs.current[index] = el;
+                    }}
                     onChange={(e) => handleMultipleFileUpload(e, setter, files, index)}
                     disabled={!canEdit}
                   />
-                  {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index, refs)}><Trash2 className="h-4 w-4"/></Button>}
+                  {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index)}><Trash2 className="h-4 w-4"/></Button>}
                 </div>
               ))}
             </div>
@@ -1559,16 +1702,18 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                   <Input
                       type="file"
                       className="h-9 text-xs"
-                      ref={el => refs.current[index] = el}
+                      ref={(el) => {
+                        refs.current[index] = el;
+                      }}
                       onChange={(e) => handleMultipleFileUpload(e, setter, files, index)}
                       disabled={!canEdit}
                   />
-                  {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index, refs)}><Trash2 className="h-4 w-4"/></Button>}
+                  {canEdit && <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setter, index)}><Trash2 className="h-4 w-4"/></Button>}
                   </div>
               ))}
           </div>
       );
-    }, [canEdit, handleMultipleFileUpload, removeFile]);
+    }, [canEdit, handleMultipleFileUpload, removeFile, addFileMultiple]);
   
     const renderUploadDialogContent = useCallback(() => {
     switch (uploadField) {
@@ -1707,7 +1852,12 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-       <AlertDialog open={!!joReceivedConfirmation} onOpenChange={setJoReceivedConfirmation}>
+        <AlertDialog
+          open={!!joReceivedConfirmation}
+          onOpenChange={(open) => {
+            if (!open) setJoReceivedConfirmation(null);
+          }}
+        >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
@@ -1757,7 +1907,13 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
         </Dialog>
       )}
 
-    <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <Dialog
+            open={isUploadDialogOpen}
+            onOpenChange={(open) => {
+              setIsUploadDialogOpen(open);
+              if (!open) setPendingCheckbox(null);
+            }}
+          >
       <DialogContent className="max-w-4xl p-0">
           <DialogHeader className="p-6 pb-0">
               <DialogTitle>
@@ -1980,25 +2136,38 @@ export function DigitizingTable({ isReadOnly, filterType = 'ONGOING' | 'COMPLETE
                             </Select>
                         </TableCell>
                         
-                        {(['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'] as CheckboxField[]).map(field => {
-                            const timestamp = lead[`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead] as string | undefined;
-                            let isDisabled = !canEditThisRow || (isCompleted && !(field === 'isFinalProgram' && enableReupload));
-                            
+                        {(['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'] as CheckboxField[]).map((field) => {
+                            const timestampKey =
+                              `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead;
+
+                            const timestamp = lead[timestampKey] as string | undefined;
+
+                            let isDisabled =
+                              !canEditThisRow || (isCompleted && !(field === 'isFinalProgram' && enableReupload));
+
                             const className = isDisabled ? 'disabled:opacity-100' : '';
+
+                            const checkedValue =
+                              (optimisticChanges?.[lead.id]?.[field] ?? lead[field] ?? false) as boolean;
+
                             return (
-                                <TableCell key={field} className="text-center align-middle">
+                              <TableCell key={field} className="text-center align-middle">
                                 <div className="flex flex-col items-center justify-center gap-1">
-                                    <Checkbox
-                                        checked={lead[field] || false}
-                                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, field, !!checked)}
-                                        disabled={isDisabled}
-                                        className={className}
-                                    />
-                                    {timestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(timestamp).dateTimeShort}</div>}
+                                  <Checkbox
+                                    checked={checkedValue}
+                                    onCheckedChange={(checked) => handleCheckboxChange(lead.id, field, !!checked)}
+                                    disabled={isDisabled}
+                                    className={className}
+                                  />
+                                  {timestamp && (
+                                    <div className="text-[10px] text-gray-500 whitespace-nowrap">
+                                      {formatDateTime(timestamp).dateTimeShort}
+                                    </div>
+                                  )}
                                 </div>
-                                </TableCell>
+                              </TableCell>
                             );
-                        })}
+                          })}
                         
                         <TableCell className="text-center align-middle">
                             <div className="flex items-center justify-center">
