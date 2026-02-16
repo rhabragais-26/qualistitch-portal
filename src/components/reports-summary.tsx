@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
+import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -76,13 +75,12 @@ const renderAmountLabel = (props: any) => {
   
     return (
       <g>
-        <rect x={x - 35} y={y - 20} width={70} height={18} fill="black" rx={4} ry={4} />
         <text 
           x={x} 
-          y={y - 11} 
+          y={y - 10} 
           textAnchor="middle" 
           dominantBaseline="middle" 
-          fill="white"
+          fill="black"
           fontSize={12} 
           fontWeight="bold"
         >
@@ -90,12 +88,12 @@ const renderAmountLabel = (props: any) => {
         </text>
       </g>
     );
-};
+  };
   
 const renderQuantityLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     
-    if (value === 0 || !height) return null;
+    if (value === 0 || !height || typeof x !== 'number' || typeof y !== 'number') return null;
   
     return (
       <text x={x + width / 2} y={y + height / 2} fill="white" fontSize={12} textAnchor="middle" dominantBaseline="middle" fontWeight="bold">
@@ -306,8 +304,8 @@ export function ReportsSummary() {
       <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-            <CardTitle>CSR Performance</CardTitle>
-            <CardDescription>Total quantity of orders and number of customers by each CSR.</CardDescription>
+            <CardTitle>SCES Performance</CardTitle>
+            <CardDescription>Total quantity of orders and number of customers by each SCES.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '250px' }}>
@@ -343,7 +341,7 @@ export function ReportsSummary() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs p-1">CSR</TableHead>
+                    <TableHead className="text-xs p-1">SCES</TableHead>
                     <TableHead className="text-right text-xs p-1">Quantity</TableHead>
                     <TableHead className="text-right text-xs p-1">Customers</TableHead>
                   </TableRow>
@@ -471,7 +469,7 @@ export function ReportsSummary() {
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                     <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12 }} />
-                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="#1e3a8a" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
@@ -481,7 +479,7 @@ export function ReportsSummary() {
                       }} />}
                     />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#2563eb">
+                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#1e3a8a">
                        <LabelList dataKey="quantity" content={renderQuantityLabel} />
                     </Bar>
                     <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
