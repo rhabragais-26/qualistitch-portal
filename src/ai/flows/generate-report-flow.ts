@@ -21,6 +21,10 @@ import {
   getYear,
   parse,
   isValid,
+  isSameDay,
+  startOfDay,
+  endOfDay,
+  parseISO
 } from 'date-fns';
 
 type Order = {
@@ -44,6 +48,7 @@ const GenerateReportInputSchema = z.object({
   selectedYear: z.string().describe('The selected year for the report.'),
   selectedMonth: z.string().describe('The selected month for the report.'),
   selectedWeek: z.string().optional().describe('The selected week for the report (e.g., "mm.dd-mm.dd").'),
+  selectedDate: z.string().optional().describe('The selected date for the report (e.g., "yyyy-MM-dd").'),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
@@ -90,7 +95,7 @@ const generateReportFlow = ai.defineFlow(
     inputSchema: GenerateReportInputSchema,
     outputSchema: GenerateReportOutputSchema,
   },
-  async ({ leads, selectedYear, selectedMonth, selectedWeek }) => {
+  async ({ leads, selectedYear, selectedMonth, selectedWeek, selectedDate }) => {
     const typedLeads = leads as Lead[];
 
     const availableYears = Array.from(
@@ -116,6 +121,11 @@ const generateReportFlow = ai.defineFlow(
     });
 
     const filteredLeads = (() => {
+      if (selectedDate && isValid(parseISO(selectedDate))) {
+        const targetDate = parseISO(selectedDate);
+        return typedLeads.filter(lead => isSameDay(new Date(lead.submissionDateTime), targetDate));
+      }
+
       if (selectedWeek) {
         const [startStr, endStr] = selectedWeek.split('-');
         const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
@@ -124,17 +134,22 @@ const generateReportFlow = ai.defineFlow(
         if(isValid(weekStart) && isValid(weekEnd)) {
              return typedLeads.filter(lead => {
                 const submissionDate = new Date(lead.submissionDateTime);
-                return isWithinInterval(submissionDate, { start: weekStart, end: weekEnd });
+                return isWithinInterval(submissionDate, { start: startOfDay(weekStart), end: endOfDay(weekEnd) });
             });
         }
+      }
+
+      if (selectedYear === 'all') return typedLeads;
+      if (isNaN(year)) return typedLeads;
+
+      if (selectedMonth === 'all' || isNaN(month)) {
+        return typedLeads.filter(lead => getYear(new Date(lead.submissionDateTime)) === year);
       }
       
       const start = startOfMonth(new Date(year, month));
       const end = endOfMonth(new Date(year, month));
 
-      return isNaN(year) || isNaN(month)
-        ? typedLeads
-        : typedLeads.filter((lead) => {
+      return typedLeads.filter((lead) => {
             const submissionDate = new Date(lead.submissionDateTime);
             return isWithinInterval(submissionDate, { start, end });
           });

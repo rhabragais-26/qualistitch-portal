@@ -1,18 +1,17 @@
-
-
-"use client";
+'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { format, parse } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Button } from './ui/button';
 import { generateReportAction } from '@/app/reports/actions';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import { format, parse, getYear, getMonth, parseISO, subDays, startOfDay, endOfDay } from 'date-fns';
 
 type Lead = {
   id: string;
@@ -65,6 +64,8 @@ export function ReportsSummary() {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [selectedWeek, setSelectedWeek] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
 
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -75,6 +76,7 @@ export function ReportsSummary() {
   const [reportError, setReportError] = useState<string | null>(null);
 
   const months = useMemo(() => [
+      { value: 'all', label: 'All Months' },
       { value: '1', label: 'January' }, { value: '2', label: 'February' },
       { value: '3', label: 'March' }, { value: '4', label: 'April' },
       { value: '5', label: 'May' }, { value: '6', label: 'June' },
@@ -82,6 +84,25 @@ export function ReportsSummary() {
       { value: '9', label: 'September' }, { value: '10', label: 'October' },
       { value: '11', label: 'November' }, { value: '12', label: 'December' },
   ], []);
+
+  const { availableDates } = useMemo(() => {
+    if (!leads) return { availableDates: [] };
+    const uniqueDates = new Set<string>();
+    leads.forEach(lead => {
+        try {
+            const date = new Date(lead.submissionDateTime);
+            const matchesYear = selectedYear === 'all' || getYear(date).toString() === selectedYear;
+            const matchesMonth = selectedMonth === 'all' || (getMonth(date) + 1).toString() === selectedMonth;
+
+            if (matchesYear && matchesMonth) {
+                uniqueDates.add(format(date, 'yyyy-MM-dd'));
+            }
+        } catch(e) {
+            // ignore invalid date
+        }
+    });
+    return { availableDates: Array.from(uniqueDates).sort((a,b) => b.localeCompare(a)) };
+  }, [leads, selectedYear, selectedMonth]);
 
   const processReport = useCallback(async () => {
     if (!leads) return;
@@ -93,6 +114,7 @@ export function ReportsSummary() {
         selectedYear,
         selectedMonth,
         selectedWeek,
+        selectedDate,
       });
       setReportData(result);
     } catch (e: any) {
@@ -101,7 +123,7 @@ export function ReportsSummary() {
     } finally {
       setIsReportLoading(false);
     }
-  }, [leads, selectedYear, selectedMonth, selectedWeek]);
+  }, [leads, selectedYear, selectedMonth, selectedWeek, selectedDate]);
 
   useEffect(() => {
     if (leads && leads.length > 0) {
@@ -110,6 +132,31 @@ export function ReportsSummary() {
         setIsReportLoading(false);
     }
   }, [leads, processReport, isLeadsLoading]);
+
+  const handleQuickFilter = (filter: 'today' | 'yesterday') => {
+    if (activeQuickFilter === filter) {
+        setActiveQuickFilter(null);
+        setSelectedDate('');
+        // Revert to month view
+        setSelectedMonth((new Date().getMonth() + 1).toString());
+        setSelectedYear(new Date().getFullYear().toString());
+    } else {
+        setActiveQuickFilter(filter);
+        const targetDate = filter === 'today' ? new Date() : subDays(new Date(), 1);
+        setSelectedDate(format(targetDate, 'yyyy-MM-dd'));
+        setSelectedMonth((getMonth(targetDate) + 1).toString());
+        setSelectedYear(getYear(targetDate).toString());
+        setSelectedWeek('');
+    }
+  };
+
+  const handleResetFilters = () => {
+    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedMonth((new Date().getMonth() + 1).toString());
+    setSelectedWeek('');
+    setSelectedDate('');
+    setActiveQuickFilter(null);
+  };
 
   const totalPriorityQuantity = useMemo(() => reportData?.priorityData.reduce((sum, item) => sum + item.value, 0) || 0, [reportData?.priorityData]);
   
@@ -164,14 +211,15 @@ export function ReportsSummary() {
     <>
       <div className="mb-8 p-4 bg-card text-card-foreground rounded-lg shadow-xl no-print">
         <div className="flex justify-between items-center">
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
                 <div className='flex items-center gap-2'>
                     <span className="text-sm font-medium text-card-foreground">Year:</span>
-                    <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setSelectedWeek(''); }}>
+                    <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setSelectedWeek(''); setSelectedDate(''); setActiveQuickFilter(null); }}>
                         <SelectTrigger className="w-[120px]">
                             <SelectValue placeholder="Select Year" />
                         </SelectTrigger>
                         <SelectContent>
+                             <SelectItem value="all">All Years</SelectItem>
                             {availableYears.map(year => (
                                 <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                             ))}
@@ -180,8 +228,8 @@ export function ReportsSummary() {
                 </div>
                 <div className='flex items-center gap-2'>
                     <span className="text-sm font-medium text-card-foreground">Month:</span>
-                    <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setSelectedWeek(''); }} disabled={!!selectedWeek}>
-                        <SelectTrigger className="w-[180px]">
+                    <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setSelectedWeek(''); setSelectedDate(''); setActiveQuickFilter(null); }} disabled={!!selectedWeek || !!selectedDate}>
+                        <SelectTrigger className="w-[140px]">
                             <SelectValue placeholder="Select Month" />
                         </SelectTrigger>
                         <SelectContent>
@@ -193,18 +241,46 @@ export function ReportsSummary() {
                 </div>
                  <div className='flex items-center gap-2'>
                     <span className="text-sm font-medium text-card-foreground">Week:</span>
-                    <Select value={selectedWeek} onValueChange={(value) => setSelectedWeek(value === 'all' ? '' : value)}>
-                        <SelectTrigger className="w-[180px]">
+                    <Select value={selectedWeek} onValueChange={(value) => { setSelectedWeek(value === 'all-weeks' ? '' : value); setSelectedDate(''); setActiveQuickFilter(null); }}>
+                        <SelectTrigger className="w-[150px]">
                             <SelectValue placeholder="Select Week" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Year</SelectItem>
+                          <SelectItem value="all-weeks">All Weeks</SelectItem>
                             {availableWeeks.map(week => (
                                 <SelectItem key={week} value={week}>{week}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                 </div>
+                 <div className='flex items-center gap-2'>
+                    <span className="text-sm font-medium text-card-foreground">Date:</span>
+                    <Select value={selectedDate} onValueChange={(value) => { 
+                        setSelectedDate(value === 'all-dates' ? '' : value); 
+                        setSelectedWeek(''); 
+                        setActiveQuickFilter(null);
+                        if (value !== 'all-dates' && value !== '') {
+                            const dateObj = parseISO(value);
+                            setSelectedMonth((getMonth(dateObj) + 1).toString());
+                            setSelectedYear(getYear(dateObj).toString());
+                        }
+                    }}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Date" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all-dates">All Dates</SelectItem>
+                            {availableDates.map(date => (
+                                <SelectItem key={date} value={date}>{format(parseISO(date), 'MMM dd, yyyy')}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
+                    <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')}>Today</Button>
+                </div>
+                 <Button variant="ghost" onClick={handleResetFilters}>Reset Filters</Button>
             </div>
         </div>
       </div>
