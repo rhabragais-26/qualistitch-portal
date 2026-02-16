@@ -12,12 +12,10 @@ import { generateReportAction } from '@/app/reports/actions';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { format, parse, getYear, getMonth, parseISO, subDays, startOfDay, endOfDay } from 'date-fns';
-import { Calendar as CalendarIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import isEqual from 'lodash/isEqual';
+import { Input } from '@/components/ui/input';
 
 
 type Lead = {
@@ -136,7 +134,7 @@ export function ReportsSummary() {
 
   const handleQuickFilter = (filter: 'today' | 'yesterday') => {
     const targetDate = filter === 'today' ? new Date() : subDays(new Date(), 1);
-    const newRange = { from: targetDate, to: targetDate };
+    const newRange = { from: startOfDay(targetDate), to: endOfDay(targetDate) };
 
     if (activeQuickFilter === filter) {
         setActiveQuickFilter(null);
@@ -166,7 +164,8 @@ export function ReportsSummary() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+        {[...Array(2)].map((_, i) => (
+          <Card key={i} className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
               <Skeleton className="h-4 w-3/4" />
@@ -175,24 +174,7 @@ export function ReportsSummary() {
               <Skeleton className="h-[300px] w-full" />
             </CardContent>
           </Card>
-          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-            <CardHeader>
-              <Skeleton className="h-8 w-1/2" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-[300px] w-full" />
-            </CardContent>
-          </Card>
-           <Card className="lg:col-span-2 w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-            <CardHeader>
-              <Skeleton className="h-8 w-1/2" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-[300px] w-full" />
-            </CardContent>
-          </Card>
+        ))}
       </div>
     );
   }
@@ -248,43 +230,26 @@ export function ReportsSummary() {
                     </Select>
                 </div>
                  <div className='flex items-center gap-2'>
-                    <span className="text-sm font-medium text-card-foreground">Date Range:</span>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                id="date"
-                                variant={"outline"}
-                                className={cn(
-                                "w-[260px] justify-start text-left font-normal",
-                                !dateRange && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {dateRange?.from ? (
-                                    dateRange.to ? (
-                                    <>
-                                        {format(dateRange.from, "LLL dd, y")} -{" "}
-                                        {format(dateRange.to, "LLL dd, y")}
-                                    </>
-                                    ) : (
-                                    format(dateRange.from, "LLL dd, y")
-                                    )
-                                ) : (
-                                    <span>Pick a date range</span>
-                                )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                initialFocus
-                                mode="range"
-                                defaultMonth={dateRange?.from}
-                                selected={dateRange}
-                                onSelect={handleDateRangeSelect}
-                                numberOfMonths={2}
-                            />
-                        </PopoverContent>
-                    </Popover>
+                    <span className="text-sm font-medium text-card-foreground">From:</span>
+                    <Input
+                        type="date"
+                        value={dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => {
+                            const newFromDate = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
+                            handleDateRangeSelect({ from: newFromDate, to: dateRange?.to });
+                        }}
+                        className="w-[160px]"
+                    />
+                     <span className="text-sm font-medium text-card-foreground">To:</span>
+                    <Input
+                        type="date"
+                        value={dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => {
+                            const newToDate = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
+                            handleDateRangeSelect({ from: dateRange?.from, to: newToDate });
+                        }}
+                        className="w-[160px]"
+                    />
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
@@ -306,7 +271,7 @@ export function ReportsSummary() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))', fontWeight: 'bold', fontSize: 12 }} />
+                    <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="left" orientation="left" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="right" orientation="right" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
