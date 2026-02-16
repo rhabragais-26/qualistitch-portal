@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
+import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -16,6 +16,7 @@ import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import isEqual from 'lodash/isEqual';
 import { Input } from '@/components/ui/input';
+import { formatCurrency } from '@/lib/utils';
 
 
 type Lead = {
@@ -48,6 +49,9 @@ const chartConfig = {
   customerCount: {
     label: 'Customers',
   },
+  amount: {
+    label: "Amount"
+  }
 };
 
 const COLORS = [
@@ -64,6 +68,17 @@ const COLORS = [
   'hsl(60, 70%, 70%)',
   'hsl(180, 70%, 70%)',
 ];
+
+const renderAmountLabel = (props: any) => {
+    const { x, y, value } = props;
+    if (value === 0) return null;
+  
+    return (
+      <text x={x} y={y} dy={-6} fill="hsl(var(--foreground))" fontSize={12} textAnchor="middle" fontWeight="bold">
+        {formatCurrency(value)}
+      </text>
+    );
+};
 
 export function ReportsSummary() {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
@@ -439,33 +454,38 @@ export function ReportsSummary() {
       <div className="mt-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-            <CardTitle>Daily Sold QTY</CardTitle>
-            <CardDescription>Total quantity of items sold each day for the selected period.</CardDescription>
+            <CardTitle>Daily Sales Performance</CardTitle>
+            <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '300px' }}>
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
+                  <ComposedChart
                     data={dailySalesData}
                     margin={{
-                      top: 20, right: 30, left: 20, bottom: 5,
+                      top: 30, right: 30, left: 20, bottom: 5,
                     }}
                   >
-                    <CartesianGrid strokeDasharray="3-3" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                     <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent />}
+                      content={<ChartTooltipContent formatter={(value, name) => {
+                          if (name === "Amount") return formatCurrency(value as number);
+                          return value.toLocaleString();
+                      }} />}
                     />
-                    <Bar dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]}>
-                      {dailySalesData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                      <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
+                    <Legend />
+                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
+                      <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" fontSize={12} />
                     </Bar>
-                  </BarChart>
+                    <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
+                       <LabelList content={renderAmountLabel} dataKey="amount" />
+                    </Line>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </div>

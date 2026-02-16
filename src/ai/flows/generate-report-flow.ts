@@ -40,6 +40,7 @@ export type Lead = {
   priorityType: string;
   orders: Order[];
   submissionDateTime: string;
+  grandTotal?: number;
   [key: string]: any;
 };
 
@@ -73,6 +74,7 @@ const GenerateReportOutputSchema = z.object({
     z.object({
       date: z.string(),
       quantity: z.number(),
+      amount: z.number(),
     })
   ),
   soldQtyByProductType: z.array(
@@ -246,22 +248,26 @@ const generateReportFlow = ai.defineFlow(
               0
             );
 
-          if (leadQuantity > 0) {
+          const leadAmount = lead.grandTotal || 0;
+
+          if (leadQuantity > 0 || leadAmount > 0) {
             if (!acc[date]) {
-              acc[date] = 0;
+              acc[date] = { quantity: 0, amount: 0 };
             }
-            acc[date] += leadQuantity;
+            acc[date].quantity += leadQuantity;
+            acc[date].amount += leadAmount;
           }
 
           return acc;
         },
-        {} as { [key: string]: number }
+        {} as { [key: string]: { quantity: number; amount: number } }
       );
 
       return Object.entries(salesByDay)
-        .map(([date, quantity]) => ({
+        .map(([date, { quantity, amount }]) => ({
           date,
           quantity,
+          amount,
         }))
         .sort(
           (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
