@@ -74,32 +74,30 @@ const renderAmountLabel = (props: any) => {
     const { x, y, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
-    const formattedValue = formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    
     return (
       <g>
         <text 
           x={x} 
-          y={y - 4} 
+          y={y - 12} 
           textAnchor="middle" 
           dominantBaseline="middle" 
           fill="hsl(var(--chart-2))"
           fontSize={12} 
           fontWeight="bold"
         >
-          {formattedValue}
+          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </text>
       </g>
     );
 };
   
 const renderQuantityLabel = (props: any) => {
-    const { x, y, width, value, index } = props;
+    const { x, y, width, height, value } = props;
     
-    if (value === 0) return null;
+    if (value === 0 || !height) return null;
   
     return (
-      <text x={x + width / 2} y={y + 10} dy={-4} fill="white" fontSize={12} textAnchor="middle" fontWeight="bold">
+      <text x={x + width / 2} y={y + height / 2} fill="white" fontSize={12} textAnchor="middle" dominantBaseline="middle" fontWeight="bold">
         {value}
       </text>
     );
@@ -455,7 +453,7 @@ export function ReportsSummary() {
         </Card>
       </div>
       <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
             <CardTitle>Daily Sales Performance</CardTitle>
             <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
@@ -472,7 +470,7 @@ export function ReportsSummary() {
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                     <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12 }} />
-                    <YAxis yAxisId="left" orientation="left" stroke="#87CEEB" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="#2563eb" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
@@ -482,7 +480,7 @@ export function ReportsSummary() {
                       }} />}
                     />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#87CEEB">
+                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#2563eb">
                        <LabelList dataKey="quantity" content={renderQuantityLabel} />
                     </Bar>
                     <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
