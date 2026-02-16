@@ -40,8 +40,8 @@ export const toTitleCase = (str: string) => {
         .join(' ');
 };
 
-export const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
+export const formatCurrency = (value: number, options?: Intl.NumberFormatOptions) => {
+    return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', ...options }).format(value);
 };
 
 export const formatJoNumber = (joNumber: number | undefined): string => {

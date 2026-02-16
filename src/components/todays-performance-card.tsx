@@ -7,7 +7,7 @@ import { Skeleton } from './ui/skeleton';
 import React, { useMemo } from 'react';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 type Order = {
@@ -109,7 +109,7 @@ export function TodaysPerformanceCard() {
             <div style={{ height: '300px' }}>
              <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={todaysSalesData}>
+                    <BarChart data={todaysSalesData} margin={{ top: 20 }}>
                         <CartesianGrid vertical={false} />
                         <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
                         <YAxis
@@ -133,8 +133,12 @@ export function TodaysPerformanceCard() {
                             />}
                         />
                         <Legend />
-                        <Bar yAxisId="left" dataKey="amount" name="Sales Amount" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-                        <Bar yAxisId="right" dataKey="quantity" name="Items Sold" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                        <Bar yAxisId="left" dataKey="amount" name="Sales Amount" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="amount" position="top" formatter={(value: number) => formatCurrency(value, { notation: 'compact', maximumFractionDigits: 0 })} fontSize={10} />
+                        </Bar>
+                        <Bar yAxisId="right" dataKey="quantity" name="Items Sold" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="quantity" position="top" fontSize={10} />
+                        </Bar>
                     </BarChart>
                 </ResponsiveContainer>
              </ChartContainer>
