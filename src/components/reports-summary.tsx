@@ -73,10 +73,38 @@ const renderAmountLabel = (props: any) => {
     const { x, y, value } = props;
     if (value === 0) return null;
   
+    const formattedValue = formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    const textLength = formattedValue.length;
+    const padding = 8;
+    const boxWidth = textLength * 7 + padding;
+    const boxHeight = 20;
+
+    const boxX = x - boxWidth / 2;
+    const boxY = y - boxHeight - 8; // Position above the line point
+
     return (
-      <text x={x} y={y} dy={-6} fill="black" fontSize={12} textAnchor="middle" fontWeight="bold">
-        {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-      </text>
+      <g>
+        <rect 
+          x={boxX} 
+          y={boxY} 
+          width={boxWidth} 
+          height={boxHeight} 
+          rx="4" 
+          fill="hsl(var(--chart-2))" 
+          fillOpacity="0.2" 
+        />
+        <text 
+          x={x} 
+          y={boxY + boxHeight / 2} 
+          textAnchor="middle" 
+          dominantBaseline="middle" 
+          fill="black" 
+          fontSize={10} 
+          fontWeight="bold"
+        >
+          {formattedValue}
+        </text>
+      </g>
     );
 };
 
@@ -89,7 +117,7 @@ export function ReportsSummary() {
 
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
   
   const [reportData, setReportData] = useState<GenerateReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
@@ -480,7 +508,7 @@ export function ReportsSummary() {
                     />
                     <Legend />
                     <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
-                      <LabelList dataKey="quantity" position="center" fill="hsl(var(--primary-foreground))" fontSize={12} />
+                       <LabelList dataKey="quantity" position="center" fill="hsl(var(--primary-foreground))" fontSize={12} />
                     </Bar>
                     <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
                        <LabelList content={renderAmountLabel} dataKey="amount" />
