@@ -372,7 +372,7 @@ export function ReportsSummary() {
         </Card>
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
           <CardHeader>
-            <CardTitle>QTY by Priority Type</CardTitle>
+            <CardTitle>Sold by Priority Type</CardTitle>
             <CardDescription>Total quantity of orders for each priority type.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col justify-between">
