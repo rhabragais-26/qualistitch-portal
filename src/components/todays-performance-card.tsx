@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -8,19 +7,29 @@ import { Skeleton } from './ui/skeleton';
 import React, { useMemo } from 'react';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+
+type Order = {
+  quantity: number;
+};
 
 type Lead = {
   id: string;
   salesRepresentative: string;
   submissionDateTime: string;
   grandTotal?: number;
+  orders: Order[];
 };
 
 const chartConfig = {
   amount: {
-    label: 'Amount',
+    label: "Sales Amount",
+    color: "hsl(var(--chart-1))",
+  },
+  quantity: {
+    label: "Items Sold",
+    color: "hsl(var(--chart-2))",
   },
 };
 
@@ -46,14 +55,16 @@ export function TodaysPerformanceCard() {
     const salesByRep = todaysLeads.reduce((acc, lead) => {
       const rep = lead.salesRepresentative;
       if (!acc[rep]) {
-        acc[rep] = 0;
+        acc[rep] = { amount: 0, quantity: 0 };
       }
-      acc[rep] += lead.grandTotal || 0;
+      acc[rep].amount += lead.grandTotal || 0;
+      const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
+      acc[rep].quantity += orderQuantity;
       return acc;
-    }, {} as { [key: string]: number });
+    }, {} as { [key: string]: { amount: number; quantity: number } });
 
     return Object.entries(salesByRep)
-      .map(([name, amount]) => ({ name, amount }))
+      .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.amount - a.amount);
   }, [leads]);
   
@@ -91,24 +102,39 @@ export function TodaysPerformanceCard() {
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
       <CardHeader>
         <CardTitle>Today's Performance</CardTitle>
-        <CardDescription>Total sales amount by SCES for {format(new Date(), 'MMMM dd, yyyy')}.</CardDescription>
+        <CardDescription>Total sales amount and items sold by SCES for {format(new Date(), 'MMMM dd, yyyy')}.</CardDescription>
       </CardHeader>
       <CardContent>
         {todaysSalesData.length > 0 ? (
             <div style={{ height: '300px' }}>
              <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={todaysSalesData} layout="vertical" margin={{ left: 20 }}>
-                        <CartesianGrid horizontal={false} />
-                        <XAxis type="number" tickFormatter={(value) => `₱${(value as number).toLocaleString()}`} />
-                        <YAxis dataKey="name" type="category" width={80} />
+                    <BarChart data={todaysSalesData}>
+                        <CartesianGrid vertical={false} />
+                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
+                        <YAxis
+                            yAxisId="left"
+                            orientation="left"
+                            stroke="hsl(var(--chart-1))"
+                            tickFormatter={(value) => `₱${Number(value) / 1000}k`}
+                        />
+                        <YAxis
+                            yAxisId="right"
+                            orientation="right"
+                            stroke="hsl(var(--chart-2))"
+                        />
                         <Tooltip
                             cursor={{ fill: 'hsl(var(--muted))' }}
-                            content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
+                            content={<ChartTooltipContent
+                                formatter={(value, name) => {
+                                    if (name === 'amount') return formatCurrency(value as number);
+                                    return value.toLocaleString();
+                                }}
+                            />}
                         />
-                        <Bar dataKey="amount" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]}>
-                            <LabelList dataKey="amount" position="right" formatter={(value: number) => formatCurrency(value)} />
-                        </Bar>
+                        <Legend />
+                        <Bar yAxisId="left" dataKey="amount" name="Sales Amount" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                        <Bar yAxisId="right" dataKey="quantity" name="Items Sold" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
              </ChartContainer>
