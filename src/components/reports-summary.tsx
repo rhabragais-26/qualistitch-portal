@@ -46,6 +46,7 @@ type GenerateReportOutput = {
 const chartConfig = {
   quantity: {
     label: 'Quantity',
+    color: "hsl(var(--chart-1))",
   },
   customerCount: {
     label: 'Customers',
@@ -73,7 +74,7 @@ const COLORS = [
 ];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, value } = props;
+    const { x, y, width, height, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
     const rectWidth = 80;
@@ -476,8 +477,8 @@ export function ReportsSummary() {
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                     <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
-                    <YAxis yAxisId="left" orientation="left" stroke="#00008B" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis yAxisId="right" orientation="right" stroke="var(--color-amount)" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent formatter={(value, name) => {
@@ -486,10 +487,10 @@ export function ReportsSummary() {
                       }} />}
                     />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#00008B">
+                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
                        <LabelList dataKey="quantity" content={renderQuantityLabel} />
                     </Bar>
-                    <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="var(--color-amount)" strokeWidth={2}>
+                    <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
                        <LabelList content={renderAmountLabel} dataKey="amount" />
                     </Line>
                   </ComposedChart>
