@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -45,9 +46,11 @@ type GenerateReportOutput = {
 const chartConfig = {
   quantity: {
     label: 'Quantity',
+    color: '#800000',
   },
   customerCount: {
     label: 'Customers',
+    color: '#800080',
   },
   amount: {
     label: "Amount"
@@ -70,36 +73,20 @@ const COLORS = [
 ];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, value } = props;
+    const { x, y, width, value } = props;
     if (value === 0) return null;
   
     const formattedValue = formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    const textLength = formattedValue.length;
-    const padding = 8;
-    const boxWidth = textLength * 7 + padding;
-    const boxHeight = 20;
-
-    const boxX = x - boxWidth / 2;
-    const boxY = y - boxHeight - 8; // Position above the line point
-
+    
     return (
       <g>
-        <rect 
-          x={boxX} 
-          y={boxY} 
-          width={boxWidth} 
-          height={boxHeight} 
-          rx="4" 
-          fill="hsl(var(--chart-2))" 
-          fillOpacity="0.2" 
-        />
         <text 
-          x={x} 
-          y={boxY + boxHeight / 2} 
+          x={x + width / 2} 
+          y={y - 4} 
           textAnchor="middle" 
           dominantBaseline="middle" 
-          fill="black" 
-          fontSize={10} 
+          fill="black"
+          fontSize={12} 
           fontWeight="bold"
         >
           {formattedValue}
@@ -201,6 +188,11 @@ export function ReportsSummary() {
 
   const totalPriorityQuantity = useMemo(() => reportData?.priorityData.reduce((sum, item) => sum + item.value, 0) || 0, [reportData?.priorityData]);
   
+  const priorityColors = {
+    'Rush': '#800000', // Maroon
+    'Regular': '#006400', // Dark Green
+  };
+
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
@@ -321,12 +313,12 @@ export function ReportsSummary() {
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
-                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" fontSize={12} />
+                    
+                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#800000">
+                       <LabelList dataKey="quantity" position="top" fill="#800000" fontSize={12} />
                     </Bar>
-                    <Bar yAxisId="right" dataKey="customerCount" name="Customers" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
-                      <LabelList dataKey="customerCount" position="top" fill="hsl(var(--foreground))" fontSize={12} />
+                    <Bar yAxisId="right" dataKey="customerCount" name="Customers" radius={[4, 4, 0, 0]} fill="#800080">
+                      <LabelList dataKey="customerCount" position="top" fill="#800080" fontSize={12} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -345,7 +337,7 @@ export function ReportsSummary() {
                   {salesRepData.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium flex items-center text-xs p-1">
-                         <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                         <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: index % 2 === 0 ? chartConfig.quantity.color : chartConfig.customerCount.color }}></span>
                         {item.name}
                       </TableCell>
                       <TableCell className="text-right text-xs p-1">{item.quantity}</TableCell>
@@ -405,9 +397,10 @@ export function ReportsSummary() {
                         );
                       }}
                     >
-                      {priorityData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
+                      {priorityData.map((entry, index) => {
+                          const color = priorityColors[entry.name as keyof typeof priorityColors] || COLORS[index % COLORS.length];
+                          return <Cell key={`cell-${index}`} fill={color} />;
+                      })}
                     </Pie>
                      <Legend verticalAlign="bottom" height={36}/>
                   </PieChart>
@@ -424,25 +417,28 @@ export function ReportsSummary() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {priorityData.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium flex items-center text-xs p-1">
-                         <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
-                        {item.name}
-                      </TableCell>
-                      <TableCell className="text-right text-xs p-1">{item.value}</TableCell>
-                      <TableCell className="text-right text-xs p-1">
-                        {totalPriorityQuantity > 0 ? `${((item.value / totalPriorityQuantity) * 100).toFixed(2)}%` : '0.00%'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {priorityData.map((item, index) => {
+                    const color = priorityColors[item.name as keyof typeof priorityColors] || COLORS[index % COLORS.length];
+                    return (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium flex items-center text-xs p-1">
+                           <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: color }}></span>
+                          {item.name}
+                        </TableCell>
+                        <TableCell className="text-right text-xs p-1">{item.value}</TableCell>
+                        <TableCell className="text-right text-xs p-1">
+                          {totalPriorityQuantity > 0 ? `${((item.value / totalPriorityQuantity) * 100).toFixed(2)}%` : '0.00%'}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
           </CardContent>
         </Card>
       </div>
-       <div className="mt-8">
+      <div className="mt-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
             <CardTitle>Sold QTY by Product Type</CardTitle>
@@ -496,7 +492,7 @@ export function ReportsSummary() {
                     }}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false}/>
-                    <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'hsl(var(--foreground))', fontSize: 12, fontWeight: 'bold' }} />
+                    <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-4))" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
@@ -506,8 +502,9 @@ export function ReportsSummary() {
                           return value.toLocaleString();
                       }} />}
                     />
+                    <Legend />
                     <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-4))">
-                       <LabelList dataKey="quantity" position="center" fill="hsl(var(--primary-foreground))" fontSize={12} />
+                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" fontSize={12} />
                     </Bar>
                     <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
                        <LabelList content={renderAmountLabel} dataKey="amount" />
