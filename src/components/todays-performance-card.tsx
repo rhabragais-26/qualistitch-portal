@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -6,9 +5,9 @@ import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import React, { useMemo } from 'react';
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 type Order = {
@@ -26,26 +25,42 @@ type Lead = {
 const chartConfig = {
   amount: {
     label: "Sales Amount",
-    color: "hsl(var(--chart-1))",
   },
   quantity: {
     label: "Items Sold",
-    color: "hsl(var(--chart-2))",
   },
 };
 
-const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
+const renderAmountLabel = (props: any) => {
+    const { x, y, width, value, index } = props;
+    const color = index % 2 === 0 ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-2))';
+    
+    if (value === 0) return null;
+  
+    return (
+      <text x={x + width / 2} y={y} dy={-4} fill={color} fontSize={12} textAnchor="middle" fontWeight="bold">
+        {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+      </text>
+    );
+};
+  
+const renderQuantityLabel = (props: any) => {
+    const { x, y, width, value, index } = props;
+    const color = index % 2 === 0 ? 'hsl(var(--chart-4))' : 'hsl(var(--chart-5))';
+    
+    if (value === 0) return null;
+  
+    return (
+      <text x={x + width / 2} y={y} dy={-4} fill={color} fontSize={12} textAnchor="middle" fontWeight="bold">
+        {value}
+      </text>
+    );
+};
 
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   const todaysSalesData = useMemo(() => {
     if (!leads) return [];
@@ -143,18 +158,17 @@ export function TodaysPerformanceCard() {
                                 }}
                             />}
                         />
-                        <Legend />
                         <Bar yAxisId="left" dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
                             {todaysSalesData.map((entry, index) => (
                                 <Cell key={`cell-amount-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-2))'} />
                             ))}
-                            <LabelList dataKey="amount" position="top" formatter={(value: number) => formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} fontSize={12} fill="black" />
+                            <LabelList dataKey="amount" content={renderAmountLabel} />
                         </Bar>
                         <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
                             {todaysSalesData.map((entry, index) => (
                                 <Cell key={`cell-quantity-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-4))' : 'hsl(var(--chart-5))'} />
                             ))}
-                            <LabelList dataKey="quantity" position="top" fontSize={12} fill="black" />
+                            <LabelList dataKey="quantity" content={renderQuantityLabel} />
                         </Bar>
                     </BarChart>
                 </ResponsiveContainer>
