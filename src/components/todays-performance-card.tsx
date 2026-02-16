@@ -5,7 +5,7 @@ import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import React, { useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
@@ -38,7 +38,7 @@ const renderAmountLabel = (props: any) => {
     if (value === 0) return null;
   
     return (
-      <text x={x + width / 2} y={y} dy={-4} fill={color} fontSize={12} textAnchor="middle" fontWeight="bold">
+      <text x={x + width / 2} y={y} dy={-4} fill="black" fontSize={12} textAnchor="middle" fontWeight="bold">
         {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </text>
     );
