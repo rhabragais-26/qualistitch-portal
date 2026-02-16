@@ -480,7 +480,7 @@ export function ReportsSummary() {
                     />
                     <Legend />
                     <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
-                      <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" fontSize={12} />
+                      <LabelList dataKey="quantity" position="center" fill="hsl(var(--primary-foreground))" fontSize={12} />
                     </Bar>
                     <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
                        <LabelList content={renderAmountLabel} dataKey="amount" />
