@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
+import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -74,8 +74,8 @@ const renderAmountLabel = (props: any) => {
     if (value === 0) return null;
   
     return (
-      <text x={x} y={y} dy={-6} fill="hsl(var(--foreground))" fontSize={12} textAnchor="middle" fontWeight="bold">
-        {formatCurrency(value)}
+      <text x={x} y={y} dy={-6} fill="black" fontSize={12} textAnchor="middle" fontWeight="bold">
+        {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </text>
     );
 };
