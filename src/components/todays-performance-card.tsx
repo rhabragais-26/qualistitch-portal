@@ -146,13 +146,13 @@ export function TodaysPerformanceCard() {
                         <Legend />
                         <Bar yAxisId="left" dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
                             {todaysSalesData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                <Cell key={`cell-amount-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-2))'} />
                             ))}
                             <LabelList dataKey="amount" position="top" formatter={(value: number) => formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} fontSize={12} fill="black" />
                         </Bar>
                         <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
-                             {todaysSalesData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[(index + 1) % COLORS.length]} />
+                            {todaysSalesData.map((entry, index) => (
+                                <Cell key={`cell-quantity-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-4))' : 'hsl(var(--chart-5))'} />
                             ))}
                             <LabelList dataKey="quantity" position="top" fontSize={12} fill="black" />
                         </Bar>
