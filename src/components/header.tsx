@@ -44,7 +44,7 @@ import {
   Camera,
   Gift,
   Newspaper,
-  Target,
+  CandlestickChart,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -305,7 +305,7 @@ const HeaderMemo = React.memo(function Header({
                         Receivables
                       </DropdownMenuItem>
                        <DropdownMenuItem onClick={() => handleNavigation('/finance/financial-forecast')}>
-                        <Target className="mr-2" />
+                        <CandlestickChart className="mr-2" />
                         Financial Forecast
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleNavigation('/finance/operational-expenses')}>
@@ -651,4 +651,3 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
-
