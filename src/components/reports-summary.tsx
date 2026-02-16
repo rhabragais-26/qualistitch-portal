@@ -71,27 +71,18 @@ const COLORS = [
 ];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, value } = props;
+    const { x, y, width, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
 
     const rectWidth = 80;
-    const rectHeight = 20;
+    const rectHeight = 18;
   
     return (
       <g>
-        <rect 
-          x={x - rectWidth / 2} 
-          y={y - rectHeight - 8} // Positioned 8px above the line point
-          width={rectWidth} 
-          height={rectHeight} 
-          fill="hsl(var(--chart-2))" 
-          opacity={0.6} // 40% transparent
-          rx={4} 
-          ry={4} 
-        />
+        <rect x={x - rectWidth / 2} y={y - rectHeight - 8} width={rectWidth} height={rectHeight} fill="hsl(var(--chart-2), 0.6)" rx={4} ry={4} />
         <text 
           x={x} 
-          y={y - rectHeight / 2 - 8} // Centered vertically in the rect
+          y={y - rectHeight/2 - 8}
           textAnchor="middle" 
           dominantBaseline="middle" 
           fill="black"
@@ -329,7 +320,7 @@ export function ReportsSummary() {
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="left" orientation="left" stroke="#008080" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis yAxisId="right" orientation="right" stroke="#800080" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="right" orientation="right" stroke="#8A2BE2" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
@@ -343,9 +334,9 @@ export function ReportsSummary() {
                     </Bar>
                     <Bar yAxisId="right" dataKey="customerCount" name="Customers" radius={[4, 4, 0, 0]}>
                       {salesRepData.map((entry, index) => (
-                        <Cell key={`cell-cust-${index}`} fill={'#800080'} />
+                        <Cell key={`cell-cust-${index}`} fill={'#8A2BE2'} />
                       ))}
-                      <LabelList dataKey="customerCount" position="top" fill={'#800080'} fontSize={12} />
+                      <LabelList dataKey="customerCount" position="top" fill={'#8A2BE2'} fontSize={12} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -393,7 +384,7 @@ export function ReportsSummary() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius="60%"
+                      innerRadius="40%"
                       outerRadius="80%"
                       labelLine={false}
                       label={({
