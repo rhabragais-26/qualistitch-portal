@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -72,12 +73,25 @@ const COLORS = [
 const renderAmountLabel = (props: any) => {
     const { x, y, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+
+    const rectWidth = 80;
+    const rectHeight = 20;
   
     return (
       <g>
+        <rect 
+          x={x - rectWidth / 2} 
+          y={y - rectHeight - 8} // Positioned 8px above the line point
+          width={rectWidth} 
+          height={rectHeight} 
+          fill="hsl(var(--chart-2))" 
+          opacity={0.6} // 40% transparent
+          rx={4} 
+          ry={4} 
+        />
         <text 
           x={x} 
-          y={y - 10} 
+          y={y - rectHeight / 2 - 8} // Centered vertically in the rect
           textAnchor="middle" 
           dominantBaseline="middle" 
           fill="black"
@@ -469,7 +483,7 @@ export function ReportsSummary() {
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                     <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12 }} />
-                    <YAxis yAxisId="left" orientation="left" stroke="#1e3a8a" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="#00008b" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
@@ -479,7 +493,7 @@ export function ReportsSummary() {
                       }} />}
                     />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#1e3a8a">
+                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#00008b">
                        <LabelList dataKey="quantity" content={renderQuantityLabel} />
                     </Bar>
                     <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
@@ -516,7 +530,7 @@ export function ReportsSummary() {
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
                       {soldQtyByProductType.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
