@@ -46,7 +46,7 @@ type GenerateReportOutput = {
 const chartConfig = {
   quantity: {
     label: 'Quantity',
-    color: '#800000',
+    color: '#000080',
   },
   customerCount: {
     label: 'Customers',
@@ -73,16 +73,16 @@ const COLORS = [
 ];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, width, value } = props;
-    if (value === 0) return null;
+    const { x, y, value } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
     const formattedValue = formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     
     return (
       <g>
         <text 
-          x={x + width / 2} 
-          y={y - 4} 
+          x={x}
+          y={y - 10} 
           textAnchor="middle" 
           dominantBaseline="middle" 
           fill="black"
@@ -314,8 +314,8 @@ export function ReportsSummary() {
                       content={<ChartTooltipContent />}
                     />
                     
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#800000">
-                       <LabelList dataKey="quantity" position="top" fill="#800000" fontSize={12} />
+                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="#000080">
+                       <LabelList dataKey="quantity" position="top" fill="#000080" fontSize={12} />
                     </Bar>
                     <Bar yAxisId="right" dataKey="customerCount" name="Customers" radius={[4, 4, 0, 0]} fill="#800080">
                       <LabelList dataKey="customerCount" position="top" fill="#800080" fontSize={12} />
@@ -441,43 +441,6 @@ export function ReportsSummary() {
       <div className="mt-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-            <CardTitle>Sold QTY by Product Type</CardTitle>
-            <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: '300px' }}>
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={soldQtyByProductType}
-                    layout="vertical"
-                    margin={{
-                      top: 20, right: 30, left: 20, bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent />}
-                    />
-                    <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
-                      {soldQtyByProductType.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-          <CardHeader>
             <CardTitle>Daily Sales Performance</CardTitle>
             <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
           </CardHeader>
@@ -510,6 +473,43 @@ export function ReportsSummary() {
                        <LabelList content={renderAmountLabel} dataKey="amount" />
                     </Line>
                   </ComposedChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="mt-8">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+          <CardHeader>
+            <CardTitle>Sold Quantity based on Product Type</CardTitle>
+            <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div style={{ height: '300px' }}>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={soldQtyByProductType}
+                    layout="vertical"
+                    margin={{
+                      top: 20, right: 30, left: 20, bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
+                    <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                      content={<ChartTooltipContent />}
+                    />
+                    <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
+                      {soldQtyByProductType.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
