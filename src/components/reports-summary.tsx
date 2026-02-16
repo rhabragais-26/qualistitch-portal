@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { ComposedChart, Line, Bar, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
+import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -76,13 +76,13 @@ const renderAmountLabel = (props: any) => {
   
     return (
       <g>
-        <rect x={x - 35} y={y - 22} width={70} height={18} fill="hsl(var(--chart-2), 0.6)" rx={4} ry={4} />
+        <rect x={x - 35} y={y - 20} width={70} height={18} fill="black" rx={4} ry={4} />
         <text 
           x={x} 
-          y={y - 13} 
+          y={y - 11} 
           textAnchor="middle" 
           dominantBaseline="middle" 
-          fill="black"
+          fill="white"
           fontSize={12} 
           fontWeight="bold"
         >
@@ -306,8 +306,8 @@ export function ReportsSummary() {
       <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-            <CardTitle>SCES Performance</CardTitle>
-            <CardDescription>Total quantity of orders and number of customers by each SCES.</CardDescription>
+            <CardTitle>CSR Performance</CardTitle>
+            <CardDescription>Total quantity of orders and number of customers by each CSR.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '250px' }}>
@@ -343,7 +343,7 @@ export function ReportsSummary() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs p-1">SCES</TableHead>
+                    <TableHead className="text-xs p-1">CSR</TableHead>
                     <TableHead className="text-right text-xs p-1">Quantity</TableHead>
                     <TableHead className="text-right text-xs p-1">Customers</TableHead>
                   </TableRow>
@@ -471,7 +471,7 @@ export function ReportsSummary() {
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                     <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12 }} />
-                    <YAxis yAxisId="left" orientation="left" stroke="#2563eb" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
