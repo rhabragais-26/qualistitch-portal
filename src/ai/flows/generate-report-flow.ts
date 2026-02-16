@@ -125,17 +125,22 @@ const generateReportFlow = ai.defineFlow(
 
     const filteredLeads = (() => {
         if (dateRange && (dateRange.from || dateRange.to)) {
-            const fromDate = dateRange.from ? parseISO(dateRange.from) : null;
-            const toDate = dateRange.to ? parseISO(dateRange.to) : fromDate;
+            const fromDate = dateRange.from ? startOfDay(parseISO(dateRange.from)) : null;
+            // If 'to' is not provided, use the 'from' date to create a single-day range.
+            const toDate = dateRange.to ? endOfDay(parseISO(dateRange.to)) : (fromDate ? endOfDay(fromDate) : null);
 
-            if(fromDate && toDate) {
-                 return typedLeads.filter(lead => {
+            if (fromDate && toDate) {
+                return typedLeads.filter(lead => {
                     const submissionDate = new Date(lead.submissionDateTime);
-                    return isWithinInterval(submissionDate, { start: startOfDay(fromDate), end: endOfDay(toDate) });
+                    return isWithinInterval(submissionDate, { start: fromDate, end: toDate });
                 });
             }
-             if (fromDate) { // Only from date is selected, same as single day
-                return typedLeads.filter(lead => isSameDay(new Date(lead.submissionDateTime), fromDate));
+            // Handle case where only 'to' date might be present
+            if (toDate) {
+                return typedLeads.filter(lead => {
+                    const submissionDate = new Date(lead.submissionDateTime);
+                    return submissionDate <= toDate;
+                });
             }
         }
 
