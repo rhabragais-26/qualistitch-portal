@@ -6,9 +6,9 @@ import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import React, { useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList, Cell } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 type Order = {
@@ -34,6 +34,14 @@ const chartConfig = {
   },
 };
 
+const COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
+
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -42,11 +50,13 @@ export function TodaysPerformanceCard() {
   const todaysSalesData = useMemo(() => {
     if (!leads) return [];
 
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
     
     const todaysLeads = leads.filter(lead => {
         try {
-            return format(new Date(lead.submissionDateTime), 'yyyy-MM-dd') === todayStr;
+            const submissionDate = new Date(lead.submissionDateTime);
+            return submissionDate >= todayStart && submissionDate <= todayEnd;
         } catch (e) {
             console.warn(`Invalid date format for lead ${lead.id}: ${lead.submissionDateTime}`);
             return false;
@@ -110,7 +120,7 @@ export function TodaysPerformanceCard() {
             <div style={{ height: '300px' }}>
              <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={todaysSalesData} margin={{ top: 20 }}>
+                    <BarChart data={todaysSalesData} margin={{ top: 30 }}>
                         <CartesianGrid vertical={false} />
                         <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                         <YAxis
@@ -134,10 +144,16 @@ export function TodaysPerformanceCard() {
                             />}
                         />
                         <Legend />
-                        <Bar yAxisId="left" dataKey="amount" name="Sales Amount" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
-                            <LabelList dataKey="amount" position="top" formatter={(value: number) => formatCurrency(value)} fontSize={12} fill="black" />
+                        <Bar yAxisId="left" dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
+                            {todaysSalesData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                            <LabelList dataKey="amount" position="top" formatter={(value: number) => formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} fontSize={12} fill="black" />
                         </Bar>
-                        <Bar yAxisId="right" dataKey="quantity" name="Items Sold" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                        <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
+                             {todaysSalesData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[(index + 1) % COLORS.length]} />
+                            ))}
                             <LabelList dataKey="quantity" position="top" fontSize={12} fill="black" />
                         </Bar>
                     </BarChart>
