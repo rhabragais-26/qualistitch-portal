@@ -19,7 +19,8 @@ export type UserPosition =
   | 'Page Admin'
   | 'Marketing Head'
   | 'Social Media Manager'
-  | 'Not Assigned';
+  | 'Not Assigned'
+  | 'RESIGNED';
 
 export type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'profile' | 'order-status' | 'finance' | 'marketing' | 'admin';
 

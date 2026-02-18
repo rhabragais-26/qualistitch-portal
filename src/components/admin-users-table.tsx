@@ -39,6 +39,7 @@ type UserProfile = {
 
 const positions: UserPosition[] = [
     'Not Assigned',
+    'RESIGNED',
     'CEO',
     'SCES',
     'Sales Supervisor',
@@ -90,7 +91,7 @@ const AdminUserTableRow = React.memo(({
           value={editedUser.position || user.position}
           onValueChange={(newPosition: string) => onFieldChange(user.uid, 'position', newPosition)}
         >
-          <SelectTrigger className={cn("w-[200px]", (editedUser.position || user.position) === 'Not Assigned' && 'text-destructive font-bold')}>
+          <SelectTrigger className={cn("w-[200px]", (editedUser.position || user.position) === 'Not Assigned' && 'text-destructive font-bold', (editedUser.position || user.position) === 'RESIGNED' && 'text-destructive font-bold')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
