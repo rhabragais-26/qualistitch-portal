@@ -119,7 +119,7 @@ export function ReportsSummary() {
 
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const [reportData, setReportData] = useState<GenerateReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);

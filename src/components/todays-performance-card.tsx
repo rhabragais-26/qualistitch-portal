@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -61,7 +62,7 @@ const renderQuantityLabel = (props: any) => {
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const [timeRange, setTimeRange] = useState<'today' | 'yesterday'>('today');
 
