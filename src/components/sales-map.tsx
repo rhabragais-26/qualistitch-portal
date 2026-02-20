@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import { formatCurrency } from '@/lib/utils';
 import { LatLngExpression } from 'leaflet';
 import { Skeleton } from './ui/skeleton';
@@ -48,30 +48,21 @@ const SalesMap = ({ salesByCityData, totalSales }: SalesMapProps) => {
 
     const center: LatLngExpression = [12.8797, 121.7740];
 
-    const salesValues = salesByCityData.map(d => d.amount);
-    const maxSales = Math.max(...salesValues);
-    const minSales = Math.min(...salesValues);
-    const range = maxSales - minSales;
+    const { markers, legendItems, minSales, maxSales } = useMemo(() => {
+        const salesValues = salesByCityData.map(d => d.amount);
+        const max = Math.max(...salesValues, 0);
+        const min = Math.min(...salesValues, 0);
+        const range = max - min;
 
-    const getColorAndRadius = (amount: number) => {
-        const percentage = range > 0 ? (amount - minSales) / range : 0;
-        let color = '#22c55e'; // Green
-        let radius = 8;
-        if (percentage > 0.75) {
-            color = '#ef4444'; // Red
-            radius = 20;
-        } else if (percentage > 0.5) {
-            color = '#f97316'; // Orange
-            radius = 16;
-        } else if (percentage > 0.25) {
-            color = '#eab308'; // Yellow
-            radius = 12;
-        }
-        return { color, radius };
-    };
+        const getColorAndRadius = (amount: number) => {
+            const percentage = range > 0 ? (amount - min) / range : 0;
+            if (percentage > 0.75) return { color: '#ef4444', radius: 20 }; // Red
+            if (percentage > 0.5) return { color: '#f97316', radius: 16 };  // Orange
+            if (percentage > 0.25) return { color: '#eab308', radius: 12 };  // Yellow
+            return { color: '#22c55e', radius: 8 };   // Green
+        };
 
-    const markers = useMemo(() => {
-        return salesByCityData
+        const markers = salesByCityData
             .map(data => {
                 const coords = cityCoordinates[data.city];
                 if (!coords) return null;
@@ -97,22 +88,37 @@ const SalesMap = ({ salesByCityData, totalSales }: SalesMapProps) => {
                 );
             })
             .filter(Boolean);
+
+        const legendItems = [
+            { color: '#ef4444', label: 'Very High' },
+            { color: '#f97316', label: 'High' },
+            { color: '#eab308', label: 'Medium' },
+            { color: '#22c55e', label: 'Low' },
+        ];
+
+        return { markers, legendItems, minSales: min, maxSales: max };
     }, [salesByCityData, totalSales]);
 
     const Legend = () => (
         <div className="leaflet-bottom leaflet-left">
             <div className="leaflet-control leaflet-bar bg-white p-2 rounded-md shadow-lg">
-                <h4 className="font-bold mb-1 text-xs">Sales Amount</h4>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ef4444' }}></div><span className="text-xs">Very High</span></div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }}></div><span className="text-xs">High</span></div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#eab308' }}></div><span className="text-xs">Medium</span></div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }}></div><span className="text-xs">Low</span></div>
+                <h4 className="font-bold mb-2 text-xs">Sales Amount</h4>
+                {legendItems.map(item => (
+                    <div key={item.label} className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                        <span className="text-xs">{item.label}</span>
+                    </div>
+                ))}
+                <div className="mt-2 text-xs text-gray-500">
+                    <p>Min: {formatCurrency(minSales)}</p>
+                    <p>Max: {formatCurrency(maxSales)}</p>
+                </div>
             </div>
         </div>
     );
-
+    
     if (!isClient) {
-        return <Skeleton className="h-[400px] w-full" />;
+        return null;
     }
 
     return (
