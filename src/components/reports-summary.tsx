@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -18,12 +19,6 @@ import { cn } from '@/lib/utils';
 import isEqual from 'lodash/isEqual';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
-
-const SalesMap = dynamic(() => import('./sales-map'), {
-    ssr: false,
-    loading: () => <Skeleton className="h-[400px] w-full" />,
-});
-
 
 type Lead = {
   id: string;
@@ -132,6 +127,14 @@ export function ReportsSummary() {
   const [isReportLoading, setIsReportLoading] = useState(true);
   const [reportError, setReportError] = useState<string | null>(null);
 
+  const SalesMap = useMemo(() => dynamic(
+    () => import('./sales-map'),
+    { 
+      ssr: false,
+      loading: () => <Skeleton className="h-[400px] w-full" />,
+    }
+  ), []);
+
   const months = useMemo(() => [
       { value: 'all', label: 'All Months' },
       { value: '1', label: 'January' }, { value: '2', label: 'February' },
@@ -174,7 +177,16 @@ export function ReportsSummary() {
     }
   }, [leads, processReport, isLeadsLoading]);
 
-  const reportContent = useMemo(() => {
+  const {
+    salesRepData,
+    priorityData,
+    dailySalesData,
+    soldQtyByProductType,
+    availableYears,
+    availableWeeks,
+    salesByCityData,
+    totalSales,
+  } = useMemo(() => {
     if (!reportData) {
       return {
         salesRepData: [],
@@ -189,17 +201,6 @@ export function ReportsSummary() {
     }
     return reportData;
   }, [reportData]);
-
-  const {
-    salesRepData,
-    priorityData,
-    dailySalesData,
-    soldQtyByProductType,
-    availableYears,
-    availableWeeks,
-    salesByCityData,
-    totalSales,
-  } = reportContent;
 
   const totalPriorityQuantity = useMemo(() => 
     priorityData.reduce((sum, item) => sum + item.value, 0) || 0
@@ -272,6 +273,8 @@ export function ReportsSummary() {
   if (!reportData) {
      return <p>No data available to generate reports.</p>;
   }
+  
+  const maxAmount = salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0);
 
   return (
     <>
@@ -339,7 +342,7 @@ export function ReportsSummary() {
                     <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
                     <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')}>Today</Button>
                 </div>
-                 <Button variant="default" onClick={handleResetFilters} className="bg-primary text-primary-foreground hover:bg-primary/90">Reset Filters</Button>
+                 <Button variant="ghost" onClick={handleResetFilters} className="bg-teal-600 text-white hover:bg-teal-700">Reset Filters</Button>
             </div>
         </div>
       </div>
