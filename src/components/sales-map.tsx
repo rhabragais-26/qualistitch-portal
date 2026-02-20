@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import { formatCurrency } from '@/lib/utils';
 import { LatLngExpression } from 'leaflet';
@@ -14,7 +15,6 @@ type SalesMapProps = {
     totalSales: number;
 };
 
-// Hardcoded coordinates for major Philippine cities
 const cityCoordinates: { [key: string]: [number, number] } = {
     'Manila': [14.5995, 120.9842],
     'Quezon City': [14.6760, 121.0437],
@@ -39,12 +39,6 @@ const cityCoordinates: { [key: string]: [number, number] } = {
 };
 
 const SalesMap = ({ salesByCityData, totalSales }: SalesMapProps) => {
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
     const center: LatLngExpression = [12.8797, 121.7740];
 
     const { markers, legendItems, minSales, maxSales } = useMemo(() => {
@@ -115,11 +109,7 @@ const SalesMap = ({ salesByCityData, totalSales }: SalesMapProps) => {
             </div>
         </div>
     );
-
-    if (!isClient) {
-        return <div style={{ height: '400px', width: '100%' }} className="flex items-center justify-center bg-gray-100 rounded-lg"><p>Loading map...</p></div>;
-    }
-
+    
     return (
         <div style={{ height: '400px', width: '100%' }}>
             <MapContainer center={center} zoom={5} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>

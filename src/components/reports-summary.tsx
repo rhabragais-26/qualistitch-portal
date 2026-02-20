@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -26,7 +27,6 @@ const SalesMap = dynamic(
     loading: () => <Skeleton className="h-[400px] w-full" />,
   }
 );
-
 
 type Lead = {
   id: string;
@@ -129,7 +129,7 @@ export function ReportsSummary() {
 
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
   
   const [reportData, setReportData] = useState<GenerateReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
@@ -248,6 +248,11 @@ export function ReportsSummary() {
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
+   const mapComponent = useMemo(() => {
+    return <SalesMap salesByCityData={salesByCityData} totalSales={totalSales} />;
+  }, [salesByCityData, totalSales]);
+
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -340,7 +345,7 @@ export function ReportsSummary() {
                     <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
                     <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')}>Today</Button>
                 </div>
-                 <Button onClick={handleResetFilters} className="bg-teal-600 text-white hover:bg-teal-700">Reset Filters</Button>
+                 <Button onClick={handleResetFilters} variant="ghost" className="bg-teal-600 text-white hover:bg-teal-700">Reset Filters</Button>
             </div>
         </div>
       </div>
@@ -574,7 +579,7 @@ export function ReportsSummary() {
                     <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <SalesMap salesByCityData={salesByCityData} totalSales={totalSales} />
+                    {mapComponent}
                 </CardContent>
             </Card>
         </div>
