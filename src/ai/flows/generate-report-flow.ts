@@ -188,23 +188,23 @@ const generateReportFlow = ai.defineFlow(
 
           if (leadQuantity > 0) {
             if (!acc[csr]) {
-              acc[csr] = { quantity: 0, customers: new Set<string>() };
+              acc[csr] = { quantity: 0, customerCount: 0 };
             }
 
             acc[csr].quantity += leadQuantity;
-            acc[csr].customers.add(lead.customerName);
+            acc[csr].customerCount += 1;
           }
 
           return acc;
         },
-        {} as { [key: string]: { quantity: number; customers: Set<string> } }
+        {} as { [key: string]: { quantity: number; customerCount: number } }
       );
 
       return Object.entries(statsBySalesRep)
-        .map(([name, { quantity, customers }]) => ({
+        .map(([name, { quantity, customerCount }]) => ({
           name,
           quantity,
-          customerCount: customers.size,
+          customerCount,
         }))
         .sort((a, b) => b.quantity - a.quantity);
     })();
