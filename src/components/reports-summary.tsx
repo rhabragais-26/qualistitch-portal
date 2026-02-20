@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -169,6 +168,53 @@ export function ReportsSummary() {
     }
   }, [leads, processReport, isLeadsLoading]);
 
+  const {
+    salesRepData,
+    priorityData,
+    dailySalesData,
+    soldQtyByProductType,
+    availableYears,
+    availableWeeks,
+    salesByCityData,
+    totalSales,
+    totalPriorityQuantity,
+    maxAmount,
+  } = useMemo(() => {
+    if (!reportData) {
+      return {
+        salesRepData: [],
+        priorityData: [],
+        dailySalesData: [],
+        soldQtyByProductType: [],
+        availableYears: [],
+        availableWeeks: [],
+        salesByCityData: [],
+        totalSales: 0,
+        totalPriorityQuantity: 0,
+        maxAmount: 0,
+      };
+    }
+
+    const calculatedTotalPriority =
+      reportData.priorityData.reduce((sum, item) => sum + item.value, 0) || 0;
+    const calculatedMaxAmount = reportData.salesByCityData.reduce(
+      (max, city) => Math.max(max, city.amount),
+      0
+    );
+
+    return {
+      ...reportData,
+      totalPriorityQuantity: calculatedTotalPriority,
+      maxAmount: calculatedMaxAmount,
+    };
+  }, [reportData]);
+
+
+  const priorityColors = {
+    'Rush': '#800000', // Maroon
+    'Regular': '#006400', // Dark Green
+  };
+
   const handleDateRangeSelect = (range: DateRange | undefined) => {
     setDateRange(range);
     if (range?.from) {
@@ -202,14 +248,7 @@ export function ReportsSummary() {
     setDateRange(undefined);
     setActiveQuickFilter(null);
   };
-
-  const totalPriorityQuantity = useMemo(() => reportData?.priorityData.reduce((sum, item) => sum + item.value, 0) || 0, [reportData?.priorityData]);
   
-  const priorityColors = {
-    'Rush': '#800000', // Maroon
-    'Regular': '#006400', // Dark Green
-  };
-
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
@@ -238,10 +277,6 @@ export function ReportsSummary() {
   if (!reportData) {
      return <p>No data available to generate reports.</p>;
   }
-
-  const { salesRepData, priorityData, dailySalesData, soldQtyByProductType, availableYears, availableWeeks, salesByCityData, totalSales } = reportData;
-
-  const maxAmount = useMemo(() => salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0), [salesByCityData]);
 
   return (
     <>
