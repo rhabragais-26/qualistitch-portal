@@ -41,6 +41,7 @@ export type Lead = {
   orders: Order[];
   submissionDateTime: string;
   grandTotal?: number;
+  city?: string;
   [key: string]: any;
 };
 
@@ -81,6 +82,12 @@ const GenerateReportOutputSchema = z.object({
     z.object({
       name: z.string(),
       quantity: z.number(),
+    })
+  ),
+  salesByCityData: z.array(
+    z.object({
+      city: z.string(),
+      amount: z.number(),
     })
   ),
   availableYears: z.array(z.number()),
@@ -188,23 +195,26 @@ const generateReportFlow = ai.defineFlow(
 
           if (leadQuantity > 0) {
             if (!acc[csr]) {
-              acc[csr] = { quantity: 0, customerCount: 0 };
+              acc[csr] = { quantity: 0, uniqueCustomerDays: new Set() };
             }
 
             acc[csr].quantity += leadQuantity;
-            acc[csr].customerCount += 1;
+            
+            const submissionDate = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
+            const uniqueKey = `${lead.customerName}-${submissionDate}`;
+            acc[csr].uniqueCustomerDays.add(uniqueKey);
           }
 
           return acc;
         },
-        {} as { [key: string]: { quantity: number; customerCount: number } }
+        {} as { [key: string]: { quantity: number; uniqueCustomerDays: Set<string> } }
       );
 
       return Object.entries(statsBySalesRep)
-        .map(([name, { quantity, customerCount }]) => ({
+        .map(([name, { quantity, uniqueCustomerDays }]) => ({
           name,
           quantity,
-          customerCount,
+          customerCount: uniqueCustomerDays.size,
         }))
         .sort((a, b) => b.quantity - a.quantity);
     })();
@@ -301,11 +311,36 @@ const generateReportFlow = ai.defineFlow(
         .sort((a, b) => b.quantity - a.quantity);
     })();
 
+    const salesByCityData = (() => {
+        const salesByCity = filteredLeads.reduce(
+          (acc, lead) => {
+            if (lead.city && lead.grandTotal && lead.grandTotal > 0) {
+              const city = lead.city.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+              if (!acc[city]) {
+                acc[city] = 0;
+              }
+              acc[city] += lead.grandTotal;
+            }
+            return acc;
+          },
+          {} as { [key: string]: number }
+        );
+  
+        return Object.entries(salesByCity)
+          .map(([city, amount]) => ({
+            city,
+            amount,
+          }))
+          .sort((a, b) => b.amount - a.amount)
+          .slice(0, 15);
+      })();
+
     return {
       salesRepData,
       priorityData,
       dailySalesData,
       soldQtyByProductType,
+      salesByCityData,
       availableYears,
       availableWeeks,
     };
