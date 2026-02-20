@@ -201,9 +201,7 @@ export function ReportsSummary() {
     }
     return reportData;
   }, [reportData]);
-
-  const maxAmount = useMemo(() => salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0), [salesByCityData]);
-
+  
   const totalPriorityQuantity = useMemo(() => 
     priorityData.reduce((sum, item) => sum + item.value, 0) || 0
   , [priorityData]);
