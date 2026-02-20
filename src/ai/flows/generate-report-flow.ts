@@ -318,17 +318,31 @@ const generateReportFlow = ai.defineFlow(
         const salesByCity = filteredLeads.reduce(
           (acc, lead) => {
             if (lead.city && lead.grandTotal && lead.grandTotal > 0) {
-              const city = lead.city.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-              if (!acc[city]) {
-                acc[city] = 0;
+              const normalizedCity = lead.city
+                .trim()
+                .toLowerCase()
+                .replace(/-/g, ' ')
+                .replace(/\s*city$/, '')
+                .trim();
+              
+              const finalCityName = normalizedCity
+                .split(' ')
+                .filter(Boolean)
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+
+              if (finalCityName) {
+                if (!acc[finalCityName]) {
+                  acc[finalCityName] = 0;
+                }
+                acc[finalCityName] += lead.grandTotal;
               }
-              acc[city] += lead.grandTotal;
             }
             return acc;
           },
           {} as { [key: string]: number }
         );
-  
+    
         return Object.entries(salesByCity)
           .map(([city, amount]) => ({
             city,
