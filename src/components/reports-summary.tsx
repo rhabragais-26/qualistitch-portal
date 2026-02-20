@@ -39,6 +39,7 @@ type GenerateReportOutput = {
   priorityData: { name: string; value: number }[];
   dailySalesData: any[];
   soldQtyByProductType: any[];
+  salesByCityData: { city: string, amount: number }[];
   availableYears: number[];
   availableWeeks: string[];
 };
@@ -237,7 +238,7 @@ export function ReportsSummary() {
      return <p>No data available to generate reports.</p>;
   }
 
-  const { salesRepData, priorityData, dailySalesData, soldQtyByProductType, availableYears, availableWeeks } = reportData;
+  const { salesRepData, priorityData, dailySalesData, soldQtyByProductType, availableYears, availableWeeks, salesByCityData } = reportData;
 
   return (
     <>
@@ -535,6 +536,41 @@ export function ReportsSummary() {
               </ChartContainer>
             </div>
           </CardContent>
+        </Card>
+      </div>
+      <div className="mt-8">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+            <CardHeader>
+                <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
+                <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div style={{ height: '400px' }}>
+                    <ChartContainer config={{ amount: { label: 'Amount', color: 'hsl(var(--chart-3))' } }} className="w-full h-full">
+                        <ResponsiveContainer>
+                            <BarChart
+                                data={salesByCityData}
+                                layout="vertical"
+                                margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                <XAxis type="number" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
+                                <YAxis dataKey="city" type="category" width={150} tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    cursor={{ fill: 'hsl(var(--muted))' }}
+                                    content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
+                                />
+                                <Bar dataKey="amount" name="Sales Amount" radius={[0, 4, 4, 0]}>
+                                    {salesByCityData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                    <LabelList dataKey="amount" position="right" formatter={(value: number) => formatCurrency(value, {notation: 'compact'})} fontSize={12} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                </div>
+            </CardContent>
         </Card>
       </div>
     </>
