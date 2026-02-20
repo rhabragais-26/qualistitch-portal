@@ -39,18 +39,13 @@ const cityCoordinates: { [key: string]: [number, number] } = {
 
 export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps) {
   const center: LatLngExpression = [12.8797, 121.774];
-
-  // ✅ This forces a brand-new DOM node for Leaflet when React remounts in dev/StrictMode
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [mapInstanceKey, setMapInstanceKey] = useState(0);
 
   useEffect(() => {
-    // On mount: if Leaflet already attached to the container (dev double-mount), reset it.
     const el = containerRef.current;
     if (!el) return;
 
-    // Leaflet stores an internal id on the container when initialized.
-    // If it exists, we force a brand new MapContainer by changing key.
     // @ts-ignore
     if ((el as any)._leaflet_id) {
       setMapInstanceKey((k) => k + 1);
@@ -119,7 +114,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
   );
 
   return (
-    <div ref={containerRef} style={{ height: '400px', width: '100%' }}>
+    <div ref={containerRef} style={{ height: '100%', width: '100%' }}>
       <MapContainer
         key={mapInstanceKey}
         center={center}
