@@ -88,6 +88,7 @@ const GenerateReportOutputSchema = z.object({
     z.object({
       city: z.string(),
       amount: z.number(),
+      orderCount: z.number(),
     })
   ),
   totalSales: z.number(),
@@ -145,7 +146,7 @@ const generateReportFlow = ai.defineFlow(
                     return isWithinInterval(submissionDate, { start: fromDate, end: toDate });
                 });
             }
-            // Handle case where only 'to' date might be present
+            // Handle case where only 'to' might be present
             if (toDate) {
                 return typedLeads.filter(lead => {
                     const submissionDate = new Date(lead.submissionDateTime);
@@ -333,20 +334,22 @@ const generateReportFlow = ai.defineFlow(
 
               if (finalCityName) {
                 if (!acc[finalCityName]) {
-                  acc[finalCityName] = 0;
+                  acc[finalCityName] = { amount: 0, orderCount: 0 };
                 }
-                acc[finalCityName] += lead.grandTotal;
+                acc[finalCityName].amount += lead.grandTotal;
+                acc[finalCityName].orderCount += 1;
               }
             }
             return acc;
           },
-          {} as { [key: string]: number }
+          {} as { [key: string]: { amount: number; orderCount: number } }
         );
     
         return Object.entries(salesByCity)
-          .map(([city, amount]) => ({
+          .map(([city, { amount, orderCount }]) => ({
             city,
             amount,
+            orderCount,
           }))
           .sort((a, b) => b.amount - a.amount)
           .slice(0, 15);

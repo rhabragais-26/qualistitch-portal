@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -17,6 +18,11 @@ import { cn } from '@/lib/utils';
 import isEqual from 'lodash/isEqual';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
+
+const SalesMap = dynamic(() => import('./sales-map'), {
+    ssr: false,
+    loading: () => <Skeleton className="h-[400px] w-full" />,
+});
 
 
 type Lead = {
@@ -38,7 +44,7 @@ type GenerateReportOutput = {
   priorityData: { name: string; value: number }[];
   dailySalesData: any[];
   soldQtyByProductType: any[];
-  salesByCityData: { city: string, amount: number }[];
+  salesByCityData: { city: string, amount: number, orderCount: number }[];
   totalSales: number;
   availableYears: number[];
   availableWeeks: string[];
@@ -168,16 +174,7 @@ export function ReportsSummary() {
     }
   }, [leads, processReport, isLeadsLoading]);
 
-  const {
-    salesRepData,
-    priorityData,
-    dailySalesData,
-    soldQtyByProductType,
-    availableYears,
-    availableWeeks,
-    salesByCityData,
-    totalSales,
-  } = useMemo(() => {
+  const reportContent = useMemo(() => {
     if (!reportData) {
       return {
         salesRepData: [],
@@ -193,14 +190,20 @@ export function ReportsSummary() {
     return reportData;
   }, [reportData]);
 
+  const {
+    salesRepData,
+    priorityData,
+    dailySalesData,
+    soldQtyByProductType,
+    availableYears,
+    availableWeeks,
+    salesByCityData,
+    totalSales,
+  } = reportContent;
+
   const totalPriorityQuantity = useMemo(() => 
     priorityData.reduce((sum, item) => sum + item.value, 0) || 0
   , [priorityData]);
-
-  const maxAmount = useMemo(() => {
-    if (!salesByCityData) return 0;
-    return salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0);
-  }, [salesByCityData]);
 
   const priorityColors = {
     'Rush': '#800000', // Maroon
@@ -570,47 +573,7 @@ export function ReportsSummary() {
                     <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div style={{ height: '400px' }}>
-                        <ChartContainer config={{ amount: { label: 'Amount', color: 'hsl(var(--chart-3))' } }} className="w-full h-full">
-                            <ResponsiveContainer>
-                                <BarChart
-                                    data={salesByCityData}
-                                    layout="vertical"
-                                    margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                    <XAxis type="number" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
-                                    <YAxis dataKey="city" type="category" width={150} tick={{ fontSize: 12 }} />
-                                    <Tooltip
-                                        cursor={{ fill: 'hsl(var(--muted))' }}
-                                        content={<ChartTooltipContent 
-                                            formatter={(value, name, props) => {
-                                                const percentage = totalSales > 0 ? (((value as number) / totalSales) * 100).toFixed(2) : 0;
-                                                return (
-                                                    <div className="text-sm">
-                                                        <p className="font-bold">{props.payload.city}</p>
-                                                        <p>Sales: <span className="font-semibold">{formatCurrency(value as number)}</span></p>
-                                                        <p>Contribution: <span className="font-semibold">{percentage}%</span></p>
-                                                    </div>
-                                                );
-                                            }} 
-                                        />}
-                                    />
-                                    <Bar dataKey="amount" name="Sales Amount" radius={[0, 4, 4, 0]}>
-                                        {salesByCityData.map((entry, index) => {
-                                            const percentage = maxAmount > 0 ? entry.amount / maxAmount : 0;
-                                            let color = '#22c55e'; // green-500
-                                            if (percentage > 0.75) color = '#ef4444'; // red-500
-                                            else if (percentage > 0.5) color = '#f97316'; // orange-500
-                                            else if (percentage > 0.25) color = '#eab308'; // yellow-500
-                                            return <Cell key={`cell-${index}`} fill={color} />;
-                                        })}
-                                        <LabelList dataKey="amount" position="right" formatter={(value: number) => formatCurrency(value, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })} fontSize={12} />
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
-                    </div>
+                    <SalesMap salesByCityData={salesByCityData} totalSales={totalSales} />
                 </CardContent>
             </Card>
         </div>
