@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -200,7 +199,6 @@ export function ReportsSummary() {
         totalSales: 0,
       };
     }
-    // For this specific request, we want to show all cities, so we remove the slice.
     return { ...reportData, salesByCityData: reportData.salesByCityData };
   }, [reportData]);
   
@@ -577,45 +575,45 @@ export function ReportsSummary() {
             </CardContent>
         </Card>
         <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
-                <CardDescription>Top performing locations for the selected period.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start h-[900px]">
-                <div className="md:col-span-2 h-full rounded-lg overflow-hidden border">
-                    {SalesMapComponent}
-                </div>
-                <div className="md:col-span-1 h-full">
-                    <ScrollArea className="h-full border rounded-md modern-scrollbar">
-                        <Table>
-                            <TableHeader className="sticky top-0 bg-muted">
-                                <TableRow>
-                                    <TableHead className="text-center align-middle">City</TableHead>
-                                    <TableHead className="text-center align-middle">Sales</TableHead>
-                                    <TableHead className="text-center align-middle">Orders</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {salesByCityData.length > 0 ? (
-                                    salesByCityData.map((cityData) => (
-                                    <TableRow key={cityData.city}>
-                                        <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
-                                        <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
-                                        <TableCell className="text-center align-middle">{cityData.orderCount}</TableCell>
-                                    </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={3} className="text-center text-muted-foreground">
-                                            No sales data for cities.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </ScrollArea>
-                </div>
-            </CardContent>
+          <CardHeader>
+            <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
+            <CardDescription>Top performing locations for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start h-[600px]">
+            <div className="md:col-span-2 h-full rounded-lg overflow-hidden border">
+              {SalesMapComponent}
+            </div>
+            <div className="md:col-span-1 h-full">
+              <ScrollArea className="h-full border rounded-md modern-scrollbar">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-muted">
+                    <TableRow>
+                      <TableHead className="text-center align-middle">City</TableHead>
+                      <TableHead className="text-center align-middle">Sales</TableHead>
+                      <TableHead className="text-center align-middle">Orders</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {salesByCityData.length > 0 ? (
+                      salesByCityData.map((cityData) => (
+                        <TableRow key={cityData.city}>
+                          <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
+                          <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
+                          <TableCell className="text-center align-middle">{cityData.orderCount}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground">
+                          No sales data for cities.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </>

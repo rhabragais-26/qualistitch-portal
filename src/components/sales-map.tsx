@@ -114,7 +114,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
   );
 
   return (
-    <div ref={containerRef} style={{ height: '100%', width: '100%' }}>
+    <div ref={containerRef} style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}>
       <MapContainer
         key={mapInstanceKey}
         center={center}
