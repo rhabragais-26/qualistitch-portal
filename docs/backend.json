@@ -2,6 +2,74 @@
 
 {
   "entities": {
+    "FinanceCategory": {
+        "title": "FinanceCategory",
+        "type": "object",
+        "description": "Represents a category for financial entries, like Payroll or Utilities.",
+        "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "group": { "type": "string", "enum": ["Fixed", "Variable", "One-Time"] }
+        },
+        "required": ["id", "name", "group"]
+    },
+    "FinanceAssumption": {
+        "title": "FinanceAssumption",
+        "type": "object",
+        "description": "Stores key assumptions for financial forecasting.",
+        "properties": {
+            "grossMarginPercent": { "type": "number", "description": "The target gross margin percentage." },
+            "desiredProfit": { "type": "number", "description": "The desired monthly profit target." },
+            "contingencyPercent": { "type": "number", "description": "A buffer percentage for unexpected expenses." }
+        },
+        "required": ["grossMarginPercent", "desiredProfit", "contingencyPercent"]
+    },
+    "FinanceForecastMonthly": {
+        "title": "FinanceForecastMonthly",
+        "type": "object",
+        "description": "A single forecasted expense for a specific month and category.",
+        "properties": {
+            "id": { "type": "string" },
+            "month": { "type": "string", "format": "yyyy-MM", "description": "The month of the forecast (e.g., '2024-08')." },
+            "categoryId": { "type": "string", "description": "Reference to the FinanceCategory." },
+            "amount": { "type": "number" },
+            "notes": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "month", "categoryId", "amount"]
+    },
+    "FinanceForecastScheduled": {
+        "title": "FinanceForecastScheduled",
+        "type": "object",
+        "description": "A recurring or one-time scheduled expense.",
+        "properties": {
+            "id": { "type": "string" },
+            "date": { "type": "string", "format": "date-time", "description": "The start date or due date of the expense." },
+            "categoryId": { "type": "string", "description": "Reference to the FinanceCategory." },
+            "amount": { "type": "number" },
+            "vendor": { "type": "string", "description": "The vendor or payee for the expense." },
+            "recurrence": { "type": "string", "enum": ["One-time", "Weekly", "Monthly"] },
+            "endDate": { "type": ["string", "null"], "format": "date-time", "description": "The end date for recurring expenses." },
+            "notes": { "type": "string" }
+        },
+        "required": ["id", "date", "categoryId", "amount", "recurrence"]
+    },
+    "FinanceForecastRollup": {
+        "title": "FinanceForecastRollup",
+        "type": "object",
+        "description": "Aggregated monthly forecast data for quick dashboard loading.",
+        "properties": {
+            "month": { "type": "string", "format": "yyyy-MM", "description": "The month of the rollup (e.g., '2024-08')." },
+            "totalForecastExpense": { "type": "number", "description": "Sum of expenses from monthly manual inputs." },
+            "scheduledForecastExpense": { "type": "number", "description": "Sum of expanded recurring/scheduled expenses for the month." },
+            "combinedForecastExpense": { "type": "number", "description": "The total of manual and scheduled expenses for the month." },
+            "totalsByCategory": {
+                "type": "object",
+                "additionalProperties": { "type": "number" }
+            }
+        },
+        "required": ["month", "totalForecastExpense", "totalsByCategory"]
+    },
     "EmbroideryLog": {
       "title": "EmbroideryLog",
       "type": "object",
@@ -670,6 +738,10 @@
           "format": "date-time",
           "description": "Timestamp for when quality was approved."
         },
+        "qualityApprovedBy": {
+            "type": "string",
+            "description": "The nickname of the user who approved the quality check."
+        },
         "isRecheckingQuality": {
           "type": "boolean",
           "description": "Indicates if a disapproved order is being re-checked."
@@ -998,6 +1070,46 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/financeCategories/{categoryId}",
+        "definition": {
+          "entityName": "FinanceCategory",
+          "schema": { "$ref": "#/backend/entities/FinanceCategory" },
+          "description": "Stores financial categories."
+        }
+      },
+      {
+        "path": "/financeAssumptions/{assumptionId}",
+        "definition": {
+          "entityName": "FinanceAssumption",
+          "schema": { "$ref": "#/backend/entities/FinanceAssumption" },
+          "description": "Stores financial forecasting assumptions. A single document with a known ID 'current' is used."
+        }
+      },
+      {
+        "path": "/financeForecastMonthly/{monthlyId}",
+        "definition": {
+          "entityName": "FinanceForecastMonthly",
+          "schema": { "$ref": "#/backend/entities/FinanceForecastMonthly" },
+          "description": "Stores individual monthly forecast entries."
+        }
+      },
+      {
+        "path": "/financeForecastScheduled/{scheduledId}",
+        "definition": {
+          "entityName": "FinanceForecastScheduled",
+          "schema": { "$ref": "#/backend/entities/FinanceForecastScheduled" },
+          "description": "Stores scheduled and recurring expenses."
+        }
+      },
+      {
+        "path": "/financeForecastRollups/{rollupId}",
+        "definition": {
+          "entityName": "FinanceForecastRollup",
+          "schema": { "$ref": "#/backend/entities/FinanceForecastRollup" },
+          "description": "Stores aggregated monthly rollup data for dashboards."
+        }
+      },
       {
         "path": "/embroidery_logs/{logId}",
         "definition": {

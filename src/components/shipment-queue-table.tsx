@@ -76,6 +76,7 @@ type Lead = {
   waybillNumbers?: string[];
   isQualityApproved?: boolean;
   qualityApprovedTimestamp?: string;
+  qualityApprovedBy?: string;
   isRecheckingQuality?: boolean;
   isPacked?: boolean;
   packedTimestamp?: string;
@@ -249,6 +250,9 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
                                 <Check className="h-4 w-4 mr-1" />
                                 Approved
                             </div>
+                            {lead.qualityApprovedBy && (
+                                <div className="text-[10px] text-gray-500 font-bold">by {lead.qualityApprovedBy}</div>
+                            )}
                             {lead.qualityApprovedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.qualityApprovedTimestamp).dateTimeShort}</div>}
                         </div>
                     ) : (
@@ -382,6 +386,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
   const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery, undefined, { listen: false });
 
+  const { userProfile } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
@@ -552,12 +557,13 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   };
   
   const handleApproveQuality = async (lead: Lead) => {
-    if (!firestore) return;
+    if (!firestore || !userProfile) return;
     const leadDocRef = doc(firestore, 'leads', lead.id);
     try {
       await updateDoc(leadDocRef, {
         isQualityApproved: true,
         qualityApprovedTimestamp: new Date().toISOString(),
+        qualityApprovedBy: userProfile.nickname,
         isRecheckingQuality: false,
       });
       refetchLeads();
@@ -1081,5 +1087,3 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     </>
   );
 }
-
-    
