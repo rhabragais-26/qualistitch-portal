@@ -580,39 +580,39 @@ export function ReportsSummary() {
             <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
             <CardDescription>Top performing locations for the selected period.</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start h-[600px]">
-            <div className="md:col-span-2 h-full rounded-lg overflow-hidden border">
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+            <div className="md:col-span-2 h-[560px] rounded-lg overflow-hidden border">
               {SalesMapComponent}
             </div>
-            <div className="md:col-span-1 h-full">
-              <ScrollArea className="h-full border rounded-md modern-scrollbar">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-muted">
-                    <TableRow>
-                      <TableHead className="text-center align-middle">City</TableHead>
-                      <TableHead className="text-center align-middle">Sales</TableHead>
-                      <TableHead className="text-center align-middle">Orders</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {salesByCityData.length > 0 ? (
-                      salesByCityData.slice(0, 15).map((cityData) => (
-                        <TableRow key={cityData.city}>
-                          <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
-                          <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
-                          <TableCell className="text-center align-middle">{cityData.orderCount}</TableCell>
+            <div className="md:col-span-1">
+                <div className="border rounded-md">
+                    <Table>
+                    <TableHeader className="sticky top-0 bg-muted">
+                        <TableRow>
+                        <TableHead className="text-center align-middle">City</TableHead>
+                        <TableHead className="text-center align-middle">Sales</TableHead>
+                        <TableHead className="text-center align-middle">Orders</TableHead>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground">
-                          No sales data for cities.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
+                    </TableHeader>
+                    <TableBody>
+                        {salesByCityData.length > 0 ? (
+                        salesByCityData.map((cityData) => (
+                            <TableRow key={cityData.city}>
+                            <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
+                            <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
+                            <TableCell className="text-center align-middle">{cityData.orderCount}</TableCell>
+                            </TableRow>
+                        ))
+                        ) : (
+                        <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground">
+                            No sales data for cities.
+                            </TableCell>
+                        </TableRow>
+                        )}
+                    </TableBody>
+                    </Table>
+                </div>
             </div>
           </CardContent>
         </Card>
