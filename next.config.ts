@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ✅ Fix for Leaflet "Map container is already initialized." in dev (StrictMode double-mount)
+  reactStrictMode: false,
+
   output: "standalone",
 
   typescript: {

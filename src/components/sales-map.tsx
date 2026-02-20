@@ -1,18 +1,17 @@
-
 'use client';
 
-import { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
+import type { LatLngExpression } from 'leaflet';
 import { formatCurrency } from '@/lib/utils';
-import { LatLngExpression } from 'leaflet';
 
 type SalesMapProps = {
-    salesByCityData: {
-        city: string;
-        amount: number;
-        orderCount: number;
-    }[];
-    totalSales: number;
+  salesByCityData: {
+    city: string;
+    amount: number;
+    orderCount: number;
+  }[];
+  totalSales: number;
 };
 
 const cityCoordinates: { [key: string]: [number, number] } = {
@@ -38,90 +37,132 @@ const cityCoordinates: { [key: string]: [number, number] } = {
     'Baguio': [16.4167, 120.5833],
 };
 
-const SalesMap = ({ salesByCityData, totalSales }: SalesMapProps) => {
-    const center: LatLngExpression = [12.8797, 121.7740];
+export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps) {
+  const center: LatLngExpression = [12.8797, 121.774];
 
-    const { markers, legendItems, minSales, maxSales } = useMemo(() => {
-        const salesValues = salesByCityData.map(d => d.amount);
-        const max = Math.max(...salesValues, 0);
-        const min = Math.min(...salesValues, 0);
-        const range = max - min;
+  // ✅ This forces a brand-new DOM node for Leaflet when React remounts in dev/StrictMode
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [mapInstanceKey, setMapInstanceKey] = useState(0);
 
-        const getColorAndRadius = (amount: number) => {
-            const percentage = range > 0 ? (amount - min) / range : 0;
-            if (percentage > 0.75) return { color: '#ef4444', radius: 20 }; // Red
-            if (percentage > 0.5) return { color: '#f97316', radius: 16 };  // Orange
-            if (percentage > 0.25) return { color: '#eab308', radius: 12 };  // Yellow
-            return { color: '#22c55e', radius: 8 };   // Green
-        };
+  useEffect(() => {
+    // On mount: if Leaflet already attached to the container (dev double-mount), reset it.
+    const el = containerRef.current;
+    if (!el) return;
 
-        const markers = salesByCityData
-            .map(data => {
-                const coords = cityCoordinates[data.city];
-                if (!coords) return null;
-                const { color, radius } = getColorAndRadius(data.amount);
-                const contribution = totalSales > 0 ? ((data.amount / totalSales) * 100).toFixed(2) : 0;
-                
-                return (
-                    <CircleMarker
-                        key={data.city}
-                        center={coords}
-                        radius={radius}
-                        pathOptions={{ color: 'white', fillColor: color, fillOpacity: 0.7, weight: 2 }}
-                    >
-                        <Tooltip>
-                            <div className="text-sm">
-                                <p className="font-bold">{data.city}</p>
-                                <p>Total Sales: <span className="font-semibold">{formatCurrency(data.amount)}</span></p>
-                                <p>Number of Orders: <span className="font-semibold">{data.orderCount}</span></p>
-                                <p>Contribution: <span className="font-semibold">{contribution}%</span></p>
-                            </div>
-                        </Tooltip>
-                    </CircleMarker>
-                );
-            })
-            .filter(Boolean);
+    // Leaflet stores an internal id on the container when initialized.
+    // If it exists, we force a brand new MapContainer by changing key.
+    // @ts-ignore
+    if ((el as any)._leaflet_id) {
+      setMapInstanceKey((k) => k + 1);
+    }
+  }, []);
 
-        const legendItems = [
-            { color: '#ef4444', label: 'Very High' },
-            { color: '#f97316', label: 'High' },
-            { color: '#eab308', label: 'Medium' },
-            { color: '#22c55e', label: 'Low' },
-        ];
+  const { markerData, legendItems, minSales, maxSales } = useMemo(() => {
+    const salesValues = salesByCityData.map((d) => d.amount);
+    const max = Math.max(...salesValues, 0);
+    const min = Math.min(...salesValues, 0);
+    const range = max - min;
 
-        return { markers, legendItems, minSales: min, maxSales: max };
-    }, [salesByCityData, totalSales]);
+    const getColorAndRadius = (amount: number) => {
+      const pct = range > 0 ? (amount - min) / range : 0;
+      if (pct > 0.75) return { color: '#ef4444', radius: 18 };
+      if (pct > 0.5) return { color: '#f97316', radius: 14 };
+      if (pct > 0.25) return { color: '#eab308', radius: 11 };
+      return { color: '#22c55e', radius: 8 };
+    };
 
-    const Legend = () => (
-        <div className="leaflet-bottom leaflet-left">
-            <div className="leaflet-control leaflet-bar bg-white p-2 rounded-md shadow-lg">
-                <h4 className="font-bold mb-2 text-xs">Sales Amount</h4>
-                {legendItems.map(item => (
-                    <div key={item.label} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                        <span className="text-xs">{item.label}</span>
-                    </div>
-                ))}
-                <div className="mt-2 text-xs text-gray-500">
-                    <p>Min: {formatCurrency(minSales)}</p>
-                    <p>Max: {formatCurrency(maxSales)}</p>
-                </div>
-            </div>
+    const markerData = salesByCityData
+      .map((d) => {
+        const coords = cityCoordinates[d.city];
+        if (!coords) return null;
+        const { color, radius } = getColorAndRadius(d.amount);
+        const contribution =
+          totalSales > 0 ? ((d.amount / totalSales) * 100).toFixed(2) : '0.00';
+        return { ...d, coords, color, radius, contribution };
+      })
+      .filter(Boolean) as Array<{
+      city: string;
+      amount: number;
+      orderCount: number;
+      coords: [number, number];
+      color: string;
+      radius: number;
+      contribution: string;
+    }>;
+
+    const legendItems = [
+      { color: '#ef4444', label: 'Very High' },
+      { color: '#f97316', label: 'High' },
+      { color: '#eab308', label: 'Medium' },
+      { color: '#22c55e', label: 'Low' },
+    ];
+
+    return { markerData, legendItems, minSales: min, maxSales: max };
+  }, [salesByCityData, totalSales]);
+
+  const Legend = () => (
+    <div className="leaflet-bottom leaflet-left">
+      <div className="leaflet-control leaflet-bar bg-white p-2 rounded-md shadow-lg">
+        <h4 className="font-bold mb-2 text-xs">Sales Amount</h4>
+        {legendItems.map((item) => (
+          <div key={item.label} className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+            <span className="text-xs">{item.label}</span>
+          </div>
+        ))}
+        <div className="mt-2 text-xs text-gray-500">
+          <p>Min: {formatCurrency(minSales)}</p>
+          <p>Max: {formatCurrency(maxSales)}</p>
         </div>
-    );
-    
-    return (
-        <div style={{ height: '400px', width: '100%' }}>
-            <MapContainer center={center} zoom={5} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
-                <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                />
-                {markers}
-                <Legend />
-            </MapContainer>
-        </div>
-    );
-};
+      </div>
+    </div>
+  );
 
-export default SalesMap;
+  return (
+    <div ref={containerRef} style={{ height: '400px', width: '100%' }}>
+      <MapContainer
+        key={mapInstanceKey}
+        center={center}
+        zoom={5}
+        scrollWheelZoom={true}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        />
+
+        {markerData.map((m) => (
+          <CircleMarker
+            key={m.city}
+            center={m.coords}
+            radius={m.radius}
+            pathOptions={{
+              color: 'white',
+              fillColor: m.color,
+              fillOpacity: 0.7,
+              weight: 2,
+            }}
+          >
+            <Tooltip>
+              <div className="text-sm">
+                <p className="font-bold">{m.city}</p>
+                <p>
+                  Total Sales: <span className="font-semibold">{formatCurrency(m.amount)}</span>
+                </p>
+                <p>
+                  Number of Orders: <span className="font-semibold">{m.orderCount}</span>
+                </p>
+                <p>
+                  Contribution: <span className="font-semibold">{m.contribution}%</span>
+                </p>
+              </div>
+            </Tooltip>
+          </CircleMarker>
+        ))}
+
+        <Legend />
+      </MapContainer>
+    </div>
+  );
+}

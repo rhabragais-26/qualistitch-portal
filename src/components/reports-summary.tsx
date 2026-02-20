@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, {useMemo, useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -19,12 +18,13 @@ import { cn } from '@/lib/utils';
 import { isEqual } from 'lodash';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const SalesMap = dynamic(
   () => import('./sales-map'),
   { 
     ssr: false,
-    loading: () => <Skeleton className="h-[400px] w-full" />,
+    loading: () => <Skeleton className="h-full w-full" />,
   }
 );
 
@@ -248,7 +248,7 @@ export function ReportsSummary() {
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
-   const mapComponent = useMemo(() => {
+  const SalesMapComponent = useMemo(() => {
     return <SalesMap salesByCityData={salesByCityData} totalSales={totalSales} />;
   }, [salesByCityData, totalSales]);
 
@@ -351,44 +351,44 @@ export function ReportsSummary() {
       </div>
        <div className="printable-area space-y-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-            <CardHeader>
-                <CardTitle>Daily Sales Performance</CardTitle>
-                <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div style={{ height: '300px' }}>
-                <ChartContainer config={chartConfig} className="w-full h-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart
-                        data={dailySalesData}
-                        margin={{
-                        top: 30, right: 30, left: 20, bottom: 5,
-                        }}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false}/>
-                        <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
-                        <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
-                        <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
-                        <Tooltip
-                        cursor={{ fill: 'hsl(var(--muted))' }}
-                        content={<ChartTooltipContent formatter={(value, name) => {
-                            if (name === "Amount") return formatCurrency(value as number);
-                            return value.toLocaleString();
-                        }} />}
-                        />
-                        <Legend />
-                        <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
-                        <LabelList dataKey="quantity" content={renderQuantityLabel} />
-                        </Bar>
-                        <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
-                        <LabelList content={renderAmountLabel} dataKey="amount" />
-                        </Line>
-                    </ComposedChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-                </div>
-            </CardContent>
-            </Card>
+          <CardHeader>
+              <CardTitle>Daily Sales Performance</CardTitle>
+              <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div style={{ height: '300px' }}>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                      data={dailySalesData}
+                      margin={{
+                      top: 30, right: 30, left: 20, bottom: 5,
+                      }}
+                  >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false}/>
+                      <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                      <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                      content={<ChartTooltipContent formatter={(value, name) => {
+                          if (name === "Amount") return formatCurrency(value as number);
+                          return value.toLocaleString();
+                      }} />}
+                      />
+                      <Legend />
+                      <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
+                      <LabelList dataKey="quantity" content={renderQuantityLabel} />
+                      </Bar>
+                      <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
+                      <LabelList content={renderAmountLabel} dataKey="amount" />
+                      </Line>
+                  </ComposedChart>
+                  </ResponsiveContainer>
+              </ChartContainer>
+              </div>
+          </CardContent>
+        </Card>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
             <CardHeader>
@@ -538,7 +538,8 @@ export function ReportsSummary() {
                 </div>
             </CardContent>
             </Card>
-            <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+        </div>
+        <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Sold Quantity based on Product Type</CardTitle>
                 <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
@@ -572,17 +573,48 @@ export function ReportsSummary() {
                 </ChartContainer>
                 </div>
             </CardContent>
-            </Card>
-            <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-                <CardHeader>
-                    <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
-                    <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {mapComponent}
-                </CardContent>
-            </Card>
-        </div>
+        </Card>
+        <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
+                <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                <div className="md:col-span-2 h-[450px] rounded-lg overflow-hidden border">
+                    {SalesMapComponent}
+                </div>
+                <div className="md:col-span-1">
+                    <ScrollArea className="h-[450px] border rounded-md">
+                        <Table>
+                            <TableHeader className="sticky top-0 bg-muted">
+                                <TableRow>
+                                    <TableHead>City</TableHead>
+                                    <TableHead className="text-right">Sales</TableHead>
+                                    <TableHead className="text-right">Orders</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {salesByCityData.length > 0 ? (
+                                    salesByCityData.map((cityData) => (
+                                    <TableRow key={cityData.city}>
+                                        <TableCell className="font-medium">{cityData.city}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(cityData.amount)}</TableCell>
+                                        <TableCell className="text-right">{cityData.orderCount}</TableCell>
+                                    </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center text-muted-foreground">
+                                            No sales data for cities.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </ScrollArea>
+                </div>
+            </CardContent>
+        </Card>
       </div>
     </>
   );
