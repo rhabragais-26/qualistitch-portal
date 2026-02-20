@@ -1,10 +1,9 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import { formatCurrency } from '@/lib/utils';
 import { LatLngExpression } from 'leaflet';
-import { Skeleton } from './ui/skeleton';
 
 type SalesMapProps = {
     salesByCityData: {
@@ -40,12 +39,6 @@ const cityCoordinates: { [key: string]: [number, number] } = {
 };
 
 const SalesMap = ({ salesByCityData, totalSales }: SalesMapProps) => {
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
     const center: LatLngExpression = [12.8797, 121.7740];
 
     const { markers, legendItems, minSales, maxSales } = useMemo(() => {
@@ -116,10 +109,6 @@ const SalesMap = ({ salesByCityData, totalSales }: SalesMapProps) => {
             </div>
         </div>
     );
-    
-    if (!isClient) {
-        return null;
-    }
 
     return (
         <div style={{ height: '400px', width: '100%' }}>
