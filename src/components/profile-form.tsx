@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,6 +48,7 @@ const positions: UserPosition[] = [
     'Finance',
     'Marketing Head',
     'Social Media Manager',
+    'Content Marketing Specialist',
     'Page Admin'
 ];
 

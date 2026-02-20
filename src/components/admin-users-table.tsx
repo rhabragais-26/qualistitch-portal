@@ -58,6 +58,7 @@ const positions: UserPosition[] = [
     'Finance',
     'Marketing Head',
     'Social Media Manager',
+    'Content Marketing Specialist',
     'Page Admin'
 ];
 
