@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -177,8 +178,6 @@ export function ReportsSummary() {
     availableWeeks,
     salesByCityData,
     totalSales,
-    totalPriorityQuantity,
-    maxAmount,
   } = useMemo(() => {
     if (!reportData) {
       return {
@@ -190,25 +189,18 @@ export function ReportsSummary() {
         availableWeeks: [],
         salesByCityData: [],
         totalSales: 0,
-        totalPriorityQuantity: 0,
-        maxAmount: 0,
       };
     }
-
-    const calculatedTotalPriority =
-      reportData.priorityData.reduce((sum, item) => sum + item.value, 0) || 0;
-    const calculatedMaxAmount = reportData.salesByCityData.reduce(
-      (max, city) => Math.max(max, city.amount),
-      0
-    );
-
-    return {
-      ...reportData,
-      totalPriorityQuantity: calculatedTotalPriority,
-      maxAmount: calculatedMaxAmount,
-    };
+    return reportData;
   }, [reportData]);
 
+  const totalPriorityQuantity = useMemo(() => 
+    priorityData.reduce((sum, item) => sum + item.value, 0) || 0
+  , [priorityData]);
+
+  const maxAmount = useMemo(() =>
+    salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0)
+  , [salesByCityData]);
 
   const priorityColors = {
     'Rush': '#800000', // Maroon
@@ -344,7 +336,7 @@ export function ReportsSummary() {
                     <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
                     <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')}>Today</Button>
                 </div>
-                 <Button variant="ghost" onClick={handleResetFilters}>Reset Filters</Button>
+                 <Button variant="default" onClick={handleResetFilters} className="bg-primary text-primary-foreground hover:bg-primary/90">Reset Filters</Button>
             </div>
         </div>
       </div>
