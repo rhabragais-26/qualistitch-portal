@@ -16,9 +16,18 @@ import { collection, query } from 'firebase/firestore';
 import { format, parse, getYear, getMonth, parseISO, subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
+
+const SalesMap = dynamic(
+  () => import('./sales-map'),
+  { 
+    ssr: false,
+    loading: () => <Skeleton className="h-[400px] w-full" />,
+  }
+);
+
 
 type Lead = {
   id: string;
@@ -127,14 +136,6 @@ export function ReportsSummary() {
   const [isReportLoading, setIsReportLoading] = useState(true);
   const [reportError, setReportError] = useState<string | null>(null);
 
-  const SalesMap = useMemo(() => dynamic(
-    () => import('./sales-map'),
-    { 
-      ssr: false,
-      loading: () => <Skeleton className="h-[400px] w-full" />,
-    }
-  ), []);
-
   const months = useMemo(() => [
       { value: 'all', label: 'All Months' },
       { value: '1', label: 'January' }, { value: '2', label: 'February' },
@@ -201,6 +202,8 @@ export function ReportsSummary() {
     }
     return reportData;
   }, [reportData]);
+
+  const maxAmount = useMemo(() => salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0), [salesByCityData]);
 
   const totalPriorityQuantity = useMemo(() => 
     priorityData.reduce((sum, item) => sum + item.value, 0) || 0
@@ -273,8 +276,6 @@ export function ReportsSummary() {
   if (!reportData) {
      return <p>No data available to generate reports.</p>;
   }
-  
-  const maxAmount = salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0);
 
   return (
     <>
@@ -342,11 +343,11 @@ export function ReportsSummary() {
                     <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
                     <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')}>Today</Button>
                 </div>
-                 <Button variant="ghost" onClick={handleResetFilters} className="bg-teal-600 text-white hover:bg-teal-700">Reset Filters</Button>
+                 <Button onClick={handleResetFilters} className="bg-teal-600 text-white hover:bg-teal-700">Reset Filters</Button>
             </div>
         </div>
       </div>
-      <div className="printable-area space-y-8">
+       <div className="printable-area space-y-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
             <CardHeader>
                 <CardTitle>Daily Sales Performance</CardTitle>
