@@ -580,7 +580,7 @@ export function ReportsSummary() {
                 <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
                 <CardDescription>Top performing locations for the selected period.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start h-[500px]">
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start h-[700px]">
                 <div className="md:col-span-2 h-full rounded-lg overflow-hidden border">
                     {SalesMapComponent}
                 </div>
@@ -589,9 +589,9 @@ export function ReportsSummary() {
                         <Table>
                             <TableHeader className="sticky top-0 bg-muted">
                                 <TableRow>
-                                    <TableHead className="text-center">City</TableHead>
-                                    <TableHead className="text-center">Sales</TableHead>
-                                    <TableHead className="text-center">Orders</TableHead>
+                                    <TableHead className="text-center align-middle">City</TableHead>
+                                    <TableHead className="text-center align-middle">Sales</TableHead>
+                                    <TableHead className="text-center align-middle">Orders</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
