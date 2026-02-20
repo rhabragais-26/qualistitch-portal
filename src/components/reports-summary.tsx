@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -577,29 +578,29 @@ export function ReportsSummary() {
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
-                <CardDescription>Sales performance by location for the selected period.</CardDescription>
+                <CardDescription>Top performing locations for the selected period.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start h-[500px]">
                 <div className="md:col-span-2 h-full rounded-lg overflow-hidden border">
                     {SalesMapComponent}
                 </div>
                 <div className="md:col-span-1 h-full">
-                    <ScrollArea className="h-full border rounded-md">
+                    <ScrollArea className="h-full border rounded-md modern-scrollbar">
                         <Table>
                             <TableHeader className="sticky top-0 bg-muted">
                                 <TableRow>
-                                    <TableHead>City</TableHead>
-                                    <TableHead className="text-right">Sales</TableHead>
-                                    <TableHead className="text-right">Orders</TableHead>
+                                    <TableHead className="text-center">City</TableHead>
+                                    <TableHead className="text-center">Sales</TableHead>
+                                    <TableHead className="text-center">Orders</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {salesByCityData.length > 0 ? (
                                     salesByCityData.map((cityData) => (
                                     <TableRow key={cityData.city}>
-                                        <TableCell className="font-medium">{cityData.city}</TableCell>
-                                        <TableCell className="text-right">{formatCurrency(cityData.amount)}</TableCell>
-                                        <TableCell className="text-right">{cityData.orderCount}</TableCell>
+                                        <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
+                                        <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
+                                        <TableCell className="text-center align-middle">{cityData.orderCount}</TableCell>
                                     </TableRow>
                                     ))
                                 ) : (
