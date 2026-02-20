@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -198,9 +197,10 @@ export function ReportsSummary() {
     priorityData.reduce((sum, item) => sum + item.value, 0) || 0
   , [priorityData]);
 
-  const maxAmount = useMemo(() =>
-    salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0)
-  , [salesByCityData]);
+  const maxAmount = useMemo(() => {
+    if (!salesByCityData) return 0;
+    return salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0);
+  }, [salesByCityData]);
 
   const priorityColors = {
     'Rush': '#800000', // Maroon
@@ -340,280 +340,280 @@ export function ReportsSummary() {
             </div>
         </div>
       </div>
-      <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-          <CardHeader>
-            <CardTitle>No. of Customers vs Quantity Sold</CardTitle>
-            <CardDescription>Total quantity of orders and number of customers by each SCES.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: '250px' }}>
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis yAxisId="left" orientation="left" stroke={'#008080'} tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis yAxisId="right" orientation="right" stroke={chartConfig.customerCount.color} tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent />}
-                    />
-                    
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]}>
-                       {salesRepData.map((entry, index) => (
-                        <Cell key={`cell-qty-${index}`} fill={'#008080'} />
-                      ))}
-                       <LabelList dataKey="quantity" position="top" fill={'#008080'} fontSize={12} />
-                    </Bar>
-                    <Bar yAxisId="right" dataKey="customerCount" name="Customers" radius={[4, 4, 0, 0]}>
-                      {salesRepData.map((entry, index) => (
-                        <Cell key={`cell-cust-${index}`} fill={chartConfig.customerCount.color} />
-                      ))}
-                      <LabelList dataKey="customerCount" position="top" fill={chartConfig.customerCount.color} fontSize={12} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-             <div className="mt-4 mx-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs p-1">SCES</TableHead>
-                    <TableHead className="text-right text-xs p-1">Quantity</TableHead>
-                    <TableHead className="text-right text-xs p-1">Customers</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {salesRepData.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium flex items-center text-xs p-1">
-                         <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: '#008080' }}></span>
-                        {item.name}
-                      </TableCell>
-                      <TableCell className="text-right text-xs p-1">{item.quantity}</TableCell>
-                      <TableCell className="text-right text-xs p-1">{item.customerCount}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
-          <CardHeader>
-            <CardTitle>Sold by Priority Type</CardTitle>
-            <CardDescription>Total quantity of orders for each priority type.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-between">
-            <div className="flex-1 h-[250px] -mt-4">
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Tooltip content={<ChartTooltipContent nameKey="value" />} />
-                    <Pie
-                      data={priorityData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius="40%"
-                      outerRadius="80%"
-                      labelLine={false}
-                      label={({
-                        cx,
-                        cy,
-                        midAngle,
-                        innerRadius,
-                        outerRadius,
-                        percent,
-                        index,
-                      }) => {
-                        const RADIAN = Math.PI / 180;
-                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                        return (
-                          <text
-                            x={x}
-                            y={y}
-                            fill="white"
-                            textAnchor={x > cx ? "start" : "end"}
-                            dominantBaseline="central"
-                            fontSize={14}
-                          >
-                            {`${(percent * 100).toFixed(0)}%`}
-                          </text>
-                        );
-                      }}
-                    >
-                      {priorityData.map((entry, index) => {
-                          const color = priorityColors[entry.name as keyof typeof priorityColors] || COLORS[index % COLORS.length];
-                          return <Cell key={`cell-${index}`} fill={color} />;
-                      })}
-                    </Pie>
-                     <Legend verticalAlign="bottom" height={36}/>
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-            <div className="mt-auto mx-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs p-1">Priority Type</TableHead>
-                    <TableHead className="text-right text-xs p-1">Quantity</TableHead>
-                    <TableHead className="text-right text-xs p-1">Percentage</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {priorityData.map((item, index) => {
-                    const color = priorityColors[item.name as keyof typeof priorityColors] || COLORS[index % COLORS.length];
-                    return (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium flex items-center text-xs p-1">
-                           <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: color }}></span>
-                          {item.name}
-                        </TableCell>
-                        <TableCell className="text-right text-xs p-1">{item.value}</TableCell>
-                        <TableCell className="text-right text-xs p-1">
-                          {totalPriorityQuantity > 0 ? `${((item.value / totalPriorityQuantity) * 100).toFixed(2)}%` : '0.00%'}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-          <CardHeader>
-            <CardTitle>Sold Quantity based on Product Type</CardTitle>
-            <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: '300px' }}>
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={soldQtyByProductType}
-                    layout="vertical"
-                    margin={{
-                      top: 20, right: 30, left: 20, bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent />}
-                    />
-                    <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
-                      {soldQtyByProductType.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="printable-area space-y-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
             <CardHeader>
-                <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
-                <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
+                <CardTitle>Daily Sales Performance</CardTitle>
+                <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div style={{ height: '400px' }}>
-                    <ChartContainer config={{ amount: { label: 'Amount', color: 'hsl(var(--chart-3))' } }} className="w-full h-full">
-                        <ResponsiveContainer>
-                            <BarChart
-                                data={salesByCityData}
-                                layout="vertical"
-                                margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                <XAxis type="number" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
-                                <YAxis dataKey="city" type="category" width={150} tick={{ fontSize: 12 }} />
-                                <Tooltip
-                                    cursor={{ fill: 'hsl(var(--muted))' }}
-                                    content={<ChartTooltipContent 
-                                        formatter={(value, name, props) => {
-                                            const percentage = totalSales > 0 ? (((value as number) / totalSales) * 100).toFixed(2) : 0;
-                                            return (
-                                                <div className="text-sm">
-                                                    <p className="font-bold">{props.payload.city}</p>
-                                                    <p>Sales: <span className="font-semibold">{formatCurrency(value as number)}</span></p>
-                                                    <p>Contribution: <span className="font-semibold">{percentage}%</span></p>
-                                                </div>
-                                            );
-                                        }} 
-                                    />}
-                                />
-                                <Bar dataKey="amount" name="Sales Amount" radius={[0, 4, 4, 0]}>
-                                    {salesByCityData.map((entry, index) => {
-                                        const percentage = maxAmount > 0 ? entry.amount / maxAmount : 0;
-                                        let color = '#22c55e'; // green-500
-                                        if (percentage > 0.75) color = '#ef4444'; // red-500
-                                        else if (percentage > 0.5) color = '#f97316'; // orange-500
-                                        else if (percentage > 0.25) color = '#eab308'; // yellow-500
-                                        return <Cell key={`cell-${index}`} fill={color} />;
-                                    })}
-                                    <LabelList dataKey="amount" position="right" formatter={(value: number) => formatCurrency(value, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })} fontSize={12} />
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
+                <div style={{ height: '300px' }}>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart
+                        data={dailySalesData}
+                        margin={{
+                        top: 30, right: 30, left: 20, bottom: 5,
+                        }}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false}/>
+                        <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                        <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
+                        <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
+                        <Tooltip
+                        cursor={{ fill: 'hsl(var(--muted))' }}
+                        content={<ChartTooltipContent formatter={(value, name) => {
+                            if (name === "Amount") return formatCurrency(value as number);
+                            return value.toLocaleString();
+                        }} />}
+                        />
+                        <Legend />
+                        <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
+                        <LabelList dataKey="quantity" content={renderQuantityLabel} />
+                        </Bar>
+                        <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
+                        <LabelList content={renderAmountLabel} dataKey="amount" />
+                        </Line>
+                    </ComposedChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
                 </div>
             </CardContent>
-        </Card>
-      </div>
-       <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-          <CardHeader>
-            <CardTitle>Daily Sales Performance</CardTitle>
-            <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: '300px' }}>
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart
-                    data={dailySalesData}
-                    margin={{
-                      top: 30, right: 30, left: 20, bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false}/>
-                    <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
-                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent formatter={(value, name) => {
-                          if (name === "Amount") return formatCurrency(value as number);
-                          return value.toLocaleString();
-                      }} />}
-                    />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
-                       <LabelList dataKey="quantity" content={renderQuantityLabel} />
-                    </Bar>
-                    <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
-                       <LabelList content={renderAmountLabel} dataKey="amount" />
-                    </Line>
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
+            </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+            <CardHeader>
+                <CardTitle>No. of Customers vs Quantity Sold</CardTitle>
+                <CardDescription>Total quantity of orders and number of customers by each SCES.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div style={{ height: '250px' }}>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
+                        <YAxis yAxisId="left" orientation="left" stroke={'#008080'} tick={{ fill: 'hsl(var(--foreground))' }} />
+                        <YAxis yAxisId="right" orientation="right" stroke={chartConfig.customerCount.color} tick={{ fill: 'hsl(var(--foreground))' }} />
+                        <Tooltip
+                        cursor={{ fill: 'hsl(var(--muted))' }}
+                        content={<ChartTooltipContent />}
+                        />
+                        
+                        <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]}>
+                        {salesRepData.map((entry, index) => (
+                            <Cell key={`cell-qty-${index}`} fill={'#008080'} />
+                        ))}
+                        <LabelList dataKey="quantity" position="top" fill={'#008080'} fontSize={12} />
+                        </Bar>
+                        <Bar yAxisId="right" dataKey="customerCount" name="Customers" radius={[4, 4, 0, 0]}>
+                        {salesRepData.map((entry, index) => (
+                            <Cell key={`cell-cust-${index}`} fill={chartConfig.customerCount.color} />
+                        ))}
+                        <LabelList dataKey="customerCount" position="top" fill={chartConfig.customerCount.color} fontSize={12} />
+                        </Bar>
+                    </BarChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+                </div>
+                <div className="mt-4 mx-4">
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead className="text-xs p-1">SCES</TableHead>
+                        <TableHead className="text-right text-xs p-1">Quantity</TableHead>
+                        <TableHead className="text-right text-xs p-1">Customers</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {salesRepData.map((item, index) => (
+                        <TableRow key={index}>
+                        <TableCell className="font-medium flex items-center text-xs p-1">
+                            <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: '#008080' }}></span>
+                            {item.name}
+                        </TableCell>
+                        <TableCell className="text-right text-xs p-1">{item.quantity}</TableCell>
+                        <TableCell className="text-right text-xs p-1">{item.customerCount}</TableCell>
+                        </TableRow>
+                    ))}
+                    </TableBody>
+                </Table>
+                </div>
+            </CardContent>
+            </Card>
+            <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
+            <CardHeader>
+                <CardTitle>Sold by Priority Type</CardTitle>
+                <CardDescription>Total quantity of orders for each priority type.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col justify-between">
+                <div className="flex-1 h-[250px] -mt-4">
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Tooltip content={<ChartTooltipContent nameKey="value" />} />
+                        <Pie
+                        data={priorityData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius="40%"
+                        outerRadius="80%"
+                        labelLine={false}
+                        label={({
+                            cx,
+                            cy,
+                            midAngle,
+                            innerRadius,
+                            outerRadius,
+                            percent,
+                            index,
+                        }) => {
+                            const RADIAN = Math.PI / 180;
+                            const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                            return (
+                            <text
+                                x={x}
+                                y={y}
+                                fill="white"
+                                textAnchor={x > cx ? "start" : "end"}
+                                dominantBaseline="central"
+                                fontSize={14}
+                            >
+                                {`${(percent * 100).toFixed(0)}%`}
+                            </text>
+                            );
+                        }}
+                        >
+                        {priorityData.map((entry, index) => {
+                            const color = priorityColors[entry.name as keyof typeof priorityColors] || COLORS[index % COLORS.length];
+                            return <Cell key={`cell-${index}`} fill={color} />;
+                        })}
+                        </Pie>
+                        <Legend verticalAlign="bottom" height={36}/>
+                    </PieChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+                </div>
+                <div className="mt-auto mx-4">
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead className="text-xs p-1">Priority Type</TableHead>
+                        <TableHead className="text-right text-xs p-1">Quantity</TableHead>
+                        <TableHead className="text-right text-xs p-1">Percentage</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {priorityData.map((item, index) => {
+                        const color = priorityColors[item.name as keyof typeof priorityColors] || COLORS[index % COLORS.length];
+                        return (
+                        <TableRow key={index}>
+                            <TableCell className="font-medium flex items-center text-xs p-1">
+                            <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: color }}></span>
+                            {item.name}
+                            </TableCell>
+                            <TableCell className="text-right text-xs p-1">{item.value}</TableCell>
+                            <TableCell className="text-right text-xs p-1">
+                            {totalPriorityQuantity > 0 ? `${((item.value / totalPriorityQuantity) * 100).toFixed(2)}%` : '0.00%'}
+                            </TableCell>
+                        </TableRow>
+                        );
+                    })}
+                    </TableBody>
+                </Table>
+                </div>
+            </CardContent>
+            </Card>
+            <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+            <CardHeader>
+                <CardTitle>Sold Quantity based on Product Type</CardTitle>
+                <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div style={{ height: '300px' }}>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                        data={soldQtyByProductType}
+                        layout="vertical"
+                        margin={{
+                        top: 20, right: 30, left: 20, bottom: 5,
+                        }}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                        <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                        <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
+                        <Tooltip
+                        cursor={{ fill: 'hsl(var(--muted))' }}
+                        content={<ChartTooltipContent />}
+                        />
+                        <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
+                        {soldQtyByProductType.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                        <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
+                        </Bar>
+                    </BarChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+                </div>
+            </CardContent>
+            </Card>
+            <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+                <CardHeader>
+                    <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
+                    <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div style={{ height: '400px' }}>
+                        <ChartContainer config={{ amount: { label: 'Amount', color: 'hsl(var(--chart-3))' } }} className="w-full h-full">
+                            <ResponsiveContainer>
+                                <BarChart
+                                    data={salesByCityData}
+                                    layout="vertical"
+                                    margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                    <XAxis type="number" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
+                                    <YAxis dataKey="city" type="category" width={150} tick={{ fontSize: 12 }} />
+                                    <Tooltip
+                                        cursor={{ fill: 'hsl(var(--muted))' }}
+                                        content={<ChartTooltipContent 
+                                            formatter={(value, name, props) => {
+                                                const percentage = totalSales > 0 ? (((value as number) / totalSales) * 100).toFixed(2) : 0;
+                                                return (
+                                                    <div className="text-sm">
+                                                        <p className="font-bold">{props.payload.city}</p>
+                                                        <p>Sales: <span className="font-semibold">{formatCurrency(value as number)}</span></p>
+                                                        <p>Contribution: <span className="font-semibold">{percentage}%</span></p>
+                                                    </div>
+                                                );
+                                            }} 
+                                        />}
+                                    />
+                                    <Bar dataKey="amount" name="Sales Amount" radius={[0, 4, 4, 0]}>
+                                        {salesByCityData.map((entry, index) => {
+                                            const percentage = maxAmount > 0 ? entry.amount / maxAmount : 0;
+                                            let color = '#22c55e'; // green-500
+                                            if (percentage > 0.75) color = '#ef4444'; // red-500
+                                            else if (percentage > 0.5) color = '#f97316'; // orange-500
+                                            else if (percentage > 0.25) color = '#eab308'; // yellow-500
+                                            return <Cell key={`cell-${index}`} fill={color} />;
+                                        })}
+                                        <LabelList dataKey="amount" position="right" formatter={(value: number) => formatCurrency(value, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })} fontSize={12} />
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
       </div>
     </>
   );
