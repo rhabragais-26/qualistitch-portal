@@ -351,8 +351,7 @@ const generateReportFlow = ai.defineFlow(
             amount,
             orderCount,
           }))
-          .sort((a, b) => b.amount - a.amount)
-          .slice(0, 15);
+          .sort((a, b) => b.amount - a.amount);
       })();
 
     return {

@@ -6,7 +6,7 @@ import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Respons
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
 import { generateReportAction } from '@/app/reports/actions';
@@ -540,51 +540,51 @@ export function ReportsSummary() {
             </Card>
         </div>
         <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle>Sold Quantity based on Product Type</CardTitle>
-                <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div style={{ height: '300px' }}>
-                <ChartContainer config={chartConfig} className="w-full h-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                        data={soldQtyByProductType}
-                        layout="vertical"
-                        margin={{
-                        top: 20, right: 30, left: 20, bottom: 5,
-                        }}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
-                        <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
-                        <Tooltip
-                        cursor={{ fill: 'hsl(var(--muted))' }}
-                        content={<ChartTooltipContent />}
-                        />
-                        <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
-                        {soldQtyByProductType.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                        <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
-                        </Bar>
-                    </BarChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-                </div>
-            </CardContent>
+          <CardHeader>
+              <CardTitle>Sold Quantity based on Product Type</CardTitle>
+              <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div style={{ height: '300px' }}>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                      data={soldQtyByProductType}
+                      layout="vertical"
+                      margin={{
+                      top: 20, right: 30, left: 20, bottom: 5,
+                      }}
+                  >
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                      <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
+                      <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                      content={<ChartTooltipContent />}
+                      />
+                      <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
+                      {soldQtyByProductType.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
+                      </Bar>
+                  </BarChart>
+                  </ResponsiveContainer>
+              </ChartContainer>
+              </div>
+          </CardContent>
         </Card>
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
-                <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
+                <CardDescription>Sales performance by location for the selected period.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-                <div className="md:col-span-2 h-[450px] rounded-lg overflow-hidden border">
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start h-[500px]">
+                <div className="md:col-span-2 h-full rounded-lg overflow-hidden border">
                     {SalesMapComponent}
                 </div>
-                <div className="md:col-span-1">
-                    <ScrollArea className="h-[450px] border rounded-md">
+                <div className="md:col-span-1 h-full">
+                    <ScrollArea className="h-full border rounded-md">
                         <Table>
                             <TableHeader className="sticky top-0 bg-muted">
                                 <TableRow>
