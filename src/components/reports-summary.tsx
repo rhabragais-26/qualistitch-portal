@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -540,39 +541,39 @@ export function ReportsSummary() {
             </Card>
         </div>
         <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle>Sold Quantity based on Product Type</CardTitle>
-                <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div style={{ height: '300px' }}>
-                <ChartContainer config={chartConfig} className="w-full h-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                        data={soldQtyByProductType}
-                        layout="vertical"
-                        margin={{
-                        top: 20, right: 30, left: 20, bottom: 5,
-                        }}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
-                        <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
-                        <Tooltip
-                        cursor={{ fill: 'hsl(var(--muted))' }}
-                        content={<ChartTooltipContent />}
-                        />
-                        <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
-                        {soldQtyByProductType.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                        <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
-                        </Bar>
-                    </BarChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-                </div>
-            </CardContent>
+          <CardHeader>
+            <CardTitle>Sold Quantity based on Product Type</CardTitle>
+            <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div style={{ height: '300px' }}>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={soldQtyByProductType}
+                    layout="vertical"
+                    margin={{
+                      top: 20, right: 30, left: 20, bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
+                    <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                      content={<ChartTooltipContent />}
+                    />
+                    <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
+                      {soldQtyByProductType.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </CardContent>
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -595,7 +596,7 @@ export function ReportsSummary() {
                   </TableHeader>
                   <TableBody>
                     {salesByCityData.length > 0 ? (
-                      salesByCityData.map((cityData) => (
+                      salesByCityData.slice(0, 15).map((cityData) => (
                         <TableRow key={cityData.city}>
                           <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
                           <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
