@@ -40,6 +40,7 @@ type GenerateReportOutput = {
   dailySalesData: any[];
   soldQtyByProductType: any[];
   salesByCityData: { city: string, amount: number }[];
+  totalSales: number;
   availableYears: number[];
   availableWeeks: string[];
 };
@@ -215,7 +216,7 @@ export function ReportsSummary() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {[...Array(2)].map((_, i) => (
+        {[...Array(4)].map((_, i) => (
           <Card key={i} className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
@@ -238,7 +239,9 @@ export function ReportsSummary() {
      return <p>No data available to generate reports.</p>;
   }
 
-  const { salesRepData, priorityData, dailySalesData, soldQtyByProductType, availableYears, availableWeeks, salesByCityData } = reportData;
+  const { salesRepData, priorityData, dailySalesData, soldQtyByProductType, availableYears, availableWeeks, salesByCityData, totalSales } = reportData;
+
+  const maxAmount = useMemo(() => salesByCityData.reduce((max, city) => Math.max(max, city.amount), 0), [salesByCityData]);
 
   return (
     <>
@@ -459,8 +462,92 @@ export function ReportsSummary() {
             </div>
           </CardContent>
         </Card>
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+          <CardHeader>
+            <CardTitle>Sold Quantity based on Product Type</CardTitle>
+            <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div style={{ height: '300px' }}>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={soldQtyByProductType}
+                    layout="vertical"
+                    margin={{
+                      top: 20, right: 30, left: 20, bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
+                    <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                      content={<ChartTooltipContent />}
+                    />
+                    <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
+                      {soldQtyByProductType.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+            <CardHeader>
+                <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
+                <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div style={{ height: '400px' }}>
+                    <ChartContainer config={{ amount: { label: 'Amount', color: 'hsl(var(--chart-3))' } }} className="w-full h-full">
+                        <ResponsiveContainer>
+                            <BarChart
+                                data={salesByCityData}
+                                layout="vertical"
+                                margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                <XAxis type="number" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
+                                <YAxis dataKey="city" type="category" width={150} tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    cursor={{ fill: 'hsl(var(--muted))' }}
+                                    content={<ChartTooltipContent 
+                                        formatter={(value, name, props) => {
+                                            const percentage = totalSales > 0 ? (((value as number) / totalSales) * 100).toFixed(2) : 0;
+                                            return (
+                                                <div className="text-sm">
+                                                    <p className="font-bold">{props.payload.city}</p>
+                                                    <p>Sales: <span className="font-semibold">{formatCurrency(value as number)}</span></p>
+                                                    <p>Contribution: <span className="font-semibold">{percentage}%</span></p>
+                                                </div>
+                                            );
+                                        }} 
+                                    />}
+                                />
+                                <Bar dataKey="amount" name="Sales Amount" radius={[0, 4, 4, 0]}>
+                                    {salesByCityData.map((entry, index) => {
+                                        const percentage = maxAmount > 0 ? entry.amount / maxAmount : 0;
+                                        let color = '#22c55e'; // green-500
+                                        if (percentage > 0.75) color = '#ef4444'; // red-500
+                                        else if (percentage > 0.5) color = '#f97316'; // orange-500
+                                        else if (percentage > 0.25) color = '#eab308'; // yellow-500
+                                        return <Cell key={`cell-${index}`} fill={color} />;
+                                    })}
+                                    <LabelList dataKey="amount" position="right" formatter={(value: number) => formatCurrency(value, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })} fontSize={12} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                </div>
+            </CardContent>
+        </Card>
       </div>
-      <div className="mt-8">
+       <div className="mt-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
             <CardTitle>Daily Sales Performance</CardTitle>
@@ -499,78 +586,6 @@ export function ReportsSummary() {
               </ChartContainer>
             </div>
           </CardContent>
-        </Card>
-      </div>
-      <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-          <CardHeader>
-            <CardTitle>Sold Quantity based on Product Type</CardTitle>
-            <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: '300px' }}>
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={soldQtyByProductType}
-                    layout="vertical"
-                    margin={{
-                      top: 20, right: 30, left: 20, bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent />}
-                    />
-                    <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
-                      {soldQtyByProductType.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-            <CardHeader>
-                <CardTitle>Total Sales Amount by City/Municipality</CardTitle>
-                <CardDescription>Top 15 performing locations for the selected period.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div style={{ height: '400px' }}>
-                    <ChartContainer config={{ amount: { label: 'Amount', color: 'hsl(var(--chart-3))' } }} className="w-full h-full">
-                        <ResponsiveContainer>
-                            <BarChart
-                                data={salesByCityData}
-                                layout="vertical"
-                                margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                <XAxis type="number" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
-                                <YAxis dataKey="city" type="category" width={150} tick={{ fontSize: 12 }} />
-                                <Tooltip
-                                    cursor={{ fill: 'hsl(var(--muted))' }}
-                                    content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
-                                />
-                                <Bar dataKey="amount" name="Sales Amount" radius={[0, 4, 4, 0]}>
-                                    {salesByCityData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                    <LabelList dataKey="amount" position="right" formatter={(value: number) => formatCurrency(value, {notation: 'compact'})} fontSize={12} />
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
-                </div>
-            </CardContent>
         </Card>
       </div>
     </>

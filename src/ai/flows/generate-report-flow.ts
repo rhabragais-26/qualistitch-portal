@@ -90,6 +90,7 @@ const GenerateReportOutputSchema = z.object({
       amount: z.number(),
     })
   ),
+  totalSales: z.number(),
   availableYears: z.array(z.number()),
   availableWeeks: z.array(z.string()),
 });
@@ -181,6 +182,8 @@ const generateReportFlow = ai.defineFlow(
             return isWithinInterval(submissionDate, { start, end });
           });
     })();
+    
+    const totalSales = filteredLeads.reduce((sum, lead) => sum + (lead.grandTotal || 0), 0);
 
     const salesRepData = (() => {
       const statsBySalesRep = filteredLeads.reduce(
@@ -341,6 +344,7 @@ const generateReportFlow = ai.defineFlow(
       dailySalesData,
       soldQtyByProductType,
       salesByCityData,
+      totalSales,
       availableYears,
       availableWeeks,
     };
