@@ -1,6 +1,5 @@
 'use client';
 import { Header } from '@/components/header';
-import { MonthlySalesCard } from '@/components/monthly-sales-card';
 import { ReportsSummary } from '@/components/reports-summary';
 import { TodaysPerformanceCard } from '@/components/todays-performance-card';
 import { SalesSummaryCards } from '@/components/sales-summary-cards';
@@ -11,7 +10,6 @@ export default function ReportsPage() {
         <div className="p-4 sm:p-6 lg:p-8 space-y-8">
             <TodaysPerformanceCard />
             <SalesSummaryCards />
-            <MonthlySalesCard />
             <ReportsSummary />
         </div>
     </Header>

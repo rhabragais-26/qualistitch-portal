@@ -7,16 +7,50 @@ import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
-import { PieChart, Pie, Cell } from 'recharts';
-import { ChartContainer } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { getMonth, getYear } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Separator } from './ui/separator';
 
 type Lead = {
   grandTotal?: number;
   paidAmount?: number;
   balance?: number;
   submissionDateTime: string;
+  salesRepresentative: string;
+};
+
+const chartConfig = {
+  amount: {
+    label: "Sales Amount",
+  },
+};
+
+const COLORS = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    'hsl(220, 70%, 70%)',
+    'hsl(340, 70%, 70%)',
+    'hsl(100, 70%, 70%)',
+    'hsl(20, 70%, 70%)',
+    'hsl(260, 70%, 70%)',
+    'hsl(60, 70%, 70%)',
+    'hsl(180, 70%, 70%)',
+];
+
+const renderAmountLabel = (props: any) => {
+    const { x, y, width, value } = props;
+    if (value === 0) return null;
+  
+    return (
+      <text x={x + width / 2} y={y} dy={-4} fill="black" fontSize={12} textAnchor="middle" fontWeight="bold">
+        {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+      </text>
+    );
 };
 
 const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string; amount: number; percentage: number; color: string }) => {
@@ -25,7 +59,7 @@ const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string
         { name: 'remaining', value: Math.max(0, 100 - Math.max(0, Math.min(100, percentage))) },
     ];
     
-    const COLORS = [color, '#e5e7eb']; // Main color and a light gray for the rest
+    const COLORS = [color, '#e5e7eb'];
 
     return (
         <Card className="flex flex-col items-center justify-center p-4">
@@ -88,13 +122,12 @@ export function SalesSummaryCards() {
     { value: '11', label: 'November' }, { value: '12', label: 'December' },
   ], []);
 
-  const summaryData = useMemo(() => {
-    if (!leads) return { totalSales: 0, totalPaid: 0, totalBalance: 0 };
-
+  const filteredLeads = useMemo(() => {
+    if (!leads) return [];
     const year = parseInt(selectedYear, 10);
     const month = parseInt(selectedMonth, 10);
 
-    const filteredLeads = leads.filter(lead => {
+    return leads.filter(lead => {
       try {
         const submissionDate = new Date(lead.submissionDateTime);
         
@@ -112,7 +145,10 @@ export function SalesSummaryCards() {
         return false;
       }
     });
+  }, [leads, selectedYear, selectedMonth]);
 
+  const summaryData = useMemo(() => {
+    if (!filteredLeads) return { totalSales: 0, totalPaid: 0, totalBalance: 0 };
     let totalSales = 0;
     let totalPaid = 0;
     let totalBalance = 0;
@@ -124,13 +160,39 @@ export function SalesSummaryCards() {
     });
 
     return { totalSales, totalPaid, totalBalance };
-  }, [leads, selectedYear, selectedMonth]);
+  }, [filteredLeads]);
+
+  const salesData = useMemo(() => {
+    const salesByRep = filteredLeads.reduce((acc, lead) => {
+      const rep = lead.salesRepresentative;
+      if (!acc[rep]) {
+        acc[rep] = { amount: 0 };
+      }
+      acc[rep].amount += lead.grandTotal || 0;
+      return acc;
+    }, {} as { [key: string]: { amount: number } });
+
+    return Object.entries(salesByRep)
+      .map(([name, data]) => ({ name, ...data }))
+      .filter(rep => rep.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+  }, [filteredLeads]);
 
   if (isLoading) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-        </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </CardHeader>
+        <CardContent className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+            </div>
+            <Separator />
+            <Skeleton className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
     );
   }
 
@@ -172,10 +234,53 @@ export function SalesSummaryCards() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <DoughnutChartCard title="Total Sales of the Period" amount={totalSales} percentage={totalSalesPercentage} color="hsl(var(--chart-1))" />
-        <DoughnutChartCard title="Total Paid" amount={totalPaid} percentage={totalPaidPercentage} color="hsl(var(--chart-2))" />
-        <DoughnutChartCard title="Total Balance" amount={totalBalance} percentage={totalBalancePercentage} color="hsl(var(--chart-3))" />
+      <CardContent className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <DoughnutChartCard title="Total Sales of the Period" amount={totalSales} percentage={totalSalesPercentage} color="hsl(var(--chart-1))" />
+            <DoughnutChartCard title="Total Paid" amount={totalPaid} percentage={totalPaidPercentage} color="hsl(var(--chart-2))" />
+            <DoughnutChartCard title="Total Balance" amount={totalBalance} percentage={totalBalancePercentage} color="hsl(var(--chart-3))" />
+        </div>
+        <Separator />
+        <div>
+            <CardHeader className="p-0 mb-4">
+              <CardTitle>Monthly Sales per Sales Representative</CardTitle>
+              <CardDescription>Total sales amount by SCES for the selected period.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {salesData.length > 0 ? (
+                  <div style={{ height: '300px' }}>
+                  <ChartContainer config={chartConfig} className="w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={salesData} margin={{ top: 30 }}>
+                              <CartesianGrid vertical={false} />
+                              <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                              <YAxis
+                                  stroke="hsl(var(--chart-1))"
+                                  tickFormatter={(value) => `₱${Number(value) / 1000}k`}
+                              />
+                              <Tooltip
+                                  cursor={{ fill: 'hsl(var(--muted))' }}
+                                  content={<ChartTooltipContent
+                                      formatter={(value) => formatCurrency(value as number)}
+                                  />}
+                              />
+                              <Bar dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
+                                  {salesData.map((entry, index) => (
+                                      <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
+                                  ))}
+                                  <LabelList dataKey="amount" content={renderAmountLabel} />
+                              </Bar>
+                          </BarChart>
+                      </ResponsiveContainer>
+                  </ChartContainer>
+                  </div>
+              ) : (
+                  <div className="flex items-center justify-center h-[300px]">
+                      <p className="text-muted-foreground">No sales recorded for the selected period.</p>
+                  </div>
+              )}
+            </CardContent>
+        </div>
       </CardContent>
     </Card>
   );
