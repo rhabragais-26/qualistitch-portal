@@ -87,7 +87,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
 
     const markerData = salesByCityData
       .map((d) => {
-        const coords = cityCoordinates[d.city];
+        const coords = cityCoordinates[d.city] || cityCoordinates[`${d.city} City`];
         if (!coords) return null;
         const { color, radius } = getColorAndRadius(d.amount);
         const contribution =
@@ -142,7 +142,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 

@@ -583,11 +583,11 @@ export function ReportsSummary() {
             <CardDescription>Top performing locations for the selected period.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-            <div className="md:col-span-2 rounded-lg overflow-hidden border">
+            <div className="md:col-span-2 rounded-lg overflow-hidden border h-[600px]">
               {SalesMapComponent}
             </div>
             <div className="md:col-span-1">
-                <div className="border rounded-md modern-scrollbar">
+                <ScrollArea className="h-[600px] border rounded-md">
                     <Table>
                     <TableHeader>
                         <TableRow>
@@ -614,7 +614,7 @@ export function ReportsSummary() {
                         )}
                     </TableBody>
                     </Table>
-                </div>
+                </ScrollArea>
             </div>
           </CardContent>
         </Card>
