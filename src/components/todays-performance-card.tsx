@@ -98,6 +98,11 @@ export function TodaysPerformanceCard() {
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.amount - a.amount);
   }, [leads, timeRange]);
+
+  const totalSales = useMemo(() => {
+    if (!salesData) return 0;
+    return salesData.reduce((acc, curr) => acc + curr.amount, 0);
+  }, [salesData]);
   
   if (isLoading) {
       return (
@@ -137,7 +142,11 @@ export function TodaysPerformanceCard() {
                 <CardTitle>{timeRange === 'today' ? "Today's" : "Yesterday's"} Performance</CardTitle>
                 <CardDescription>Total sales amount and items sold by SCES for {format(timeRange === 'today' ? new Date() : subDays(new Date(), 1), 'MMMM dd, yyyy')}.</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
+                <div className="text-right">
+                    <p className="text-sm font-medium text-gray-600">Total Sales</p>
+                    <p className="text-lg font-bold">{formatCurrency(totalSales)}</p>
+                </div>
                 <Button variant={timeRange === 'yesterday' ? 'default' : 'outline'} onClick={() => setTimeRange('yesterday')}>Yesterday</Button>
                 <Button variant={timeRange === 'today' ? 'default' : 'outline'} onClick={() => setTimeRange('today')}>Today</Button>
             </div>
