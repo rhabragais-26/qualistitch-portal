@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -84,8 +85,8 @@ const COLORS = [
   'hsl(180, 70%, 70%)',
 ];
 
-const renderAmountLabel = (props: any) => {
-    const { x, y, width, height, value } = props;
+const renderDailyAmountLabel = (props: any) => {
+    const { x, y, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
     const rectWidth = 80;
@@ -93,14 +94,39 @@ const renderAmountLabel = (props: any) => {
   
     return (
       <g>
-        <rect x={x - rectWidth / 2} y={y - rectHeight - 12} width={rectWidth} height={rectHeight} fill="hsla(160, 60%, 45%, 0.4)" rx={4} ry={4} />
+        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill="hsla(160, 60%, 45%, 0.4)" rx={4} ry={4} />
         <text 
           x={x} 
-          y={y - rectHeight/2 - 12}
+          y={y - rectHeight/2 - 5}
           textAnchor="middle" 
           dominantBaseline="middle" 
           fill="black"
           fontSize={12} 
+          fontWeight="bold"
+        >
+          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+        </text>
+      </g>
+    );
+};
+
+const renderWeeklyAmountLabel = (props: any) => {
+    const { x, y, value } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+
+    const rectWidth = 80;
+    const rectHeight = 18;
+  
+    return (
+      <g>
+        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill="hsla(340, 75%, 55%, 0.4)" rx={4} ry={4} />
+        <text
+          x={x}
+          y={y - rectHeight / 2 - 5}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="black"
+          fontSize={12}
           fontWeight="bold"
         >
           {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -386,7 +412,7 @@ export function ReportsSummary() {
                       <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
                       <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
-                      <LabelList content={renderAmountLabel} dataKey="amount" />
+                      <LabelList content={renderDailyAmountLabel} dataKey="amount" />
                       </Line>
                   </ComposedChart>
                   </ResponsiveContainer>
@@ -421,11 +447,11 @@ export function ReportsSummary() {
                       }} />}
                       />
                       <Legend />
-                      <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-4))">
+                      <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(27, 85%, 50%)">
                       <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
                       <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-5))" strokeWidth={2}>
-                      <LabelList content={renderAmountLabel} dataKey="amount" />
+                      <LabelList content={renderWeeklyAmountLabel} dataKey="amount" />
                       </Line>
                   </ComposedChart>
                   </ResponsiveContainer>
