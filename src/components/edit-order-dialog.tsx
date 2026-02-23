@@ -23,13 +23,64 @@ import type { PricingConfig } from '@/lib/pricing';
 import { initialPricingConfig } from '@/lib/pricing-data';
 
 const jacketColors = [
-  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
-  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
-  'Army Green',
+    'Army Green',
+    'Black',
+    'Black/Gray',
+    'Black/Khaki',
+    'Black/Navy Blue',
+    'Brown',
+    'Dark Gray',
+    'Dark Khaki',
+    'Khaki',
+    'Light Gray',
+    'Light Khaki',
+    'Maroon/Gray',
+    'Navy Blue',
+    'Navy Blue/Gray',
+    'Olive Green',
 ];
 
 const poloShirtColors = [
-    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue', 'Yellow', 'Orange', 'Dark Green', 'Green', 'Light Green', 'Pink', 'Fuchsia', 'Sky Blue', 'Oatmeal', 'Cream', 'Purple', 'Gold', 'Brown', 'Melange Gray', 'Choco Brown', 'Irish Green', 'Mint Green', 'Dawn Blue', 'Military Green', 'Fair Orchid', 'Mocha', 'Green Briar', 'Teal', 'Rapture Rose', 'Estate Blue', 'Honey Mustard', 'Nine Ion Gray', 'Jade Green'
+    'Aqua Blue',
+    'Black',
+    'Brown',
+    'Choco Brown',
+    'Cream',
+    'Dark Green',
+    'Dark Gray',
+    'Dawn Blue',
+    'Emerald Green',
+    'Estate Blue',
+    'Fair Orchid',
+    'Fuchsia',
+    'Gold',
+    'Golden Yellow',
+    'Green',
+    'Green Briar',
+    'Honey Mustard',
+    'Irish Green',
+    'Jade Green',
+    'Light Green',
+    'Light Gray',
+    'Maroon',
+    'Melange Gray',
+    'Military Green',
+    'Mint Green',
+    'Mocha',
+    'Navy Blue',
+    'Nine Ion Gray',
+    'Oatmeal',
+    'Orange',
+    'Pink',
+    'Purple',
+    'Rapture Rose',
+    'Red',
+    'Royal Blue',
+    'Sky Blue',
+    'Slate Blue',
+    'Teal',
+    'White',
+    'Yellow'
 ];
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
@@ -108,9 +159,7 @@ const EditOrderDialogMemo = React.memo(function EditOrderDialog({ isOpen, onOpen
               </SelectTrigger>
               <SelectContent>
                 {productTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -123,9 +172,7 @@ const EditOrderDialogMemo = React.memo(function EditOrderDialog({ isOpen, onOpen
                 </SelectTrigger>
                 <SelectContent>
                   {availableColors.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
