@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -583,38 +582,36 @@ export function ReportsSummary() {
             <CardDescription>Top performing locations for the selected period.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-            <div className="md:col-span-2 rounded-lg overflow-hidden border h-[600px]">
+            <div className="md:col-span-2 rounded-lg overflow-hidden border">
               {SalesMapComponent}
             </div>
-            <div className="md:col-span-1">
-                <ScrollArea className="h-[600px] border rounded-md">
-                    <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead className="text-center align-middle">City</TableHead>
-                        <TableHead className="text-center align-middle">Sales</TableHead>
-                        <TableHead className="text-center align-middle">Orders</TableHead>
+            <div className="md:col-span-1 border rounded-md">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead className="text-center align-middle">City</TableHead>
+                    <TableHead className="text-center align-middle">Sales</TableHead>
+                    <TableHead className="text-center align-middle">Orders</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {top15Cities.length > 0 ? (
+                    top15Cities.map((cityData) => (
+                        <TableRow key={cityData.city}>
+                        <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
+                        <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
+                        <TableCell className="text-center align-middle">{cityData.orderCount}</TableCell>
                         </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {top15Cities.length > 0 ? (
-                        top15Cities.map((cityData) => (
-                            <TableRow key={cityData.city}>
-                            <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
-                            <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
-                            <TableCell className="text-center align-middle">{cityData.orderCount}</TableCell>
-                            </TableRow>
-                        ))
-                        ) : (
-                        <TableRow>
-                            <TableCell colSpan={3} className="text-center text-muted-foreground">
-                            No sales data for cities.
-                            </TableCell>
-                        </TableRow>
-                        )}
-                    </TableBody>
-                    </Table>
-                </ScrollArea>
+                    ))
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground">
+                        No sales data for cities.
+                        </TableCell>
+                    </TableRow>
+                    )}
+                </TableBody>
+                </Table>
             </div>
           </CardContent>
         </Card>
