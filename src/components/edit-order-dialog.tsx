@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,22 +17,10 @@ import { Label } from './ui/label';
 import { Button } from './ui/button';
 import { Minus, Plus } from 'lucide-react';
 import { type Order } from '@/lib/form-schemas';
-
-const productTypes = [
-  'Executive Jacket 1',
-  'Executive Jacket v2 (with lines)',
-  'Turtle Neck Jacket',
-  'Corporate Jacket',
-  'Reversible v1',
-  'Reversible v2',
-  'Polo Shirt (Smilee) - Cool Pass',
-  'Polo Shirt (Smilee) - Cotton Blend',
-  'Polo Shirt (Lifeline)',
-  'Polo Shirt (Blue Corner)',
-  'Polo Shirt (Softex)',
-  'Patches',
-  'Client Owned',
-];
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { PricingConfig } from '@/lib/pricing';
+import { initialPricingConfig } from '@/lib/pricing-data';
 
 const jacketColors = [
   'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
@@ -57,6 +45,24 @@ const EditOrderDialogMemo = React.memo(function EditOrderDialog({ isOpen, onOpen
   const [color, setColor] = useState(order.color);
   const [size, setSize] = useState(order.size);
   const [quantity, setQuantity] = useState<number | string>(order.quantity);
+  
+  const firestore = useFirestore();
+  const pricingConfigRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'pricing', 'default') : null),
+    [firestore]
+  );
+  const { data: fetchedConfig } = useDoc<PricingConfig>(pricingConfigRef);
+
+  const pricingConfig = useMemo(() => {
+      if (fetchedConfig) return fetchedConfig;
+      return initialPricingConfig as PricingConfig;
+  }, [fetchedConfig]);
+
+  const productTypes = useMemo(() => {
+    if (!pricingConfig) return [];
+    const baseTypes = Object.keys(pricingConfig.productGroupMapping || {}).sort();
+    return [...baseTypes, 'Patches', 'Client Owned'];
+  }, [pricingConfig]);
 
   const isPolo = productType.includes('Polo Shirt');
   const availableColors = isPolo ? poloShirtColors : jacketColors;

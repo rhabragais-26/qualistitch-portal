@@ -68,8 +68,8 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from './ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, query, doc } from 'firebase/firestore';
 import locations from '@/lib/ph-locations.json';
 import { StatusBanner } from '@/components/ui/status-banner';
 import { Label } from './ui/label';
@@ -81,6 +81,8 @@ import { formatCurrency } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { type FormValues, type Order } from '@/lib/form-schemas';
+import type { PricingConfig } from '@/lib/pricing';
+import { initialPricingConfig } from '@/lib/pricing-data';
 
 const inventoryItemSchema = z.object({
     id: z.string(),
@@ -113,23 +115,6 @@ type Lead = {
   orderType?: string;
   submissionDateTime: string;
 };
-
-
-const productTypes = [
-  'Executive Jacket 1',
-  'Executive Jacket v2 (with lines)',
-  'Turtle Neck Jacket',
-  'Corporate Jacket',
-  'Reversible v1',
-  'Reversible v2',
-  'Polo Shirt (Smilee) - Cool Pass',
-  'Polo Shirt (Smilee) - Cotton Blend',
-  'Polo Shirt (Lifeline)',
-  'Polo Shirt (Blue Corner)',
-  'Polo Shirt (Softex)',
-  'Patches',
-  'Client Owned',
-];
 
 const jacketColors = [
   'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
@@ -208,6 +193,23 @@ export function LeadForm({
   
   const form = useFormContext<FormValues>();
   const { control, watch, setValue, formState, reset } = form;
+
+  const pricingConfigRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'pricing', 'default') : null),
+    [firestore]
+  );
+  const { data: fetchedConfig } = useDoc<PricingConfig>(pricingConfigRef);
+
+  const pricingConfig = useMemo(() => {
+      if (fetchedConfig) return fetchedConfig;
+      return initialPricingConfig as PricingConfig;
+  }, [fetchedConfig]);
+
+  const productTypes = useMemo(() => {
+    if (!pricingConfig) return [];
+    const baseTypes = Object.keys(pricingConfig.productGroupMapping || {}).sort();
+    return [...baseTypes, 'Patches', 'Client Owned'];
+  }, [pricingConfig]);
 
   // Watch for form state changes to report dirtiness
   useEffect(() => {
@@ -371,7 +373,7 @@ export function LeadForm({
       return ['Client Owned', 'Patches'];
     }
     return productTypes;
-  }, [orderTypeValue]);
+  }, [orderTypeValue, productTypes]);
 
   useEffect(() => {
     onOrderTypeChange(orderTypeValue);
