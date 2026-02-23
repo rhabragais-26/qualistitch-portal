@@ -78,6 +78,13 @@ const GenerateReportOutputSchema = z.object({
       amount: z.number(),
     })
   ),
+  weeklySalesData: z.array(
+    z.object({
+      week: z.string(),
+      quantity: z.number(),
+      amount: z.number(),
+    })
+  ),
   soldQtyByProductType: z.array(
     z.object({
       name: z.string(),
@@ -288,6 +295,41 @@ const generateReportFlow = ai.defineFlow(
         );
     })();
 
+    const weeklySalesData = (() => {
+        const salesByWeek = filteredLeads.reduce((acc, lead) => {
+            const date = new Date(lead.submissionDateTime);
+            const start = startOfWeek(date, { weekStartsOn: 1 });
+            const end = endOfWeek(date, { weekStartsOn: 1 });
+            const weekRange = `${format(start, 'MMM dd')} - ${format(end, 'MMM dd')}`;
+
+            const leadQuantity = lead.orders
+                .filter(o => o.productType !== 'Patches')
+                .reduce((sum, order) => sum + order.quantity, 0);
+
+            const leadAmount = lead.grandTotal || 0;
+
+            if (leadQuantity > 0 || leadAmount > 0) {
+                if (!acc[weekRange]) {
+                    acc[weekRange] = { quantity: 0, amount: 0, start: start };
+                }
+                acc[weekRange].quantity += leadQuantity;
+                acc[weekRange].amount += leadAmount;
+            }
+
+            return acc;
+        }, {} as { [key: string]: { quantity: number; amount: number, start: Date } });
+
+        return Object.entries(salesByWeek)
+            .map(([week, { quantity, amount, start }]) => ({
+                week,
+                quantity,
+                amount,
+                start,
+            }))
+            .sort((a, b) => a.start.getTime() - b.start.getTime())
+            .map(({ week, quantity, amount }) => ({ week, quantity, amount }));
+    })();
+
     const soldQtyByProductType = (() => {
       const quantityByProductType = filteredLeads.reduce(
         (acc, lead) => {
@@ -360,6 +402,7 @@ const generateReportFlow = ai.defineFlow(
       salesRepData,
       priorityData,
       dailySalesData,
+      weeklySalesData,
       soldQtyByProductType,
       salesByCityData,
       totalSales,

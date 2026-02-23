@@ -46,6 +46,7 @@ type GenerateReportOutput = {
   salesRepData: any[];
   priorityData: { name: string; value: number }[];
   dailySalesData: any[];
+  weeklySalesData: any[];
   soldQtyByProductType: any[];
   salesByCityData: { city: string, amount: number, orderCount: number }[];
   totalSales: number;
@@ -181,6 +182,7 @@ export function ReportsSummary() {
     salesRepData,
     priorityData,
     dailySalesData,
+    weeklySalesData,
     soldQtyByProductType,
     availableYears,
     availableWeeks,
@@ -192,6 +194,7 @@ export function ReportsSummary() {
         salesRepData: [],
         priorityData: [],
         dailySalesData: [],
+        weeklySalesData: [],
         soldQtyByProductType: [],
         availableYears: [],
         availableWeeks: [],
@@ -199,7 +202,7 @@ export function ReportsSummary() {
         totalSales: 0,
       };
     }
-    return { ...reportData, salesByCityData: reportData.salesByCityData };
+    return reportData;
   }, [reportData]);
   
   const top15Cities = useMemo(() => salesByCityData.slice(0, 15), [salesByCityData]);
@@ -383,6 +386,45 @@ export function ReportsSummary() {
                       <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
                       <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
+                      <LabelList content={renderAmountLabel} dataKey="amount" />
+                      </Line>
+                  </ComposedChart>
+                  </ResponsiveContainer>
+              </ChartContainer>
+              </div>
+          </CardContent>
+        </Card>
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+          <CardHeader>
+              <CardTitle>Weekly Sales Performance</CardTitle>
+              <CardDescription>Total quantity and amount sold each week for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div style={{ height: '300px' }}>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                      data={weeklySalesData}
+                      margin={{
+                      top: 30, right: 30, left: 20, bottom: 5,
+                      }}
+                  >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false}/>
+                      <XAxis dataKey="week" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                      <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-4))" tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-5))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                      content={<ChartTooltipContent formatter={(value, name) => {
+                          if (name === "Amount") return formatCurrency(value as number);
+                          return value.toLocaleString();
+                      }} />}
+                      />
+                      <Legend />
+                      <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-4))">
+                      <LabelList dataKey="quantity" content={renderQuantityLabel} />
+                      </Bar>
+                      <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-5))" strokeWidth={2}>
                       <LabelList content={renderAmountLabel} dataKey="amount" />
                       </Line>
                   </ComposedChart>
