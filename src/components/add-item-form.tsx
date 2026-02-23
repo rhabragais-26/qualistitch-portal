@@ -238,7 +238,7 @@ const AddItemFormMemo = React.memo(function AddItemForm({ onAddItem, isReadOnly 
                 render={({ field }) => (
                 <FormItem>
                     <FormLabel className="flex items-center gap-2 text-black"><Palette className="h-4 w-4 text-primary" />Color</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isReadOnly}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isReadOnly || !productTypeValue}>
                         <FormControl>
                             <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
                         </FormControl>
