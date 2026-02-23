@@ -7,7 +7,7 @@ import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Respons
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
 import { generateReportAction } from '@/app/reports/actions';
@@ -85,7 +85,7 @@ const COLORS = [
   'hsl(180, 70%, 70%)',
 ];
 
-const renderDailyAmountLabel = (props: any) => {
+const renderAmountLabel = (props: any, backgroundColor: string) => {
     const { x, y, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
@@ -94,7 +94,7 @@ const renderDailyAmountLabel = (props: any) => {
   
     return (
       <g>
-        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill="hsla(160, 60%, 45%, 0.4)" rx={4} ry={4} />
+        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={backgroundColor} rx={4} ry={4} />
         <text 
           x={x} 
           y={y - rectHeight/2 - 5}
@@ -102,31 +102,6 @@ const renderDailyAmountLabel = (props: any) => {
           dominantBaseline="middle" 
           fill="black"
           fontSize={12} 
-          fontWeight="bold"
-        >
-          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-        </text>
-      </g>
-    );
-};
-
-const renderWeeklyAmountLabel = (props: any) => {
-    const { x, y, value } = props;
-    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
-
-    const rectWidth = 80;
-    const rectHeight = 18;
-  
-    return (
-      <g>
-        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill="hsla(340, 75%, 55%, 0.4)" rx={4} ry={4} />
-        <text
-          x={x}
-          y={y - rectHeight / 2 - 5}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="black"
-          fontSize={12}
           fontWeight="bold"
         >
           {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -236,6 +211,8 @@ export function ReportsSummary() {
   const totalPriorityQuantity = useMemo(() => 
     priorityData.reduce((sum, item) => sum + item.value, 0) || 0
   , [priorityData]);
+
+  const totalWeeklySales = useMemo(() => weeklySalesData.reduce((sum, item) => sum + item.amount, 0), [weeklySalesData]);
 
   const priorityColors = {
     'Rush': '#800000', // Maroon
@@ -409,10 +386,10 @@ export function ReportsSummary() {
                       />
                       <Legend />
                       <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
-                      <LabelList dataKey="quantity" content={renderQuantityLabel} />
+                        <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
                       <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
-                      <LabelList content={renderDailyAmountLabel} dataKey="amount" />
+                        <LabelList content={(props) => renderAmountLabel(props, 'hsla(160, 60%, 45%, 0.4)')} dataKey="amount" />
                       </Line>
                   </ComposedChart>
                   </ResponsiveContainer>
@@ -422,8 +399,16 @@ export function ReportsSummary() {
         </Card>
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-              <CardTitle>Weekly Sales Performance</CardTitle>
-              <CardDescription>Total quantity and amount sold each week for the selected period.</CardDescription>
+            <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle>Weekly Sales Performance</CardTitle>
+                    <CardDescription>Total quantity and amount sold each week for the selected period.</CardDescription>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm font-medium text-gray-600">Total Sales</p>
+                    <p className="text-2xl font-bold">{formatCurrency(totalWeeklySales)}</p>
+                </div>
+            </div>
           </CardHeader>
           <CardContent>
               <div style={{ height: '300px' }}>
@@ -447,11 +432,11 @@ export function ReportsSummary() {
                       }} />}
                       />
                       <Legend />
-                      <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(27, 85%, 50%)">
+                      <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill={'hsl(27, 85%, 50%)'}>
                       <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
                       <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-5))" strokeWidth={2}>
-                      <LabelList content={renderWeeklyAmountLabel} dataKey="amount" />
+                      <LabelList content={(props) => renderAmountLabel(props, 'hsla(340, 75%, 55%, 0.4)')} dataKey="amount" />
                       </Line>
                   </ComposedChart>
                   </ResponsiveContainer>
