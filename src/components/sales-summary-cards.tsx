@@ -22,36 +22,36 @@ type Lead = {
 const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string; amount: number; percentage: number; color: string }) => {
     const data = [
         { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
-        { name: 'remaining', value: 100 - Math.max(0, Math.min(100, percentage)) },
+        { name: 'remaining', value: Math.max(0, 100 - Math.max(0, Math.min(100, percentage))) },
     ];
     
     const COLORS = [color, '#e5e7eb']; // Main color and a light gray for the rest
 
     return (
         <Card className="flex flex-col items-center justify-center p-4">
-            <CardHeader className="p-0 mb-2">
+            <CardHeader className="p-0 mb-2 text-center">
                 <CardTitle className="text-base font-medium">{title}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 relative w-32 h-32">
                 <ChartContainer config={{}} className="w-full h-full">
-                    <PieChart>
-                        <Pie
-                            data={data}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            innerRadius="60%"
-                            outerRadius="80%"
-                            startAngle={90}
-                            endAngle={450}
-                            stroke="none"
-                        >
-                            {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Pie>
-                    </PieChart>
+                  <PieChart>
+                      <Pie
+                          data={data}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="60%"
+                          outerRadius="80%"
+                          startAngle={90}
+                          endAngle={450}
+                          stroke="none"
+                      >
+                          {data.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                      </Pie>
+                  </PieChart>
                 </ChartContainer>
                 <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-3xl font-bold">{percentage.toFixed(0)}%</span>
@@ -141,6 +141,8 @@ export function SalesSummaryCards() {
   const { totalSales, totalPaid, totalBalance } = summaryData;
   const totalPaidPercentage = totalSales > 0 ? (totalPaid / totalSales) * 100 : 0;
   const totalBalancePercentage = totalSales > 0 ? (totalBalance / totalSales) * 100 : 0;
+  const monthlySalesTarget = 12000000;
+  const totalSalesPercentage = monthlySalesTarget > 0 ? (totalSales / monthlySalesTarget) * 100 : 0;
 
   return (
     <Card>
@@ -171,7 +173,7 @@ export function SalesSummaryCards() {
         </div>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <DoughnutChartCard title="Total Sales of the Period" amount={totalSales} percentage={100} color="hsl(var(--chart-1))" />
+        <DoughnutChartCard title="Total Sales of the Period" amount={totalSales} percentage={totalSalesPercentage} color="hsl(var(--chart-1))" />
         <DoughnutChartCard title="Total Paid" amount={totalPaid} percentage={totalPaidPercentage} color="hsl(var(--chart-2))" />
         <DoughnutChartCard title="Total Balance" amount={totalBalance} percentage={totalBalancePercentage} color="hsl(var(--chart-3))" />
       </CardContent>
