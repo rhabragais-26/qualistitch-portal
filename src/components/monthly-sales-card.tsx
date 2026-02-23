@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -41,7 +42,7 @@ export function MonthlySalesCard() {
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>('all'); // 'all' for year-to-date
+  const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
 
   const availableYears = useMemo(() => {
     if (!leads) return [new Date().getFullYear().toString()];
@@ -77,7 +78,7 @@ export function MonthlySalesCard() {
             
             return true; // Year-to-date matches all in the selected year
         } catch (e) {
-            console.warn(`Invalid date format for lead ${'\'\'\''}${lead.id}: ${'\'\'\''}${lead.submissionDateTime}`);
+            console.warn(`Invalid date format for lead '${lead.id}: '${lead.submissionDateTime}`);
             return false;
         }
     });
