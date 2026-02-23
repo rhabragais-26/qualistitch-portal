@@ -25,6 +25,21 @@ const chartConfig = {
   },
 };
 
+const COLORS = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    'hsl(220, 70%, 70%)',
+    'hsl(340, 70%, 70%)',
+    'hsl(100, 70%, 70%)',
+    'hsl(20, 70%, 70%)',
+    'hsl(260, 70%, 70%)',
+    'hsl(60, 70%, 70%)',
+    'hsl(180, 70%, 70%)',
+];
+
 const renderAmountLabel = (props: any) => {
     const { x, y, width, value } = props;
     if (value === 0 || !y) return null;
@@ -94,6 +109,7 @@ export function MonthlySalesCard() {
 
     return Object.entries(salesByRep)
       .map(([name, data]) => ({ name, ...data }))
+      .filter(rep => rep.amount > 0)
       .sort((a, b) => b.amount - a.amount);
   }, [leads, selectedYear, selectedMonth]);
 
@@ -174,7 +190,7 @@ export function MonthlySalesCard() {
                         />
                         <Bar dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
                             {salesData.map((entry, index) => (
-                                <Cell key={`cell-amount-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-2))'} />
+                                <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                             <LabelList dataKey="amount" content={renderAmountLabel} />
                         </Bar>
