@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -202,6 +203,8 @@ export function ReportsSummary() {
     return { ...reportData, salesByCityData: reportData.salesByCityData };
   }, [reportData]);
   
+  const top15Cities = useMemo(() => salesByCityData.slice(0, 15), [salesByCityData]);
+
   const totalPriorityQuantity = useMemo(() => 
     priorityData.reduce((sum, item) => sum + item.value, 0) || 0
   , [priorityData]);
@@ -580,11 +583,11 @@ export function ReportsSummary() {
             <CardDescription>Top performing locations for the selected period.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-            <div className="md:col-span-2 h-[600px] rounded-lg overflow-hidden border">
+            <div className="md:col-span-2 h-[500px] rounded-lg overflow-hidden border">
               {SalesMapComponent}
             </div>
             <div className="md:col-span-1">
-                <div className="border rounded-md">
+                <div className="border rounded-md modern-scrollbar">
                     <Table>
                     <TableHeader>
                         <TableRow>
@@ -594,8 +597,8 @@ export function ReportsSummary() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {salesByCityData.length > 0 ? (
-                        salesByCityData.map((cityData) => (
+                        {top15Cities.length > 0 ? (
+                        top15Cities.map((cityData) => (
                             <TableRow key={cityData.city}>
                             <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
                             <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
