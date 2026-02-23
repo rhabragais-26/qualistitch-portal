@@ -137,16 +137,16 @@ export function TodaysPerformanceCard() {
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
       <CardHeader>
-        <div className="flex justify-between items-start">
-            <div>
+        <div className="flex justify-between items-center">
+            <div className="flex-1">
                 <CardTitle>{timeRange === 'today' ? "Today's" : "Yesterday's"} Performance</CardTitle>
                 <CardDescription>Total sales amount and items sold by SCES for {format(timeRange === 'today' ? new Date() : subDays(new Date(), 1), 'MMMM dd, yyyy')}.</CardDescription>
             </div>
-            <div className="flex items-center gap-4">
-                <div className="text-right">
-                    <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                    <p className="text-lg font-bold">{formatCurrency(totalSales)}</p>
-                </div>
+             <div className="flex-1 text-center">
+                <p className="text-sm font-medium text-gray-600">Total Sales</p>
+                <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
+            </div>
+            <div className="flex-1 flex justify-end items-center gap-4">
                 <Button variant={timeRange === 'yesterday' ? 'default' : 'outline'} onClick={() => setTimeRange('yesterday')}>Yesterday</Button>
                 <Button variant={timeRange === 'today' ? 'default' : 'outline'} onClick={() => setTimeRange('today')}>Today</Button>
             </div>
