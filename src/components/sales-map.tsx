@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -42,7 +41,6 @@ const cityCoordinates: { [key: string]: [number, number] } = {
     'Batangas': [13.7569, 121.0583],
     'Batangas City': [13.7569, 121.0583],
     'Zamboanga': [6.9214, 122.0790],
-    'Zambaonga': [6.9214, 122.0790], // Typo alias
     'Marikina': [14.6500, 121.1000],
     'Butuan': [8.9475, 125.5408],
     'San Juan': [14.6017, 121.0306],
@@ -153,7 +151,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 

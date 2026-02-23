@@ -319,7 +319,7 @@ const generateReportFlow = ai.defineFlow(
         const salesByCity = filteredLeads.reduce(
           (acc, lead) => {
             if (lead.city && lead.grandTotal && lead.grandTotal > 0) {
-              const cityLower = lead.city.trim().toLowerCase();
+              const cityLower = lead.city.trim().toLowerCase().replace('zambaonga', 'zamboanga');
               
               const normalizedCity = cityLower
                 .replace(/\bcity\b/g, '') // remove the word 'city'
