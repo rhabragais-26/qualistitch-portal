@@ -319,12 +319,15 @@ const generateReportFlow = ai.defineFlow(
         const salesByCity = filteredLeads.reduce(
           (acc, lead) => {
             if (lead.city && lead.grandTotal && lead.grandTotal > 0) {
-              const normalizedCity = lead.city
-                .trim()
-                .toLowerCase()
-                .replace(/-/g, ' ')
-                .trim();
+              const cityLower = lead.city.trim().toLowerCase();
               
+              const normalizedCity = cityLower
+                .replace(/\bcity\b/g, '') // remove the word 'city'
+                .replace(/\bof\b/g, '')   // remove the word 'of'
+                .replace(/-/g, ' ')      // replace hyphens with space
+                .trim()
+                .replace(/\s+/g, ' ');    // collapse multiple spaces
+
               const finalCityName = normalizedCity
                 .split(' ')
                 .filter(Boolean)
