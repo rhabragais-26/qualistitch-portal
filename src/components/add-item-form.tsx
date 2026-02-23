@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import * as z from 'zod';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,23 +27,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Boxes, Palette, Ruler, Hash, Plus, Minus, Warehouse } from 'lucide-react';
 import type { StagedItem } from '@/app/inventory/add-items/page';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { Separator } from './ui/separator';
-
-const productTypes = [
-  'Executive Jacket 1',
-  'Executive Jacket v2 (with lines)',
-  'Turtle Neck Jacket',
-  'Corporate Jacket',
-  'Reversible v1',
-  'Reversible v2',
-  'Polo Shirt (Smilee) - Cool Pass',
-  'Polo Shirt (Smilee) - Cotton Blend',
-  'Polo Shirt (Lifeline)',
-  'Polo Shirt (Blue Corner)',
-  'Polo Shirt (Softex)',
-];
+import type { PricingConfig } from '@/lib/pricing';
+import { initialPricingConfig } from '@/lib/pricing-data';
 
 const jacketColors = [
   'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
@@ -77,6 +65,23 @@ type AddItemFormProps = {
 
 const AddItemFormMemo = React.memo(function AddItemForm({ onAddItem, isReadOnly }: AddItemFormProps) {
   const { toast } = useToast();
+  const firestore = useFirestore();
+
+  const pricingConfigRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'pricing', 'default') : null),
+    [firestore]
+  );
+  const { data: fetchedConfig } = useDoc<PricingConfig>(pricingConfigRef);
+
+  const pricingConfig = useMemo(() => {
+    if (fetchedConfig) return fetchedConfig;
+    return initialPricingConfig as PricingConfig;
+  }, [fetchedConfig]);
+
+  const productTypes = useMemo(() => {
+    if (!pricingConfig) return [];
+    return Object.keys(pricingConfig.productGroupMapping || {}).sort();
+  }, [pricingConfig]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
