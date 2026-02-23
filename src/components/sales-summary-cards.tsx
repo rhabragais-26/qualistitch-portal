@@ -1,9 +1,10 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
 import { PieChart, Pie, Cell } from 'recharts';
@@ -50,7 +51,7 @@ const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
-                    </ChartContainer>
+                    </PieChart>
                 </ChartContainer>
                 <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-3xl font-bold">{percentage.toFixed(0)}%</span>
