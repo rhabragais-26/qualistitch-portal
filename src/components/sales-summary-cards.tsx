@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -19,8 +20,8 @@ type Lead = {
 
 const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string; amount: number; percentage: number; color: string }) => {
     const data = [
-        { name: 'value', value: percentage },
-        { name: 'remaining', value: 100 - percentage },
+        { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
+        { name: 'remaining', value: 100 - Math.max(0, Math.min(100, percentage)) },
     ];
     
     const COLORS = [color, '#e5e7eb']; // Main color and a light gray for the rest
@@ -51,11 +52,13 @@ const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string
                         </Pie>
                     </PieChart>
                 </ChartContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-lg font-bold">{formatCurrency(amount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                    <span className="text-xs text-muted-foreground">{percentage.toFixed(0)}%</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-2xl font-bold">{percentage.toFixed(0)}%</span>
                 </div>
             </CardContent>
+            <div className="mt-2 text-center">
+                 <span className="text-lg font-bold">{formatCurrency(amount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+            </div>
         </Card>
     )
 }
