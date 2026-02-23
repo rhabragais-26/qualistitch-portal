@@ -147,7 +147,8 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
       <MapContainer
         key={mapInstanceKey}
         center={center}
-        zoom={5}
+        zoom={5.5}
+        minZoom={2}
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%' }}
       >
