@@ -1,19 +1,24 @@
 
 'use client';
 
+import React, { useMemo, useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { useMemo, useState } from 'react';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
+import { Separator } from './ui/separator';
 
 type Order = {
   quantity: number;
+};
+
+type Layout = {
+  layoutImage?: string | null;
 };
 
 type Lead = {
@@ -22,6 +27,7 @@ type Lead = {
   submissionDateTime: string;
   grandTotal?: number;
   orders: Order[];
+  layouts?: Layout[];
 };
 
 const chartConfig = {
@@ -32,6 +38,21 @@ const chartConfig = {
     label: "Items Sold",
   },
 };
+
+const COLORS = [
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    'hsl(220, 70%, 70%)',
+    'hsl(340, 70%, 70%)',
+    'hsl(100, 70%, 70%)',
+    'hsl(20, 70%, 70%)',
+    'hsl(260, 70%, 70%)',
+    'hsl(60, 70%, 70%)',
+    'hsl(180, 70%, 70%)',
+];
 
 const renderAmountLabel = (props: any) => {
     const { x, y, width, value, index } = props;
@@ -86,13 +107,15 @@ export function TodaysPerformanceCard() {
     const salesByRep = filteredLeads.reduce((acc, lead) => {
       const rep = lead.salesRepresentative;
       if (!acc[rep]) {
-        acc[rep] = { amount: 0, quantity: 0 };
+        acc[rep] = { amount: 0, quantity: 0, layoutCount: 0 };
       }
       acc[rep].amount += lead.grandTotal || 0;
       const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
       acc[rep].quantity += orderQuantity;
+      const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
+      acc[rep].layoutCount += layoutCount;
       return acc;
-    }, {} as { [key: string]: { amount: number; quantity: number } });
+    }, {} as { [key: string]: { amount: number; quantity: number; layoutCount: number } });
 
     return Object.entries(salesByRep)
       .map(([name, data]) => ({ name, ...data }))
@@ -152,50 +175,75 @@ export function TodaysPerformanceCard() {
             </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-8">
         {salesData.length > 0 ? (
-            <div style={{ height: '300px' }}>
-             <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={salesData} margin={{ top: 30 }}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
-                        <YAxis
-                            yAxisId="left"
-                            orientation="left"
-                            stroke="hsl(var(--chart-1))"
-                            tickFormatter={(value) => `₱${Number(value) / 1000}k`}
-                        />
-                        <YAxis
-                            yAxisId="right"
-                            orientation="right"
-                            stroke="hsl(var(--chart-2))"
-                        />
-                        <Tooltip
-                            cursor={{ fill: 'hsl(var(--muted))' }}
-                            content={<ChartTooltipContent
-                                formatter={(value, name) => {
-                                    if (name === 'amount') return formatCurrency(value as number);
-                                    return value.toLocaleString();
-                                }}
-                            />}
-                        />
-                        <Bar yAxisId="left" dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
-                            {salesData.map((entry, index) => (
-                                <Cell key={`cell-amount-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-2))'} />
-                            ))}
-                            <LabelList dataKey="amount" content={renderAmountLabel} />
-                        </Bar>
-                        <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
-                            {salesData.map((entry, index) => (
-                                <Cell key={`cell-quantity-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-4))' : 'hsl(var(--chart-5))'} />
-                            ))}
-                            <LabelList dataKey="quantity" content={renderQuantityLabel} />
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
-             </ChartContainer>
-            </div>
+            <>
+                <div style={{ height: '300px' }}>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={salesData} margin={{ top: 30 }}>
+                            <CartesianGrid vertical={false} />
+                            <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                            <YAxis
+                                yAxisId="left"
+                                orientation="left"
+                                stroke="hsl(var(--chart-1))"
+                                tickFormatter={(value) => `₱${Number(value) / 1000}k`}
+                            />
+                            <YAxis
+                                yAxisId="right"
+                                orientation="right"
+                                stroke="hsl(var(--chart-2))"
+                            />
+                            <Tooltip
+                                cursor={{ fill: 'hsl(var(--muted))' }}
+                                content={<ChartTooltipContent
+                                    formatter={(value, name) => {
+                                        if (name === 'amount') return formatCurrency(value as number);
+                                        return value.toLocaleString();
+                                    }}
+                                />}
+                            />
+                            <Bar yAxisId="left" dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
+                                {salesData.map((entry, index) => (
+                                    <Cell key={`cell-amount-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-2))'} />
+                                ))}
+                                <LabelList dataKey="amount" content={renderAmountLabel} />
+                            </Bar>
+                            <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
+                                {salesData.map((entry, index) => (
+                                    <Cell key={`cell-quantity-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-4))' : 'hsl(var(--chart-5))'} />
+                                ))}
+                                <LabelList dataKey="quantity" content={renderQuantityLabel} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+                </div>
+                <Separator />
+                <div style={{ height: '300px' }}>
+                    <h3 className="text-center font-semibold mb-4">Layouts Created</h3>
+                    <ChartContainer config={{ layoutCount: { label: 'Layouts' } }} className="w-full h-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={salesData} margin={{ top: 20 }}>
+                                <CartesianGrid vertical={false} />
+                                <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                                <YAxis allowDecimals={false} />
+                                <Tooltip
+                                    cursor={{ fill: 'hsl(var(--muted))' }}
+                                    content={<ChartTooltipContent />}
+                                />
+                                <Bar dataKey="layoutCount" name="Layouts Created" radius={[4, 4, 0, 0]}>
+                                    {salesData.map((entry, index) => (
+                                        <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                    <LabelList dataKey="layoutCount" position="top" fill="black" fontSize={12} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                </div>
+            </>
         ) : (
             <div className="flex items-center justify-center h-[300px]">
                 <p className="text-muted-foreground">No sales recorded for {timeRange === 'today' ? 'today' : 'yesterday'}.</p>
