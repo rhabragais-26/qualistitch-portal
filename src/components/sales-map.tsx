@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -72,24 +73,33 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
   }, []);
 
   const { markerData, legendItems, minSales, maxSales } = useMemo(() => {
+    // Range for sales amount (for color)
     const salesValues = salesByCityData.map((d) => d.amount);
-    const max = Math.max(...salesValues, 0);
-    const min = Math.min(...salesValues, 0);
-    const range = max - min;
+    const maxAmount = Math.max(...salesValues, 0);
+    const minAmount = Math.min(...salesValues, 0);
+    const salesRange = maxAmount - minAmount;
 
-    const getColorAndRadius = (amount: number) => {
-      const pct = range > 0 ? (amount - min) / range : 0;
-      if (pct > 0.75) return { color: '#ef4444', radius: 18 };
-      if (pct > 0.5) return { color: '#f97316', radius: 14 };
-      if (pct > 0.25) return { color: '#eab308', radius: 11 };
-      return { color: '#22c55e', radius: 8 };
+    const getColor = (amount: number) => {
+      const pct = salesRange > 0 ? (amount - minAmount) / salesRange : 0;
+      if (pct > 0.75) return '#ef4444'; // Very High
+      if (pct > 0.5) return '#f97316';  // High
+      if (pct > 0.25) return '#eab308';  // Medium
+      return '#22c55e';                   // Low
+    };
+
+    const getRadius = (count: number) => {
+        if (count > 15) return 20;
+        if (count > 10) return 16;
+        if (count > 5) return 12;
+        return 8;
     };
 
     const markerData = salesByCityData
       .map((d) => {
         const coords = cityCoordinates[d.city] || cityCoordinates[`${d.city} City`];
         if (!coords) return null;
-        const { color, radius } = getColorAndRadius(d.amount);
+        const color = getColor(d.amount);
+        const radius = getRadius(d.orderCount);
         const contribution =
           totalSales > 0 ? ((d.amount / totalSales) * 100).toFixed(2) : '0.00';
         return { ...d, coords, color, radius, contribution };
@@ -111,7 +121,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
       { color: '#22c55e', label: 'Low' },
     ];
 
-    return { markerData, legendItems, minSales: min, maxSales: max };
+    return { markerData, legendItems, minSales: minAmount, maxSales: maxAmount };
   }, [salesByCityData, totalSales]);
 
   const Legend = () => (
