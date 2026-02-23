@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -75,6 +76,96 @@ export function ProductManagement() {
   
   const [editingCategory, setEditingCategory] = useState<{ oldName: string; newName: string } | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<string | null>(null);
+
+  const saveConfiguration = useCallback(async (configToSave: EditablePricingConfig, successMessage?: string) => {
+    if (!configToSave || !pricingConfigRef) return;
+  
+    const validateTiers = (tiers: EditableTier[], context: string): {min: number, max: number, price: number}[] | null => {
+      const numericTiers: { min: number; price: number }[] = [];
+  
+      for (let i = 0; i < tiers.length; i++) {
+        const tier = tiers[i];
+        if (tier.min === '' || tier.price === '') {
+          toast({ variant: 'destructive', title: `Invalid Pricing in ${context}`, description: `Tier ${i + 1} has an empty minimum quantity or price. Please fill all fields.` });
+          return null;
+        }
+        numericTiers.push({ min: Number(tier.min), price: Number(tier.price) });
+      }
+  
+      numericTiers.sort((a, b) => a.min - b.min);
+  
+      for (let i = 1; i < numericTiers.length; i++) {
+        if (numericTiers[i].min <= numericTiers[i-1].min) {
+          toast({ variant: 'destructive', title: `Invalid Pricing in ${context}`, description: `Tier minimum quantities must be in increasing order and not have duplicates.` });
+          return null;
+        }
+      }
+      return numericTiers.map(t => ({...t, max: 0}));
+    };
+  
+    const validatedConfig = JSON.parse(JSON.stringify(configToSave));
+    let isValid = true;
+  
+    for (const group of Object.keys(validatedConfig.pricingTiers)) {
+      for (const embroidery of ['logo', 'name', 'logoAndText']) {
+        const tiers = validatedConfig.pricingTiers[group][embroidery].tiers;
+        if (tiers.length === 0) {
+          toast({ variant: 'destructive', title: `Invalid Pricing`, description: `The category "${group}" under "${embroidery}" must have at least one pricing tier.` });
+          isValid = false;
+          break;
+        }
+        const context = `${group} - ${embroidery}`;
+        const validated = validateTiers(tiers, context);
+        if (!validated) {
+          isValid = false;
+          break;
+        }
+        validatedConfig.pricingTiers[group][embroidery].tiers = validated.map((t, index) => ({
+            ...t,
+            max: index === validated.length - 1 ? Infinity : validated[index + 1].min - 1
+        }));
+      }
+      if (!isValid) break;
+    }
+    if (!isValid) return;
+  
+    for (const addOn of Object.keys(validatedConfig.addOnPricing)) {
+      if (addOn === 'rushFee' || addOn === 'shippingFee') continue;
+      const tiers = validatedConfig.addOnPricing[addOn].tiers;
+      if (tiers.length === 0) {
+        toast({ variant: 'destructive', title: `Invalid Pricing`, description: `The add-on "${addOn}" must have at least one pricing tier.` });
+        isValid = false;
+        break;
+      }
+      const validated = validateTiers(tiers, addOn);
+      if (!validated) {
+        isValid = false;
+        break;
+      }
+      validatedConfig.addOnPricing[addOn].tiers = validated.map((t, index) => ({
+        ...t,
+        max: index === validated.length - 1 ? Infinity : validated[index + 1].min - 1
+      }));
+    }
+    if (!isValid) return;
+  
+    try {
+      await setDoc(pricingConfigRef, validatedConfig);
+      toast({
+        title: 'Success!',
+        description: successMessage || 'Pricing configuration has been updated.',
+      });
+      refetch();
+      setEditModes({});
+    } catch (error: any) {
+      console.error('Error saving pricing config:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: error.message || 'Could not save pricing configuration.',
+      });
+    }
+  }, [pricingConfigRef, toast, refetch]);
 
   useEffect(() => {
     const dataToUse = fetchedConfig || (isLoading ? null : initialPricingConfig as PricingConfig);
@@ -232,21 +323,25 @@ export function ProductManagement() {
     setConfig(newConfig);
   }, [config]);
   
-  const handleAddNewProduct = useCallback(() => {
+  const handleAddNewProduct = useCallback(async () => {
     if (!config || !newProduct.name) {
       toast({ variant: 'destructive', title: 'Error', description: 'Product name cannot be empty.' });
       return;
     }
+    if (Object.keys(config.productGroupMapping).find(p => p.toLowerCase() === newProduct.name.toLowerCase())) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Product name already exists.' });
+      return;
+    }
     const newConfig = { ...config, productGroupMapping: { ...config.productGroupMapping, [newProduct.name]: newProduct.group } };
-    setConfig(newConfig);
-
-    const newProductTypes = [...productTypes, newProduct.name].sort();
-    setProductTypes(newProductTypes);
+    
+    // Save the new configuration to Firestore
+    await saveConfiguration(newConfig, `Product "${newProduct.name}" added successfully.`);
+    
+    // After saving, also update the local state to select the new product
     setSelectedProductType(newProduct.name);
-
     setNewProduct({ name: '', group: newProduct.group });
-    toast({ title: 'Product Staged', description: `"${newProduct.name}" is ready to be saved.`});
-  }, [config, newProduct.name, newProduct.group, productTypes, toast]);
+    // The refetch from useDoc will update the UI
+  }, [config, newProduct, saveConfiguration, toast]);
 
   const handleRemoveProduct = useCallback((productName: string) => {
       if (!config) return;
@@ -286,96 +381,6 @@ export function ProductManagement() {
     setIsAddCategoryOpen(false);
     toast({ title: 'Category Staged', description: `"${newCategoryName.trim()}" is ready to be configured and saved.`});
   }, [config, newCategoryName, toast]);
-
-  const saveConfiguration = useCallback(async (configToSave: EditablePricingConfig, successMessage?: string) => {
-    if (!configToSave || !pricingConfigRef) return;
-  
-    const validateTiers = (tiers: EditableTier[], context: string): {min: number, max: number, price: number}[] | null => {
-      const numericTiers: { min: number; price: number }[] = [];
-  
-      for (let i = 0; i < tiers.length; i++) {
-        const tier = tiers[i];
-        if (tier.min === '' || tier.price === '') {
-          toast({ variant: 'destructive', title: `Invalid Pricing in ${context}`, description: `Tier ${i + 1} has an empty minimum quantity or price. Please fill all fields.` });
-          return null;
-        }
-        numericTiers.push({ min: Number(tier.min), price: Number(tier.price) });
-      }
-  
-      numericTiers.sort((a, b) => a.min - b.min);
-  
-      for (let i = 1; i < numericTiers.length; i++) {
-        if (numericTiers[i].min <= numericTiers[i-1].min) {
-          toast({ variant: 'destructive', title: `Invalid Pricing in ${context}`, description: `Tier minimum quantities must be in increasing order and not have duplicates.` });
-          return null;
-        }
-      }
-      return numericTiers.map(t => ({...t, max: 0}));
-    };
-  
-    const validatedConfig = JSON.parse(JSON.stringify(configToSave));
-    let isValid = true;
-  
-    for (const group of Object.keys(validatedConfig.pricingTiers)) {
-      for (const embroidery of ['logo', 'name', 'logoAndText']) {
-        const tiers = validatedConfig.pricingTiers[group][embroidery].tiers;
-        if (tiers.length === 0) {
-          toast({ variant: 'destructive', title: `Invalid Pricing`, description: `The category "${group}" under "${embroidery}" must have at least one pricing tier.` });
-          isValid = false;
-          break;
-        }
-        const context = `${group} - ${embroidery}`;
-        const validated = validateTiers(tiers, context);
-        if (!validated) {
-          isValid = false;
-          break;
-        }
-        validatedConfig.pricingTiers[group][embroidery].tiers = validated.map((t, index) => ({
-            ...t,
-            max: index === validated.length - 1 ? Infinity : validated[index + 1].min - 1
-        }));
-      }
-      if (!isValid) break;
-    }
-    if (!isValid) return;
-  
-    for (const addOn of Object.keys(validatedConfig.addOnPricing)) {
-      if (addOn === 'rushFee' || addOn === 'shippingFee') continue;
-      const tiers = validatedConfig.addOnPricing[addOn].tiers;
-      if (tiers.length === 0) {
-        toast({ variant: 'destructive', title: `Invalid Pricing`, description: `The add-on "${addOn}" must have at least one pricing tier.` });
-        isValid = false;
-        break;
-      }
-      const validated = validateTiers(tiers, addOn);
-      if (!validated) {
-        isValid = false;
-        break;
-      }
-      validatedConfig.addOnPricing[addOn].tiers = validated.map((t, index) => ({
-        ...t,
-        max: index === validated.length - 1 ? Infinity : validated[index + 1].min - 1
-      }));
-    }
-    if (!isValid) return;
-  
-    try {
-      await setDoc(pricingConfigRef, validatedConfig);
-      toast({
-        title: 'Success!',
-        description: successMessage || 'Pricing configuration has been updated.',
-      });
-      refetch();
-      setEditModes({});
-    } catch (error: any) {
-      console.error('Error saving pricing config:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Save Failed',
-        description: error.message || 'Could not save pricing configuration.',
-      });
-    }
-  }, [pricingConfigRef, toast, refetch]);
 
   const handleSaveChanges = useCallback(async () => {
     if (!config) return;
@@ -585,7 +590,7 @@ export function ProductManagement() {
                                             <div className="font-bold text-center border-b pb-2">Product Category</div>
                                             <div className="font-bold text-center border-b pb-2">Action</div>
 
-                                            {Object.entries(config.productGroupMapping).map(([name, group]) => (
+                                            {Object.entries(config.productGroupMapping).sort((a,b) => a[0].localeCompare(b[0])).map(([name, group]) => (
                                                 <React.Fragment key={name}>
                                                     <span className="whitespace-nowrap col-span-3 self-center">{name}</span>
                                                     <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
