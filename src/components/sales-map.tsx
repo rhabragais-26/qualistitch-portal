@@ -35,6 +35,25 @@ const cityCoordinates: { [key: string]: [number, number] } = {
     'Las Piñas': [14.4445, 120.9939],
     'Muntinlupa': [14.3833, 121.0333],
     'Baguio': [16.4167, 120.5833],
+    'Valenzuela': [14.7000, 120.9833],
+    'San Jose': [14.8167, 121.0500],
+    'San Jose del Monte': [14.8167, 121.0500],
+    'Batangas': [13.7569, 121.0583],
+    'Batangas City': [13.7569, 121.0583],
+    'Zamboanga': [6.9214, 122.0790],
+    'Zambaonga': [6.9214, 122.0790], // Typo alias
+    'Marikina': [14.6500, 121.1000],
+    'Butuan': [8.9475, 125.5408],
+    'San Juan': [14.6017, 121.0306],
+    'Malolos': [14.8433, 120.8114],
+    'Santa Barbara': [15.9961, 120.4081],
+    'Tuguegarao': [17.6133, 121.7289],
+    'Paranaque': [14.4792, 121.0194],
+    'Taytay': [14.5667, 121.1333],
+    'Tarlac': [15.4833, 120.5833],
+    'Tabaco': [13.3589, 123.7317],
+    'Iloilo': [10.7202, 122.5621],
+    'San Carlos': [15.9272, 120.3467],
 };
 
 export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps) {

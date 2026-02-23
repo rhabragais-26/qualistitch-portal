@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -585,9 +584,9 @@ export function ReportsSummary() {
               {SalesMapComponent}
             </div>
             <div className="md:col-span-1">
-                <div className="border rounded-md h-[600px] overflow-y-auto modern-scrollbar">
+                <div className="border rounded-md">
                     <Table>
-                    <TableHeader className="sticky top-0 bg-muted">
+                    <TableHeader>
                         <TableRow>
                         <TableHead className="text-center align-middle">City</TableHead>
                         <TableHead className="text-center align-middle">Sales</TableHead>
