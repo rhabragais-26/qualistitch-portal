@@ -48,6 +48,8 @@ import { z, ZodError } from 'zod';
 import { EditLeadFullDialog } from './edit-lead-full-dialog';
 import { FieldErrors } from 'react-hook-form';
 import Link from 'next/link';
+import { getMonth, getYear, startOfDay, endOfDay, subDays } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
 
 const orderSchema = z.object({
   id: z.string().optional(), // Keep track of original order if needed
@@ -248,7 +250,6 @@ const RecordsTableRow = React.memo(({
                   )}
                   {openCustomerDetails === lead.id && (
                     <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
-                        <p className="font-bold">{lead.id}</p>
                         {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                         {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                     </div>
@@ -358,7 +359,24 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   const [csrFilter, setCsrFilter] = useState('All');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>('All');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
   
+  const handleQuickFilter = (filter: 'today' | 'yesterday') => {
+    const targetDate = filter === 'today' ? new Date() : subDays(new Date(), 1);
+    const newRange = { from: startOfDay(targetDate), to: endOfDay(targetDate) };
+
+    if (activeQuickFilter === filter) {
+        setActiveQuickFilter(null);
+        setDateRange(undefined);
+    } else {
+        setActiveQuickFilter(filter);
+        setDateRange(newRange);
+        setSelectedYear('All');
+        setSelectedMonth('All');
+    }
+  };
+
   const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
     if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
         return { text: 'COMPLETED', variant: 'success' };
@@ -435,9 +453,18 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
       
       const submissionDate = new Date(lead.submissionDateTime);
-      const matchesYear = selectedYear === 'All' || submissionDate.getFullYear().toString() === selectedYear;
-      const matchesMonth = selectedMonth === 'All' || (submissionDate.getMonth() + 1).toString() === selectedMonth;
-
+      let dateMatches = false;
+      
+      if (dateRange?.from) {
+        const from = startOfDay(dateRange.from);
+        const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+        dateMatches = submissionDate >= from && submissionDate <= to;
+      } else {
+        const matchesYear = selectedYear === 'All' || submissionDate.getFullYear().toString() === selectedYear;
+        const matchesMonth = selectedMonth === 'All' || (submissionDate.getMonth() + 1).toString() === selectedMonth;
+        dateMatches = matchesYear && matchesMonth;
+      }
+      
       const overallStatus = getOverallStatus(lead).text;
       let matchesStatus = true;
       if (filterType === 'COMPLETED') {
@@ -447,9 +474,9 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
       }
 
 
-      return matchesSearch && matchesCsr && matchesYear && matchesMonth && matchesStatus;
+      return matchesSearch && matchesCsr && dateMatches && matchesStatus;
     });
-  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, filterType, getOverallStatus]);
+  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, dateRange, filterType, getOverallStatus]);
   
     const { totalAmount, totalQuantity } = useMemo(() => {
         if (!filteredLeads) return { totalAmount: 0, totalQuantity: 0 };
@@ -538,7 +565,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
             <div className="flex items-center gap-4">
               <div className='flex items-center gap-2'>
                 <span className="text-sm font-medium">Filter by Year/Month:</span>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
                   <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
@@ -549,7 +576,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
                   <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
@@ -559,6 +586,8 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     ))}
                   </SelectContent>
                 </Select>
+                <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
+                <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')}>Today</Button>
               </div>
               <div className='flex items-center gap-2'>
                 <span className="text-sm font-medium">Filter by SCES:</span>
@@ -583,12 +612,14 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 />
               </div>
             </div>
-             <div className="w-full text-right mt-2 space-y-2">
-                {filterType !== 'COMPLETED' && (
-                    <div className="text-right font-semibold text-sm">
+            <div className="w-full flex justify-between items-center mt-2">
+                {filterType !== 'COMPLETED' ? (
+                    <div className="text-left font-semibold text-sm">
                         <span>Overall Total Amount: <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
                         <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
                     </div>
+                ) : (
+                    <div></div>
                 )}
                 <div>
                     {filterType === 'COMPLETED' ? (
