@@ -152,19 +152,20 @@ const getContrastColor = (hex: string) => {
 };
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, value, stroke } = props;
+    const { x, y, width, value, stroke } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
     const rectWidth = 80;
     const rectHeight = 18;
-  
+    const xPos = width ? x + width / 2 : x;
+    
     const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
 
     return (
       <g>
-        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
+        <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
         <text 
-          x={x} 
+          x={xPos} 
           y={y - rectHeight/2 - 5}
           textAnchor="middle" 
           dominantBaseline="middle" 
@@ -436,7 +437,7 @@ export function ReportsSummary() {
         const monthLabel = months.find(m => m.value === selectedMonth)?.label || '';
         period = `${monthLabel} ${selectedYear}`;
     }
-    return `Sold Amount per Sales Specialist for ${period}`;
+    return `Sales, Customers & Items Sold per Sales Specialist for ${period}`;
   }, [selectedYear, selectedMonth, selectedWeek, dateRange, months]);
   
   const top15Cities = useMemo(() => salesByCityData.slice(0, 15), [salesByCityData]);
@@ -611,7 +612,7 @@ export function ReportsSummary() {
                   </div>
                    <div className="text-right">
                       <p className="text-sm font-medium text-gray-600">Adjusted Daily Sales Target to hit Monthly Goal</p>
-                      <p className="text-2xl font-bold">{formatCurrency(dailySalesTarget)}</p>
+                      <p className="text-2xl font-bold text-destructive">{formatCurrency(dailySalesTarget)}</p>
                   </div>
               </div>
           </CardHeader>
@@ -700,7 +701,7 @@ export function ReportsSummary() {
             <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
               <CardHeader>
                   <CardTitle>Quantity Sold vs Customer Count</CardTitle>
-                  <CardDescription>Total sales, quantity, and customers by each SCES.</CardDescription>
+                  <CardDescription>{salesByRepTitle}</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">
                   <div className="flex-1 h-[250px] -mt-4">
