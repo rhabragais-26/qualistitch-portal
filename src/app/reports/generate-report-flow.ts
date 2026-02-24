@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -298,7 +299,7 @@ const generateReportFlow = ai.defineFlow(
           (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
         );
     })();
-    
+
     const weeklySalesData = (() => {
         const salesByWeek = filteredLeads.reduce((acc, lead) => {
             const date = new Date(lead.submissionDateTime);
@@ -358,7 +359,7 @@ const generateReportFlow = ai.defineFlow(
           name,
           quantity,
         }))
-        .sort((a, b) => b.quantity - a.quantity);
+        .sort((a, b) => a.name.localeCompare(b.name));
     })();
 
     const salesByCityData = (() => {
