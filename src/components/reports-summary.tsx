@@ -73,18 +73,18 @@ const chartConfig = {
 };
 
 const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(220, 70%, 70%)',
-  'hsl(340, 70%, 70%)',
-  'hsl(100, 70%, 70%)',
-  'hsl(20, 70%, 70%)',
-  'hsl(260, 70%, 70%)',
-  'hsl(60, 70%, 70%)',
-  'hsl(180, 70%, 70%)',
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    'hsl(220, 70%, 70%)',
+    'hsl(340, 70%, 70%)',
+    'hsl(100, 70%, 70%)',
+    'hsl(20, 70%, 70%)',
+    'hsl(260, 70%, 70%)',
+    'hsl(60, 70%, 70%)',
+    'hsl(180, 70%, 70%)',
 ];
 
 const renderAmountLabel = (props: any) => {
@@ -154,8 +154,46 @@ export function ReportsSummary() {
     }
   }, [productTypesForFilter, colorProductTypeFilter]);
 
+  const filteredLeads = useMemo(() => {
+    if (!leads) return [];
+    
+    return leads.filter(lead => {
+        try {
+            const submissionDate = new Date(lead.submissionDateTime);
+            let isInDateRange = true;
+
+            if (dateRange?.from) {
+                const from = startOfDay(dateRange.from);
+                const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+                isInDateRange = submissionDate >= from && submissionDate <= to;
+            } else if (selectedWeek) {
+                 const [startStr, endStr] = selectedWeek.split('-');
+                 const year = parseInt(selectedYear, 10);
+                 const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
+                 const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
+                 isInDateRange = submissionDate >= startOfDay(weekStart) && submissionDate <= endOfDay(weekEnd);
+            }
+            else {
+                const year = parseInt(selectedYear, 10);
+                const month = parseInt(selectedMonth, 10);
+                if (selectedYear !== 'all' && getYear(submissionDate) !== year) {
+                    return false;
+                }
+                if (selectedMonth !== 'all' && (getMonth(submissionDate) + 1) !== month) {
+                    return false;
+                }
+            }
+            
+            return isInDateRange;
+
+        } catch (e) {
+            return false;
+        }
+    });
+  }, [leads, selectedYear, selectedMonth, selectedWeek, dateRange]);
+
   const itemsSoldPerColor = useMemo(() => {
-    if (!leads || !colorProductTypeFilter) return [];
+    if (!filteredLeads || !colorProductTypeFilter) return [];
 
     const colorCounts = filteredLeads.reduce((acc, lead) => {
         lead.orders.forEach(order => {
@@ -171,7 +209,7 @@ export function ReportsSummary() {
         name: color,
         value: quantity,
     })).sort((a,b) => b.value - a.value);
-  }, [leads, colorProductTypeFilter, reportData]);
+  }, [filteredLeads, colorProductTypeFilter]);
 
 
   const months = useMemo(() => [
@@ -242,44 +280,6 @@ export function ReportsSummary() {
     }
     return reportData;
   }, [reportData]);
-  
-  const filteredLeads = useMemo(() => {
-    if (!leads) return [];
-    
-    return leads.filter(lead => {
-        try {
-            const submissionDate = new Date(lead.submissionDateTime);
-            let isInDateRange = true;
-
-            if (dateRange?.from) {
-                const from = startOfDay(dateRange.from);
-                const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
-                isInDateRange = submissionDate >= from && submissionDate <= to;
-            } else if (selectedWeek) {
-                 const [startStr, endStr] = selectedWeek.split('-');
-                 const year = parseInt(selectedYear, 10);
-                 const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
-                 const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
-                 isInDateRange = submissionDate >= startOfDay(weekStart) && submissionDate <= endOfDay(weekEnd);
-            }
-            else {
-                const year = parseInt(selectedYear, 10);
-                const month = parseInt(selectedMonth, 10);
-                if (selectedYear !== 'all' && getYear(submissionDate) !== year) {
-                    return false;
-                }
-                if (selectedMonth !== 'all' && (getMonth(submissionDate) + 1) !== month) {
-                    return false;
-                }
-            }
-            
-            return isInDateRange;
-
-        } catch (e) {
-            return false;
-        }
-    });
-}, [leads, selectedYear, selectedMonth, selectedWeek, dateRange]);
   
   const top15Cities = useMemo(() => salesByCityData.slice(0, 15), [salesByCityData]);
 
