@@ -253,6 +253,30 @@ export function ReportsSummary() {
     });
   }, [leads, selectedYear, selectedMonth, selectedWeek, dateRange]);
 
+  const renderCustomizedLabel = (props: any) => {
+    const { cx, cy, midAngle, innerRadius, outerRadius, percent, fill } = props;
+    if (percent === 0) return null;
+
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const contrastColor = getContrastColor(fill);
+
+    return (
+        <text
+            x={x}
+            y={y}
+            fill={contrastColor}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={12}
+            fontWeight="bold"
+        >
+            {`${(percent * 100).toFixed(0)}%`}
+        </text>
+    );
+  };
 
   const itemsSoldPerColor = useMemo(() => {
     if (!filteredLeads || !colorProductTypeFilter) return [];
@@ -267,9 +291,10 @@ export function ReportsSummary() {
         return acc;
     }, {} as Record<string, number>);
 
-    return Object.entries(colorCounts).map(([color, quantity]) => ({
+    return Object.entries(colorCounts).map(([color, quantity], index) => ({
         name: color,
         value: quantity,
+        fill: colorMap[color.toLowerCase()] || COLORS[index % COLORS.length]
     })).sort((a,b) => b.value - a.value);
   }, [filteredLeads, colorProductTypeFilter]);
 
@@ -751,10 +776,6 @@ export function ReportsSummary() {
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">
                   <div className="flex-1 h-[250px] -mt-4 relative">
-                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                          <span className="text-3xl font-bold">{totalColorQuantity}</span>
-                          <span className="text-sm text-gray-500">{percentageOfTotal.toFixed(1)}% of total</span>
-                      </div>
                   <ChartContainer config={chartConfig} className="w-full h-full">
                       <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -765,14 +786,13 @@ export function ReportsSummary() {
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          innerRadius="60%"
+                          innerRadius="50%"
                           outerRadius="80%"
                           labelLine={false}
-                          label={false}
+                          label={renderCustomizedLabel}
                           >
-                          {itemsSoldPerColor.map((entry, index) => {
-                              const fillColor = colorMap[entry.name.toLowerCase()] || COLORS[index % COLORS.length];
-                              return <Cell key={`cell-${index}`} fill={fillColor} />;
+                          {itemsSoldPerColor.map((entry) => {
+                              return <Cell key={`cell-${entry.name}`} fill={entry.fill} />;
                           })}
                           </Pie>
                           <Legend verticalAlign="bottom" height={36} formatter={renderLegendText}/>
