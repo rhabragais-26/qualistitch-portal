@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -158,7 +159,7 @@ const renderAmountLabel = (props: any) => {
     const rectWidth = 80;
     const rectHeight = 18;
   
-    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.8)') : 'rgba(255, 255, 255, 0.8)';
+    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
 
     return (
       <g>
@@ -400,6 +401,14 @@ export function ReportsSummary() {
     itemsSoldPerColor.reduce((sum, item) => sum + item.value, 0) || 0
   , [itemsSoldPerColor]);
 
+    const totalAllItemsSold = useMemo(() =>
+    soldQtyByProductType.reduce((sum, item) => sum + item.quantity, 0)
+    , [soldQtyByProductType]);
+
+    const percentageOfTotal = useMemo(() =>
+        totalAllItemsSold > 0 ? (totalColorQuantity / totalAllItemsSold) * 100 : 0
+    , [totalColorQuantity, totalAllItemsSold]);
+
   const totalWeeklySales = useMemo(() => weeklySalesData.reduce((sum, item) => sum + item.amount, 0), [weeklySalesData]);
 
   const priorityColors = {
@@ -559,7 +568,7 @@ export function ReportsSummary() {
                   </div>
                    {dailySalesTarget > 0 && (
                       <div className="text-right">
-                          <p className="text-sm font-medium text-gray-600">Daily Sales Target Adjustment to hit Monthly Target</p>
+                          <p className="text-sm font-medium text-gray-600">Adjusted Daily Sales Target to hit Monthly Goal</p>
                           <p className="text-2xl font-bold text-destructive">{formatCurrency(dailySalesTarget)}</p>
                       </div>
                   )}
@@ -649,7 +658,7 @@ export function ReportsSummary() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
               <CardHeader>
-                  <CardTitle>SCES Performance</CardTitle>
+                  <CardTitle>{salesByRepTitle}</CardTitle>
                   <CardDescription>Total sales, quantity, and customers by each SCES.</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">
@@ -693,7 +702,7 @@ export function ReportsSummary() {
                       </TableRow>
                       </TableHeader>
                       <TableBody>
-                      {salesRepData.map((item, index) => (
+                      {salesRepData.filter(item => item.amount > 0).map((item, index) => (
                           <TableRow key={index}>
                           <TableCell className="font-medium text-xs p-1 text-center align-middle">
                               {item.name}
@@ -728,7 +737,11 @@ export function ReportsSummary() {
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">
-                  <div className="flex-1 h-[250px] -mt-4">
+                  <div className="flex-1 h-[250px] -mt-4 relative">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-3xl font-bold">{totalColorQuantity}</span>
+                          <span className="text-sm text-gray-500">{percentageOfTotal.toFixed(1)}% of total</span>
+                      </div>
                   <ChartContainer config={chartConfig} className="w-full h-full">
                       <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -739,39 +752,10 @@ export function ReportsSummary() {
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          innerRadius="40%"
+                          innerRadius="60%"
                           outerRadius="80%"
                           labelLine={false}
-                          label={({
-                              cx,
-                              cy,
-                              midAngle,
-                              innerRadius,
-                              outerRadius,
-                              percent,
-                              index,
-                          }) => {
-                              const RADIAN = Math.PI / 180;
-                              const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                              const entry = itemsSoldPerColor[index];
-                              const fillColor = colorMap[entry.name.toLowerCase()] || COLORS[index % COLORS.length];
-
-                              return (
-                              <text
-                                  x={x}
-                                  y={y}
-                                  fill={getContrastColor(fillColor)}
-                                  textAnchor={x > cx ? "start" : "end"}
-                                  dominantBaseline="central"
-                                  fontSize={14}
-                                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
-                              >
-                                  {`${(percent * 100).toFixed(0)}%`}
-                              </text>
-                              );
-                          }}
+                          label={false}
                           >
                           {itemsSoldPerColor.map((entry, index) => {
                               const fillColor = colorMap[entry.name.toLowerCase()] || COLORS[index % COLORS.length];
