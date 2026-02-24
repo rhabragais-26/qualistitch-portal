@@ -3,7 +3,7 @@
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart } from 'recharts';
+import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart, ReferenceLine, Label as RechartsLabel } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -348,52 +348,6 @@ export function ReportsSummary() {
     }
   }, [leads, processReport, isLeadsLoading]);
 
-    const dailySalesTarget = useMemo(() => {
-        if (!leads || !selectedYear || selectedYear === 'all' || !selectedMonth || selectedMonth === 'all') {
-            return 0;
-        }
-
-        const monthlyQuota = 12000000;
-        const year = parseInt(selectedYear, 10);
-        const month = parseInt(selectedMonth, 10) - 1; // 0-indexed for Date
-
-        const startOfMonthDate = new Date(year, month, 1);
-        const endOfMonthDate = endOfMonth(startOfMonthDate);
-
-        const totalSalesForMonth = leads
-            .filter(lead => {
-                const submissionDate = new Date(lead.submissionDateTime);
-                return getYear(submissionDate) === year && getMonth(submissionDate) === month;
-            })
-            .reduce((sum, lead) => sum + (lead.grandTotal || 0), 0);
-
-        const remainingSalesNeeded = Math.max(0, monthlyQuota - totalSalesForMonth);
-
-        const today = new Date();
-        const isPastMonth = getYear(today) > year || (getYear(today) === year && getMonth(today) > month);
-        const isFutureMonth = getYear(today) < year || (getYear(today) === year && getMonth(today) < month);
-
-        if (isPastMonth) {
-            return 0;
-        }
-
-        const startDateForCounting = isFutureMonth ? startOfMonthDate : (today < startOfMonthDate ? startOfMonthDate : today);
-
-        const remainingDaysInMonth = eachDayOfInterval({
-            start: startDateForCounting,
-            end: endOfMonthDate,
-        });
-
-        const remainingWorkingDays = remainingDaysInMonth.filter(day => day.getDay() !== 0).length; // 0 is Sunday
-
-        if (remainingWorkingDays <= 0) {
-            return remainingSalesNeeded > 0 ? remainingSalesNeeded : 0;
-        }
-
-        return remainingSalesNeeded / remainingWorkingDays;
-    }, [leads, selectedYear, selectedMonth]);
-
-
   const {
     salesRepData,
     priorityData,
@@ -420,6 +374,77 @@ export function ReportsSummary() {
     }
     return reportData;
   }, [reportData]);
+  
+  const fixedDailyTarget = useMemo(() => {
+    if (selectedYear === 'all' || selectedMonth === 'all') {
+        return 0;
+    }
+
+    const monthlyQuota = 12000000;
+    const year = parseInt(selectedYear, 10);
+    const month = parseInt(selectedMonth, 10) - 1;
+
+    const startOfMonthDate = new Date(year, month, 1);
+    const endOfMonthDate = endOfMonth(startOfMonthDate);
+
+    const daysInMonth = eachDayOfInterval({
+        start: startOfMonthDate,
+        end: endOfMonthDate,
+    });
+
+    const workingDays = daysInMonth.filter(day => day.getDay() !== 0).length; // 0 is Sunday
+
+    if (workingDays <= 0) {
+        return 0;
+    }
+
+    return monthlyQuota / workingDays;
+  }, [selectedYear, selectedMonth]);
+
+  const dailySalesTarget = useMemo(() => {
+    if (!leads || !selectedYear || selectedYear === 'all' || !selectedMonth || selectedMonth === 'all') {
+        return 0;
+    }
+
+    const monthlyQuota = 12000000;
+    const year = parseInt(selectedYear, 10);
+    const month = parseInt(selectedMonth, 10) - 1;
+
+    const startOfMonthDate = new Date(year, month, 1);
+    const endOfMonthDate = endOfMonth(startOfMonthDate);
+
+    const totalSalesForMonth = leads
+        .filter(lead => {
+            const submissionDate = new Date(lead.submissionDateTime);
+            return getYear(submissionDate) === year && getMonth(submissionDate) === month;
+        })
+        .reduce((sum, lead) => sum + (lead.grandTotal || 0), 0);
+
+    const remainingSalesNeeded = Math.max(0, monthlyQuota - totalSalesForMonth);
+
+    const today = new Date();
+    const isPastMonth = getYear(today) > year || (getYear(today) === year && getMonth(today) > month);
+    const isFutureMonth = getYear(today) < year || (getYear(today) === year && getMonth(today) < month);
+
+    if (isPastMonth) {
+        return 0;
+    }
+
+    const startDateForCounting = isFutureMonth ? startOfMonthDate : (today < startOfMonthDate ? startOfMonthDate : today);
+
+    const remainingDaysInMonth = eachDayOfInterval({
+        start: startDateForCounting,
+        end: endOfMonthDate,
+    });
+
+    const remainingWorkingDays = remainingDaysInMonth.filter(day => day.getDay() !== 0).length;
+
+    if (remainingWorkingDays <= 0) {
+        return remainingSalesNeeded > 0 ? remainingSalesNeeded : 0;
+    }
+
+    return remainingSalesNeeded / remainingWorkingDays;
+  }, [leads, selectedYear, selectedMonth]);
 
   const salesByRepTitle = useMemo(() => {
     let period;
@@ -635,6 +660,22 @@ export function ReportsSummary() {
                       }} />}
                       />
                       <Legend />
+                      {fixedDailyTarget > 0 && (
+                        <ReferenceLine 
+                          y={fixedDailyTarget} 
+                          yAxisId="right" 
+                          stroke="red" 
+                          strokeDasharray="3 3" 
+                          strokeOpacity={0.7}
+                        >
+                          <RechartsLabel
+                              value={`Fixed Daily Target (${formatCurrency(fixedDailyTarget, { maximumFractionDigits: 0 })})`}
+                              position="insideTopLeft"
+                              fill="red"
+                              fontSize={10}
+                          />
+                        </ReferenceLine>
+                      )}
                       <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
                         <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
