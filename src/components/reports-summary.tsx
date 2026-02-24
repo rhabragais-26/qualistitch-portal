@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -151,15 +152,17 @@ const getContrastColor = (hex: string) => {
 };
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, value } = props;
+    const { x, y, value, stroke } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
     const rectWidth = 80;
     const rectHeight = 18;
   
+    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.8)') : 'rgba(255, 255, 255, 0.8)';
+
     return (
       <g>
-        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill="rgba(255, 255, 255, 0.8)" rx={4} ry={4} />
+        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
         <text 
           x={x} 
           y={y - rectHeight/2 - 5}
@@ -832,3 +835,4 @@ export function ReportsSummary() {
     </>
   );
 }
+    
