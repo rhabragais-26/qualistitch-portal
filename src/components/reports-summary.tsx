@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -559,7 +560,7 @@ export function ReportsSummary() {
                   </div>
                    {dailySalesTarget > 0 && (
                       <div className="text-right">
-                          <p className="text-sm font-medium text-gray-600">Daily Sales Target</p>
+                          <p className="text-sm font-medium text-gray-600">Daily Sales Target Adjustment based on Monthly Target</p>
                           <p className="text-2xl font-bold text-destructive">{formatCurrency(dailySalesTarget)}</p>
                       </div>
                   )}
@@ -695,9 +696,10 @@ export function ReportsSummary() {
                     <TableBody>
                     {salesRepData.filter(item => item.amount > 0).map((item, index) => (
                         <TableRow key={index}>
-                        <TableCell className="font-medium flex items-center text-xs p-1">
-                            <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: chartConfig.quantity.color }}></span>
-                            {item.name}
+                        <TableCell className="font-medium text-xs p-1">
+                            <div className="flex items-center justify-center">
+                                {item.name}
+                            </div>
                         </TableCell>
                         <TableCell className="text-xs p-1 text-center">{item.quantity}</TableCell>
                         <TableCell className="text-xs p-1 text-center">{item.customerCount}</TableCell>
