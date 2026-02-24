@@ -57,17 +57,21 @@ const COLORS = [
 ];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, value } = props;
+    const { x, y, width, value, stroke } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
     const rectWidth = 80;
     const rectHeight = 18;
-  
+    const xPos = width ? x + width / 2 : x;
+    
+    // Convert hsl(a, b, c) to hsla(a, b, c, 0.4)
+    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.4)') : 'rgba(255, 255, 255, 0.4)';
+
     return (
       <g>
-        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill="rgba(255, 255, 255, 0.8)" rx={4} ry={4} />
+        <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
         <text 
-          x={x} 
+          x={xPos} 
           y={y - rectHeight/2 - 5}
           textAnchor="middle" 
           dominantBaseline="middle" 
@@ -112,7 +116,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead ${lead.id}: ${lead.submissionDateTime}`);
+            console.warn(`Invalid date format for lead ${'\'\'\''}${lead.id}: ${'\'\'\''}${lead.submissionDateTime}`);
             return false;
         }
     });
@@ -209,13 +213,13 @@ export function TodaysPerformanceCard() {
                                     <YAxis
                                         yAxisId="left"
                                         orientation="left"
-                                        stroke="hsl(var(--chart-1))"
+                                        stroke="hsl(var(--chart-2))"
                                         tickFormatter={(value) => `₱${Number(value) / 1000}k`}
                                     />
                                     <YAxis
                                         yAxisId="right"
                                         orientation="right"
-                                        stroke="hsl(var(--chart-2))"
+                                        stroke="hsl(var(--chart-1))"
                                     />
                                     <Tooltip
                                         cursor={{ fill: 'hsl(var(--muted))' }}
@@ -232,7 +236,7 @@ export function TodaysPerformanceCard() {
                                         ))}
                                         <LabelList dataKey="quantity" content={renderQuantityLabel} />
                                     </Bar>
-                                    <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                                    <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
                                         <LabelList content={renderAmountLabel} dataKey="amount" />
                                     </Line>
                                 </ComposedChart>
