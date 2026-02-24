@@ -116,7 +116,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}: '${'\'\''}${lead.submissionDateTime}`);
+            console.warn(`Invalid date format for lead '${lead.id}: '${lead.submissionDateTime}`);
             return false;
         }
     });
@@ -210,7 +210,7 @@ export function TodaysPerformanceCard() {
                                         yAxisId="left"
                                         orientation="left"
                                         stroke="hsl(var(--chart-2))"
-                                        tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}${'\'\''}`}
+                                        tickFormatter={(value) => `₱${Number(value) / 1000}k`}
                                     />
                                     <YAxis
                                         yAxisId="right"
@@ -228,7 +228,7 @@ export function TodaysPerformanceCard() {
                                     />
                                     <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
                                         {salesData.map((entry, index) => (
-                                            <Cell key={`cell-amount-${'\'\'\''}${index}${'\'\''}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                         <LabelList dataKey="quantity" content={renderQuantityLabel} />
                                     </Bar>
@@ -263,13 +263,38 @@ export function TodaysPerformanceCard() {
                                         cx="50%"
                                         cy="50%"
                                         outerRadius={90}
-                                        labelLine={true}
-                                        label={({ name, percent }) => `${'\'\'\''}${name}: ${(percent * 100).toFixed(0)}%`}
+                                        labelLine={false}
+                                        label={({
+                                            cx,
+                                            cy,
+                                            midAngle,
+                                            innerRadius,
+                                            outerRadius,
+                                            value,
+                                        }) => {
+                                            const RADIAN = Math.PI / 180;
+                                            const radius = innerRadius + (outerRadius - innerRadius) * 0.7; // Position label farther out
+                                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                                            return (
+                                            <text
+                                                x={x}
+                                                y={y}
+                                                fill="white"
+                                                textAnchor="middle"
+                                                dominantBaseline="central"
+                                                fontSize={12}
+                                                style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                                            >
+                                                {value}
+                                            </text>
+                                            );
+                                        }}
                                     >
                                         {layoutChartData.map((entry, index) => (
-                                            <Cell key={`cell-layout-${'\'\'\''}${index}${'\'\''}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
-                                        <LabelList dataKey="layoutCount" position="inside" fill="white" fontSize={12} />
                                     </Pie>
                                     <Legend />
                                 </PieChart>
