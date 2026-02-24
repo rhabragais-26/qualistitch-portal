@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -45,7 +46,7 @@ export default function PendingApprovalPage() {
             <div className="bg-black rounded-lg px-8 py-4">
                 <span className={cn("font-bold font-headline flex items-baseline bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200 bg-clip-text text-transparent shining-metal whitespace-nowrap")}>
                     <span className="text-5xl">Q</span>
-                    <span className="text-4xl">UALISTITCH Inc.</span>
+                    <span className="text-4xl">UALISTITCH Portal</span>
                 </span>
             </div>
         </header>

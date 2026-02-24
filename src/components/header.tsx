@@ -279,7 +279,7 @@ const HeaderMemo = React.memo(function Header({
             <Link href="/home" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/home'); }}>
               <span className={cn("font-bold font-headline flex items-baseline bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200 bg-clip-text text-transparent shining-metal whitespace-nowrap")}>
                 <span className="text-3xl">Q</span>
-                <span className="text-2xl">UALISTITCH Inc.</span>
+                <span className="text-2xl">UALISTITCH Portal</span>
               </span>
             </Link>
           </div>
