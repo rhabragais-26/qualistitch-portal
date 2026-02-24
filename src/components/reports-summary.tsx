@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -499,10 +498,6 @@ export function ReportsSummary() {
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
-  const SalesMapComponent = useMemo(() => {
-    return <SalesMap salesByCityData={salesByCityData} totalSales={totalSales} />;
-  }, [salesByCityData, totalSales]);
-  
   const renderLegendText = (value: string) => {
     return <span style={{ color: 'black' }}>{value}</span>;
   };
@@ -885,7 +880,7 @@ export function ReportsSummary() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
             <div className="md:col-span-2 rounded-lg overflow-hidden border">
-              {SalesMapComponent}
+              <SalesMap salesByCityData={salesByCityData} totalSales={totalSales} />
             </div>
             <div className="md:col-span-1 border rounded-md">
                 <Table>
