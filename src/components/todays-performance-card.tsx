@@ -15,6 +15,8 @@ import { Separator } from './ui/separator';
 import { Input } from '@/components/ui/input';
 import { DateRange } from 'react-day-picker';
 import { eachDayOfInterval, endOfMonth } from 'date-fns';
+import { z, ZodError } from 'zod';
+
 
 type Order = {
   quantity: number;
@@ -24,14 +26,21 @@ type Layout = {
   layoutImage?: string | null;
 };
 
-type Lead = {
-  id: string;
-  salesRepresentative: string;
-  submissionDateTime: string;
-  grandTotal?: number;
-  orders: Order[];
-  layouts?: Layout[];
-};
+const leadSchema = z.object({
+  id: z.string(),
+  customerName: z.string(),
+  salesRepresentative: z.string(),
+  submissionDateTime: z.string(),
+  grandTotal: z.number().optional(),
+  orders: z.array(z.object({
+    quantity: z.number(),
+  })),
+  layouts: z.array(z.object({
+    layoutImage: z.string().nullable().optional(),
+  })).optional(),
+});
+
+type Lead = z.infer<typeof leadSchema>;
 
 const chartConfig = {
   amount: {
@@ -72,25 +81,43 @@ const renderQuantityLabel = (props: any) => {
     );
 };
 
-export function TodaysPerformanceCard() {
-  const firestore = useFirestore();
-  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+const renderAmountLabel = (props: any) => {
+    const { x, y, width, value, stroke } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+  
+    const rectWidth = 80;
+    const rectHeight = 18;
+    const xPos = width ? x + width / 2 : x;
+    
+    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
 
-  const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+    return (
+      <g>
+        <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
+        <text 
+          x={xPos} 
+          y={y - rectHeight/2 - 5}
+          textAnchor="middle" 
+          dominantBaseline="middle" 
+          fill="black"
+          fontSize={12} 
+          fontWeight="bold"
+        >
+          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+        </text>
+      </g>
+    );
+};
 
-  const renderHourlyLabel = (props: any) => {
+const renderHourlyLabel = (props: any) => {
     const { x, y, value } = props;
 
     if (typeof x !== 'number' || typeof y !== 'number' || typeof value !== 'number' || value <= 0) {
       return null;
     }
 
-    // Access quantity safely from payload object on props
     const quantity = props.payload?.quantity ?? 0;
-
-    const labelText = `${formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })} (${quantity})`;
+    const labelText = `${value} (${quantity})`;
     
     return (
         <text
@@ -105,35 +132,16 @@ export function TodaysPerformanceCard() {
           {labelText}
         </text>
     );
-  };
+};
 
-  const renderAmountLabel = (props: any) => {
-      const { x, y, width, value, stroke } = props;
-      if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
-    
-      const rectWidth = 80;
-      const rectHeight = 18;
-      const xPos = width ? x + width / 2 : x;
-      
-      const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
 
-      return (
-        <g>
-          <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
-          <text 
-            x={xPos} 
-            y={y - rectHeight/2 - 5}
-            textAnchor="middle" 
-            dominantBaseline="middle" 
-            fill="black"
-            fontSize={12} 
-            fontWeight="bold"
-          >
-            {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-          </text>
-        </g>
-      );
-  };
+export function TodaysPerformanceCard() {
+  const firestore = useFirestore();
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
+
+  const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const salesData = useMemo(() => {
     if (!leads) return [];
@@ -217,12 +225,12 @@ export function TodaysPerformanceCard() {
     const salesByHour = filteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
       if (!acc[hour]) {
-        acc[hour] = { amount: 0, quantity: 0 };
+        acc[hour] = { customers: new Set(), quantity: 0 };
       }
-      acc[hour].amount += lead.grandTotal || 0;
+      acc[hour].customers.add(lead.customerName);
       acc[hour].quantity += lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
       return acc;
-    }, {} as Record<number, { amount: number; quantity: number }>);
+    }, {} as Record<number, { customers: Set<string>; quantity: number }>);
 
     // --- Historical Data Calculation ---
     const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
@@ -246,20 +254,24 @@ export function TodaysPerformanceCard() {
 
       const historicalSalesByHour = historicalLeads.reduce((acc, lead) => {
         const hour = new Date(lead.submissionDateTime).getHours();
-        acc[hour] = (acc[hour] || 0) + (lead.grandTotal || 0);
+        if (!acc[hour]) {
+            acc[hour] = new Set<string>();
+        }
+        acc[hour].add(lead.customerName);
         return acc;
-      }, {} as Record<number, number>);
+      }, {} as Record<number, Set<string>>);
 
       for (let j = 0; j < 24; j++) {
-        historicalData[j][historicalKey] = historicalSalesByHour[j] || 0;
+        historicalData[j][historicalKey] = historicalSalesByHour[j] ? historicalSalesByHour[j].size : 0;
       }
     }
 
     const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
-      const hourData = salesByHour[i] || { amount: 0, quantity: 0 };
+      const hourData = salesByHour[i];
       return {
         hour: `${i.toString().padStart(2, '0')}:00`,
-        ...hourData,
+        customerCount: hourData ? hourData.customers.size : 0,
+        quantity: hourData ? hourData.quantity : 0,
         ...historicalData[i],
       };
     });
@@ -487,10 +499,10 @@ export function TodaysPerformanceCard() {
             <CardContent>
                 <div className="text-left mb-4">
                     <CardTitle>Hourly Sales Breakdown</CardTitle>
-                    <CardDescription>Sales and quantity per hour for the selected day, compared to previous weeks.</CardDescription>
+                    <CardDescription>Customer count and quantity per hour for the selected day, compared to previous weeks.</CardDescription>
                 </div>
                 <div style={{ height: '300px' }}>
-                    <ChartContainer config={{ amount: { label: 'Amount' } }} className="w-full h-full">
+                    <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={hourlySalesData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
                                 <CartesianGrid stroke="hsl(var(--border) / 0.7)" />
@@ -508,14 +520,14 @@ export function TodaysPerformanceCard() {
                                 }}
                                 interval={0}
                                 />
-                                <YAxis tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
+                                <YAxis tickFormatter={(value) => `${value}`} />
                                 <Tooltip
                                     content={<ChartTooltipContent
                                         formatter={(value, name, item) => {
-                                            if (name === 'Sales Amount') {
+                                            if (name === 'Customer Count') {
                                                 return (
                                                     <div className="flex flex-col">
-                                                        <span>{formatCurrency(item.payload.amount)}</span>
+                                                        <span>{item.payload.customerCount} customers</span>
                                                         <span className="text-muted-foreground">{item.payload.quantity} items</span>
                                                     </div>
                                                 );
@@ -525,7 +537,7 @@ export function TodaysPerformanceCard() {
                                                 const weekNum = weekMatch[1];
                                                  return (
                                                     <div className="flex flex-col">
-                                                        <span>{formatCurrency(value as number)}</span>
+                                                        <span>{value as number} customers</span>
                                                         <span className="text-muted-foreground">({weekNum} week{parseInt(weekNum, 10) > 1 ? 's' : ''} ago)</span>
                                                     </div>
                                                 );
@@ -548,8 +560,8 @@ export function TodaysPerformanceCard() {
                                         activeDot={false}
                                     />
                                 ))}
-                                <Line type="monotone" dataKey="amount" name="Sales Amount" stroke="hsl(var(--chart-1))" strokeWidth={2}>
-                                    <LabelList dataKey="amount" content={renderHourlyLabel} />
+                                <Line type="monotone" dataKey="customerCount" name="Customer Count" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                                    <LabelList dataKey="customerCount" content={renderHourlyLabel} />
                                 </Line>
                             </LineChart>
                         </ResponsiveContainer>
