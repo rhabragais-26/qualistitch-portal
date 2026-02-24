@@ -231,8 +231,8 @@ export function ReportsSummary() {
             } else if (selectedWeek) {
                  const [startStr, endStr] = selectedWeek.split('-');
                  const year = parseInt(selectedYear, 10);
-                 const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
-                 const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
+                 const weekStart = parse(`${'\'\'\''}${startStr}.${'\'\'\''}${year}`, 'MM.dd.yyyy', new Date());
+                 const weekEnd = parse(`${'\'\'\''}${endStr}.${'\'\'\''}${year}`, 'MM.dd.yyyy', new Date());
                  isInDateRange = submissionDate >= startOfDay(weekStart) && submissionDate <= endOfDay(weekEnd);
             }
             else {
