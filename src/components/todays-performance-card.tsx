@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
+import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, LineChart } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -106,6 +105,27 @@ export function TodaysPerformanceCard() {
   const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
+  const renderHourlyLabel = (props: any) => {
+    const { x, y, value, payload } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number' || !payload) return null;
+  
+    return (
+      <g>
+        <text 
+          x={x} 
+          y={y}
+          dy={-10}
+          textAnchor="middle"
+          fill="black"
+          fontSize={12} 
+          fontWeight="bold"
+        >
+          {`${formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })} (${payload.quantity})`}
+        </text>
+      </g>
+    );
+  };
+  
   const salesData = useMemo(() => {
     if (!leads) return [];
 
@@ -211,27 +231,6 @@ export function TodaysPerformanceCard() {
     return fullDayData;
   }, [leads, activeFilter, selectedDate]);
   
-  const renderHourlyLabel = (props: any) => {
-    const { x, y, value, payload } = props;
-    if (value === 0 || typeof x !== 'number' || typeof y !== 'number' || !payload) return null;
-  
-    return (
-      <g>
-        <text 
-          x={x} 
-          y={y}
-          dy={-10}
-          textAnchor="middle"
-          fill="black"
-          fontSize={12} 
-          fontWeight="bold"
-        >
-          {`${formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })} (${payload.quantity})`}
-        </text>
-      </g>
-    );
-  };
-
   const totalSales = useMemo(() => {
     if (!salesData) return 0;
     return salesData.reduce((acc, curr) => acc + curr.amount, 0);
@@ -466,7 +465,13 @@ export function TodaysPerformanceCard() {
                                 tickLine={false}
                                 axisLine={false}
                                 tickMargin={8}
-                                tickFormatter={(value: string) => value.split(':')[0]}
+                                tickFormatter={(value: string) => {
+                                    const hour = parseInt(value.split(':')[0], 10);
+                                    if (hour === 0) return '12am';
+                                    if (hour === 12) return '12pm';
+                                    if (hour > 12) return `${hour - 12}pm`;
+                                    return `${hour}am`;
+                                }}
                                 interval={'preserveStartEnd'}
                                 minTickGap={30}
                                 />
