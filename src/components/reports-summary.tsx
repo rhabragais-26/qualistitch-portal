@@ -73,18 +73,9 @@ const chartConfig = {
 };
 
 const COLORS = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
-    'hsl(220, 70%, 70%)',
-    'hsl(340, 70%, 70%)',
-    'hsl(100, 70%, 70%)',
-    'hsl(20, 70%, 70%)',
-    'hsl(260, 70%, 70%)',
-    'hsl(60, 70%, 70%)',
-    'hsl(180, 70%, 70%)',
+    '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1967',
+    '#3498DB', '#2ECC71', '#F1C40F', '#E67E22', '#9B59B6', '#E74C3C',
+    '#1ABC9C', '#34495E',
 ];
 
 const colorMap: { [key: string]: string } = {
@@ -141,6 +132,25 @@ const colorMap: { [key: string]: string } = {
     'unknown': '#CCCCCC'
 };
 
+const getContrastColor = (hex: string) => {
+    if (!hex) return 'black'; // default for undefined colors
+    if (hex.startsWith('#')) {
+      hex = hex.slice(1);
+    }
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    if (hex.length !== 6) {
+      return 'black'; // default for invalid hex, assume light
+    }
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    // Using YIQ formula to determine brightness
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 150) ? 'black' : 'white'; // threshold 150 for good contrast
+};
+
 const renderAmountLabel = (props: any) => {
     const { x, y, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
@@ -187,7 +197,7 @@ export function ReportsSummary() {
 
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, {listen: false});
   
   const [reportData, setReportData] = useState<GenerateReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
@@ -217,8 +227,8 @@ export function ReportsSummary() {
             } else if (selectedWeek) {
                  const [startStr, endStr] = selectedWeek.split('-');
                  const year = parseInt(selectedYear, 10);
-                 const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
-                 const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
+                 const weekStart = parse(`${'\'\'\''}${startStr}.${'\'\'\''}${year}`, 'MM.dd.yyyy', new Date());
+                 const weekEnd = parse(`${'\'\'\''}${endStr}.${'\'\'\''}${year}`, 'MM.dd.yyyy', new Date());
                  isInDateRange = submissionDate >= startOfDay(weekStart) && submissionDate <= endOfDay(weekEnd);
             }
             else {
@@ -505,7 +515,7 @@ export function ReportsSummary() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                       <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                       <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
-                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}${'\'\'\''}`} tick={{ fill: 'hsl(var(--foreground))' }} />
                       <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent formatter={(value, name) => {
@@ -552,7 +562,7 @@ export function ReportsSummary() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                       <XAxis dataKey="week" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                       <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-4))" tick={{ fill: 'hsl(var(--foreground))' }} />
-                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-5))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-5))" tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}${'\'\'\''}`} tick={{ fill: 'hsl(var(--foreground))' }} />
                       <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent formatter={(value, name) => {
@@ -681,15 +691,18 @@ export function ReportsSummary() {
                               const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                               const x = cx + radius * Math.cos(-midAngle * RADIAN);
                               const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                              const entry = itemsSoldPerColor[index];
+                              const fillColor = colorMap[entry.name.toLowerCase()] || COLORS[index % COLORS.length];
 
                               return (
                               <text
                                   x={x}
                                   y={y}
-                                  fill="white"
+                                  fill={getContrastColor(fillColor)}
                                   textAnchor={x > cx ? "start" : "end"}
                                   dominantBaseline="central"
                                   fontSize={14}
+                                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
                               >
                                   {`${(percent * 100).toFixed(0)}%`}
                               </text>
