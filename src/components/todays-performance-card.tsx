@@ -10,6 +10,7 @@ import { formatCurrency } from '@/lib/utils';
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
+import { Separator } from './ui/separator';
 
 type Order = {
   quantity: number;
@@ -99,8 +100,13 @@ export function TodaysPerformanceCard() {
 
   const [timeRange, setTimeRange] = useState<'today' | 'yesterday'>('today');
 
-  const salesData = useMemo(() => {
+  const allSalesReps = useMemo(() => {
     if (!leads) return [];
+    return [...new Set(leads.map(lead => lead.salesRepresentative))].sort();
+  }, [leads]);
+
+  const salesData = useMemo(() => {
+    if (!leads || !allSalesReps) return [];
 
     const targetDate = timeRange === 'today' ? new Date() : subDays(new Date(), 1);
     const rangeStart = startOfDay(targetDate);
@@ -116,23 +122,26 @@ export function TodaysPerformanceCard() {
         }
     });
 
-    const salesByRep = filteredLeads.reduce((acc, lead) => {
-      const rep = lead.salesRepresentative;
-      if (!acc[rep]) {
-        acc[rep] = { amount: 0, quantity: 0, layoutCount: 0 };
-      }
-      acc[rep].amount += lead.grandTotal || 0;
-      const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
-      acc[rep].quantity += orderQuantity;
-      const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
-      acc[rep].layoutCount += layoutCount;
+    const salesByRep = allSalesReps.reduce((acc, repName) => {
+      acc[repName] = { amount: 0, quantity: 0, layoutCount: 0 };
       return acc;
     }, {} as { [key: string]: { amount: number; quantity: number; layoutCount: number } });
+
+    filteredLeads.forEach(lead => {
+      const rep = lead.salesRepresentative;
+      if (salesByRep[rep]) {
+        salesByRep[rep].amount += lead.grandTotal || 0;
+        const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
+        salesByRep[rep].quantity += orderQuantity;
+        const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
+        salesByRep[rep].layoutCount += layoutCount;
+      }
+    });
 
     return Object.entries(salesByRep)
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.amount - a.amount);
-  }, [leads, timeRange]);
+  }, [leads, timeRange, allSalesReps]);
 
   const totalSales = useMemo(() => {
     if (!salesData) return 0;
@@ -188,10 +197,10 @@ export function TodaysPerformanceCard() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-[400px]">
         {salesData.length > 0 ? (
             <>
-                <div className="w-full">
+                <div className="lg:col-span-2 h-full">
                     <CardHeader className="p-0 mb-4 text-center">
                         <CardTitle>Sales &amp; Items Sold</CardTitle>
                     </CardHeader>
@@ -235,14 +244,14 @@ export function TodaysPerformanceCard() {
                         </ChartContainer>
                     </div>
                 </div>
-                <div className="w-full">
+                <div className="w-full lg:col-span-1 h-full">
                      <CardHeader className="p-0 mb-4 text-center">
                         <CardTitle>Layouts Created</CardTitle>
                     </CardHeader>
                     <div style={{ height: '350px' }}>
                        <ChartContainer config={{ layoutCount: { label: 'Layouts' } }} className="w-full h-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
+                                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                     <Tooltip
                                         cursor={{ fill: 'hsl(var(--muted))' }}
                                         content={<ChartTooltipContent nameKey="layoutCount" />}
@@ -253,13 +262,14 @@ export function TodaysPerformanceCard() {
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={110}
-                                        labelLine={false}
-                                        label={({ name, layoutCount, percent }) => `${name}: ${(percent * 100).toFixed(0)}% (${layoutCount})`}
+                                        outerRadius={90}
+                                        labelLine={true}
+                                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                                     >
                                         {salesData.filter(d => d.layoutCount > 0).map((entry, index) => (
                                             <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
+                                        <LabelList dataKey="layoutCount" position="inside" fill="white" fontSize={12} fontWeight="bold" />
                                     </Pie>
                                     <Legend />
                                 </PieChart>
@@ -269,7 +279,7 @@ export function TodaysPerformanceCard() {
                 </div>
             </>
         ) : (
-            <div className="lg:col-span-2 flex items-center justify-center h-[300px]">
+            <div className="lg:col-span-3 flex items-center justify-center h-[300px]">
                 <p className="text-muted-foreground">No sales recorded for {timeRange === 'today' ? 'today' : 'yesterday'}.</p>
             </div>
         )}
