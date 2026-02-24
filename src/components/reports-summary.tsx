@@ -282,19 +282,24 @@ export function ReportsSummary() {
   const itemsSoldPerColor = useMemo(() => {
     if (!filteredLeads || !colorProductTypeFilter) return [];
 
-    const colorCounts = filteredLeads.reduce((acc, lead) => {
+    const colorStats = filteredLeads.reduce((acc, lead) => {
         lead.orders.forEach(order => {
             if (order.productType === colorProductTypeFilter) {
                 const color = order.color || 'Unknown';
-                acc[color] = (acc[color] || 0) + order.quantity;
+                if (!acc[color]) {
+                    acc[color] = { quantity: 0, customers: new Set() };
+                }
+                acc[color].quantity += order.quantity;
+                acc[color].customers.add(lead.customerName);
             }
         });
         return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, { quantity: number; customers: Set<string> }>);
 
-    return Object.entries(colorCounts).map(([color, quantity], index) => ({
+    return Object.entries(colorStats).map(([color, stats], index) => ({
         name: color,
-        value: quantity,
+        value: stats.quantity,
+        customerCount: stats.customers.size,
         fill: colorMap[color.toLowerCase()] || COLORS[index % COLORS.length]
     })).sort((a,b) => b.value - a.value);
   }, [filteredLeads, colorProductTypeFilter]);
@@ -660,22 +665,20 @@ export function ReportsSummary() {
                       }} />}
                       />
                       <Legend />
-                      {fixedDailyTarget > 0 && (
-                        <ReferenceLine 
-                          y={fixedDailyTarget} 
-                          yAxisId="right" 
-                          stroke="red" 
-                          strokeDasharray="3 3" 
-                          strokeOpacity={0.7}
-                        >
-                          <RechartsLabel
-                              value={`Fixed Daily Target (${formatCurrency(fixedDailyTarget, { maximumFractionDigits: 0 })})`}
-                              position="insideTopLeft"
-                              fill="red"
-                              fontSize={10}
-                          />
-                        </ReferenceLine>
-                      )}
+                      <ReferenceLine 
+                        y={fixedDailyTarget} 
+                        yAxisId="right" 
+                        stroke="red" 
+                        strokeDasharray="3 3" 
+                        strokeOpacity={0.7}
+                      >
+                        <RechartsLabel
+                            value={`Fixed Daily Target (${formatCurrency(fixedDailyTarget, { maximumFractionDigits: 0 })})`}
+                            position="insideTopLeft"
+                            fill="red"
+                            fontSize={10}
+                        />
+                      </ReferenceLine>
                       <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
                         <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
@@ -854,26 +857,36 @@ export function ReportsSummary() {
                       <TableHeader>
                       <TableRow>
                           <TableHead className="text-xs p-1">Color</TableHead>
+                          <TableHead className="text-center text-xs p-1">Customers</TableHead>
                           <TableHead className="text-right text-xs p-1">Quantity</TableHead>
                           <TableHead className="text-right text-xs p-1">Percentage</TableHead>
                       </TableRow>
                       </TableHeader>
                       <TableBody>
-                      {itemsSoldPerColor.map((item, index) => {
-                          const color = colorMap[item.name.toLowerCase()] || COLORS[index % COLORS.length];
-                          return (
-                          <TableRow key={index}>
-                              <TableCell className="font-medium flex items-center text-xs p-1">
-                              <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: color }}></span>
-                              {item.name}
-                              </TableCell>
-                              <TableCell className="text-right text-xs p-1">{item.value}</TableCell>
-                              <TableCell className="text-right text-xs p-1">
-                              {totalColorQuantity > 0 ? `${((item.value / totalColorQuantity) * 100).toFixed(2)}%` : '0.00%'}
-                              </TableCell>
-                          </TableRow>
-                          );
-                      })}
+                        {itemsSoldPerColor.length > 0 ? (
+                            itemsSoldPerColor.map((item, index) => {
+                                const color = colorMap[item.name.toLowerCase()] || COLORS[index % COLORS.length];
+                                return (
+                                <TableRow key={index}>
+                                    <TableCell className="font-medium flex items-center text-xs p-1">
+                                    <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: color }}></span>
+                                    {item.name}
+                                    </TableCell>
+                                    <TableCell className="text-center text-xs p-1">{item.customerCount}</TableCell>
+                                    <TableCell className="text-right text-xs p-1">{item.value}</TableCell>
+                                    <TableCell className="text-right text-xs p-1">
+                                    {totalColorQuantity > 0 ? `${((item.value / totalColorQuantity) * 100).toFixed(2)}%` : '0.00%'}
+                                    </TableCell>
+                                </TableRow>
+                                );
+                            })
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                No data for selected product type.
+                                </TableCell>
+                            </TableRow>
+                        )}
                       </TableBody>
                   </Table>
                   </div>
