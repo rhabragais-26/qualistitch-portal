@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
@@ -60,9 +59,37 @@ const COLORS = [
     'hsl(180, 70%, 70%)',
 ];
 
+const renderAmountLabel = (props: any) => {
+    const { x, y, width, value, stroke } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+  
+    const rectWidth = 80;
+    const rectHeight = 18;
+    const xPos = width ? x + width / 2 : x;
+    
+    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
+
+    return (
+      <g>
+        <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
+        <text 
+          x={xPos} 
+          y={y - rectHeight/2 - 5}
+          textAnchor="middle" 
+          dominantBaseline="middle" 
+          fill="black"
+          fontSize={12} 
+          fontWeight="bold"
+        >
+          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+        </text>
+      </g>
+    );
+};
+  
 const renderHourlyLabel = (props: any) => {
     const { x, y, value, payload } = props;
-    if (!value || value === 0 || typeof x !== 'number' || typeof y !== 'number') {
+    if (!value || value === 0 || typeof x !== 'number' || typeof y !== 'number' || !payload) {
       return null;
     }
   
@@ -81,8 +108,8 @@ const renderHourlyLabel = (props: any) => {
           {labelText}
         </text>
     );
-  };
-  
+};
+
 const renderQuantityLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     
@@ -450,7 +477,6 @@ export function TodaysPerformanceCard() {
             </div>
         )}
       </CardContent>
-      {activeFilter !== 'all' && (
         <>
             <Separator className="my-4" />
             <CardContent>
@@ -526,9 +552,6 @@ export function TodaysPerformanceCard() {
                 </div>
             </CardContent>
         </>
-      )}
     </Card>
   );
 }
-
-    
