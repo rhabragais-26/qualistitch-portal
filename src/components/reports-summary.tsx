@@ -783,8 +783,8 @@ export function ReportsSummary() {
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">
-                  <div className="flex-1 h-[250px] -mt-4 relative">
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="flex-1 h-[250px] relative">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none -mt-4">
                         <p className="text-xs font-medium text-muted-foreground">Sold QTY</p>
                         <p className="text-2xl font-bold">{totalColorQuantity.toLocaleString()}</p>
                         <p className="text-xs text-muted-foreground">
@@ -801,7 +801,7 @@ export function ReportsSummary() {
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          innerRadius="50%"
+                          innerRadius="60%"
                           outerRadius="80%"
                           labelLine={false}
                           label={renderCustomizedLabel}
