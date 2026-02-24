@@ -496,7 +496,7 @@ export function TodaysPerformanceCard() {
             <Separator className="my-4" />
             <CardContent>
                 <div className="text-left mb-4">
-                    <CardTitle>Hourly Sales Breakdown</CardTitle>
+                    <CardTitle>Count of Closed Clients per Interval</CardTitle>
                     <CardDescription>Customer count per hour for the selected day, compared to previous weeks.</CardDescription>
                 </div>
                 <div style={{ height: '300px' }}>

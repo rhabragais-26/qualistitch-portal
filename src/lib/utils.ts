@@ -7,25 +7,47 @@ export function cn(...inputs: ClassValue[]) {
 
 export const formatDateTime = (isoString: string) => {
     if (!isoString) return { dateTime: '-', dayOfWeek: '-', dateTimeShort: '-' };
-    const date = new Date(isoString);
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const dayOfWeek = days[date.getDay()];
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const month = months[date.getMonth()];
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-    const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
-    return {
-      dateTime: `${month}-${day}-${year} ${strTime}`,
-      dayOfWeek: dayOfWeek,
-      dateTimeShort: `${month}-${day} ${strTime}`
+    try {
+        const date = new Date(isoString);
+        
+        const phTimeOptions: Intl.DateTimeFormatOptions = {
+            timeZone: 'Asia/Manila',
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+        };
+
+        const formatter = new Intl.DateTimeFormat('en-US', phTimeOptions);
+        const parts = formatter.formatToParts(date);
+        
+        const find = (type: string) => parts.find(p => p.type === type)?.value || '';
+
+        const month = find('month');
+        const day = find('day');
+        const year = find('year');
+        const hour = find('hour');
+        const minute = find('minute');
+        const dayPeriod = find('dayPeriod').toUpperCase().replace(/\s/g, ''); // AM/PM
+
+        const dateTime = `${month}-${day}-${year} ${hour}:${minute} ${dayPeriod}`;
+        const dateTimeShort = `${month}-${day} ${hour}:${minute} ${dayPeriod}`;
+        
+        const dayOfWeek = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Manila' }).format(date);
+
+        return {
+          dateTime,
+          dayOfWeek,
+          dateTimeShort,
+        }
+
+    } catch (e) {
+        console.error("Error formatting date:", isoString, e);
+        return { dateTime: 'Invalid Date', dayOfWeek: '-', dateTimeShort: 'Invalid Date' };
     }
-  };
+};
 
 export const toTitleCase = (str: string) => {
     if (!str) return '';
