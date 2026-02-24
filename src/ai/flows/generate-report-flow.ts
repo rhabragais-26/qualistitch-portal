@@ -358,7 +358,7 @@ const generateReportFlow = ai.defineFlow(
           name,
           quantity,
         }))
-        .sort((a, b) => b.quantity - a.quantity);
+        .sort((a, b) => a.name.localeCompare(b.name));
     })();
 
     const salesByCityData = (() => {
