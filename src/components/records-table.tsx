@@ -358,7 +358,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   const [searchTerm, setSearchTerm] = useState('');
   const [csrFilter, setCsrFilter] = useState('All');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>('All');
+  const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
   
@@ -372,9 +372,18 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     } else {
         setActiveQuickFilter(filter);
         setDateRange(newRange);
-        setSelectedYear('All');
-        setSelectedMonth('All');
+        setSelectedYear('all');
+        setSelectedMonth('all');
     }
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setCsrFilter('All');
+    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedMonth((new Date().getMonth() + 1).toString());
+    setDateRange(undefined);
+    setActiveQuickFilter(null);
   };
 
   const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
@@ -586,7 +595,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
+                 <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
                 <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')}>Today</Button>
               </div>
               <div className='flex items-center gap-2'>
@@ -614,14 +623,15 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
             </div>
             <div className="w-full flex justify-between items-center mt-2">
                 {filterType !== 'COMPLETED' ? (
-                    <div className="text-left font-semibold text-sm">
-                        <span>Overall Total Amount: <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
+                    <div className="flex items-center gap-4 text-left font-semibold text-sm">
+                        <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
                         <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
                     </div>
                 ) : (
                     <div></div>
                 )}
-                <div>
+                <div className="flex items-center gap-2">
+                    <Button onClick={handleResetFilters} variant="outline">Reset All Filters</Button>
                     {filterType === 'COMPLETED' ? (
                         <Link href="/records" className="text-sm text-primary hover:underline">
                             View Ongoing Orders
