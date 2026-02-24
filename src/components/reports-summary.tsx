@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -488,16 +487,31 @@ export function ReportsSummary() {
   
   const salesByRepTitle = useMemo(() => {
     let period;
-    if (selectedYear === 'all') {
-        period = 'All Time';
+    if (dateRange?.from) {
+        const fromDate = format(dateRange.from, 'MMM dd, yyyy');
+        const toDate = dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : fromDate;
+        if (fromDate === toDate) {
+            period = `for ${fromDate}`;
+        } else {
+            period = `from ${fromDate} to ${toDate}`;
+        }
+    } else if (selectedWeek) {
+        const [startStr, endStr] = selectedWeek.split('-');
+        const year = parseInt(selectedYear, 10);
+        const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
+        const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
+        period = `for the week of ${format(weekStart, 'MMM dd')} - ${format(weekEnd, 'MMM dd, yyyy')}`;
+    }
+    else if (selectedYear === 'all') {
+        period = 'of All Time';
     } else if (selectedMonth === 'all') {
-        period = `the Year ${selectedYear}`;
+        period = `for the Year ${selectedYear}`;
     } else {
         const monthLabel = months.find(m => m.value === selectedMonth)?.label || '';
-        period = `${monthLabel} ${selectedYear}`;
+        period = `for ${monthLabel} ${selectedYear}`;
     }
-    return `Sold Amount per Sales Specialist for ${period}`;
-  }, [selectedYear, selectedMonth, months]);
+    return `Sold Amount per Sales Specialist ${period}`;
+  }, [selectedYear, selectedMonth, months, selectedWeek, dateRange]);
 
 
   if (isLoading) {
@@ -604,12 +618,6 @@ export function ReportsSummary() {
                       <CardTitle>Daily Sales Performance</CardTitle>
                       <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
                   </div>
-                   {dailySalesTarget > 0 && (
-                      <div className="text-right">
-                          <p className="text-sm font-medium text-gray-600">Adjusted Daily Sales Target to hit Monthly Goal</p>
-                          <p className="text-2xl font-bold text-destructive">{formatCurrency(dailySalesTarget)}</p>
-                      </div>
-                  )}
               </div>
           </CardHeader>
           <CardContent>
@@ -776,6 +784,13 @@ export function ReportsSummary() {
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">
                   <div className="flex-1 h-[250px] -mt-4 relative">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <p className="text-xs font-medium text-muted-foreground">Sold QTY</p>
+                        <p className="text-2xl font-bold">{totalColorQuantity.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">
+                            ({percentageOfTotal.toFixed(2)}% of total)
+                        </p>
+                    </div>
                   <ChartContainer config={chartConfig} className="w-full h-full">
                       <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
