@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -9,7 +8,7 @@ import { Skeleton } from './ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { getMonth, getYear } from 'date-fns';
+import { getMonth, getYear, format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Separator } from './ui/separator';
 
@@ -219,22 +218,35 @@ export function SalesSummaryCards() {
       .sort((a, b) => b.amount - a.amount);
   }, [filteredLeads]);
 
+  const salesByRepTitle = useMemo(() => {
+    let period;
+    if (selectedYear === 'all') {
+        period = 'All Time';
+    } else if (selectedMonth === 'all') {
+        period = `the Year ${selectedYear}`;
+    } else {
+        const monthLabel = months.find(m => m.value === selectedMonth)?.label || '';
+        period = `${monthLabel} ${selectedYear}`;
+    }
+    return `Sold Amount per Sales Specialist for ${period}`;
+  }, [selectedYear, selectedMonth, months]);
+
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </CardHeader>
-        <CardContent className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-            </div>
-            <Separator />
-            <Skeleton className="h-[300px] w-full" />
-        </CardContent>
-      </Card>
-    );
+      return (
+           <Card>
+            <CardHeader>
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                </div>
+                <Separator />
+                <Skeleton className="h-[300px] w-full" />
+            </CardContent>
+          </Card>
+      )
   }
 
   if (error) {
@@ -293,7 +305,7 @@ export function SalesSummaryCards() {
         <Separator />
         <div>
             <CardHeader className="p-0 mb-4">
-              <CardTitle>Monthly Sales per Sales Representative</CardTitle>
+              <CardTitle>{salesByRepTitle}</CardTitle>
               <CardDescription>Total sales amount by SCES for the selected period.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
