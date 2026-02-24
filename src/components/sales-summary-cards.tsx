@@ -19,6 +19,7 @@ type Lead = {
   balance?: number;
   submissionDateTime: string;
   salesRepresentative: string;
+  priorityType: string;
 };
 
 const chartConfig = {
@@ -98,6 +99,20 @@ const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string
     )
 }
 
+const PriorityBar = ({ percentage, count, label, color }: { percentage: number, count: number, label: string, color: string }) => {
+    return (
+        <div className="flex flex-col items-center w-full">
+            <p className="font-medium text-sm self-start">{label}</p>
+            <div className="w-full h-8 bg-gray-200 rounded-lg my-1 relative overflow-hidden">
+                <div style={{ width: `${percentage}%`, backgroundColor: color }} className="h-full rounded-lg flex items-center justify-center transition-all duration-500">
+                    <span className="text-white font-bold text-sm">{percentage.toFixed(0)}%</span>
+                </div>
+            </div>
+            <p className="text-sm font-bold self-end">{count} orders</p>
+        </div>
+    )
+}
+
 export function SalesSummaryCards() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -161,6 +176,32 @@ export function SalesSummaryCards() {
 
     return { totalSales, totalPaid, totalBalance };
   }, [filteredLeads]);
+  
+  const priorityData = useMemo(() => {
+    if (!filteredLeads) return { Rush: { count: 0, percentage: 0 }, Regular: { count: 0, percentage: 0 } };
+
+    const counts = filteredLeads.reduce((acc, lead) => {
+        if (lead.priorityType === 'Rush') {
+            acc.Rush++;
+        } else {
+            acc.Regular++;
+        }
+        return acc;
+    }, { Rush: 0, Regular: 0 });
+
+    const total = counts.Rush + counts.Regular;
+
+    return {
+        Rush: {
+            count: counts.Rush,
+            percentage: total > 0 ? (counts.Rush / total) * 100 : 0
+        },
+        Regular: {
+            count: counts.Regular,
+            percentage: total > 0 ? (counts.Regular / total) * 100 : 0
+        }
+    };
+  }, [filteredLeads]);
 
   const salesData = useMemo(() => {
     const salesByRep = filteredLeads.reduce((acc, lead) => {
@@ -186,8 +227,8 @@ export function SalesSummaryCards() {
           <Skeleton className="h-4 w-1/2" />
         </CardHeader>
         <CardContent className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
             </div>
             <Separator />
             <Skeleton className="h-[300px] w-full" />
@@ -235,10 +276,19 @@ export function SalesSummaryCards() {
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <DoughnutChartCard title="Total Sales of the Period" amount={totalSales} percentage={totalSalesPercentage} color="hsl(var(--chart-1))" />
             <DoughnutChartCard title="Total Paid" amount={totalPaid} percentage={totalPaidPercentage} color="hsl(var(--chart-2))" />
             <DoughnutChartCard title="Total Balance" amount={totalBalance} percentage={totalBalancePercentage} color="hsl(var(--chart-3))" />
+            <Card>
+                <CardHeader className="p-4 pb-2 text-center">
+                    <CardTitle className="text-base font-medium">Priority Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-2 flex flex-col gap-4">
+                    <PriorityBar percentage={priorityData.Rush.percentage} count={priorityData.Rush.count} label="Rush" color="#ef4444" />
+                    <PriorityBar percentage={priorityData.Regular.percentage} count={priorityData.Regular.count} label="Regular" color="#22c55e" />
+                </CardContent>
+            </Card>
         </div>
         <Separator />
         <div>
