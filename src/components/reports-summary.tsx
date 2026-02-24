@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -648,66 +647,66 @@ export function ReportsSummary() {
           </CardContent>
         </Card>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-            <CardHeader>
-                <CardTitle>SCES Performance</CardTitle>
-                <CardDescription>Total quantity of orders and number of customers by each SCES.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div style={{ height: '250px' }}>
-                <ChartContainer config={chartConfig} className="w-full h-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
-                        <YAxis yAxisId="left" orientation="left" stroke={chartConfig.quantity.color} tick={{ fill: 'hsl(var(--foreground))' }} />
-                        <YAxis yAxisId="right" orientation="right" stroke={chartConfig.customerCount.color} tick={{ fill: 'hsl(var(--foreground))' }} />
-                        <Tooltip
-                        cursor={{ fill: 'hsl(var(--muted))' }}
-                        content={<ChartTooltipContent />}
-                        />
-                        
-                        <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]}>
-                        {salesRepData.map((entry, index) => (
-                            <Cell key={`cell-qty-${index}`} fill={chartConfig.quantity.color} />
-                        ))}
-                        <LabelList dataKey="quantity" position="top" fill={chartConfig.quantity.color} fontSize={12} />
-                        </Bar>
-                        <Bar yAxisId="right" dataKey="customerCount" name="Customers" radius={[4, 4, 0, 0]}>
-                        {salesRepData.map((entry, index) => (
-                            <Cell key={`cell-cust-${index}`} fill={chartConfig.customerCount.color} />
-                        ))}
-                        <LabelList dataKey="customerCount" position="top" fill={chartConfig.customerCount.color} fontSize={12} />
-                        </Bar>
-                    </BarChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-                </div>
-                <div className="mt-4 mx-4">
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead className="text-xs p-1 text-center align-middle">SCES</TableHead>
-                        <TableHead className="text-xs p-1 text-center align-middle">Quantity</TableHead>
-                        <TableHead className="text-xs p-1 text-center align-middle">Customers</TableHead>
-                        <TableHead className="text-xs p-1 text-center align-middle">Sales Amount</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {salesRepData.filter(item => item.amount > 0).map((item, index) => (
-                        <TableRow key={index}>
-                        <TableCell className="font-medium text-xs p-1 text-center align-middle">
-                            {item.name}
-                        </TableCell>
-                        <TableCell className="text-xs p-1 text-center align-middle">{item.quantity}</TableCell>
-                        <TableCell className="text-xs p-1 text-center align-middle">{item.customerCount}</TableCell>
-                        <TableCell className="text-xs p-1 text-center align-middle">{formatCurrency(item.amount)}</TableCell>
-                        </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
-                </div>
-            </CardContent>
+            <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
+              <CardHeader>
+                  <CardTitle>SCES Performance</CardTitle>
+                  <CardDescription>Total sales, quantity, and customers by each SCES.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col justify-between">
+                  <div className="flex-1 h-[250px] -mt-4">
+                  <ChartContainer config={chartConfig} className="w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
+                          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                          <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
+                          <YAxis yAxisId="left" orientation="left" stroke={chartConfig.quantity.color} tick={{ fill: 'hsl(var(--foreground))' }} />
+                          <YAxis yAxisId="right" orientation="right" stroke={chartConfig.customerCount.color} tick={{ fill: 'hsl(var(--foreground))' }} />
+                          <Tooltip
+                          cursor={{ fill: 'hsl(var(--muted))' }}
+                          content={<ChartTooltipContent />}
+                          />
+                          
+                          <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]}>
+                          {salesRepData.map((entry, index) => (
+                              <Cell key={`cell-qty-${index}`} fill={chartConfig.quantity.color} />
+                          ))}
+                          <LabelList dataKey="quantity" position="top" fill={chartConfig.quantity.color} fontSize={12} />
+                          </Bar>
+                          <Bar yAxisId="right" dataKey="customerCount" name="Customers" radius={[4, 4, 0, 0]}>
+                          {salesRepData.map((entry, index) => (
+                              <Cell key={`cell-cust-${index}`} fill={chartConfig.customerCount.color} />
+                          ))}
+                          <LabelList dataKey="customerCount" position="top" fill={chartConfig.customerCount.color} fontSize={12} />
+                          </Bar>
+                      </BarChart>
+                      </ResponsiveContainer>
+                  </ChartContainer>
+                  </div>
+                  <div className="mt-auto mx-4">
+                  <Table>
+                      <TableHeader>
+                      <TableRow>
+                          <TableHead className="text-xs p-1 text-center align-middle">SCES</TableHead>
+                          <TableHead className="text-xs p-1 text-center align-middle">Quantity</TableHead>
+                          <TableHead className="text-xs p-1 text-center align-middle">Customers</TableHead>
+                          <TableHead className="text-xs p-1 text-center align-middle">Sales Amount</TableHead>
+                      </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                      {salesRepData.map((item, index) => (
+                          <TableRow key={index}>
+                          <TableCell className="font-medium text-xs p-1 text-center align-middle">
+                              {item.name}
+                          </TableCell>
+                          <TableCell className="text-xs p-1 text-center align-middle">{item.quantity}</TableCell>
+                          <TableCell className="text-xs p-1 text-center align-middle">{item.customerCount}</TableCell>
+                          <TableCell className="text-xs p-1 text-center align-middle">{formatCurrency(item.amount)}</TableCell>
+                          </TableRow>
+                      ))}
+                      </TableBody>
+                  </Table>
+                  </div>
+              </CardContent>
             </Card>
             <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
               <CardHeader>
@@ -865,6 +864,7 @@ export function ReportsSummary() {
                     <TableRow>
                     <TableHead className="text-center align-middle">City</TableHead>
                     <TableHead className="text-center align-middle">Sales</TableHead>
+                    <TableHead className="text-center align-middle">Contribution</TableHead>
                     <TableHead className="text-center align-middle">Orders</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -875,18 +875,16 @@ export function ReportsSummary() {
                         <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
                         <TableCell className="text-center align-middle">
                             {formatCurrency(cityData.amount)}
-                            {totalSales > 0 && (
-                                <span className="font-bold ml-1">
-                                    ({((cityData.amount / totalSales) * 100).toFixed(2)}%)
-                                </span>
-                            )}
+                        </TableCell>
+                        <TableCell className="text-center align-middle font-bold">
+                            {totalSales > 0 ? `${((cityData.amount / totalSales) * 100).toFixed(2)}%` : '0.00%'}
                         </TableCell>
                         <TableCell className="text-center align-middle">{cityData.orderCount}</TableCell>
                         </TableRow>
                     ))
                     ) : (
                     <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground">
+                        <TableCell colSpan={4} className="text-center text-muted-foreground">
                         No sales data for cities.
                         </TableCell>
                     </TableRow>
@@ -900,5 +898,3 @@ export function ReportsSummary() {
     </>
   );
 }
-
-    
