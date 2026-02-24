@@ -57,17 +57,17 @@ const COLORS = [
 ];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, width, value } = props;
-    if (value === 0 || !width || typeof x !== 'number' || typeof y !== 'number') return null;
+    const { x, y, value } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
     const rectWidth = 80;
     const rectHeight = 18;
   
     return (
       <g>
-        <rect x={x + width / 2 - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={'hsla(160, 60%, 45%, 0.4)'} rx={4} ry={4} />
+        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill="rgba(255, 255, 255, 0.8)" rx={4} ry={4} />
         <text 
-          x={x + width / 2} 
+          x={x} 
           y={y - rectHeight/2 - 5}
           textAnchor="middle" 
           dominantBaseline="middle" 
@@ -100,13 +100,8 @@ export function TodaysPerformanceCard() {
 
   const [timeRange, setTimeRange] = useState<'today' | 'yesterday'>('today');
 
-  const allSalesReps = useMemo(() => {
-    if (!leads) return [];
-    return [...new Set(leads.map(lead => lead.salesRepresentative))].sort();
-  }, [leads]);
-
   const salesData = useMemo(() => {
-    if (!leads || !allSalesReps) return [];
+    if (!leads) return [];
 
     const targetDate = timeRange === 'today' ? new Date() : subDays(new Date(), 1);
     const rangeStart = startOfDay(targetDate);
@@ -122,26 +117,24 @@ export function TodaysPerformanceCard() {
         }
     });
 
-    const salesByRep = allSalesReps.reduce((acc, repName) => {
-      acc[repName] = { amount: 0, quantity: 0, layoutCount: 0 };
+    const salesByRep = filteredLeads.reduce((acc, lead) => {
+      const rep = lead.salesRepresentative;
+      if (!acc[rep]) {
+        acc[rep] = { amount: 0, quantity: 0, layoutCount: 0 };
+      }
+      acc[rep].amount += lead.grandTotal || 0;
+      const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
+      acc[rep].quantity += orderQuantity;
+      const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
+      acc[rep].layoutCount += layoutCount;
       return acc;
     }, {} as { [key: string]: { amount: number; quantity: number; layoutCount: number } });
 
-    filteredLeads.forEach(lead => {
-      const rep = lead.salesRepresentative;
-      if (salesByRep[rep]) {
-        salesByRep[rep].amount += lead.grandTotal || 0;
-        const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
-        salesByRep[rep].quantity += orderQuantity;
-        const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
-        salesByRep[rep].layoutCount += layoutCount;
-      }
-    });
-
     return Object.entries(salesByRep)
       .map(([name, data]) => ({ name, ...data }))
+      .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
-  }, [leads, timeRange, allSalesReps]);
+  }, [leads, timeRange]);
 
   const totalSales = useMemo(() => {
     if (!salesData) return 0;
@@ -155,9 +148,9 @@ export function TodaysPerformanceCard() {
               <Skeleton className="h-8 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
             </CardHeader>
-            <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <Skeleton className="h-[350px] w-full" />
-                <Skeleton className="h-[350px] w-full" />
+            <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-[400px]">
+                <Skeleton className="lg:col-span-2 h-full w-full" />
+                <Skeleton className="h-full w-full" />
             </CardContent>
           </Card>
       )
@@ -178,6 +171,9 @@ export function TodaysPerformanceCard() {
         </Card>
       )
   }
+  
+  const layoutChartData = salesData.filter(d => d.layoutCount > 0);
+
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
@@ -189,7 +185,7 @@ export function TodaysPerformanceCard() {
             </div>
              <div className="flex-1 text-center">
                 <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
+                <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
             </div>
             <div className="flex-1 flex justify-end items-center gap-4">
                 <Button variant={timeRange === 'yesterday' ? 'default' : 'outline'} onClick={() => setTimeRange('yesterday')}>Yesterday</Button>
@@ -230,14 +226,14 @@ export function TodaysPerformanceCard() {
                                             }}
                                         />}
                                     />
-                                    <Bar yAxisId="left" dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
+                                    <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
                                         {salesData.map((entry, index) => (
-                                            <Cell key={`cell-amount-${index}`} fill={index % 2 === 0 ? 'hsl(var(--chart-3))' : 'hsl(var(--chart-2))'} />
+                                            <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
-                                        <LabelList dataKey="amount" content={renderAmountLabel} />
-                                    </Bar>
-                                    <Line yAxisId="right" type="monotone" dataKey="quantity" name="Items Sold" stroke="hsl(var(--chart-5))" strokeWidth={2}>
                                         <LabelList dataKey="quantity" content={renderQuantityLabel} />
+                                    </Bar>
+                                    <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                                        <LabelList content={renderAmountLabel} dataKey="amount" />
                                     </Line>
                                 </ComposedChart>
                             </ResponsiveContainer>
@@ -251,13 +247,13 @@ export function TodaysPerformanceCard() {
                     <div style={{ height: '350px' }}>
                        <ChartContainer config={{ layoutCount: { label: 'Layouts' } }} className="w-full h-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                <PieChart>
                                     <Tooltip
                                         cursor={{ fill: 'hsl(var(--muted))' }}
                                         content={<ChartTooltipContent nameKey="layoutCount" />}
                                     />
                                     <Pie
-                                        data={salesData.filter(d => d.layoutCount > 0)}
+                                        data={layoutChartData}
                                         dataKey="layoutCount"
                                         nameKey="name"
                                         cx="50%"
@@ -266,7 +262,7 @@ export function TodaysPerformanceCard() {
                                         labelLine={true}
                                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                                     >
-                                        {salesData.filter(d => d.layoutCount > 0).map((entry, index) => (
+                                        {layoutChartData.map((entry, index) => (
                                             <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                         <LabelList dataKey="layoutCount" position="inside" fill="white" fontSize={12} fontWeight="bold" />
