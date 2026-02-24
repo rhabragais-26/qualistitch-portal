@@ -68,7 +68,7 @@ const ResetViewControl = ({ center, zoom }: { center: LatLngExpression, zoom: nu
 
   return (
     <div className="leaflet-top leaflet-right">
-      <div className="leaflet-control leaflet-bar mt-[10px] mr-[10px]">
+      <div className="leaflet-control mt-[10px] mr-[10px]">
         <Button onClick={handleReset} className="w-8 h-8 p-0" title="Reset view">
           <Home className="h-4 w-4" />
         </Button>
@@ -174,7 +174,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
