@@ -134,12 +134,12 @@ const leadSchema = z.object({
 export type Lead = z.infer<typeof leadSchema>;
 
 const inventoryItemSchema = z.object({
-  id: z.string(),
-  productType: z.string(),
-  color: z.string(),
-  size: z.string(),
-  stock: z.number(),
-});
+    id: z.string(),
+    productType: z.string(),
+    color: z.string(),
+    size: z.string(),
+    stock: z.number(),
+  });
 type InventoryItem = z.infer<typeof inventoryItemSchema>;
 
 
@@ -155,9 +155,9 @@ const productTypes = [
 ];
 
 const jacketColors = [
-    'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
-    'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
-    'Army Green',
+  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
+  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
+  'Army Green',
 ];
 
 const poloShirtColors = [
@@ -238,7 +238,7 @@ const RecordsTableRow = React.memo(({
                           <div className="flex items-center gap-1.5 cursor-pointer">
                             <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                             <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                              {lead.orderNumber + 1}
+                              {lead.orderNumber}
                             </span>
                           </div>
                         </TooltipTrigger>
@@ -254,6 +254,10 @@ const RecordsTableRow = React.memo(({
                     <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
                       {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                       {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                      <div className="pt-2">
+                        <span className="font-bold text-gray-600">Lead ID:</span>
+                        <p className="font-mono text-xs text-black bg-gray-200 rounded px-1 inline-block">{lead.id}</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -689,3 +693,5 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
+
+```
