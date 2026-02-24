@@ -134,7 +134,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead '${lead.id}': '${lead.submissionDateTime}'`);
+            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}${'\'\''}: '${'\'\''}${lead.submissionDateTime}${'\'\''}`);
             return false;
         }
     });
@@ -185,7 +185,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead '${lead.id}': '${lead.submissionDateTime}'`);
+            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}${'\'\''}: '${'\'\''}${lead.submissionDateTime}${'\'\''}`);
             return false;
         }
     });
@@ -213,7 +213,7 @@ export function TodaysPerformanceCard() {
   
   const renderHourlyLabel = (props: any) => {
     const { x, y, value, payload } = props;
-    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number' || !payload) return null;
   
     return (
       <g>
