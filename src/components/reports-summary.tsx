@@ -418,6 +418,26 @@ export function ReportsSummary() {
     }
     return reportData;
   }, [reportData]);
+
+  const salesByRepTitle = useMemo(() => {
+    let period;
+    if (dateRange?.from) {
+      const from = format(dateRange.from, 'MMM dd, yyyy');
+      const to = dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : from;
+      period = from === to ? from : `${from} to ${to}`;
+    } else if (selectedWeek) {
+      const [start, end] = selectedWeek.split('-');
+      period = `the week of ${format(parse(start, 'MM.dd', new Date()), 'MMM dd')} - ${format(parse(end, 'MM.dd', new Date()), 'MMM dd')}, ${selectedYear}`;
+    } else if (selectedYear === 'all') {
+        period = 'All Time';
+    } else if (selectedMonth === 'all') {
+        period = `the Year ${selectedYear}`;
+    } else {
+        const monthLabel = months.find(m => m.value === selectedMonth)?.label || '';
+        period = `${monthLabel} ${selectedYear}`;
+    }
+    return `Sold Amount per Sales Specialist for ${period}`;
+  }, [selectedYear, selectedMonth, selectedWeek, dateRange, months]);
   
   const top15Cities = useMemo(() => salesByCityData.slice(0, 15), [salesByCityData]);
 
@@ -588,6 +608,10 @@ export function ReportsSummary() {
                   <div>
                       <CardTitle>Daily Sales Performance</CardTitle>
                       <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
+                  </div>
+                   <div className="text-right">
+                      <p className="text-sm font-medium text-gray-600">Adjusted Daily Sales Target to hit Monthly Goal</p>
+                      <p className="text-2xl font-bold">{formatCurrency(dailySalesTarget)}</p>
                   </div>
               </div>
           </CardHeader>
