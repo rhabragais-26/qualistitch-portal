@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -560,7 +559,7 @@ export function ReportsSummary() {
                   </div>
                    {dailySalesTarget > 0 && (
                       <div className="text-right">
-                          <p className="text-sm font-medium text-gray-600">Daily Sales Target Adjustment based on Monthly Target</p>
+                          <p className="text-sm font-medium text-gray-600">Daily Sales Target Adjustment to hit Monthly Target</p>
                           <p className="text-2xl font-bold text-destructive">{formatCurrency(dailySalesTarget)}</p>
                       </div>
                   )}
