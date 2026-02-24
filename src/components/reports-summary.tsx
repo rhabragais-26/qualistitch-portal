@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -14,7 +12,7 @@ import { Button } from './ui/button';
 import { generateReportAction } from '@/app/reports/actions';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { format, parse, getYear, getMonth, parseISO, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format, parse, getYear, getMonth, parseISO, subDays, startOfDay, endOfDay, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import { isEqual } from 'lodash';
@@ -45,6 +43,7 @@ type Lead = {
   orders: Order[];
   submissionDateTime: string;
   [key: string]: any;
+  grandTotal?: number;
 };
 
 type GenerateReportOutput = {
@@ -322,6 +321,52 @@ export function ReportsSummary() {
     }
   }, [leads, processReport, isLeadsLoading]);
 
+    const dailySalesTarget = useMemo(() => {
+        if (!leads || !selectedYear || selectedYear === 'all' || !selectedMonth || selectedMonth === 'all') {
+            return 0;
+        }
+
+        const monthlyQuota = 12000000;
+        const year = parseInt(selectedYear, 10);
+        const month = parseInt(selectedMonth, 10) - 1; // 0-indexed for Date
+
+        const startOfMonthDate = new Date(year, month, 1);
+        const endOfMonthDate = endOfMonth(startOfMonthDate);
+
+        const totalSalesForMonth = leads
+            .filter(lead => {
+                const submissionDate = new Date(lead.submissionDateTime);
+                return getYear(submissionDate) === year && getMonth(submissionDate) === month;
+            })
+            .reduce((sum, lead) => sum + (lead.grandTotal || 0), 0);
+
+        const remainingSalesNeeded = Math.max(0, monthlyQuota - totalSalesForMonth);
+
+        const today = new Date();
+        const isPastMonth = getYear(today) > year || (getYear(today) === year && getMonth(today) > month);
+        const isFutureMonth = getYear(today) < year || (getYear(today) === year && getMonth(today) < month);
+
+        if (isPastMonth) {
+            return 0;
+        }
+
+        const startDateForCounting = isFutureMonth ? startOfMonthDate : (today < startOfMonthDate ? startOfMonthDate : today);
+
+        const remainingDaysInMonth = eachDayOfInterval({
+            start: startDateForCounting,
+            end: endOfMonthDate,
+        });
+
+        const remainingWorkingDays = remainingDaysInMonth.filter(day => day.getDay() !== 0).length; // 0 is Sunday
+
+        if (remainingWorkingDays <= 0) {
+            return remainingSalesNeeded > 0 ? remainingSalesNeeded : 0;
+        }
+
+        return remainingSalesNeeded / remainingWorkingDays;
+    }, [leads, selectedYear, selectedMonth]);
+
+
   const {
     salesRepData,
     priorityData,
@@ -507,8 +552,18 @@ export function ReportsSummary() {
        <div className="printable-area space-y-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-              <CardTitle>Daily Sales Performance</CardTitle>
-              <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
+              <div className="flex justify-between items-start">
+                  <div>
+                      <CardTitle>Daily Sales Performance</CardTitle>
+                      <CardDescription>Total quantity and amount sold each day for the selected period.</CardDescription>
+                  </div>
+                   {dailySalesTarget > 0 && (
+                      <div className="text-right">
+                          <p className="text-sm font-medium text-gray-600">Daily Sales Target</p>
+                          <p className="text-2xl font-bold text-destructive">{formatCurrency(dailySalesTarget)}</p>
+                      </div>
+                  )}
+              </div>
           </CardHeader>
           <CardContent>
               <div style={{ height: '300px' }}>
@@ -640,12 +695,13 @@ export function ReportsSummary() {
                     <TableBody>
                     {salesRepData.filter(item => item.amount > 0).map((item, index) => (
                         <TableRow key={index}>
-                        <TableCell className="font-medium text-xs p-1 text-center align-middle">
+                        <TableCell className="font-medium flex items-center text-xs p-1">
+                            <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: chartConfig.quantity.color }}></span>
                             {item.name}
                         </TableCell>
-                        <TableCell className="text-xs p-1 text-center align-middle">{item.quantity}</TableCell>
-                        <TableCell className="text-xs p-1 text-center align-middle">{item.customerCount}</TableCell>
-                        <TableCell className="text-xs p-1 text-center align-middle">{formatCurrency(item.amount)}</TableCell>
+                        <TableCell className="text-xs p-1 text-center">{item.quantity}</TableCell>
+                        <TableCell className="text-xs p-1 text-center">{item.customerCount}</TableCell>
+                        <TableCell className="text-xs p-1 text-center">{formatCurrency(item.amount)}</TableCell>
                         </TableRow>
                     ))}
                     </TableBody>
