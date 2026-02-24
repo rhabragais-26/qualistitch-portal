@@ -38,7 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { formatDateTime, toTitleCase } from '@/lib/utils';
+import { formatDateTime, toTitleCase, formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
@@ -48,10 +48,6 @@ import { z, ZodError } from 'zod';
 import { EditLeadFullDialog } from './edit-lead-full-dialog';
 import { FieldErrors } from 'react-hook-form';
 import Link from 'next/link';
-
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
-};
 
 const orderSchema = z.object({
   id: z.string().optional(), // Keep track of original order if needed
@@ -252,8 +248,9 @@ const RecordsTableRow = React.memo(({
                   )}
                   {openCustomerDetails === lead.id && (
                     <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
-                      {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                      {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                        <p className="font-bold">{lead.id}</p>
+                        {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                        {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                     </div>
                   )}
                 </div>
@@ -453,6 +450,16 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
       return matchesSearch && matchesCsr && matchesYear && matchesMonth && matchesStatus;
     });
   }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, filterType, getOverallStatus]);
+  
+    const { totalAmount, totalQuantity } = useMemo(() => {
+        if (!filteredLeads) return { totalAmount: 0, totalQuantity: 0 };
+        return filteredLeads.reduce((totals, lead) => {
+            totals.totalAmount += lead.grandTotal || 0;
+            const quantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+            totals.totalQuantity += quantity;
+            return totals;
+        }, { totalAmount: 0, totalQuantity: 0 });
+    }, [filteredLeads]);
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
@@ -576,16 +583,24 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 />
               </div>
             </div>
-            <div className="w-full text-right mt-2">
-                {filterType === 'COMPLETED' ? (
-                  <Link href="/records" className="text-sm text-primary hover:underline">
-                    View Ongoing Orders
-                  </Link>
-                ) : (
-                  <Link href="/records/completed" className="text-sm text-primary hover:underline">
-                    View Completed Orders
-                  </Link>
+             <div className="w-full text-right mt-2 space-y-2">
+                {filterType !== 'COMPLETED' && (
+                    <div className="text-right font-semibold text-sm">
+                        <span>Overall Total Amount: <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
+                        <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
+                    </div>
                 )}
+                <div>
+                    {filterType === 'COMPLETED' ? (
+                        <Link href="/records" className="text-sm text-primary hover:underline">
+                            View Ongoing Orders
+                        </Link>
+                    ) : (
+                        <Link href="/records/completed" className="text-sm text-primary hover:underline">
+                            View Completed Orders
+                        </Link>
+                    )}
+                </div>
             </div>
           </div>
         </div>
