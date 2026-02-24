@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
@@ -59,57 +60,6 @@ const COLORS = [
     'hsl(180, 70%, 70%)',
 ];
 
-const renderAmountLabel = (props: any) => {
-    const { x, y, width, value, stroke } = props;
-    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
-  
-    const rectWidth = 80;
-    const rectHeight = 18;
-    const xPos = width ? x + width / 2 : x;
-    
-    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
-
-    return (
-      <g>
-        <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
-        <text 
-          x={xPos} 
-          y={y - rectHeight/2 - 5}
-          textAnchor="middle" 
-          dominantBaseline="middle" 
-          fill="black"
-          fontSize={12} 
-          fontWeight="bold"
-        >
-          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-        </text>
-      </g>
-    );
-};
-  
-const renderHourlyLabel = (props: any) => {
-    const { x, y, value, payload } = props;
-    if (!value || value === 0 || typeof x !== 'number' || typeof y !== 'number' || !payload) {
-      return null;
-    }
-  
-    const labelText = `${formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })} (${payload.quantity || 0})`;
-    
-    return (
-        <text
-          x={x}
-          y={y}
-          dy={-10}
-          fill="hsl(var(--foreground))"
-          fontSize={12}
-          fontWeight="bold"
-          textAnchor="middle"
-        >
-          {labelText}
-        </text>
-    );
-};
-
 const renderQuantityLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     
@@ -129,7 +79,62 @@ export function TodaysPerformanceCard() {
 
   const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  
+
+  const renderHourlyLabel = (props: any) => {
+    const { x, y, value } = props;
+
+    if (typeof x !== 'number' || typeof y !== 'number' || typeof value !== 'number' || value <= 0) {
+      return null;
+    }
+
+    // Access quantity safely from payload object on props
+    const quantity = props.payload?.quantity ?? 0;
+
+    const labelText = `${formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })} (${quantity})`;
+    
+    return (
+        <text
+          x={x}
+          y={y}
+          dy={-10}
+          fill="hsl(var(--foreground))"
+          fontSize={12}
+          fontWeight="bold"
+          textAnchor="middle"
+        >
+          {labelText}
+        </text>
+    );
+  };
+
+  const renderAmountLabel = (props: any) => {
+      const { x, y, width, value, stroke } = props;
+      if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+    
+      const rectWidth = 80;
+      const rectHeight = 18;
+      const xPos = width ? x + width / 2 : x;
+      
+      const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
+
+      return (
+        <g>
+          <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
+          <text 
+            x={xPos} 
+            y={y - rectHeight/2 - 5}
+            textAnchor="middle" 
+            dominantBaseline="middle" 
+            fill="black"
+            fontSize={12} 
+            fontWeight="bold"
+          >
+            {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </text>
+        </g>
+      );
+  };
+
   const salesData = useMemo(() => {
     if (!leads) return [];
 
@@ -482,7 +487,7 @@ export function TodaysPerformanceCard() {
             <CardContent>
                 <div className="text-left mb-4">
                     <CardTitle>Hourly Sales Breakdown</CardTitle>
-                    <CardDescription>Sales and quantity per hour for the selected day.</CardDescription>
+                    <CardDescription>Sales and quantity per hour for the selected day, compared to previous weeks.</CardDescription>
                 </div>
                 <div style={{ height: '300px' }}>
                     <ChartContainer config={{ amount: { label: 'Amount' } }} className="w-full h-full">
@@ -507,7 +512,7 @@ export function TodaysPerformanceCard() {
                                 <Tooltip
                                     content={<ChartTooltipContent
                                         formatter={(value, name, item) => {
-                                            if (name === 'amount') {
+                                            if (name === 'Sales Amount') {
                                                 return (
                                                     <div className="flex flex-col">
                                                         <span>{formatCurrency(item.payload.amount)}</span>
