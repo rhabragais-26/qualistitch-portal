@@ -630,20 +630,24 @@ export function ReportsSummary() {
                 <Table>
                     <TableHeader>
                     <TableRow>
-                        <TableHead className="text-xs p-1">SCES</TableHead>
-                        <TableHead className="text-right text-xs p-1">Quantity</TableHead>
-                        <TableHead className="text-right text-xs p-1">Customers</TableHead>
+                        <TableHead className="text-xs p-1 text-center align-middle">SCES</TableHead>
+                        <TableHead className="text-xs p-1 text-center align-middle">Quantity</TableHead>
+                        <TableHead className="text-xs p-1 text-center align-middle">Customers</TableHead>
+                        <TableHead className="text-xs p-1 text-center align-middle">Sales Amount</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
                     {salesRepData.map((item, index) => (
                         <TableRow key={index}>
-                        <TableCell className="font-medium flex items-center text-xs p-1">
-                            <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: '#008080' }}></span>
-                            {item.name}
+                        <TableCell className="font-medium text-xs p-1 text-center align-middle">
+                            <div className="flex items-center justify-center">
+                                <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: '#008080' }}></span>
+                                {item.name}
+                            </div>
                         </TableCell>
-                        <TableCell className="text-right text-xs p-1">{item.quantity}</TableCell>
-                        <TableCell className="text-right text-xs p-1">{item.customerCount}</TableCell>
+                        <TableCell className="text-xs p-1 text-center align-middle">{item.quantity}</TableCell>
+                        <TableCell className="text-xs p-1 text-center align-middle">{item.customerCount}</TableCell>
+                        <TableCell className="text-xs p-1 text-center align-middle">{formatCurrency(item.amount)}</TableCell>
                         </TableRow>
                     ))}
                     </TableBody>
@@ -835,4 +839,3 @@ export function ReportsSummary() {
     </>
   );
 }
-    

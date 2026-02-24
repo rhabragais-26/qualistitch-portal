@@ -63,6 +63,7 @@ const GenerateReportOutputSchema = z.object({
       name: z.string(),
       quantity: z.number(),
       customerCount: z.number(),
+      amount: z.number(),
     })
   ),
   priorityData: z.array(
@@ -203,13 +204,15 @@ const generateReportFlow = ai.defineFlow(
               0
             );
           const csr = lead.salesRepresentative;
+          const leadAmount = lead.grandTotal || 0;
 
-          if (leadQuantity > 0) {
+          if (leadQuantity > 0 || leadAmount > 0) {
             if (!acc[csr]) {
-              acc[csr] = { quantity: 0, uniqueCustomerDays: new Set() };
+              acc[csr] = { quantity: 0, amount: 0, uniqueCustomerDays: new Set() };
             }
 
             acc[csr].quantity += leadQuantity;
+            acc[csr].amount += leadAmount;
             
             const submissionDate = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
             const uniqueKey = `${lead.customerName}-${submissionDate}`;
@@ -218,14 +221,15 @@ const generateReportFlow = ai.defineFlow(
 
           return acc;
         },
-        {} as { [key: string]: { quantity: number; uniqueCustomerDays: Set<string> } }
+        {} as { [key: string]: { quantity: number; amount: number; uniqueCustomerDays: Set<string> } }
       );
 
       return Object.entries(statsBySalesRep)
-        .map(([name, { quantity, uniqueCustomerDays }]) => ({
+        .map(([name, { quantity, amount, uniqueCustomerDays }]) => ({
           name,
           quantity,
           customerCount: uniqueCustomerDays.size,
+          amount,
         }))
         .sort((a, b) => b.quantity - a.quantity);
     })();
