@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -344,7 +343,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   }, [leads]);
 
   const months = useMemo(() => [
-    { value: 'All', label: 'All Months' }, { value: '1', label: 'January' },
+    { value: 'all', label: 'All Months' }, { value: '1', label: 'January' },
     { value: '2', label: 'February' }, { value: '3', label: 'March' },
     { value: '4', label: 'April' }, { value: '5', label: 'May' },
     { value: '6', label: 'June' }, { value: '7', label: 'July' },
@@ -579,7 +578,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Years</SelectItem>
+                    <SelectItem value="all">All Years</SelectItem>
                     {availableYears.map(year => (
                       <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                     ))}
@@ -622,16 +621,16 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
               </div>
             </div>
             <div className="w-full flex justify-between items-center mt-2">
-                {filterType !== 'COMPLETED' ? (
-                    <div className="flex items-center gap-4 text-left font-semibold text-sm">
-                        <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
-                        <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
-                    </div>
-                ) : (
-                    <div></div>
-                )}
+                <div className="flex items-center gap-4 text-left font-semibold text-sm">
+                    {filterType !== 'COMPLETED' && (
+                        <>
+                            <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
+                            <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
+                        </>
+                    )}
+                </div>
                 <div className="flex items-center gap-2">
-                    <Button onClick={handleResetFilters} variant="outline">Reset All Filters</Button>
+                    <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset All Filters</Button>
                     {filterType === 'COMPLETED' ? (
                         <Link href="/records" className="text-sm text-primary hover:underline">
                             View Ongoing Orders
@@ -745,3 +744,4 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
+
