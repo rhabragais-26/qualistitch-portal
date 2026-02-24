@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
@@ -38,7 +39,7 @@ const chartConfig = {
     label: "Items Sold",
   },
   layoutCount: {
-    label: "Layouts Created"
+    label: "Layouts"
   }
 };
 
@@ -307,7 +308,7 @@ export function TodaysPerformanceCard() {
                 </div>
                 <div className="w-full lg:col-span-1">
                      <CardHeader className="p-0 mb-4 text-center">
-                        <CardTitle>Layouts Created</CardTitle>
+                        <CardTitle>Layouts converted to Sales</CardTitle>
                     </CardHeader>
                     <div style={{ height: '350px' }}>
                        <ChartContainer config={{ layoutCount: { label: 'Layouts' } }} className="w-full h-full">
@@ -373,3 +374,4 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
+
