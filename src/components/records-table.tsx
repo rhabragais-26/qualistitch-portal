@@ -469,8 +469,10 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
         const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
         dateMatches = submissionDate >= from && submissionDate <= to;
       } else {
-        const matchesYear = selectedYear === 'all' || submissionDate.getFullYear().toString() === selectedYear;
-        const matchesMonth = selectedMonth === 'all' || (submissionDate.getMonth() + 1).toString() === selectedMonth;
+        const year = parseInt(selectedYear, 10);
+        const month = parseInt(selectedMonth, 10);
+        const matchesYear = selectedYear === 'all' || getYear(submissionDate) === year;
+        const matchesMonth = selectedMonth === 'all' || (getMonth(submissionDate) + 1) === month;
         dateMatches = matchesYear && matchesMonth;
       }
       
@@ -559,7 +561,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   }
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
           <div>
@@ -586,7 +588,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                   </SelectContent>
                 </Select>
                 <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
-                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectTrigger className="w-[140px] bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
                   <SelectContent>
@@ -601,7 +603,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
               <div className='flex items-center gap-2'>
                 <span className="text-sm font-medium">Filter by SCES:</span>
                 <Select value={csrFilter} onValueChange={setCsrFilter}>
-                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectTrigger className="w-[140px] bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Filter by SCES" />
                   </SelectTrigger>
                   <SelectContent>
@@ -746,3 +748,28 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   );
 }
 
+```
+- tsconfig.prod.json:
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  }
+}
+
+```
+- typings.d.ts:
+```ts
+declare module 'react-day-picker' {
+  import { DayPicker } from 'react-day-picker';
+  export { DayPicker };
+}
+
+```
+- next-env.d.ts:
+```ts
+/// <reference types="next" />
+/// <reference types="next/image" />
+
+```
