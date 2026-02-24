@@ -157,6 +157,80 @@ export function TodaysPerformanceCard() {
       .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
   }, [leads, activeFilter, selectedDate]);
+  
+    const hourlySalesData = useMemo(() => {
+    if (!leads) return [];
+
+    let rangeStart: Date;
+    let rangeEnd: Date;
+    
+    if (activeFilter === 'today') {
+        const today = new Date();
+        rangeStart = startOfDay(today);
+        rangeEnd = endOfDay(today);
+    } else if (activeFilter === 'yesterday') {
+        const yesterday = subDays(new Date(), 1);
+        rangeStart = startOfDay(yesterday);
+        rangeEnd = endOfDay(yesterday);
+    } else if (activeFilter === 'custom' && selectedDate) {
+        rangeStart = startOfDay(selectedDate);
+        rangeEnd = endOfDay(selectedDate);
+    } else {
+        // If no specific day is selected, we can't show hourly data.
+        return [];
+    }
+    
+    const filteredLeads = leads.filter(lead => {
+        try {
+            const submissionDate = new Date(lead.submissionDateTime);
+            return submissionDate >= rangeStart && submissionDate <= rangeEnd;
+        } catch (e) {
+            console.warn(`Invalid date format for lead '${lead.id}': '${lead.submissionDateTime}`);
+            return false;
+        }
+    });
+
+    const salesByHour = filteredLeads.reduce((acc, lead) => {
+      const hour = new Date(lead.submissionDateTime).getHours(); // 0-23
+      if (!acc[hour]) {
+        acc[hour] = { amount: 0, quantity: 0 };
+      }
+      acc[hour].amount += lead.grandTotal || 0;
+      acc[hour].quantity += lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
+      return acc;
+    }, {} as { [key: number]: { amount: number; quantity: number } });
+
+    const fullDayData = Array.from({ length: 24 }, (_, i) => {
+        const hourData = salesByHour[i] || { amount: 0, quantity: 0 };
+        return {
+            hour: `${i.toString().padStart(2, '0')}:00`,
+            ...hourData,
+        };
+    });
+
+    return fullDayData;
+  }, [leads, activeFilter, selectedDate]);
+  
+  const renderHourlyLabel = (props: any) => {
+    const { x, y, value, payload } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+  
+    return (
+      <g>
+        <text 
+          x={x} 
+          y={y}
+          dy={-10}
+          textAnchor="middle"
+          fill="black"
+          fontSize={12} 
+          fontWeight="bold"
+        >
+          {`${formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })} (${payload.quantity})`}
+        </text>
+      </g>
+    );
+  };
 
   const totalSales = useMemo(() => {
     if (!salesData) return 0;
@@ -189,6 +263,8 @@ export function TodaysPerformanceCard() {
     };
   }, [activeFilter, selectedDate]);
   
+  const layoutChartData = salesData.filter(d => d.layoutCount > 0);
+
   if (isLoading) {
       return (
            <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
@@ -196,9 +272,13 @@ export function TodaysPerformanceCard() {
               <Skeleton className="h-8 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
             </CardHeader>
-            <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-[400px]">
-                <Skeleton className="lg:col-span-2 h-full w-full" />
-                <Skeleton className="h-full w-full" />
+            <CardContent className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start h-[400px]">
+                    <Skeleton className="lg:col-span-2 h-full w-full" />
+                    <Skeleton className="h-full w-full" />
+                </div>
+                <Separator />
+                <Skeleton className="h-[300px] w-full" />
             </CardContent>
           </Card>
       )
@@ -220,9 +300,6 @@ export function TodaysPerformanceCard() {
       )
   }
   
-  const layoutChartData = salesData.filter(d => d.layoutCount > 0);
-
-
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
       <CardHeader>
@@ -371,7 +448,49 @@ export function TodaysPerformanceCard() {
             </div>
         )}
       </CardContent>
+       {activeFilter !== 'all' && (
+        <>
+            <Separator className="my-4" />
+            <CardContent>
+                <CardHeader className="p-0 mb-4 text-center">
+                    <CardTitle>Hourly Sales Breakdown</CardTitle>
+                    <CardDescription>Sales and quantity per hour for the selected day.</CardDescription>
+                </CardHeader>
+                <div style={{ height: '300px' }}>
+                    <ChartContainer config={{ amount: { label: 'Amount' } }} className="w-full h-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={hourlySalesData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis
+                                dataKey="hour"
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                                tickFormatter={(value: string) => value.split(':')[0]}
+                                interval={'preserveStartEnd'}
+                                minTickGap={30}
+                                />
+                                <YAxis tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
+                                <Tooltip
+                                    content={<ChartTooltipContent
+                                        formatter={(value, name, item) => (
+                                            <div className="flex flex-col">
+                                                <span>{formatCurrency(item.payload.amount)}</span>
+                                                <span className="text-muted-foreground">{item.payload.quantity} items</span>
+                                            </div>
+                                        )}
+                                    />}
+                                />
+                                <Line type="monotone" dataKey="amount" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                                <LabelList dataKey="amount" content={renderHourlyLabel} />
+                                </Line>
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                </div>
+            </CardContent>
+        </>
+      )}
     </Card>
   );
 }
-
