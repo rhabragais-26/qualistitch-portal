@@ -480,10 +480,10 @@ export function TodaysPerformanceCard() {
         <>
             <Separator className="my-4" />
             <CardContent>
-                <CardHeader className="p-0 mb-4 text-left">
+                <div className="text-left mb-4">
                     <CardTitle>Hourly Sales Breakdown</CardTitle>
                     <CardDescription>Sales and quantity per hour for the selected day.</CardDescription>
-                </CardHeader>
+                </div>
                 <div style={{ height: '300px' }}>
                     <ChartContainer config={{ amount: { label: 'Amount' } }} className="w-full h-full">
                         <ResponsiveContainer width="100%" height="100%">
