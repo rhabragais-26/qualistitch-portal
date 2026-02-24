@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Calendar } from './ui/calendar';
+import { CalendarIcon } from 'lucide-react';
 
 type Order = {
   quantity: number;
@@ -64,7 +67,6 @@ const renderAmountLabel = (props: any) => {
     const rectHeight = 18;
     const xPos = width ? x + width / 2 : x;
     
-    // Convert hsl(a, b, c) to hsla(a, b, c, 0.4)
     const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
 
     return (
@@ -102,14 +104,31 @@ export function TodaysPerformanceCard() {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
-  const [timeRange, setTimeRange] = useState<'today' | 'yesterday'>('today');
+  const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const salesData = useMemo(() => {
     if (!leads) return [];
 
-    const targetDate = timeRange === 'today' ? new Date() : subDays(new Date(), 1);
-    const rangeStart = startOfDay(targetDate);
-    const rangeEnd = endOfDay(targetDate);
+    let rangeStart: Date;
+    let rangeEnd: Date;
+    
+    if (activeFilter === 'today') {
+        const today = new Date();
+        rangeStart = startOfDay(today);
+        rangeEnd = endOfDay(today);
+    } else if (activeFilter === 'yesterday') {
+        const yesterday = subDays(new Date(), 1);
+        rangeStart = startOfDay(yesterday);
+        rangeEnd = endOfDay(yesterday);
+    } else if (activeFilter === 'custom' && selectedDate) {
+        rangeStart = startOfDay(selectedDate);
+        rangeEnd = endOfDay(selectedDate);
+    } else {
+        const today = new Date();
+        rangeStart = startOfDay(today);
+        rangeEnd = endOfDay(today);
+    }
     
     const filteredLeads = leads.filter(lead => {
         try {
@@ -138,12 +157,37 @@ export function TodaysPerformanceCard() {
       .map(([name, data]) => ({ name, ...data }))
       .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
-  }, [leads, timeRange]);
+  }, [leads, activeFilter, selectedDate]);
 
   const totalSales = useMemo(() => {
     if (!salesData) return 0;
     return salesData.reduce((acc, curr) => acc + curr.amount, 0);
   }, [salesData]);
+
+  const { title, description } = useMemo(() => {
+    if (activeFilter === 'today') {
+        return {
+            title: "Today's Performance",
+            description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
+        };
+    }
+    if (activeFilter === 'yesterday') {
+        return {
+            title: "Yesterday's Performance",
+            description: `Total sales amount and items sold by SCES for ${format(subDays(new Date(), 1), 'MMMM dd, yyyy')}.`
+        };
+    }
+    if (selectedDate) {
+        return {
+            title: `Performance for ${format(selectedDate, 'MMMM dd, yyyy')}`,
+            description: `Total sales amount and items sold by SCES for ${format(selectedDate, 'MMMM dd, yyyy')}.`
+        };
+    }
+    return {
+        title: "Today's Performance",
+        description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
+    };
+  }, [activeFilter, selectedDate]);
   
   if (isLoading) {
       return (
@@ -164,8 +208,8 @@ export function TodaysPerformanceCard() {
       return (
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
              <CardHeader>
-                <CardTitle>{timeRange === 'today' ? "Today's" : "Yesterday's"} Performance</CardTitle>
-                <CardDescription>Total sales amount and items sold by SCES for {format(timeRange === 'today' ? new Date() : subDays(new Date(), 1), 'MMMM dd, yyyy')}.</CardDescription>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center justify-center h-[300px]">
@@ -184,12 +228,40 @@ export function TodaysPerformanceCard() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div className="flex-1">
-                <CardTitle>{timeRange === 'today' ? "Today's" : "Yesterday's"} Performance</CardTitle>
-                <CardDescription>Total sales amount and items sold by SCES for {format(timeRange === 'today' ? new Date() : subDays(new Date(), 1), 'MMMM dd, yyyy')}.</CardDescription>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
             </div>
             <div className="flex-1 flex justify-end items-center gap-4">
-                <Button variant={timeRange === 'yesterday' ? 'default' : 'outline'} onClick={() => setTimeRange('yesterday')}>Yesterday</Button>
-                <Button variant={timeRange === 'today' ? 'default' : 'outline'} onClick={() => setTimeRange('today')}>Today</Button>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-[240px] justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground",
+                                activeFilter === 'custom' && 'font-bold border-primary'
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedDate ? format(selectedDate, "PPP") : <span>Select a date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                        <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => {
+                                setSelectedDate(date);
+                                if (date) {
+                                    setActiveFilter('custom');
+                                }
+                            }}
+                            initialFocus
+                        />
+                    </PopoverContent>
+                </Popover>
+                <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => { setActiveFilter('yesterday'); setSelectedDate(undefined); }}>Yesterday</Button>
+                <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => { setActiveFilter('today'); setSelectedDate(undefined); }}>Today</Button>
             </div>
         </div>
       </CardHeader>
@@ -305,7 +377,7 @@ export function TodaysPerformanceCard() {
             </>
         ) : (
             <div className="lg:col-span-3 flex items-center justify-center h-[300px]">
-                <p className="text-muted-foreground">No sales recorded for {timeRange === 'today' ? 'today' : 'yesterday'}.</p>
+                <p className="text-muted-foreground">No sales recorded for the selected date.</p>
             </div>
         )}
       </CardContent>
