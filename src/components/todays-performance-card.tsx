@@ -11,9 +11,7 @@ import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Respons
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Calendar } from './ui/calendar';
-import { CalendarIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 type Order = {
   quantity: number;
@@ -183,6 +181,7 @@ export function TodaysPerformanceCard() {
             description: `Total sales amount and items sold by SCES for ${format(selectedDate, 'MMMM dd, yyyy')}.`
         };
     }
+    // Fallback
     return {
         title: "Today's Performance",
         description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
@@ -232,34 +231,24 @@ export function TodaysPerformanceCard() {
                 <CardDescription>{description}</CardDescription>
             </div>
             <div className="flex-1 flex justify-end items-center gap-4">
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-[240px] justify-start text-left font-normal",
-                                !selectedDate && "text-muted-foreground",
-                                activeFilter === 'custom' && 'font-bold border-primary'
-                            )}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "PPP") : <span>Select a date</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
-                        <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(date) => {
-                                setSelectedDate(date);
-                                if (date) {
-                                    setActiveFilter('custom');
-                                }
-                            }}
-                            initialFocus
-                        />
-                    </PopoverContent>
-                </Popover>
+                 <Input
+                    type="date"
+                    value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        if (value) {
+                            setSelectedDate(new Date(value + 'T00:00:00'));
+                            setActiveFilter('custom');
+                        } else {
+                            setSelectedDate(undefined);
+                            setActiveFilter('today');
+                        }
+                    }}
+                    className={cn(
+                        "w-[180px] justify-start text-left font-normal",
+                         activeFilter === 'custom' && 'font-bold border-primary'
+                    )}
+                />
                 <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => { setActiveFilter('yesterday'); setSelectedDate(undefined); }}>Yesterday</Button>
                 <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => { setActiveFilter('today'); setSelectedDate(undefined); }}>Today</Button>
             </div>
