@@ -460,6 +460,19 @@ export function ReportsSummary() {
   const renderLegendText = (value: string) => {
     return <span style={{ color: 'black' }}>{value}</span>;
   };
+  
+  const salesByRepTitle = useMemo(() => {
+    let period;
+    if (selectedYear === 'all') {
+        period = 'All Time';
+    } else if (selectedMonth === 'all') {
+        period = `the Year ${selectedYear}`;
+    } else {
+        const monthLabel = months.find(m => m.value === selectedMonth)?.label || '';
+        period = `${monthLabel} ${selectedYear}`;
+    }
+    return `Sold Amount per Sales Specialist for ${period}`;
+  }, [selectedYear, selectedMonth, months]);
 
 
   if (isLoading) {
