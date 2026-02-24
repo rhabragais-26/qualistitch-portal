@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
@@ -86,25 +87,23 @@ const renderAmountLabel = (props: any) => {
       </g>
     );
 };
-
+  
 const renderHourlyLabel = (props: any) => {
-    const { x, y, value, payload } = props;
-    if (!payload || value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+    const { x, y, value } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
     return (
-      <g>
         <text 
           x={x} 
           y={y}
-          dy={-15}
+          dy={-10}
           textAnchor="middle"
-          fill="black"
+          fill="hsl(var(--foreground))"
           fontSize={12} 
           fontWeight="bold"
         >
-          {`${formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })} (${payload.quantity})`}
+          {formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })}
         </text>
-      </g>
     );
 };
   
@@ -461,7 +460,7 @@ export function TodaysPerformanceCard() {
                     <ChartContainer config={{ amount: { label: 'Amount' } }} className="w-full h-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={hourlySalesData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
-                                <CartesianGrid stroke="hsl(var(--muted-foreground))" />
+                                <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis
                                 dataKey="hour"
                                 tickLine={false}
@@ -488,7 +487,7 @@ export function TodaysPerformanceCard() {
                                     />}
                                 />
                                 <Line type="monotone" dataKey="amount" stroke="hsl(var(--chart-1))" strokeWidth={2}>
-                                <LabelList dataKey="amount" content={renderHourlyLabel} />
+                                    <LabelList dataKey="amount" content={renderHourlyLabel} />
                                 </Line>
                             </LineChart>
                         </ResponsiveContainer>
