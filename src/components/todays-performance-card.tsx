@@ -65,7 +65,7 @@ const renderAmountLabel = (props: any) => {
     const xPos = width ? x + width / 2 : x;
     
     // Convert hsl(a, b, c) to hsla(a, b, c, 0.4)
-    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.4)') : 'rgba(255, 255, 255, 0.4)';
+    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
 
     return (
       <g>
@@ -116,7 +116,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead ${'\'\'\''}${lead.id}: ${'\'\'\''}${lead.submissionDateTime}`);
+            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}: '${'\'\''}${lead.submissionDateTime}`);
             return false;
         }
     });
@@ -187,24 +187,20 @@ export function TodaysPerformanceCard() {
                 <CardTitle>{timeRange === 'today' ? "Today's" : "Yesterday's"} Performance</CardTitle>
                 <CardDescription>Total sales amount and items sold by SCES for {format(timeRange === 'today' ? new Date() : subDays(new Date(), 1), 'MMMM dd, yyyy')}.</CardDescription>
             </div>
-             <div className="flex-1 text-center">
-                <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
-            </div>
             <div className="flex-1 flex justify-end items-center gap-4">
                 <Button variant={timeRange === 'yesterday' ? 'default' : 'outline'} onClick={() => setTimeRange('yesterday')}>Yesterday</Button>
                 <Button variant={timeRange === 'today' ? 'default' : 'outline'} onClick={() => setTimeRange('today')}>Today</Button>
             </div>
         </div>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start h-[400px]">
+      <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {salesData.length > 0 ? (
             <>
-                <div className="lg:col-span-2 h-full">
+                <div className="lg:col-span-2">
                     <CardHeader className="p-0 mb-4 text-center">
                         <CardTitle>Sales &amp; Items Sold</CardTitle>
                     </CardHeader>
-                    <div style={{ height: '350px' }}>
+                    <div style={{ height: '300px' }}>
                         <ChartContainer config={chartConfig} className="w-full h-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={salesData} margin={{ top: 30 }}>
@@ -214,7 +210,7 @@ export function TodaysPerformanceCard() {
                                         yAxisId="left"
                                         orientation="left"
                                         stroke="hsl(var(--chart-2))"
-                                        tickFormatter={(value) => `₱${Number(value) / 1000}k`}
+                                        tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}${'\'\''}`}
                                     />
                                     <YAxis
                                         yAxisId="right"
@@ -232,19 +228,23 @@ export function TodaysPerformanceCard() {
                                     />
                                     <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
                                         {salesData.map((entry, index) => (
-                                            <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-amount-${'\'\'\''}${index}${'\'\''}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                         <LabelList dataKey="quantity" content={renderQuantityLabel} />
                                     </Bar>
-                                    <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
+                                    <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2}>
                                         <LabelList content={renderAmountLabel} dataKey="amount" />
                                     </Line>
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </ChartContainer>
                     </div>
+                    <div className="text-center mt-4">
+                        <p className="text-sm font-medium text-gray-600">Total Sales</p>
+                        <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
+                    </div>
                 </div>
-                <div className="w-full lg:col-span-1 h-full">
+                <div className="w-full lg:col-span-1">
                      <CardHeader className="p-0 mb-4 text-center">
                         <CardTitle>Layouts Created</CardTitle>
                     </CardHeader>
@@ -264,12 +264,12 @@ export function TodaysPerformanceCard() {
                                         cy="50%"
                                         outerRadius={90}
                                         labelLine={true}
-                                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                        label={({ name, percent }) => `${'\'\'\''}${name}: ${(percent * 100).toFixed(0)}%`}
                                     >
                                         {layoutChartData.map((entry, index) => (
-                                            <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-layout-${'\'\'\''}${index}${'\'\''}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
-                                        <LabelList dataKey="layoutCount" position="inside" fill="white" fontSize={12} fontWeight="bold" />
+                                        <LabelList dataKey="layoutCount" position="inside" fill="white" fontSize={12} />
                                     </Pie>
                                     <Legend />
                                 </PieChart>
