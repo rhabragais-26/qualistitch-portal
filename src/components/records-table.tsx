@@ -621,7 +621,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
-                  const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
+                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                   return (
                     <React.Fragment key={lead.id}>
                         <RecordsTableRow 
@@ -693,5 +693,3 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
-
-```
