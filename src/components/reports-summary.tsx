@@ -87,6 +87,60 @@ const COLORS = [
     'hsl(180, 70%, 70%)',
 ];
 
+const colorMap: { [key: string]: string } = {
+    'army green': '#4B5320',
+    'black': '#000000',
+    'black/gray': '#5A5A5A',
+    'black/khaki': '#7C6F62',
+    'black/navy blue': '#000040',
+    'brown': '#A52A2A',
+    'dark gray': '#A9A9A9',
+    'dark khaki': '#BDB76B',
+    'khaki': '#BDB76B',
+    'light gray': '#D3D3D3',
+    'light khaki': '#F0E68C',
+    'maroon/gray': '#800000',
+    'navy blue': '#000080',
+    'navy blue/gray': '#404080',
+    'olive green': '#808000',
+    'aqua blue': '#00FFFF',
+    'choco brown': '#D2691E',
+    'cream': '#FFFDD0',
+    'dark green': '#006400',
+    'dawn blue': '#A9D1F7',
+    'emerald green': '#50C878',
+    'estate blue': '#00005D',
+    'fair orchid': '#F1DCE7',
+    'fuchsia': '#FF00FF',
+    'gold': '#FFD700',
+    'golden yellow': '#FFDF00',
+    'green': '#008000',
+    'green briar': '#58A55C',
+    'honey mustard': '#E1C62F',
+    'irish green': '#009E60',
+    'jade green': '#00A86B',
+    'light green': '#90EE90',
+    'maroon': '#800000',
+    'melange gray': '#BEBEBE',
+    'military green': '#4B5320',
+    'mint green': '#98FF98',
+    'mocha': '#967969',
+    'nine ion gray': '#A9A9A9',
+    'oatmeal': '#EAE0C8',
+    'orange': '#FFA500',
+    'pink': '#FFC0CB',
+    'purple': '#800080',
+    'rapture rose': '#DB5573',
+    'red': '#FF0000',
+    'royal blue': '#4169E1',
+    'sky blue': '#87CEEB',
+    'slate blue': '#6A5ACD',
+    'teal': '#008080',
+    'white': '#F5F5F5',
+    'yellow': '#FFFF00',
+    'unknown': '#CCCCCC'
+};
+
 const renderAmountLabel = (props: any) => {
     const { x, y, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
@@ -147,12 +201,6 @@ export function ReportsSummary() {
         .filter(type => type !== 'Client Owned' && type !== 'Patches')
         .sort();
   }, [leads]);
-  
-  useEffect(() => {
-    if (productTypesForFilter.length > 0 && !colorProductTypeFilter) {
-        setColorProductTypeFilter(productTypesForFilter[0]);
-    }
-  }, [productTypesForFilter, colorProductTypeFilter]);
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
@@ -191,6 +239,12 @@ export function ReportsSummary() {
         }
     });
   }, [leads, selectedYear, selectedMonth, selectedWeek, dateRange]);
+  
+  useEffect(() => {
+    if (productTypesForFilter.length > 0 && !colorProductTypeFilter) {
+        setColorProductTypeFilter(productTypesForFilter[0]);
+    }
+  }, [productTypesForFilter, colorProductTypeFilter]);
 
   const itemsSoldPerColor = useMemo(() => {
     if (!filteredLeads || !colorProductTypeFilter) return [];
@@ -643,7 +697,8 @@ export function ReportsSummary() {
                           }}
                           >
                           {itemsSoldPerColor.map((entry, index) => {
-                              return <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />;
+                              const fillColor = colorMap[entry.name.toLowerCase()] || COLORS[index % COLORS.length];
+                              return <Cell key={`cell-${index}`} fill={fillColor} />;
                           })}
                           </Pie>
                           <Legend verticalAlign="bottom" height={36}/>
@@ -662,7 +717,7 @@ export function ReportsSummary() {
                       </TableHeader>
                       <TableBody>
                       {itemsSoldPerColor.map((item, index) => {
-                          const color = COLORS[index % COLORS.length];
+                          const color = colorMap[item.name.toLowerCase()] || COLORS[index % COLORS.length];
                           return (
                           <TableRow key={index}>
                               <TableCell className="font-medium flex items-center text-xs p-1">
