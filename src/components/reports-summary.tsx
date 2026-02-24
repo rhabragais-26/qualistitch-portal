@@ -84,10 +84,10 @@ const colorMap: { [key: string]: string } = {
     'black/gray': '#5A5A5A',
     'black/khaki': '#7C6F62',
     'black/navy blue': '#000040',
-    'brown': '#A52A2A',
+    'brown': '#8B4513',
     'dark gray': '#A9A9A9',
     'dark khaki': '#BDB76B',
-    'khaki': '#BDB76B',
+    'khaki': '#F0E68C',
     'light gray': '#D3D3D3',
     'light khaki': '#F0E68C',
     'maroon/gray': '#800000',
@@ -133,7 +133,7 @@ const colorMap: { [key: string]: string } = {
 };
 
 const getContrastColor = (hex: string) => {
-    if (!hex) return 'black'; // default for undefined colors
+    if (!hex) return 'black';
     if (hex.startsWith('#')) {
       hex = hex.slice(1);
     }
@@ -141,14 +141,13 @@ const getContrastColor = (hex: string) => {
       hex = hex.split('').map(c => c + c).join('');
     }
     if (hex.length !== 6) {
-      return 'black'; // default for invalid hex, assume light
+      return 'black';
     }
     const r = parseInt(hex.slice(0, 2), 16);
     const g = parseInt(hex.slice(2, 4), 16);
     const b = parseInt(hex.slice(4, 6), 16);
-    // Using YIQ formula to determine brightness
     const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    return (yiq >= 150) ? 'black' : 'white'; // threshold 150 for good contrast
+    return (yiq >= 150) ? 'black' : 'white';
 };
 
 const renderAmountLabel = (props: any) => {
