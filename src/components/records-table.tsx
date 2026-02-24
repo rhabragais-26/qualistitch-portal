@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -572,11 +573,26 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
             </CardDescription>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-4">
-              <div className='flex items-center gap-2'>
-                <span className="text-sm font-medium">Filter by Year/Month:</span>
+            <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500 w-48 h-9"
+                />
+                <Select value={csrFilter} onValueChange={setCsrFilter}>
+                  <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by SCES" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All SCES</SelectItem>
+                    {salesRepresentatives.map(csr => (
+                      <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
-                  <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -596,39 +612,16 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
-                <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')}>Today</Button>
+                <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
+                <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
+                 <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 text-white hover:bg-teal-700">Reset All Filters</Button>
               </div>
-              <div className='flex items-center gap-2'>
-                <span className="text-sm font-medium">Filter by SCES:</span>
-                <Select value={csrFilter} onValueChange={setCsrFilter}>
-                  <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by SCES" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All SCES</SelectItem>
-                    {salesRepresentatives.map(csr => (
-                      <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                 <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset All Filters</Button>
-              </div>
-              <div className="flex-1 min-w-[300px]">
-                <Input
-                  placeholder="Search customer, company or contact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
-              </div>
-            </div>
             <div className="w-full flex justify-between items-center mt-2">
                <div className="flex items-center gap-4 text-left font-semibold text-sm">
                   {filterType !== 'COMPLETED' && (
                       <>
-                          <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
-                          <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
+                          <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary text-lg">{formatCurrency(totalAmount)}</span></span>
+                          <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary text-lg">{totalQuantity.toLocaleString()}</span></span>
                       </>
                   )}
               </div>
