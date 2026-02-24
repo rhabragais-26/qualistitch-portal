@@ -60,52 +60,28 @@ const COLORS = [
     'hsl(180, 70%, 70%)',
 ];
 
-const renderAmountLabel = (props: any) => {
-    const { x, y, width, value, stroke } = props;
-    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
-  
-    const rectWidth = 80;
-    const rectHeight = 18;
-    const xPos = width ? x + width / 2 : x;
-    
-    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
-
-    return (
-      <g>
-        <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
-        <text 
-          x={xPos} 
-          y={y - rectHeight/2 - 5}
-          textAnchor="middle" 
-          dominantBaseline="middle" 
-          fill="black"
-          fontSize={12} 
-          fontWeight="bold"
-        >
-          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-        </text>
-      </g>
-    );
-};
-  
 const renderHourlyLabel = (props: any) => {
-    const { x, y, value } = props;
-    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+    const { x, y, value, payload } = props;
+    if (!value || value === 0 || typeof x !== 'number' || typeof y !== 'number') {
+      return null;
+    }
   
+    const labelText = `${formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })} (${payload.quantity || 0})`;
+    
     return (
-        <text 
-          x={x} 
+        <text
+          x={x}
           y={y}
           dy={-10}
-          textAnchor="middle"
           fill="hsl(var(--foreground))"
-          fontSize={12} 
+          fontSize={12}
           fontWeight="bold"
+          textAnchor="middle"
         >
-          {formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })}
+          {labelText}
         </text>
     );
-};
+  };
   
 const renderQuantityLabel = (props: any) => {
     const { x, y, width, height, value } = props;
@@ -179,57 +155,84 @@ export function TodaysPerformanceCard() {
       .sort((a, b) => b.amount - a.amount);
   }, [leads, activeFilter, selectedDate]);
   
-    const hourlySalesData = useMemo(() => {
-    if (!leads) return [];
+  const { hourlySalesData, historicalDataKeys } = useMemo(() => {
+    if (!leads) return { hourlySalesData: [], historicalDataKeys: [] };
 
-    let rangeStart: Date;
-    let rangeEnd: Date;
-    
+    let currentDate: Date;
     if (activeFilter === 'today') {
-        const today = new Date();
-        rangeStart = startOfDay(today);
-        rangeEnd = endOfDay(today);
+      currentDate = new Date();
     } else if (activeFilter === 'yesterday') {
-        const yesterday = subDays(new Date(), 1);
-        rangeStart = startOfDay(yesterday);
-        rangeEnd = endOfDay(yesterday);
+      currentDate = subDays(new Date(), 1);
     } else if (activeFilter === 'custom' && selectedDate) {
-        rangeStart = startOfDay(selectedDate);
-        rangeEnd = endOfDay(selectedDate);
+      currentDate = selectedDate;
     } else {
-        // If no specific day is selected, we can't show hourly data.
-        return [];
+      currentDate = new Date(); // Fallback to today
     }
-    
+
+    const rangeStart = startOfDay(currentDate);
+    const rangeEnd = endOfDay(currentDate);
+
+    // Filter for the selected day
     const filteredLeads = leads.filter(lead => {
-        try {
-            const submissionDate = new Date(lead.submissionDateTime);
-            return submissionDate >= rangeStart && submissionDate <= rangeEnd;
-        } catch (e) {
-            console.warn(`Invalid date format for lead '${lead.id}': '${lead.submissionDateTime}'`);
-            return false;
-        }
+      try {
+        const submissionDate = new Date(lead.submissionDateTime);
+        return submissionDate >= rangeStart && submissionDate <= rangeEnd;
+      } catch (e) {
+        return false;
+      }
     });
 
     const salesByHour = filteredLeads.reduce((acc, lead) => {
-      const hour = new Date(lead.submissionDateTime).getHours(); // 0-23
+      const hour = new Date(lead.submissionDateTime).getHours();
       if (!acc[hour]) {
         acc[hour] = { amount: 0, quantity: 0 };
       }
       acc[hour].amount += lead.grandTotal || 0;
       acc[hour].quantity += lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
       return acc;
-    }, {} as { [key: number]: { amount: number; quantity: number } });
+    }, {} as Record<number, { amount: number; quantity: number }>);
 
-    const fullDayData = Array.from({ length: 24 }, (_, i) => {
-        const hourData = salesByHour[i] || { amount: 0, quantity: 0 };
-        return {
-            hour: `${i.toString().padStart(2, '0')}:00`,
-            ...hourData,
-        };
+    // --- Historical Data Calculation ---
+    const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
+    const historicalDataKeys: string[] = [];
+
+    for (let i = 1; i <= 4; i++) {
+      const historicalDate = subDays(currentDate, i * 7);
+      const historicalRangeStart = startOfDay(historicalDate);
+      const historicalRangeEnd = endOfDay(historicalDate);
+      const historicalKey = `prevWeek${i}`;
+      historicalDataKeys.push(historicalKey);
+
+      const historicalLeads = leads.filter(lead => {
+        try {
+          const submissionDate = new Date(lead.submissionDateTime);
+          return submissionDate >= historicalRangeStart && submissionDate <= historicalRangeEnd;
+        } catch (e) {
+          return false;
+        }
+      });
+
+      const historicalSalesByHour = historicalLeads.reduce((acc, lead) => {
+        const hour = new Date(lead.submissionDateTime).getHours();
+        acc[hour] = (acc[hour] || 0) + (lead.grandTotal || 0);
+        return acc;
+      }, {} as Record<number, number>);
+
+      for (let j = 0; j < 24; j++) {
+        historicalData[j][historicalKey] = historicalSalesByHour[j] || 0;
+      }
+    }
+
+    const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
+      const hourData = salesByHour[i] || { amount: 0, quantity: 0 };
+      return {
+        hour: `${i.toString().padStart(2, '0')}:00`,
+        ...hourData,
+        ...historicalData[i],
+      };
     });
 
-    return fullDayData;
+    return { hourlySalesData: combinedHourlyData, historicalDataKeys };
   }, [leads, activeFilter, selectedDate]);
   
   const totalSales = useMemo(() => {
@@ -256,7 +259,6 @@ export function TodaysPerformanceCard() {
             description: `Total sales amount and items sold by SCES for ${format(selectedDate, 'MMMM dd, yyyy')}.`
         };
     }
-    // Fallback
     return {
         title: "Today's Performance",
         description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
@@ -412,7 +414,7 @@ export function TodaysPerformanceCard() {
                                             value,
                                         }) => {
                                             const RADIAN = Math.PI / 180;
-                                            const radius = innerRadius + (outerRadius - innerRadius) * 0.7; // Position label farther out
+                                            const radius = innerRadius + (outerRadius - innerRadius) * 0.7; 
                                             const x = cx + radius * Math.cos(-midAngle * RADIAN);
                                             const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
@@ -460,13 +462,13 @@ export function TodaysPerformanceCard() {
                     <ChartContainer config={{ amount: { label: 'Amount' } }} className="w-full h-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={hourlySalesData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
+                                <CartesianGrid stroke="hsl(var(--border) / 0.7)" />
                                 <XAxis
                                 dataKey="hour"
                                 tickLine={false}
                                 axisLine={false}
                                 tickMargin={8}
-                                tickFormatter={(value: string) => {
+                                tickFormatter={(value) => {
                                     const hour = parseInt(value.split(':')[0], 10);
                                     if (hour === 0) return '12am';
                                     if (hour === 12) return '12pm';
@@ -478,15 +480,44 @@ export function TodaysPerformanceCard() {
                                 <YAxis tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
                                 <Tooltip
                                     content={<ChartTooltipContent
-                                        formatter={(value, name, item) => (
-                                            <div className="flex flex-col">
-                                                <span>{formatCurrency(item.payload.amount)}</span>
-                                                <span className="text-muted-foreground">{item.payload.quantity} items</span>
-                                            </div>
-                                        )}
+                                        formatter={(value, name, item) => {
+                                            if (name === 'amount') {
+                                                return (
+                                                    <div className="flex flex-col">
+                                                        <span>{formatCurrency(item.payload.amount)}</span>
+                                                        <span className="text-muted-foreground">{item.payload.quantity} items</span>
+                                                    </div>
+                                                );
+                                            }
+                                            const weekMatch = name.match(/(\d+) week(s)? ago/);
+                                            if(weekMatch) {
+                                                const weekNum = weekMatch[1];
+                                                 return (
+                                                    <div className="flex flex-col">
+                                                        <span>{formatCurrency(value as number)}</span>
+                                                        <span className="text-muted-foreground">({weekNum} week{parseInt(weekNum, 10) > 1 ? 's' : ''} ago)</span>
+                                                    </div>
+                                                );
+                                            }
+                                            return value;
+                                        }}
                                     />}
                                 />
-                                <Line type="monotone" dataKey="amount" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                                <Legend />
+                                {historicalDataKeys.map((key, index) => (
+                                    <Line
+                                        key={key}
+                                        dataKey={key}
+                                        type="monotone"
+                                        name={`${index + 1} week${index > 0 ? 's' : ''} ago`}
+                                        stroke={COLORS[(index + 1) % COLORS.length]}
+                                        strokeOpacity={0.4}
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={false}
+                                    />
+                                ))}
+                                <Line type="monotone" dataKey="amount" name="Sales Amount" stroke="hsl(var(--chart-1))" strokeWidth={2}>
                                     <LabelList dataKey="amount" content={renderHourlyLabel} />
                                 </Line>
                             </LineChart>
@@ -499,3 +530,5 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
+
+    
