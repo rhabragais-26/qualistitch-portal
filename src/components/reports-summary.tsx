@@ -211,7 +211,7 @@ export function ReportsSummary() {
         .filter(type => type !== 'Client Owned' && type !== 'Patches')
         .sort();
   }, [leads]);
-
+  
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
     
@@ -227,8 +227,8 @@ export function ReportsSummary() {
             } else if (selectedWeek) {
                  const [startStr, endStr] = selectedWeek.split('-');
                  const year = parseInt(selectedYear, 10);
-                 const weekStart = parse(`${'\'\'\''}${startStr}.${'\'\'\''}${year}`, 'MM.dd.yyyy', new Date());
-                 const weekEnd = parse(`${'\'\'\''}${endStr}.${'\'\'\''}${year}`, 'MM.dd.yyyy', new Date());
+                 const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
+                 const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
                  isInDateRange = submissionDate >= startOfDay(weekStart) && submissionDate <= endOfDay(weekEnd);
             }
             else {
@@ -249,12 +249,7 @@ export function ReportsSummary() {
         }
     });
   }, [leads, selectedYear, selectedMonth, selectedWeek, dateRange]);
-  
-  useEffect(() => {
-    if (productTypesForFilter.length > 0 && !colorProductTypeFilter) {
-        setColorProductTypeFilter(productTypesForFilter[0]);
-    }
-  }, [productTypesForFilter, colorProductTypeFilter]);
+
 
   const itemsSoldPerColor = useMemo(() => {
     if (!filteredLeads || !colorProductTypeFilter) return [];
@@ -275,6 +270,12 @@ export function ReportsSummary() {
     })).sort((a,b) => b.value - a.value);
   }, [filteredLeads, colorProductTypeFilter]);
 
+
+  useEffect(() => {
+    if (productTypesForFilter.length > 0 && !colorProductTypeFilter) {
+        setColorProductTypeFilter(productTypesForFilter[0]);
+    }
+  }, [productTypesForFilter, colorProductTypeFilter]);
 
   const months = useMemo(() => [
       { value: 'all', label: 'All Months' },
@@ -398,6 +399,10 @@ export function ReportsSummary() {
   const SalesMapComponent = useMemo(() => {
     return <SalesMap salesByCityData={salesByCityData} totalSales={totalSales} />;
   }, [salesByCityData, totalSales]);
+  
+  const renderLegendText = (value: string) => {
+    return <span style={{ color: 'black' }}>{value}</span>;
+  };
 
 
   if (isLoading) {
@@ -515,7 +520,7 @@ export function ReportsSummary() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                       <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                       <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tick={{ fill: 'hsl(var(--foreground))' }} />
-                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}${'\'\'\''}`} tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                       <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent formatter={(value, name) => {
@@ -562,7 +567,7 @@ export function ReportsSummary() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                       <XAxis dataKey="week" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                       <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-4))" tick={{ fill: 'hsl(var(--foreground))' }} />
-                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-5))" tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}${'\'\'\''}`} tick={{ fill: 'hsl(var(--foreground))' }} />
+                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-5))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} tick={{ fill: 'hsl(var(--foreground))' }} />
                       <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent formatter={(value, name) => {
@@ -714,7 +719,7 @@ export function ReportsSummary() {
                               return <Cell key={`cell-${index}`} fill={fillColor} />;
                           })}
                           </Pie>
-                          <Legend verticalAlign="bottom" height={36}/>
+                          <Legend verticalAlign="bottom" height={36} formatter={renderLegendText}/>
                       </PieChart>
                       </ResponsiveContainer>
                   </ChartContainer>
