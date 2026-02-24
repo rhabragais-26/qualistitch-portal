@@ -53,6 +53,8 @@ const cityCoordinates: { [key: string]: [number, number] } = {
     'Tabaco': [13.3589, 123.7317],
     'Iloilo': [10.7202, 122.5621],
     'San Carlos': [15.9272, 120.3467],
+    'Naga': [13.6233, 123.1833],
+    'Naga City': [13.6233, 123.1833],
 };
 
 export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps) {
