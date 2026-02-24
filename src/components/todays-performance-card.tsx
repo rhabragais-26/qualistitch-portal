@@ -133,7 +133,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead '\${lead.id}': '\${lead.submissionDateTime}`);
+            console.warn(`Invalid date format for lead '${lead.id}': '${lead.submissionDateTime}`);
             return false;
         }
     });
@@ -166,25 +166,25 @@ export function TodaysPerformanceCard() {
     if (activeFilter === 'today') {
         return {
             title: "Today's Performance",
-            description: `Total sales amount and items sold by SCES for \${format(new Date(), 'MMMM dd, yyyy')}.`
+            description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
         };
     }
     if (activeFilter === 'yesterday') {
         return {
             title: "Yesterday's Performance",
-            description: `Total sales amount and items sold by SCES for \${format(subDays(new Date(), 1), 'MMMM dd, yyyy')}.`
+            description: `Total sales amount and items sold by SCES for ${format(subDays(new Date(), 1), 'MMMM dd, yyyy')}.`
         };
     }
     if (selectedDate) {
         return {
-            title: `Performance for \${format(selectedDate, 'MMMM dd, yyyy')}`,
-            description: `Total sales amount and items sold by SCES for \${format(selectedDate, 'MMMM dd, yyyy')}.`
+            title: `Performance for ${format(selectedDate, 'MMMM dd, yyyy')}`,
+            description: `Total sales amount and items sold by SCES for ${format(selectedDate, 'MMMM dd, yyyy')}.`
         };
     }
     // Fallback
     return {
         title: "Today's Performance",
-        description: `Total sales amount and items sold by SCES for \${format(new Date(), 'MMMM dd, yyyy')}.`
+        description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
     };
   }, [activeFilter, selectedDate]);
   
@@ -271,7 +271,7 @@ export function TodaysPerformanceCard() {
                                         yAxisId="left"
                                         orientation="left"
                                         stroke="hsl(var(--chart-2))"
-                                        tickFormatter={(value) => `₱\${Number(value) / 1000}k`}
+                                        tickFormatter={(value) => `₱${Number(value) / 1000}k`}
                                     />
                                     <YAxis
                                         yAxisId="right"
@@ -289,7 +289,7 @@ export function TodaysPerformanceCard() {
                                     />
                                     <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
                                         {salesData.map((entry, index) => (
-                                            <Cell key={`cell-amount-\${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                         <LabelList dataKey="quantity" content={renderQuantityLabel} />
                                     </Bar>
@@ -301,7 +301,7 @@ export function TodaysPerformanceCard() {
                         </ChartContainer>
                     </div>
                     <div className="text-center mt-4">
-                        <p className="text-sm font-medium text-gray-600">Adjusted Daily Sales Target to hit Monthly Goal</p>
+                        <p className="text-sm font-medium text-gray-600">Total Sales</p>
                         <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
                     </div>
                 </div>
@@ -354,7 +354,7 @@ export function TodaysPerformanceCard() {
                                         }}
                                     >
                                         {layoutChartData.map((entry, index) => (
-                                            <Cell key={`cell-layout-\${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
                                     <Legend />
@@ -373,4 +373,3 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
-    
