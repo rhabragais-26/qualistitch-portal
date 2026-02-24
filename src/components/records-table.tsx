@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -468,8 +469,8 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
         const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
         dateMatches = submissionDate >= from && submissionDate <= to;
       } else {
-        const matchesYear = selectedYear === 'All' || submissionDate.getFullYear().toString() === selectedYear;
-        const matchesMonth = selectedMonth === 'All' || (submissionDate.getMonth() + 1).toString() === selectedMonth;
+        const matchesYear = selectedYear === 'all' || submissionDate.getFullYear().toString() === selectedYear;
+        const matchesMonth = selectedMonth === 'all' || (submissionDate.getMonth() + 1).toString() === selectedMonth;
         dateMatches = matchesYear && matchesMonth;
       }
       
@@ -594,7 +595,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     ))}
                   </SelectContent>
                 </Select>
-                 <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
+                <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')}>Yesterday</Button>
                 <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')}>Today</Button>
               </div>
               <div className='flex items-center gap-2'>
@@ -610,6 +611,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     ))}
                   </SelectContent>
                 </Select>
+                 <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset All Filters</Button>
               </div>
               <div className="flex-1 min-w-[300px]">
                 <Input
@@ -621,26 +623,25 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
               </div>
             </div>
             <div className="w-full flex justify-between items-center mt-2">
-                <div className="flex items-center gap-4 text-left font-semibold text-sm">
-                    {filterType !== 'COMPLETED' && (
-                        <>
-                            <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
-                            <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
-                        </>
-                    )}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset All Filters</Button>
-                    {filterType === 'COMPLETED' ? (
-                        <Link href="/records" className="text-sm text-primary hover:underline">
-                            View Ongoing Orders
-                        </Link>
-                    ) : (
-                        <Link href="/records/completed" className="text-sm text-primary hover:underline">
-                            View Completed Orders
-                        </Link>
-                    )}
-                </div>
+              <div className="flex items-center gap-4 text-left font-semibold text-sm">
+                {filterType !== 'COMPLETED' && (
+                    <>
+                        <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
+                        <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
+                    </>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {filterType === 'COMPLETED' ? (
+                    <Link href="/records" className="text-sm text-primary hover:underline">
+                        View Ongoing Orders
+                    </Link>
+                ) : (
+                    <Link href="/records/completed" className="text-sm text-primary hover:underline">
+                        View Completed Orders
+                    </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
