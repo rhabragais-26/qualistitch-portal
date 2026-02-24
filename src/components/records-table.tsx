@@ -204,7 +204,7 @@ const RecordsTableRow = React.memo(({
     return (
         <React.Fragment>
             <TableRow>
-                <TableCell className="text-xs align-middle text-center py-2 text-black">
+                <TableCell className="text-xs align-middle text-center py-2 text-black whitespace-nowrap">
               <Collapsible>
                 <CollapsibleTrigger asChild>
                     <div className="flex items-center justify-center cursor-pointer">
