@@ -485,35 +485,6 @@ export function ReportsSummary() {
     return <span style={{ color: 'black' }}>{value}</span>;
   };
   
-  const salesByRepTitle = useMemo(() => {
-    let period;
-    if (dateRange?.from) {
-        const fromDate = format(dateRange.from, 'MMM dd, yyyy');
-        const toDate = dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : fromDate;
-        if (fromDate === toDate) {
-            period = `for ${fromDate}`;
-        } else {
-            period = `from ${fromDate} to ${toDate}`;
-        }
-    } else if (selectedWeek) {
-        const [startStr, endStr] = selectedWeek.split('-');
-        const year = parseInt(selectedYear, 10);
-        const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
-        const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
-        period = `for the week of ${format(weekStart, 'MMM dd')} - ${format(weekEnd, 'MMM dd, yyyy')}`;
-    }
-    else if (selectedYear === 'all') {
-        period = 'of All Time';
-    } else if (selectedMonth === 'all') {
-        period = `for the Year ${selectedYear}`;
-    } else {
-        const monthLabel = months.find(m => m.value === selectedMonth)?.label || '';
-        period = `for ${monthLabel} ${selectedYear}`;
-    }
-    return `Sold Amount per Sales Specialist ${period}`;
-  }, [selectedYear, selectedMonth, months, selectedWeek, dateRange]);
-
-
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -704,7 +675,7 @@ export function ReportsSummary() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
               <CardHeader>
-                  <CardTitle>{salesByRepTitle}</CardTitle>
+                  <CardTitle>Quantity Sold vs Customer Count</CardTitle>
                   <CardDescription>Total sales, quantity, and customers by each SCES.</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">
