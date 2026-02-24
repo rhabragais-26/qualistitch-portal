@@ -69,18 +69,6 @@ const COLORS = [
     'hsl(180, 70%, 70%)',
 ];
 
-const renderQuantityLabel = (props: any) => {
-    const { x, y, width, height, value } = props;
-    
-    if (value === 0 || !height || typeof x !== 'number' || typeof y !== 'number') return null;
-  
-    return (
-      <text x={x + width / 2} y={y + height / 2} fill="white" fontSize={12} textAnchor="middle" dominantBaseline="middle" fontWeight="bold">
-        {value}
-      </text>
-    );
-};
-
 const renderAmountLabel = (props: any) => {
     const { x, y, width, value, stroke } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
@@ -108,6 +96,18 @@ const renderAmountLabel = (props: any) => {
       </g>
     );
 };
+  
+const renderQuantityLabel = (props: any) => {
+    const { x, y, width, height, value } = props;
+    
+    if (value === 0 || !height || typeof x !== 'number' || typeof y !== 'number') return null;
+  
+    return (
+      <text x={x + width / 2} y={y + height / 2} fill="white" fontSize={12} textAnchor="middle" dominantBaseline="middle" fontWeight="bold">
+        {value}
+      </text>
+    );
+};
 
 const renderHourlyLabel = (props: any) => {
     const { x, y, value } = props;
@@ -115,10 +115,9 @@ const renderHourlyLabel = (props: any) => {
     if (typeof x !== 'number' || typeof y !== 'number' || typeof value !== 'number' || value <= 0) {
       return null;
     }
-
-    const quantity = props.payload?.quantity ?? 0;
-    const labelText = `${value} (${quantity})`;
     
+    const labelText = `${value}`;
+
     return (
         <text
           x={x}
@@ -133,7 +132,6 @@ const renderHourlyLabel = (props: any) => {
         </text>
     );
 };
-
 
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
@@ -499,13 +497,13 @@ export function TodaysPerformanceCard() {
             <CardContent>
                 <div className="text-left mb-4">
                     <CardTitle>Hourly Sales Breakdown</CardTitle>
-                    <CardDescription>Customer count and quantity per hour for the selected day, compared to previous weeks.</CardDescription>
+                    <CardDescription>Customer count per hour for the selected day, compared to previous weeks.</CardDescription>
                 </div>
                 <div style={{ height: '300px' }}>
                     <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={hourlySalesData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
-                                <CartesianGrid stroke="hsl(var(--border) / 0.7)" />
+                                <CartesianGrid stroke="hsl(var(--border) / 0.7)" vertical={true} horizontal={true}/>
                                 <XAxis
                                 dataKey="hour"
                                 tickLine={false}
