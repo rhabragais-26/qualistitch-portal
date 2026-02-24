@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -851,17 +852,29 @@ export function ReportsSummary() {
                     data={soldQtyByProductType}
                     layout="vertical"
                     margin={{
-                      top: 20, right: 30, left: 20, bottom: 5,
+                      top: 20, right: 40, left: 100, bottom: 5,
                     }}
                   >
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
+                    <XAxis
+                        type="number"
+                        scale="log"
+                        domain={[0.1, 'dataMax']}
+                        allowDataOverflow
+                        tick={{ fill: 'hsl(var(--foreground))' }}
+                    />
+                    <YAxis
+                        dataKey="name"
+                        type="category"
+                        tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                        width={180}
+                        interval={0}
+                    />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Bar dataKey="quantity" radius={[0, 4, 0, 0]}>
+                    <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
                       {soldQtyByProductType.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
