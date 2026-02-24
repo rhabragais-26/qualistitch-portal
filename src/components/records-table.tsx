@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -50,6 +48,7 @@ import { FieldErrors } from 'react-hook-form';
 import Link from 'next/link';
 import { getMonth, getYear, startOfDay, endOfDay, subDays } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
+
 
 const orderSchema = z.object({
   id: z.string().optional(), // Keep track of original order if needed
@@ -588,7 +587,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                   </SelectContent>
                 </Select>
                 <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
-                  <SelectTrigger className="w-[140px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectTrigger className="w-[140px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
                   <SelectContent>
@@ -603,7 +602,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
               <div className='flex items-center gap-2'>
                 <span className="text-sm font-medium">Filter by SCES:</span>
                 <Select value={csrFilter} onValueChange={setCsrFilter}>
-                  <SelectTrigger className="w-[140px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Filter by SCES" />
                   </SelectTrigger>
                   <SelectContent>
@@ -625,13 +624,13 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
               </div>
             </div>
             <div className="w-full flex justify-between items-center mt-2">
-              <div className="flex items-center gap-4 text-left font-semibold text-sm">
-                {filterType !== 'COMPLETED' && (
-                    <>
-                        <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
-                        <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
-                    </>
-                )}
+               <div className="flex items-center gap-4 text-left font-semibold text-sm">
+                  {filterType !== 'COMPLETED' && (
+                      <>
+                          <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary">{formatCurrency(totalAmount)}</span></span>
+                          <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary">{totalQuantity.toLocaleString()}</span></span>
+                      </>
+                  )}
               </div>
               <div className="flex items-center gap-2">
                 {filterType === 'COMPLETED' ? (
@@ -675,61 +674,23 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
-                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
+                  
                   return (
-                    <React.Fragment key={lead.id}>
-                        <RecordsTableRow 
-                            lead={lead}
-                            openLeadId={openLeadId}
-                            openCustomerDetails={openCustomerDetails}
-                            isRepeat={isRepeat}
-                            isReadOnly={isReadOnly}
-                            canDelete={canDelete}
-                            filterType={filterType}
-                            getContactDisplay={getContactDisplay}
-                            toggleCustomerDetails={toggleCustomerDetails}
-                            handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
-                            handleDeleteLead={handleDeleteLead}
-                            setOpenLeadId={setOpenLeadId}
-                        />
-                        {openLeadId === lead.id && (
-                        <TableRow>
-                            <TableCell colSpan={13} className="p-0">
-                            <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
-                                <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
-                                <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Product Type</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Color</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Size</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Quantity</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {lead.orders?.map((order: any, index: number) => (
-                                    <TableRow key={order.id || index} className="border-0">
-                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.productType}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.color}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.size}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.quantity}</TableCell>
-                                    </TableRow>
-                                    ))}
-                                </TableBody>
-                                {lead.orders && lead.orders.length > 1 && (
-                                  <TableFooter>
-                                      <TableRow>
-                                      <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
-                                      <TableCell className="font-bold text-black text-center pt-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
-                                      </TableRow>
-                                  </TableFooter>
-                                )}
-                                </Table>
-                            </div>
-                            </TableCell>
-                        </TableRow>
-                        )}
-                    </React.Fragment>
+                    <RecordsTableRow
+                        key={lead.id}
+                        lead={lead}
+                        openLeadId={openLeadId}
+                        openCustomerDetails={openCustomerDetails}
+                        isRepeat={!lead.forceNewCustomer && lead.orderNumber > 0}
+                        isReadOnly={isReadOnly}
+                        canDelete={canDelete}
+                        filterType={filterType}
+                        getContactDisplay={getContactDisplay}
+                        toggleCustomerDetails={toggleCustomerDetails}
+                        handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
+                        handleDeleteLead={handleDeleteLead}
+                        setOpenLeadId={setOpenLeadId}
+                    />
                   );
                 })}
                 </TableBody>
@@ -747,29 +708,3 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
-
-```
-- tsconfig.prod.json:
-```json
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "noEmit": true
-  }
-}
-
-```
-- typings.d.ts:
-```ts
-declare module 'react-day-picker' {
-  import { DayPicker } from 'react-day-picker';
-  export { DayPicker };
-}
-
-```
-- next-env.d.ts:
-```ts
-/// <reference types="next" />
-/// <reference types="next/image" />
-
-```
