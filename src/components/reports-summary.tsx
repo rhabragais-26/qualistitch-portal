@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -695,14 +696,12 @@ export function ReportsSummary() {
                     <TableBody>
                     {salesRepData.filter(item => item.amount > 0).map((item, index) => (
                         <TableRow key={index}>
-                        <TableCell className="font-medium text-xs p-1">
-                            <div className="flex items-center justify-center">
-                                {item.name}
-                            </div>
+                        <TableCell className="font-medium text-xs p-1 text-center align-middle">
+                            {item.name}
                         </TableCell>
-                        <TableCell className="text-xs p-1 text-center">{item.quantity}</TableCell>
-                        <TableCell className="text-xs p-1 text-center">{item.customerCount}</TableCell>
-                        <TableCell className="text-xs p-1 text-center">{formatCurrency(item.amount)}</TableCell>
+                        <TableCell className="text-xs p-1 text-center align-middle">{item.quantity}</TableCell>
+                        <TableCell className="text-xs p-1 text-center align-middle">{item.customerCount}</TableCell>
+                        <TableCell className="text-xs p-1 text-center align-middle">{formatCurrency(item.amount)}</TableCell>
                         </TableRow>
                     ))}
                     </TableBody>
@@ -874,7 +873,14 @@ export function ReportsSummary() {
                     top15Cities.map((cityData) => (
                         <TableRow key={cityData.city}>
                         <TableCell className="font-medium text-center align-middle">{cityData.city}</TableCell>
-                        <TableCell className="text-center align-middle">{formatCurrency(cityData.amount)}</TableCell>
+                        <TableCell className="text-center align-middle">
+                            {formatCurrency(cityData.amount)}
+                            {totalSales > 0 && (
+                                <span className="font-bold ml-1">
+                                    ({((cityData.amount / totalSales) * 100).toFixed(2)}%)
+                                </span>
+                            )}
+                        </TableCell>
                         <TableCell className="text-center align-middle">{cityData.orderCount}</TableCell>
                         </TableRow>
                     ))
@@ -894,3 +900,5 @@ export function ReportsSummary() {
     </>
   );
 }
+
+    
