@@ -84,6 +84,27 @@ const renderAmountLabel = (props: any) => {
       </g>
     );
 };
+
+const renderHourlyLabel = (props: any) => {
+    const { x, y, value } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+  
+    return (
+      <g>
+        <text 
+          x={x} 
+          y={y}
+          dy={-15}
+          textAnchor="middle"
+          fill="black"
+          fontSize={12} 
+          fontWeight="bold"
+        >
+          {formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })}
+        </text>
+      </g>
+    );
+};
   
 const renderQuantityLabel = (props: any) => {
     const { x, y, width, height, value } = props;
@@ -104,27 +125,6 @@ export function TodaysPerformanceCard() {
 
   const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-
-  const renderHourlyLabel = (props: any) => {
-    const { x, y, value, payload } = props;
-    if (value === 0 || typeof x !== 'number' || typeof y !== 'number' || !payload) return null;
-  
-    return (
-      <g>
-        <text 
-          x={x} 
-          y={y}
-          dy={-10}
-          textAnchor="middle"
-          fill="black"
-          fontSize={12} 
-          fontWeight="bold"
-        >
-          {`${formatCurrency(value, { notation: 'compact', compactDisplay: 'short' })} (${payload.quantity})`}
-        </text>
-      </g>
-    );
-  };
   
   const salesData = useMemo(() => {
     if (!leads) return [];
@@ -451,7 +451,7 @@ export function TodaysPerformanceCard() {
         <>
             <Separator className="my-4" />
             <CardContent>
-                <CardHeader className="p-0 mb-4 text-center">
+                <CardHeader className="p-0 mb-4 text-left">
                     <CardTitle>Hourly Sales Breakdown</CardTitle>
                     <CardDescription>Sales and quantity per hour for the selected day.</CardDescription>
                 </CardHeader>
@@ -459,7 +459,7 @@ export function TodaysPerformanceCard() {
                     <ChartContainer config={{ amount: { label: 'Amount' } }} className="w-full h-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={hourlySalesData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <CartesianGrid stroke="hsl(var(--border))" />
                                 <XAxis
                                 dataKey="hour"
                                 tickLine={false}
