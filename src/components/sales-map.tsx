@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
 import { formatCurrency } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Home } from 'lucide-react';
 
 type SalesMapProps = {
   salesByCityData: {
@@ -57,8 +59,27 @@ const cityCoordinates: { [key: string]: [number, number] } = {
     'Naga City': [13.6233, 123.1833],
 };
 
+const ResetViewControl = ({ center, zoom }: { center: LatLngExpression, zoom: number }) => {
+  const map = useMap();
+
+  const handleReset = () => {
+    map.flyTo(center, zoom);
+  };
+
+  return (
+    <div className="leaflet-top leaflet-right">
+      <div className="leaflet-control leaflet-bar mt-[10px] mr-[10px]">
+        <Button onClick={handleReset} className="w-8 h-8 p-0" title="Reset view">
+          <Home className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps) {
   const center: LatLngExpression = [12.8797, 121.774];
+  const zoomLevel = 5.5;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [mapInstanceKey, setMapInstanceKey] = useState(0);
 
@@ -147,7 +168,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
       <MapContainer
         key={mapInstanceKey}
         center={center}
-        zoom={5.5}
+        zoom={zoomLevel}
         minZoom={2}
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%' }}
@@ -187,6 +208,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
         ))}
 
         <Legend />
+        <ResetViewControl center={center} zoom={zoomLevel} />
       </MapContainer>
     </div>
   );
