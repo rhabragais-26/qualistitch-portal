@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -797,8 +798,8 @@ export function ReportsSummary() {
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          innerRadius="60%"
-                          outerRadius="80%"
+                          innerRadius="50%"
+                          outerRadius="70%"
                           labelLine={false}
                           label={renderCustomizedLabel}
                           >
