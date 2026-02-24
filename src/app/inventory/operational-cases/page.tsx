@@ -76,8 +76,8 @@ function OperationalCasesPageContent() {
         </div>
       )}
       <Header isOperationalCasesPageDirty={isFormDirty}>
-        <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        <main className="flex-1 w-full py-4 sm:py-6 lg:py-8 px-8 sm:px-12 lg:px-16">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
               <div className="lg:col-span-2 lg:sticky lg:top-24">
                    <OperationalCasesForm 
                       editingCase={editingCase}
