@@ -254,10 +254,6 @@ const RecordsTableRow = React.memo(({
                     <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
                       {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                       {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                      <div className="pt-2">
-                        <span className="font-bold text-gray-600">Lead ID:</span>
-                        <p className="font-mono text-xs text-black bg-gray-200 rounded px-1 inline-block">{lead.id}</p>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -406,7 +402,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
         
         const totalCustomerQuantity = orders.reduce((sum, o) => {
             if (!Array.isArray(o.orders)) return sum;
-            return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
+            return sum + o.orders.reduce((orderSum, item) => sum + (item.quantity || 0), 0)
         }, 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
