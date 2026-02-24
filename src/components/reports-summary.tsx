@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useMemo, useState, useEffect, useCallback } from 'react';
@@ -29,16 +28,19 @@ const SalesMap = dynamic(
   }
 );
 
+type Order = {
+  quantity: number;
+  productType: string;
+  color: string;
+  [key: string]: any;
+};
+
 type Lead = {
   id: string;
   customerName: string;
   salesRepresentative: string;
   priorityType: string;
-  orders: {
-    quantity: number;
-    productType: string;
-    [key: string]: any;
-  }[];
+  orders: Order[];
   submissionDateTime: string;
   [key: string]: any;
 };
@@ -85,7 +87,7 @@ const COLORS = [
   'hsl(180, 70%, 70%)',
 ];
 
-const renderAmountLabel = (props: any, backgroundColor: string) => {
+const renderAmountLabel = (props: any) => {
     const { x, y, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
   
@@ -94,7 +96,7 @@ const renderAmountLabel = (props: any, backgroundColor: string) => {
   
     return (
       <g>
-        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={backgroundColor} rx={4} ry={4} />
+        <rect x={x - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill="rgba(255, 255, 255, 0.8)" rx={4} ry={4} />
         <text 
           x={x} 
           y={y - rectHeight/2 - 5}
@@ -136,6 +138,41 @@ export function ReportsSummary() {
   const [reportData, setReportData] = useState<GenerateReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
   const [reportError, setReportError] = useState<string | null>(null);
+  
+  const [colorProductTypeFilter, setColorProductTypeFilter] = useState<string>('');
+
+  const productTypesForFilter = useMemo(() => {
+    if (!leads) return [];
+    return Array.from(new Set(leads.flatMap(l => l.orders.map(o => o.productType))))
+        .filter(type => type !== 'Client Owned' && type !== 'Patches')
+        .sort();
+  }, [leads]);
+  
+  useEffect(() => {
+    if (productTypesForFilter.length > 0 && !colorProductTypeFilter) {
+        setColorProductTypeFilter(productTypesForFilter[0]);
+    }
+  }, [productTypesForFilter, colorProductTypeFilter]);
+
+  const itemsSoldPerColor = useMemo(() => {
+    if (!leads || !colorProductTypeFilter) return [];
+
+    const colorCounts = filteredLeads.reduce((acc, lead) => {
+        lead.orders.forEach(order => {
+            if (order.productType === colorProductTypeFilter) {
+                const color = order.color || 'Unknown';
+                acc[color] = (acc[color] || 0) + order.quantity;
+            }
+        });
+        return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(colorCounts).map(([color, quantity]) => ({
+        name: color,
+        value: quantity,
+    })).sort((a,b) => b.value - a.value);
+  }, [leads, colorProductTypeFilter, reportData]);
+
 
   const months = useMemo(() => [
       { value: 'all', label: 'All Months' },
@@ -206,11 +243,49 @@ export function ReportsSummary() {
     return reportData;
   }, [reportData]);
   
+  const filteredLeads = useMemo(() => {
+    if (!leads) return [];
+    
+    return leads.filter(lead => {
+        try {
+            const submissionDate = new Date(lead.submissionDateTime);
+            let isInDateRange = true;
+
+            if (dateRange?.from) {
+                const from = startOfDay(dateRange.from);
+                const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+                isInDateRange = submissionDate >= from && submissionDate <= to;
+            } else if (selectedWeek) {
+                 const [startStr, endStr] = selectedWeek.split('-');
+                 const year = parseInt(selectedYear, 10);
+                 const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
+                 const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
+                 isInDateRange = submissionDate >= startOfDay(weekStart) && submissionDate <= endOfDay(weekEnd);
+            }
+            else {
+                const year = parseInt(selectedYear, 10);
+                const month = parseInt(selectedMonth, 10);
+                if (selectedYear !== 'all' && getYear(submissionDate) !== year) {
+                    return false;
+                }
+                if (selectedMonth !== 'all' && (getMonth(submissionDate) + 1) !== month) {
+                    return false;
+                }
+            }
+            
+            return isInDateRange;
+
+        } catch (e) {
+            return false;
+        }
+    });
+}, [leads, selectedYear, selectedMonth, selectedWeek, dateRange]);
+  
   const top15Cities = useMemo(() => salesByCityData.slice(0, 15), [salesByCityData]);
 
-  const totalPriorityQuantity = useMemo(() => 
-    priorityData.reduce((sum, item) => sum + item.value, 0) || 0
-  , [priorityData]);
+  const totalColorQuantity = useMemo(() => 
+    itemsSoldPerColor.reduce((sum, item) => sum + item.value, 0) || 0
+  , [itemsSoldPerColor]);
 
   const totalWeeklySales = useMemo(() => weeklySalesData.reduce((sum, item) => sum + item.amount, 0), [weeklySalesData]);
 
@@ -389,7 +464,7 @@ export function ReportsSummary() {
                         <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
                       <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
-                        <LabelList content={(props) => renderAmountLabel(props, 'hsla(160, 60%, 45%, 0.4)')} dataKey="amount" />
+                        <LabelList content={(props) => renderAmountLabel(props)} dataKey="amount" />
                       </Line>
                   </ComposedChart>
                   </ResponsiveContainer>
@@ -436,7 +511,7 @@ export function ReportsSummary() {
                       <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
                       <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-5))" strokeWidth={2}>
-                      <LabelList content={(props) => renderAmountLabel(props, 'hsla(340, 75%, 55%, 0.4)')} dataKey="amount" />
+                      <LabelList content={(props) => renderAmountLabel(props)} dataKey="amount" />
                       </Line>
                   </ComposedChart>
                   </ResponsiveContainer>
@@ -506,92 +581,105 @@ export function ReportsSummary() {
             </CardContent>
             </Card>
             <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
-            <CardHeader>
-                <CardTitle>Sold by Priority Type</CardTitle>
-                <CardDescription>Total quantity of orders for each priority type.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col justify-between">
-                <div className="flex-1 h-[250px] -mt-4">
-                <ChartContainer config={chartConfig} className="w-full h-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Tooltip content={<ChartTooltipContent nameKey="value" />} />
-                        <Pie
-                        data={priorityData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius="40%"
-                        outerRadius="80%"
-                        labelLine={false}
-                        label={({
-                            cx,
-                            cy,
-                            midAngle,
-                            innerRadius,
-                            outerRadius,
-                            percent,
-                            index,
-                        }) => {
-                            const RADIAN = Math.PI / 180;
-                            const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+              <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Item Sold per Color</CardTitle>
+                        <CardDescription>Total quantity of items sold for each color of a selected product.</CardDescription>
+                    </div>
+                    <Select value={colorProductTypeFilter} onValueChange={setColorProductTypeFilter}>
+                        <SelectTrigger className="w-[220px]">
+                            <SelectValue placeholder="Select Product Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {productTypesForFilter.map(type => (
+                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col justify-between">
+                  <div className="flex-1 h-[250px] -mt-4">
+                  <ChartContainer config={chartConfig} className="w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                          <Tooltip content={<ChartTooltipContent nameKey="value" />} />
+                          <Pie
+                          data={itemsSoldPerColor}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="40%"
+                          outerRadius="80%"
+                          labelLine={false}
+                          label={({
+                              cx,
+                              cy,
+                              midAngle,
+                              innerRadius,
+                              outerRadius,
+                              percent,
+                              index,
+                          }) => {
+                              const RADIAN = Math.PI / 180;
+                              const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-                            return (
-                            <text
-                                x={x}
-                                y={y}
-                                fill="white"
-                                textAnchor={x > cx ? "start" : "end"}
-                                dominantBaseline="central"
-                                fontSize={14}
-                            >
-                                {`${(percent * 100).toFixed(0)}%`}
-                            </text>
-                            );
-                        }}
-                        >
-                        {priorityData.map((entry, index) => {
-                            const color = priorityColors[entry.name as keyof typeof priorityColors] || COLORS[index % COLORS.length];
-                            return <Cell key={`cell-${index}`} fill={color} />;
-                        })}
-                        </Pie>
-                        <Legend verticalAlign="bottom" height={36}/>
-                    </PieChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-                </div>
-                <div className="mt-auto mx-4">
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead className="text-xs p-1">Priority Type</TableHead>
-                        <TableHead className="text-right text-xs p-1">Quantity</TableHead>
-                        <TableHead className="text-right text-xs p-1">Percentage</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {priorityData.map((item, index) => {
-                        const color = priorityColors[item.name as keyof typeof priorityColors] || COLORS[index % COLORS.length];
-                        return (
-                        <TableRow key={index}>
-                            <TableCell className="font-medium flex items-center text-xs p-1">
-                            <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: color }}></span>
-                            {item.name}
-                            </TableCell>
-                            <TableCell className="text-right text-xs p-1">{item.value}</TableCell>
-                            <TableCell className="text-right text-xs p-1">
-                            {totalPriorityQuantity > 0 ? `${((item.value / totalPriorityQuantity) * 100).toFixed(2)}%` : '0.00%'}
-                            </TableCell>
-                        </TableRow>
-                        );
-                    })}
-                    </TableBody>
-                </Table>
-                </div>
-            </CardContent>
+                              return (
+                              <text
+                                  x={x}
+                                  y={y}
+                                  fill="white"
+                                  textAnchor={x > cx ? "start" : "end"}
+                                  dominantBaseline="central"
+                                  fontSize={14}
+                              >
+                                  {`${(percent * 100).toFixed(0)}%`}
+                              </text>
+                              );
+                          }}
+                          >
+                          {itemsSoldPerColor.map((entry, index) => {
+                              return <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />;
+                          })}
+                          </Pie>
+                          <Legend verticalAlign="bottom" height={36}/>
+                      </PieChart>
+                      </ResponsiveContainer>
+                  </ChartContainer>
+                  </div>
+                  <div className="mt-auto mx-4">
+                  <Table>
+                      <TableHeader>
+                      <TableRow>
+                          <TableHead className="text-xs p-1">Color</TableHead>
+                          <TableHead className="text-right text-xs p-1">Quantity</TableHead>
+                          <TableHead className="text-right text-xs p-1">Percentage</TableHead>
+                      </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                      {itemsSoldPerColor.map((item, index) => {
+                          const color = COLORS[index % COLORS.length];
+                          return (
+                          <TableRow key={index}>
+                              <TableCell className="font-medium flex items-center text-xs p-1">
+                              <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: color }}></span>
+                              {item.name}
+                              </TableCell>
+                              <TableCell className="text-right text-xs p-1">{item.value}</TableCell>
+                              <TableCell className="text-right text-xs p-1">
+                              {totalColorQuantity > 0 ? `${((item.value / totalColorQuantity) * 100).toFixed(2)}%` : '0.00%'}
+                              </TableCell>
+                          </TableRow>
+                          );
+                      })}
+                      </TableBody>
+                  </Table>
+                  </div>
+              </CardContent>
             </Card>
         </div>
         <Card className="lg:col-span-2">
