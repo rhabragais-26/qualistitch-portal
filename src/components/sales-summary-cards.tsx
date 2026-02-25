@@ -57,7 +57,7 @@ const renderAmountLabel = (props: any) => {
       </text>
     );
 };
-
+  
 const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string; amount: number; percentage: number; color: string }) => {
     const data = [
         { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
@@ -352,12 +352,12 @@ export function SalesSummaryCards() {
               <CardHeader className="p-0 mb-2 text-center">
                 <CardTitle className="text-base font-medium">Ticket Breakdown</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 relative w-full h-32">
+              <CardContent className="p-0 relative w-full flex-1">
                 <ChartContainer config={{}} className="w-full h-full">
                   <ResponsiveContainer>
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={ticketData}>
                       <PolarGrid />
-                      <PolarAngleAxis dataKey="category" tick={{ fontSize: 8 }} />
+                      <PolarAngleAxis dataKey="category" tick={{ fontSize: 10 }} />
                       <PolarRadiusAxis angle={30} domain={[0, totalUniqueCustomers > 0 ? totalUniqueCustomers : 1]} tick={false} axisLine={false} />
                       <Radar name="Customers" dataKey="customers" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
                        <Tooltip
@@ -378,10 +378,6 @@ export function SalesSummaryCards() {
                   </ResponsiveContainer>
                 </ChartContainer>
               </CardContent>
-              <div className="mt-2 text-center">
-                <span className="text-lg font-bold">{totalUniqueCustomers}</span>
-                <p className="text-xs text-muted-foreground">Total Unique Customers</p>
-              </div>
             </Card>
             <Card className="p-2">
                 <CardHeader className="p-0 pb-2 text-center">
