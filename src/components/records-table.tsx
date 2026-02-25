@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -499,6 +500,12 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
         }, { totalAmount: 0, totalQuantity: 0 });
     }, [filteredLeads]);
 
+    const uniqueCustomers = useMemo(() => {
+      if (!filteredLeads) return 0;
+      const customerNames = new Set(filteredLeads.map(lead => lead.customerName.toLowerCase()));
+      return customerNames.size;
+    }, [filteredLeads]);
+
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
   const toggleCustomerDetails = useCallback((leadId: string) => {
@@ -622,6 +629,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                       <>
                           <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary text-lg">{formatCurrency(totalAmount)}</span></span>
                           <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary text-lg">{totalQuantity.toLocaleString()}</span></span>
+                          <span className="ml-4">Customer: <span className="font-bold text-primary text-lg">{uniqueCustomers}</span></span>
                       </>
                   )}
               </div>
@@ -701,3 +709,4 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
+
