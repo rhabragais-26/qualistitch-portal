@@ -198,11 +198,13 @@ const RecordsTableRow = React.memo(({
     if (lead.paymentType === 'Fully Paid' && lead.balance && lead.balance > 0) {
         displayPaymentType = 'Partially Paid';
     }
+    
+    const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
 
     return (
         <React.Fragment key={lead.id}>
             <TableRow>
-                <TableCell className="text-xs align-middle text-center py-2 text-black whitespace-nowrap">
+            <TableCell className="text-xs align-middle text-center py-2 text-black whitespace-nowrap">
               <Collapsible>
                 <CollapsibleTrigger asChild>
                     <div className="flex items-center justify-center cursor-pointer">
@@ -315,26 +317,34 @@ const RecordsTableRow = React.memo(({
             <TableRow>
                 <TableCell colSpan={13} className="p-0">
                     <div className="p-4 bg-blue-50 rounded-md my-2 max-w-4xl mx-auto">
-                        <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
+                        <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center">Product</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center">Color</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center">Size</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center">Quantity</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {lead.orders.map((order, index) => (
                                     <TableRow key={index} className="border-0">
-                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.productType}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.color}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.size}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-right align-middle">{order.quantity}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.productType}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.color}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.size}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.quantity}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
+                            {lead.orders && lead.orders.length > 1 && (
+                                <TableFooter>
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
+                                        <TableCell className="font-bold text-black text-center pt-1 px-2">{totalQuantity}</TableCell>
+                                    </TableRow>
+                                </TableFooter>
+                            )}
                         </Table>
                     </div>
                 </TableCell>
@@ -609,58 +619,58 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
-                <Input
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500 w-48 h-9"
-                />
-                <Select value={csrFilter} onValueChange={setCsrFilter}>
-                  <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by SCES" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All SCES</SelectItem>
-                    {salesRepresentatives.map(csr => (
-                      <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
-                  <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Years</SelectItem>
-                    {availableYears.map(year => (
-                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
-                  <SelectTrigger className="w-[140px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map(month => (
-                      <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
-                <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
-                 <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
-              </div>
+              <Input
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-gray-100 text-black placeholder:text-gray-500 w-48 h-9"
+              />
+              <Select value={csrFilter} onValueChange={setCsrFilter}>
+                <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Filter by SCES" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All SCES</SelectItem>
+                  {salesRepresentatives.map(csr => (
+                    <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
+              <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
+                <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
+                <SelectTrigger className="w-[140px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map(month => (
+                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
+              <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
+            </div>
             <div className="w-full flex justify-between items-center mt-2">
-               <div className="flex items-center gap-4 text-left font-semibold text-sm">
-                  {filterType !== 'COMPLETED' && (
-                      <>
-                          <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary text-lg">{formatCurrency(totalAmount)}</span></span>
-                          <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary text-lg">{totalQuantity.toLocaleString()}</span></span>
-                          <span className="ml-4">Customer: <span className="font-bold text-primary text-lg">{uniqueCustomers}</span></span>
-                      </>
-                  )}
-              </div>
+                <div className="flex items-center gap-4 text-left font-semibold text-sm">
+                    {filterType !== 'COMPLETED' && (
+                        <>
+                            <span>Overall Amount (Ongoing Orders): <span className="font-bold text-primary text-lg">{formatCurrency(totalAmount)}</span></span>
+                            <span className="ml-4">Total Quantity Ordered: <span className="font-bold text-primary text-lg">{totalQuantity.toLocaleString()}</span></span>
+                            <span className="ml-4">Customer: <span className="font-bold text-primary text-lg">{uniqueCustomers}</span></span>
+                        </>
+                    )}
+                </div>
               <div className="flex items-center gap-2">
                 {filterType === 'COMPLETED' ? (
                     <Link href="/records" className="text-sm text-primary hover:underline">
