@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -197,7 +197,7 @@ export function TodaysPerformanceCard() {
       .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
   }, [leads, activeFilter, selectedDate]);
-  
+
   const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesTableData } = useMemo(() => {
     if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesTableData: [] };
 
@@ -244,7 +244,8 @@ export function TodaysPerformanceCard() {
     let totalQty = 0;
 
     filteredLeads.forEach(lead => {
-        totalQty += lead.orders.reduce((sum, currentOrder) => sum + (currentOrder.quantity || 0), 0);
+        const quantity = lead.orders.reduce((sum, currentOrder) => sum + (currentOrder.quantity || 0), 0);
+        totalQty += quantity;
         
         if (lead.customerName) {
            totalCust.add(lead.customerName.toLowerCase());
@@ -455,12 +456,12 @@ export function TodaysPerformanceCard() {
                     </div>
                     <div className="flex justify-center items-end gap-8 mt-4">
                         <div className="text-center">
-                            <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                            <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
-                        </div>
-                        <div className="text-center">
                             <p className="text-sm font-medium text-gray-600">Total Quantity</p>
                             <p className="text-2xl font-bold">{totalItemsSold.toLocaleString()}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm font-medium text-gray-600">Total Sales</p>
+                            <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
                         </div>
                         <div className="text-center">
                             <p className="text-sm font-medium text-gray-600">Total Customers</p>
@@ -537,74 +538,76 @@ export function TodaysPerformanceCard() {
             <Separator className="my-4" />
              <CardContent>
                 <div className="text-left mb-4">
-                    <CardTitle>Hourly Performance</CardTitle>
-                    <CardDescription>Customer count and items sold per hour for the selected day.</CardDescription>
-                </div>
-                <div style={{ height: '300px' }}>
-                    <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={hourlySalesData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
-                                <CartesianGrid stroke="hsl(var(--border) / 0.7)" vertical={true} horizontal={true}/>
-                                <XAxis
-                                dataKey="hour"
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                                tickFormatter={(value) => {
-                                    const hour = parseInt(value.split(':')[0], 10);
-                                    if (hour === 0) return '12am';
-                                    if (hour === 12) return '12pm';
-                                    if (hour > 12) return `${'\'\'\''}${hour - 12}${'\'\''}`;
-                                    return `${'\'\'\''}${hour}${'\'\''}`;
-                                }}
-                                interval={0}
-                                />
-                                <YAxis tickFormatter={(value) => `${'\'\''}${value}${'\'\''}`} />
-                                <Tooltip
-                                    content={<ChartTooltipContent
-                                        formatter={(value, name, item) => {
-                                            if (name === 'Customer Count') {
-                                                return (
-                                                    <div className="flex flex-col">
-                                                        <span>{item.payload.customerCount} customers</span>
-                                                        <span className="text-muted-foreground">{item.payload.quantity} items</span>
-                                                    </div>
-                                                );
-                                            }
-                                            const weekMatch = name.match(/(\d+) week(s)? ago/);
-                                            if(weekMatch) {
-                                                const weekNum = weekMatch[1];
-                                                 return (
-                                                    <div className="flex flex-col">
-                                                        <span>{value as number} customers</span>
-                                                        <span className="text-muted-foreground">({weekNum} week{parseInt(weekNum, 10) > 1 ? 's' : ''} ago)</span>
-                                                    </div>
-                                                );
-                                            }
-                                            return value;
-                                        }}
-                                    />}
-                                />
-                                <Legend />
-                                {historicalDataKeys.map((key, index) => (
-                                    <Line
-                                        key={key}
-                                        dataKey={key}
-                                        type="monotone"
-                                        name={`${'\'\'\''}${index + 1}${'\'\''}`}
-                                        stroke={COLORS[(index + 1) % COLORS.length]}
-                                        strokeOpacity={0.4}
-                                        strokeWidth={2}
-                                        dot={false}
-                                        activeDot={false}
+                    <CardHeader className="p-0">
+                        <CardTitle>Hourly Performance</CardTitle>
+                        <CardDescription>Customer count and items sold per hour for the selected day.</CardDescription>
+                    </CardHeader>
+                    <div style={{ height: '300px' }}>
+                        <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={hourlySalesData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
+                                    <CartesianGrid stroke="hsl(var(--border) / 0.7)" vertical={true} horizontal={true}/>
+                                    <XAxis
+                                    dataKey="hour"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickMargin={8}
+                                    tickFormatter={(value) => {
+                                        const hour = parseInt(value.split(':')[0], 10);
+                                        if (hour === 0) return '12am';
+                                        if (hour === 12) return '12pm';
+                                        if (hour > 12) return `${'\'\'\''}${hour - 12}${'\'\''}`;
+                                        return `${'\'\'\''}${hour}${'\'\''}`;
+                                    }}
+                                    interval={0}
                                     />
-                                ))}
-                                <Line type="monotone" dataKey="customerCount" name="Customer Count" stroke="hsl(var(--chart-1))" strokeWidth={2}>
-                                    <LabelList dataKey="customerCount" content={renderHourlyLabel} />
-                                </Line>
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
+                                    <YAxis tickFormatter={(value) => `${'\'\'\''}${value}${'\'\''}`} />
+                                    <Tooltip
+                                        content={<ChartTooltipContent
+                                            formatter={(value, name, item) => {
+                                                if (name === 'Customer Count') {
+                                                    return (
+                                                        <div className="flex flex-col">
+                                                            <span>{item.payload.customerCount} customers</span>
+                                                            <span className="text-muted-foreground">{item.payload.quantity} items</span>
+                                                        </div>
+                                                    );
+                                                }
+                                                const weekMatch = name.match(/(\d+) week(s)? ago/);
+                                                if(weekMatch) {
+                                                    const weekNum = weekMatch[1];
+                                                     return (
+                                                        <div className="flex flex-col">
+                                                            <span>{value as number} customers</span>
+                                                            <span className="text-muted-foreground">({weekNum} week{parseInt(weekNum, 10) > 1 ? 's' : ''} ago)</span>
+                                                        </div>
+                                                    );
+                                                }
+                                                return value;
+                                            }}
+                                        />}
+                                    />
+                                    <Legend />
+                                    {historicalDataKeys.map((key, index) => (
+                                        <Line
+                                            key={key}
+                                            dataKey={key}
+                                            type="monotone"
+                                            name={`${'\'\'\''}${index + 1}${'\'\''}`}
+                                            stroke={COLORS[(index + 1) % COLORS.length]}
+                                            strokeOpacity={0.4}
+                                            strokeWidth={2}
+                                            dot={false}
+                                            activeDot={false}
+                                        />
+                                    ))}
+                                    <Line type="monotone" dataKey="customerCount" name="Customer Count" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                                        <LabelList dataKey="customerCount" content={renderHourlyLabel} />
+                                    </Line>
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                    </div>
                 </div>
             </CardContent>
              <Separator className="my-4" />
