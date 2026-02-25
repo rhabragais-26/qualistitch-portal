@@ -121,7 +121,7 @@ const generateReportFlow = ai.defineFlow(
     const typedLeads = leads as Lead[];
 
     const availableYears = Array.from(
-      new Set(typedLeads.map((lead) => getYear(parseISO(lead.submissionDateTime))))
+      new Set(typedLeads.map((lead) => getYear(new Date(lead.submissionDateTime))))
     ).sort((a, b) => b - a);
 
     const year = parseInt(selectedYear);
@@ -129,9 +129,9 @@ const generateReportFlow = ai.defineFlow(
 
     const availableWeeks = Array.from(new Set(
       typedLeads
-        .filter(lead => getYear(parseISO(lead.submissionDateTime)) === year)
+        .filter(lead => getYear(new Date(lead.submissionDateTime)) === year)
         .map(lead => {
-          const date = parseISO(lead.submissionDateTime);
+          const date = new Date(lead.submissionDateTime);
           const start = startOfWeek(date, { weekStartsOn: 1 });
           const end = endOfWeek(date, { weekStartsOn: 1 });
           return `${format(start, 'MM.dd')}-${format(end, 'MM.dd')}`;
@@ -150,14 +150,14 @@ const generateReportFlow = ai.defineFlow(
 
             if (fromDate && toDate) {
                 return typedLeads.filter(lead => {
-                    const submissionDate = parseISO(lead.submissionDateTime);
+                    const submissionDate = new Date(lead.submissionDateTime);
                     return isWithinInterval(submissionDate, { start: fromDate, end: toDate });
                 });
             }
             // Handle case where only 'to' might be present
             if (toDate) {
                 return typedLeads.filter(lead => {
-                    const submissionDate = parseISO(lead.submissionDateTime);
+                    const submissionDate = new Date(lead.submissionDateTime);
                     return submissionDate <= toDate;
                 });
             }
@@ -170,7 +170,7 @@ const generateReportFlow = ai.defineFlow(
         
         if(isValid(weekStart) && isValid(weekEnd)) {
              return typedLeads.filter(lead => {
-                const submissionDate = parseISO(lead.submissionDateTime);
+                const submissionDate = new Date(lead.submissionDateTime);
                 return isWithinInterval(submissionDate, { start: startOfDay(weekStart), end: endOfDay(weekEnd) });
             });
         }
@@ -180,14 +180,14 @@ const generateReportFlow = ai.defineFlow(
       if (isNaN(year)) return typedLeads;
 
       if (selectedMonth === 'all' || isNaN(month)) {
-        return typedLeads.filter(lead => getYear(parseISO(lead.submissionDateTime)) === year);
+        return typedLeads.filter(lead => getYear(new Date(lead.submissionDateTime)) === year);
       }
       
       const start = startOfMonth(new Date(year, month));
       const end = endOfMonth(new Date(year, month));
 
       return typedLeads.filter((lead) => {
-            const submissionDate = parseISO(lead.submissionDateTime);
+            const submissionDate = new Date(lead.submissionDateTime);
             return isWithinInterval(submissionDate, { start, end });
           });
     })();
@@ -214,7 +214,7 @@ const generateReportFlow = ai.defineFlow(
             acc[csr].quantity += leadQuantity;
             acc[csr].amount += leadAmount;
             
-            const submissionDate = format(parseISO(lead.submissionDateTime), 'yyyy-MM-dd');
+            const submissionDate = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
             const uniqueKey = `${lead.customerName}-${submissionDate}`;
             acc[csr].uniqueCustomerDays.add(uniqueKey);
           }
@@ -265,7 +265,7 @@ const generateReportFlow = ai.defineFlow(
     const dailySalesData = (() => {
       const salesByDay = filteredLeads.reduce(
         (acc, lead) => {
-          const date = format(parseISO(lead.submissionDateTime), 'MMM-dd-yyyy');
+          const date = format(new Date(lead.submissionDateTime), 'MMM-dd-yyyy');
           const leadQuantity = lead.orders
             .filter(o => o.productType !== 'Patches')
             .reduce(
@@ -301,7 +301,7 @@ const generateReportFlow = ai.defineFlow(
 
     const weeklySalesData = (() => {
         const salesByWeek = filteredLeads.reduce((acc, lead) => {
-            const date = parseISO(lead.submissionDateTime);
+            const date = new Date(lead.submissionDateTime);
             const start = startOfWeek(date, { weekStartsOn: 1 });
             const end = endOfWeek(date, { weekStartsOn: 1 });
             const weekRange = `${format(start, 'MMM dd')} - ${format(end, 'MMM dd')}`;
