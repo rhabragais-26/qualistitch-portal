@@ -146,8 +146,8 @@ export function TodaysPerformanceCard() {
   const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  const salesData = useMemo(() => {
-    if (!leads) return [];
+  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesTableData, salesData } = useMemo(() => {
+    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesTableData: [], salesData: [] };
 
     let rangeStart: Date;
     let rangeEnd: Date;
@@ -192,44 +192,11 @@ export function TodaysPerformanceCard() {
       return acc;
     }, {} as { [key: string]: { amount: number; quantity: number; layoutCount: number } });
 
-    return Object.entries(salesByRep)
+    const finalSalesData = Object.entries(salesByRep)
       .map(([name, data]) => ({ name, ...data }))
       .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
-  }, [leads, activeFilter, selectedDate]);
-
-  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesTableData } = useMemo(() => {
-    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesTableData: [] };
-
-    let rangeStart: Date;
-    let rangeEnd: Date;
-    
-    if (activeFilter === 'today') {
-        const today = new Date();
-        rangeStart = startOfDay(today);
-        rangeEnd = endOfDay(today);
-    } else if (activeFilter === 'yesterday') {
-        const yesterday = subDays(new Date(), 1);
-        rangeStart = startOfDay(yesterday);
-        rangeEnd = endOfDay(yesterday);
-    } else if (activeFilter === 'custom' && selectedDate) {
-        rangeStart = startOfDay(selectedDate);
-        rangeEnd = endOfDay(selectedDate);
-    } else {
-        const today = new Date();
-        rangeStart = startOfDay(today);
-        rangeEnd = endOfDay(today);
-    }
-    
-    const filteredLeads = leads.filter(lead => {
-        try {
-            const submissionDate = new Date(lead.submissionDateTime);
-            return submissionDate >= rangeStart && submissionDate <= rangeEnd;
-        } catch (e) {
-            return false;
-        }
-    });
-
+      
     const salesByHour = filteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
       if (!acc[hour]) {
@@ -306,7 +273,7 @@ export function TodaysPerformanceCard() {
       };
     });
 
-    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, salesTableData: tableData };
+    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, salesTableData: tableData, salesData: finalSalesData };
   }, [leads, activeFilter, selectedDate]);
   
   const totalSales = useMemo(() => {
@@ -436,7 +403,7 @@ export function TodaysPerformanceCard() {
                                         cursor={{ fill: 'hsl(var(--muted))' }}
                                         content={<ChartTooltipContent
                                             formatter={(value, name) => {
-                                                if (name === 'amount') return formatCurrency(value as number);
+                                                if (name === 'Sales Amount') return formatCurrency(value as number);
                                                 return value.toLocaleString();
                                             }}
                                         />}
@@ -539,8 +506,8 @@ export function TodaysPerformanceCard() {
              <CardContent>
                 <div className="text-left mb-4">
                     <CardHeader className="p-0">
-                        <CardTitle>Hourly Performance</CardTitle>
-                        <CardDescription>Customer count and items sold per hour for the selected day.</CardDescription>
+                        <CardTitle>Count of Clients per Interval</CardTitle>
+                        <CardDescription>Number of unique customers acquired per hour for the selected day.</CardDescription>
                     </CardHeader>
                     <div style={{ height: '300px' }}>
                         <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
@@ -608,42 +575,6 @@ export function TodaysPerformanceCard() {
                             </ResponsiveContainer>
                         </ChartContainer>
                     </div>
-                </div>
-            </CardContent>
-             <Separator className="my-4" />
-            <CardContent>
-                <div className="text-left mb-4">
-                    <CardHeader className="p-0">
-                        <CardTitle>Sales Breakdown</CardTitle>
-                    </CardHeader>
-                    <ScrollArea className="h-[350px]">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Time</TableHead>
-                                <TableHead>Customer</TableHead>
-                                <TableHead className="text-right">Quantity</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                                <TableHead className="text-right">Payment</TableHead>
-                                <TableHead className="text-right">Balance</TableHead>
-                                <TableHead>SCES</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {salesTableData.map((sale, index) => (
-                                <TableRow key={index}>
-                                    <TableCell>{format(new Date(sale.timestamp), 'h:mm a')}</TableCell>
-                                    <TableCell>{sale.customerName}</TableCell>
-                                    <TableCell className="text-right">{sale.totalQuantity}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(sale.totalAmount)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(sale.payment)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(sale.balance)}</TableCell>
-                                    <TableCell>{sale.sces}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    </ScrollArea>
                 </div>
             </CardContent>
         </>
