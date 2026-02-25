@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -28,8 +27,9 @@ import { Input } from './ui/input';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
-import { Boxes, Shirt, PackageX, MinusCircle, Download } from 'lucide-react';
+import { Boxes, Shirt, PackageX, MinusCircle, Download, Edit, Save, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 type Order = {
   productType: string;
@@ -76,7 +76,7 @@ const jacketColors = [
 ];
 
 const poloShirtColors = [
-    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Slate Blue', 'Emerald Green', 'Golden Yellow', 'Yellow', 'Orange', 'Dark Green', 'Green', 'Light Green', 'Pink', 'Fuchsia', 'Sky Blue', 'Oatmeal', 'Cream', 'Purple', 'Gold', 'Brown'
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue', 'Yellow', 'Orange', 'Dark Green', 'Green', 'Light Green', 'Pink', 'Fuchsia', 'Sky Blue', 'Oatmeal', 'Cream', 'Purple', 'Gold', 'Brown'
 ];
 
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
@@ -85,12 +85,15 @@ const statusOptions = ['All Statuses', 'In Stock', 'Low Stock', 'Out of Stock', 
 
 export function InventorySummaryTable() {
   const firestore = useFirestore();
-  const { user, isUserLoading: isAuthLoading } = useUser();
+  const { user, isUserLoading: isAuthLoading, isAdmin } = useUser();
+  const { toast } = useToast();
   const [productTypeFilter, setProductTypeFilter] = React.useState('All');
   const [colorFilter, setColorFilter] = React.useState('All');
   const [statusFilter, setStatusFilter] = React.useState('All Statuses');
   const [searchTerm, setSearchTerm] = useState('');
   const [sizeFilter, setSizeFilter] = useState('All');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedStocks, setEditedStocks] = useState<Record<string, number>>({});
 
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -102,8 +105,55 @@ export function InventorySummaryTable() {
     return query(collection(firestore, 'leads'));
   }, [firestore, user]);
 
-  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
+  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError, refetch } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+
+  const handleStockChange = (itemId: string, value: string) => {
+    const newStock = parseInt(value, 10);
+    if (!isNaN(newStock)) {
+      setEditedStocks(prev => ({
+        ...prev,
+        [itemId]: newStock,
+      }));
+    }
+  };
+
+  const handleSave = async () => {
+    if (!firestore || Object.keys(editedStocks).length === 0) {
+      setIsEditMode(false);
+      setEditedStocks({});
+      return;
+    }
+
+    const updatePromises = Object.entries(editedStocks).map(([itemId, newStock]) => {
+      const itemRef = doc(firestore, 'inventory', itemId);
+      return updateDoc(itemRef, { stock: newStock });
+    });
+
+    try {
+      await Promise.all(updatePromises);
+      toast({
+        title: "Inventory Updated",
+        description: "Stock levels have been saved successfully.",
+      });
+      refetch();
+    } catch (error: any) {
+      console.error("Error updating stock:", error);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: error.message || "Could not update stock levels.",
+      });
+    } finally {
+      setIsEditMode(false);
+      setEditedStocks({});
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditedStocks({});
+  };
 
   const availableColors = React.useMemo(() => {
     if (productTypeFilter === 'All') {
@@ -138,13 +188,13 @@ export function InventorySummaryTable() {
     const soldQuantities = new Map<string, number>();
     leads.forEach(lead => {
         lead.orders.forEach(order => {
-            const key = `${order.productType}-${order.color}-${order.size}`;
+            const key = `${'\'\'\''}${order.productType}-${'\'\'\''}${order.color}-${'\'\'\''}${order.size}`;
             soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
         });
     });
 
     return inventoryItems.map(item => {
-        const key = `${item.productType}-${item.color}-${item.size}`;
+        const key = `${'\'\'\''}${item.productType}-${'\'\'\''}${item.color}-${'\'\'\''}${item.size}`;
         const sold = soldQuantities.get(key) || 0;
         return {
             ...item,
@@ -335,6 +385,24 @@ export function InventorySummaryTable() {
                      ))}
                   </SelectContent>
               </Select>
+              {isAdmin && (
+                <div className="flex items-center gap-2 ml-auto">
+                {isEditMode ? (
+                    <>
+                    <Button onClick={handleSave} className="h-9">
+                        <Save className="mr-2 h-4 w-4" /> Save
+                    </Button>
+                    <Button onClick={handleCancelEdit} variant="outline" className="h-9">
+                        <X className="mr-2 h-4 w-4" /> Cancel
+                    </Button>
+                    </>
+                ) : (
+                    <Button onClick={() => setIsEditMode(true)} className="h-9">
+                    <Edit className="mr-2 h-4 w-4" /> Edit Stocks
+                    </Button>
+                )}
+                </div>
+              )}
           </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
@@ -369,7 +437,18 @@ export function InventorySummaryTable() {
                             <TableCell className="font-medium text-xs align-middle py-2 text-black">{item.productType}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{item.color}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{item.size}</TableCell>
-                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.stock}</TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">
+                                {isEditMode ? (
+                                    <Input 
+                                        type="number"
+                                        value={editedStocks[item.id] ?? item.stock}
+                                        onChange={(e) => handleStockChange(item.id, e.target.value)}
+                                        className="w-20 h-8 text-center mx-auto"
+                                    />
+                                ) : (
+                                    item.stock
+                                )}
+                            </TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.sold}</TableCell>
                             <TableCell className={cn("text-center font-bold text-xs align-middle py-2", item.remaining < 0 && "text-destructive")}>{item.remaining}</TableCell>
                             <TableCell className="text-center align-middle py-2">
