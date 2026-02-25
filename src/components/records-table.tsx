@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -528,20 +529,18 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     });
   }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, dateRange, filterType, getOverallStatus]);
   
-    const { totalAmount, totalQuantity } = useMemo(() => {
-        if (!filteredLeads) return { totalAmount: 0, totalQuantity: 0 };
-        return filteredLeads.reduce((totals, lead) => {
-            totals.totalAmount += lead.grandTotal || 0;
+    const { totalAmount, totalQuantity, uniqueCustomers } = useMemo(() => {
+        if (!filteredLeads) return { totalAmount: 0, totalQuantity: 0, uniqueCustomers: 0 };
+        const customerNames = new Set<string>();
+        const totals = filteredLeads.reduce((acc, lead) => {
+            acc.totalAmount += lead.grandTotal || 0;
             const quantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-            totals.totalQuantity += quantity;
-            return totals;
+            acc.totalQuantity += quantity;
+            customerNames.add(lead.customerName.toLowerCase());
+            return acc;
         }, { totalAmount: 0, totalQuantity: 0 });
-    }, [filteredLeads]);
-
-    const uniqueCustomers = useMemo(() => {
-      if (!filteredLeads) return 0;
-      const customerNames = new Set(filteredLeads.map(lead => lead.customerName.toLowerCase()));
-      return customerNames.size;
+        
+        return { ...totals, uniqueCustomers: customerNames.size };
     }, [filteredLeads]);
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
@@ -636,7 +635,6 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
               <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
                 <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
                   <SelectValue placeholder="Year" />
@@ -660,6 +658,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
               </Select>
               <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
               <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
+              <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
             </div>
             <div className="w-full flex justify-between items-center mt-2">
                 <div className="flex items-center gap-4 text-left font-semibold text-sm">
@@ -672,6 +671,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     )}
                 </div>
               <div className="flex items-center gap-2">
+                
                 {filterType === 'COMPLETED' ? (
                     <Link href="/records" className="text-sm text-primary hover:underline">
                         View Ongoing Orders
@@ -747,4 +747,5 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
+
 
