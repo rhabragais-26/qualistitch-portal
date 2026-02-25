@@ -195,7 +195,7 @@ export default function AnalyticsPage() {
                     <LabelList
                       dataKey="cpm"
                       position="center"
-                      fill="#FFD700"
+                      fill="#800000"
                       formatter={(value: number) => value > 0 ? formatCurrency(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
                       fontSize={12}
                       fontWeight="bold"
