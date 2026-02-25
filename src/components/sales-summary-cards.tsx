@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import {
+    PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
+    RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
+} from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { getMonth, getYear, format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -19,6 +22,8 @@ type Lead = {
   submissionDateTime: string;
   salesRepresentative: string;
   priorityType: string;
+  customerName: string;
+  orders: { quantity: number }[];
 };
 
 const chartConfig = {
@@ -62,7 +67,7 @@ const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string
     const COLORS = [color, '#e5e7eb'];
 
     return (
-        <Card className="flex flex-col items-center justify-center p-4">
+        <Card className="flex flex-col items-center justify-center p-2">
             <CardHeader className="p-0 mb-2 text-center">
                 <CardTitle className="text-base font-medium">{title}</CardTitle>
             </CardHeader>
@@ -218,6 +223,57 @@ export function SalesSummaryCards() {
       .sort((a, b) => b.amount - a.amount);
   }, [filteredLeads]);
 
+  const { ticketData, totalUniqueCustomers } = useMemo(() => {
+    if (!filteredLeads) return { ticketData: [], totalUniqueCustomers: 0 };
+
+    const ticketCounts: {
+      'Small Ticket': Set<string>,
+      'Medium Ticket': Set<string>,
+      'Large Ticket': Set<string>,
+      'High Ticket': Set<string>,
+      'VIP Ticket': Set<string>,
+    } = {
+      'Small Ticket': new Set(),
+      'Medium Ticket': new Set(),
+      'Large Ticket': new Set(),
+      'High Ticket': new Set(),
+      'VIP Ticket': new Set(),
+    };
+
+    const allCustomers = new Set<string>();
+
+    filteredLeads.forEach(lead => {
+      allCustomers.add(lead.customerName.toLowerCase());
+      const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+
+      if (totalQuantity >= 1 && totalQuantity <= 9) {
+        ticketCounts['Small Ticket'].add(lead.customerName.toLowerCase());
+      } else if (totalQuantity >= 10 && totalQuantity <= 99) {
+        ticketCounts['Medium Ticket'].add(lead.customerName.toLowerCase());
+      } else if (totalQuantity >= 100 && totalQuantity <= 199) {
+        ticketCounts['Large Ticket'].add(lead.customerName.toLowerCase());
+      } else if (totalQuantity >= 200 && totalQuantity <= 999) {
+        ticketCounts['High Ticket'].add(lead.customerName.toLowerCase());
+      } else if (totalQuantity >= 1000) {
+        ticketCounts['VIP Ticket'].add(lead.customerName.toLowerCase());
+      }
+    });
+
+    const totalCustomers = allCustomers.size;
+
+    const data = [
+      { category: 'Small (1-9)', customers: ticketCounts['Small Ticket'].size, fullMark: totalCustomers },
+      { category: 'Medium (10-99)', customers: ticketCounts['Medium Ticket'].size, fullMark: totalCustomers },
+      { category: 'Large (100-199)', customers: ticketCounts['Large Ticket'].size, fullMark: totalCustomers },
+      { category: 'High (200-999)', customers: ticketCounts['High Ticket'].size, fullMark: totalCustomers },
+      { category: 'VIP (1k+)', customers: ticketCounts['VIP Ticket'].size, fullMark: totalCustomers },
+    ];
+    
+    return { ticketData: data, totalUniqueCustomers: totalCustomers };
+
+  }, [filteredLeads]);
+
+
   const salesByRepTitle = useMemo(() => {
     let period;
     if (selectedYear === 'all') {
@@ -239,8 +295,8 @@ export function SalesSummaryCards() {
               <Skeleton className="h-4 w-1/2" />
             </CardHeader>
             <CardContent className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
                 </div>
                 <Separator />
                 <Skeleton className="h-[300px] w-full" />
@@ -288,15 +344,50 @@ export function SalesSummaryCards() {
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-2">
             <DoughnutChartCard title="Total Sales of the Period" amount={totalSales} percentage={totalSalesPercentage} color="hsl(var(--chart-1))" />
             <DoughnutChartCard title="Total Paid" amount={totalPaid} percentage={totalPaidPercentage} color="hsl(var(--chart-2))" />
             <DoughnutChartCard title="Total Balance" amount={totalBalance} percentage={totalBalancePercentage} color="hsl(var(--chart-3))" />
-            <Card>
-                <CardHeader className="p-4 pb-2 text-center">
+            <Card className="flex flex-col items-center justify-center p-2">
+              <CardHeader className="p-0 mb-2 text-center">
+                <CardTitle className="text-base font-medium">Ticket Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 relative w-full h-32">
+                <ChartContainer config={{}} className="w-full h-full">
+                  <ResponsiveContainer>
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={ticketData}>
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="category" tick={{ fontSize: 8 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, totalUniqueCustomers > 0 ? totalUniqueCustomers : 1]} tick={false} axisLine={false} />
+                      <Radar name="Customers" dataKey="customers" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+                       <Tooltip
+                          content={({ payload }) => {
+                              if (!payload || payload.length === 0) return null;
+                              const { category, customers } = payload[0].payload;
+                              const percentage = totalUniqueCustomers > 0 ? (customers / totalUniqueCustomers * 100).toFixed(2) : 0;
+                              return (
+                                  <div className="bg-white p-2 border rounded shadow-lg text-xs">
+                                      <p className="font-bold">{category}</p>
+                                      <p>Customers: {customers}</p>
+                                      <p>Percentage: {percentage}%</p>
+                                  </div>
+                              );
+                          }}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+              <div className="mt-2 text-center">
+                <span className="text-lg font-bold">{totalUniqueCustomers}</span>
+                <p className="text-xs text-muted-foreground">Total Unique Customers</p>
+              </div>
+            </Card>
+            <Card className="p-2">
+                <CardHeader className="p-0 pb-2 text-center">
                     <CardTitle className="text-base font-medium">Priority Breakdown</CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 pt-2 flex flex-col gap-4">
+                <CardContent className="p-0 flex flex-col gap-4">
                     <PriorityBar percentage={priorityData.Rush.percentage} count={priorityData.Rush.count} label="Rush" color="#ef4444" />
                     <PriorityBar percentage={priorityData.Regular.percentage} count={priorityData.Regular.count} label="Regular" color="#22c55e" />
                 </CardContent>
@@ -317,7 +408,6 @@ export function SalesSummaryCards() {
                               <CartesianGrid vertical={false} />
                               <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                               <YAxis
-                                  stroke="hsl(var(--chart-1))"
                                   tickFormatter={(value) => `₱${Number(value) / 1000}k`}
                               />
                               <Tooltip
