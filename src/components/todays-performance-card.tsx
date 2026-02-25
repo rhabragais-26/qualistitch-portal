@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, Bar } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -18,7 +17,6 @@ import { eachDayOfInterval, endOfMonth } from 'date-fns';
 import { z, ZodError } from 'zod';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ScrollArea } from './ui/scroll-area';
-
 
 type Order = {
   quantity: number;
@@ -145,6 +143,11 @@ export function TodaysPerformanceCard() {
 
   const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesData } = useMemo(() => {
     if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesData: [] };
@@ -213,7 +216,7 @@ export function TodaysPerformanceCard() {
     let totalQty = 0;
 
     filteredLeads.forEach(lead => {
-        const quantity = lead.orders.reduce((sum, currentOrder) => sum + (currentOrder.quantity || 0), 0);
+        const quantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
         totalQty += quantity;
         
         if (lead.customerName) {
@@ -221,7 +224,6 @@ export function TodaysPerformanceCard() {
         }
     });
     
-    // --- Historical Data Calculation ---
     const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
     const historicalDataKeys: string[] = [];
 
@@ -301,7 +303,7 @@ export function TodaysPerformanceCard() {
   
   const layoutChartData = useMemo(() => salesData.filter(d => d.layoutCount > 0), [salesData]);
 
-  if (isLoading) {
+  if (isLoading || !isClient) {
       return (
            <Card>
             <CardHeader>
@@ -419,7 +421,7 @@ export function TodaysPerformanceCard() {
                             <p className="text-sm font-medium text-gray-600">Total Quantity</p>
                             <p className="text-2xl font-bold">{totalItemsSold.toLocaleString()}</p>
                         </div>
-                         <div className="text-center">
+                        <div className="text-center">
                             <p className="text-sm font-medium text-gray-600">Total Sales</p>
                             <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
                         </div>
