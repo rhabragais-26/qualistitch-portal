@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -145,12 +146,8 @@ export function TodaysPerformanceCard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
-  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesData, salesTableData } = useMemo(() => {
-    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesData: [], salesTableData: [] };
+  const { salesData, salesTableData } = useMemo(() => {
+    if (!leads) return { salesData: [], salesTableData: [] };
 
     let rangeStart: Date;
     let rangeEnd: Date;
@@ -187,7 +184,15 @@ export function TodaysPerformanceCard() {
       if (!acc[rep]) {
         acc[rep] = { amount: 0, quantity: 0, layoutCount: 0 };
       }
-      acc[rep].amount += lead.grandTotal || 0;
+      let amount = lead.grandTotal || 0;
+      if (lead.orderType === 'Item Sample' && lead.payments) {
+          const securityDeposit = lead.payments
+              .filter(p => p.type === 'securityDeposit')
+              .reduce((sum, p) => sum + p.amount, 0);
+          amount += securityDeposit;
+      }
+      acc[rep].amount += amount;
+
       const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
       acc[rep].quantity += orderQuantity;
       const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
@@ -200,6 +205,63 @@ export function TodaysPerformanceCard() {
       .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
       
+    const tableData = filteredLeads.map(lead => {
+        const quantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+        
+        let amount = lead.grandTotal || 0;
+        if (lead.orderType === 'Item Sample' && lead.payments) {
+            const securityDeposit = lead.payments
+                .filter(p => p.type === 'securityDeposit')
+                .reduce((sum, p) => sum + p.amount, 0);
+            amount += securityDeposit;
+        }
+
+        return {
+            time: lead.submissionDateTime,
+            customerName: lead.customerName,
+            quantity: quantity,
+            amount: amount,
+            payment: (lead.paidAmount || 0),
+            balance: (lead.balance || 0),
+            sces: lead.salesRepresentative
+        };
+    }).sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+
+    return { salesData: finalSalesData, salesTableData: tableData };
+  }, [leads, activeFilter, selectedDate]);
+  
+  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold } = useMemo(() => {
+    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0 };
+
+    let rangeStart: Date;
+    let rangeEnd: Date;
+    
+    if (activeFilter === 'today') {
+        const today = new Date();
+        rangeStart = startOfDay(today);
+        rangeEnd = endOfDay(today);
+    } else if (activeFilter === 'yesterday') {
+        const yesterday = subDays(new Date(), 1);
+        rangeStart = startOfDay(yesterday);
+        rangeEnd = endOfDay(yesterday);
+    } else if (activeFilter === 'custom' && selectedDate) {
+        rangeStart = startOfDay(selectedDate);
+        rangeEnd = endOfDay(selectedDate);
+    } else {
+        const today = new Date();
+        rangeStart = startOfDay(today);
+        rangeEnd = endOfDay(today);
+    }
+    
+    const filteredLeads = leads.filter(lead => {
+        try {
+            const submissionDate = new Date(lead.submissionDateTime);
+            return submissionDate >= rangeStart && submissionDate <= rangeEnd;
+        } catch (e) {
+            return false;
+        }
+    });
+
     const salesByHour = filteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
       if (!acc[hour]) {
@@ -208,31 +270,29 @@ export function TodaysPerformanceCard() {
       acc[hour].customers.add(lead.customerName);
       const quantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
       acc[hour].quantity += quantity;
-      acc[hour].amount += lead.grandTotal || 0;
+      
+      let amount = lead.grandTotal || 0;
+      if (lead.orderType === 'Item Sample' && lead.payments) {
+        const securityDeposit = lead.payments
+            .filter(p => p.type === 'securityDeposit')
+            .reduce((sum, p) => sum + p.amount, 0);
+        amount += securityDeposit;
+      }
+      acc[hour].amount += amount;
+
       return acc;
     }, {} as Record<number, { customers: Set<string>; quantity: number; amount: number }>);
 
     const totalCust = new Set<string>();
     let totalQty = 0;
     
-    const tableData = filteredLeads.map(lead => {
-        const quantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+    filteredLeads.forEach(lead => {
+        const quantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
         totalQty += quantity;
-        
-        if (lead.customerName) {
-           totalCust.add(lead.customerName.toLowerCase());
+        if(lead.orderType !== 'Item Sample') {
+            totalCust.add(lead.customerName.toLowerCase());
         }
-
-        return {
-            time: lead.submissionDateTime,
-            customerName: lead.customerName,
-            quantity: quantity,
-            amount: lead.grandTotal || 0,
-            payment: (lead.paidAmount || 0),
-            balance: (lead.balance || 0),
-            sces: lead.salesRepresentative
-        };
-    }).sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    });
 
     const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
     const historicalDataKeys: string[] = [];
@@ -278,9 +338,13 @@ export function TodaysPerformanceCard() {
       };
     });
 
-    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, salesData: finalSalesData, salesTableData: tableData };
+    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty };
   }, [leads, activeFilter, selectedDate]);
   
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const totalSales = useMemo(() => {
     if (!salesData) return 0;
     return salesData.reduce((acc, curr) => acc + curr.amount, 0);
@@ -377,6 +441,20 @@ export function TodaysPerformanceCard() {
                 />
                 <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => { setActiveFilter('yesterday'); setSelectedDate(undefined); }}>Yesterday</Button>
                 <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => { setActiveFilter('today'); setSelectedDate(undefined); }}>Today</Button>
+            </div>
+        </div>
+        <div className="mt-4 flex items-center justify-around bg-muted p-4 rounded-lg">
+            <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
+                <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
+            </div>
+            <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
+                <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
+            </div>
+            <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
+                <p className="text-3xl font-bold">{totalCustomers}</p>
             </div>
         </div>
       </CardHeader>
@@ -494,86 +572,84 @@ export function TodaysPerformanceCard() {
       </CardContent>
         <>
             <Separator className="my-4" />
-             <CardContent>
-                <div className="text-left mb-4">
-                    <CardHeader className="p-0">
-                        <CardTitle>Count of Clients per Interval</CardTitle>
-                        <CardDescription>Number of unique customers and total sales amount acquired per hour for the selected day.</CardDescription>
-                    </CardHeader>
-                    <div style={{ height: '300px' }}>
-                        <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart data={hourlySalesData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                    <CartesianGrid stroke="hsl(var(--border) / 0.7)" vertical={false} />
-                                    <XAxis
-                                    dataKey="hour"
-                                    tickLine={false}
-                                    axisLine={false}
-                                    tickMargin={8}
-                                    tickFormatter={(value) => {
-                                        const hour = parseInt(value.split(':')[0], 10);
-                                        if (hour === 0) return '12am';
-                                        if (hour === 12) return '12pm';
-                                        if (hour > 12) return `${hour - 12}`;
-                                        return `${hour}`;
-                                    }}
-                                    interval={0}
+             <CardHeader>
+                <CardTitle>Count of Clients per Interval</CardTitle>
+                <CardDescription>Number of unique customers and total sales amount acquired per hour for the selected day.</CardDescription>
+              </CardHeader>
+            <CardContent>
+                <div style={{ height: '300px' }}>
+                    <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={hourlySalesData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid stroke="hsl(var(--border) / 0.7)" vertical={false} />
+                                <XAxis
+                                dataKey="hour"
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                                tickFormatter={(value) => {
+                                    const hour = parseInt(value.split(':')[0], 10);
+                                    if (hour === 0) return '12am';
+                                    if (hour === 12) return '12pm';
+                                    if (hour > 12) return `${hour - 12}`;
+                                    return `${hour}`;
+                                }}
+                                interval={0}
+                                />
+                                <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tickFormatter={(value) => `${value}`} />
+                                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
+                                <Tooltip
+                                    content={<ChartTooltipContent
+                                        formatter={(value, name, item) => {
+                                            if (name === 'Customers') {
+                                                return (
+                                                    <div className="flex flex-col">
+                                                        <span>{item.payload.customerCount} customers</span>
+                                                        <span className="text-muted-foreground">{item.payload.quantity} items</span>
+                                                    </div>
+                                                );
+                                            }
+                                            if (name === 'Sales') {
+                                                return formatCurrency(value as number);
+                                            }
+                                            const weekMatch = name.match(/(\d+) week(s)? ago/);
+                                            if (weekMatch) {
+                                                const weekNum = weekMatch[1];
+                                                return (
+                                                    <div className="flex flex-col">
+                                                        <span>{value as number} customers</span>
+                                                        <span className="text-muted-foreground">({weekNum} week{parseInt(weekNum, 10) > 1 ? 's' : ''} ago)</span>
+                                                    </div>
+                                                );
+                                            }
+                                            return value;
+                                        }}
+                                    />}
+                                />
+                                <Legend />
+                                {historicalDataKeys.map((key, index) => (
+                                    <Line
+                                        key={key}
+                                        yAxisId="left"
+                                        dataKey={key}
+                                        type="monotone"
+                                        name={`${index + 1} week${index > 0 ? 's' : ''} ago`}
+                                        stroke={COLORS[(index + 1) % COLORS.length]}
+                                        strokeOpacity={0.4}
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={false}
                                     />
-                                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tickFormatter={(value) => `${value}`} />
-                                    <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
-                                    <Tooltip
-                                        content={<ChartTooltipContent
-                                            formatter={(value, name, item) => {
-                                                if (name === 'Customers') {
-                                                    return (
-                                                        <div className="flex flex-col">
-                                                            <span>{item.payload.customerCount} customers</span>
-                                                            <span className="text-muted-foreground">{item.payload.quantity} items</span>
-                                                        </div>
-                                                    );
-                                                }
-                                                if (name === 'Sales') {
-                                                    return formatCurrency(value as number);
-                                                }
-                                                const weekMatch = name.match(/(\d+) week(s)? ago/);
-                                                if (weekMatch) {
-                                                    const weekNum = weekMatch[1];
-                                                    return (
-                                                        <div className="flex flex-col">
-                                                            <span>{value as number} customers</span>
-                                                            <span className="text-muted-foreground">({weekNum} week{parseInt(weekNum, 10) > 1 ? 's' : ''} ago)</span>
-                                                        </div>
-                                                    );
-                                                }
-                                                return value;
-                                            }}
-                                        />}
-                                    />
-                                    <Legend />
-                                    {historicalDataKeys.map((key, index) => (
-                                        <Line
-                                            key={key}
-                                            yAxisId="left"
-                                            dataKey={key}
-                                            type="monotone"
-                                            name={`${index + 1} week${index > 0 ? 's' : ''} ago`}
-                                            stroke={COLORS[(index + 1) % COLORS.length]}
-                                            strokeOpacity={0.4}
-                                            strokeWidth={2}
-                                            dot={false}
-                                            activeDot={false}
-                                        />
-                                    ))}
-                                    <Area yAxisId="right" type="monotone" dataKey="amount" name="Sales" fill="hsl(var(--chart-2))" fillOpacity={0.4} stroke="hsl(var(--chart-2))">
-                                        <LabelList dataKey="amount" content={renderAmountLabel} />
-                                    </Area>
-                                    <Line yAxisId="left" type="monotone" dataKey="customerCount" name="Customers" stroke="hsl(var(--chart-1))" strokeWidth={2}>
-                                        <LabelList dataKey="customerCount" content={renderHourlyLabel} />
-                                    </Line>
-                                </ComposedChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
-                    </div>
+                                ))}
+                                <Area yAxisId="right" dataKey="amount" name="Sales" fill="hsl(var(--chart-2))" fillOpacity={0.4} stroke="hsl(var(--chart-2))">
+                                  <LabelList dataKey="amount" content={renderAmountLabel} />
+                                </Area>
+                                <Line yAxisId="left" type="monotone" dataKey="customerCount" name="Customers" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                                    <LabelList dataKey="customerCount" content={renderHourlyLabel} />
+                                </Line>
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
                 </div>
             </CardContent>
         </>
