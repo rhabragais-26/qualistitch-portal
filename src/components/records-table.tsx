@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -201,7 +200,7 @@ const RecordsTableRow = React.memo(({
     }
 
     return (
-        <React.Fragment>
+        <React.Fragment key={lead.id}>
             <TableRow>
                 <TableCell className="text-xs align-middle text-center py-2 text-black whitespace-nowrap">
               <Collapsible>
@@ -312,6 +311,35 @@ const RecordsTableRow = React.memo(({
                 </TableCell>
             )}
         </TableRow>
+        {openLeadId === lead.id && (
+            <TableRow>
+                <TableCell colSpan={13} className="p-0">
+                    <div className="p-4 bg-blue-50 rounded-md my-2 max-w-4xl mx-auto">
+                        <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {lead.orders.map((order, index) => (
+                                    <TableRow key={index} className="border-0">
+                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.productType}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.color}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.size}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-right align-middle">{order.quantity}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </TableCell>
+            </TableRow>
+        )}
         </React.Fragment>
     );
 });
@@ -621,7 +649,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 </Select>
                 <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
                 <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
-                 <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 text-white hover:bg-teal-700">Reset All Filters</Button>
+                 <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
               </div>
             <div className="w-full flex justify-between items-center mt-2">
                <div className="flex items-center gap-4 text-left font-semibold text-sm">
