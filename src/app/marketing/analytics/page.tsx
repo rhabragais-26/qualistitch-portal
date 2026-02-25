@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -165,7 +166,7 @@ export default function AnalyticsPage() {
                 </div>
              </div>
           </CardHeader>
-          <CardContent className="h-[500px]">
+          <CardContent className="h-[400px]">
             <ChartContainer config={chartConfig} className="w-full h-full">
               <ResponsiveContainer>
                 <ComposedChart data={filteredData}>
