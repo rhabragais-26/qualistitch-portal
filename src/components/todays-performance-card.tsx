@@ -6,9 +6,9 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import { format, startOfDay, endOfDay, subDays, getYear, getMonth, parse } from 'date-fns';
+import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, LineChart } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -146,8 +146,8 @@ export function TodaysPerformanceCard() {
   const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesTableData, salesData } = useMemo(() => {
-    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesTableData: [], salesData: [] };
+  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesData } = useMemo(() => {
+    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesData: [] };
 
     let rangeStart: Date;
     let rangeEnd: Date;
@@ -174,7 +174,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}${'\'\''}: '${'\'\''}${lead.submissionDateTime}${'\'\''}`);
+            console.warn(`Invalid date format for lead '${lead.id}': '${lead.submissionDateTime}'`);
             return false;
         }
     });
@@ -200,12 +200,14 @@ export function TodaysPerformanceCard() {
     const salesByHour = filteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
       if (!acc[hour]) {
-        acc[hour] = { customers: new Set(), quantity: 0 };
+        acc[hour] = { customers: new Set(), quantity: 0, amount: 0 };
       }
       acc[hour].customers.add(lead.customerName);
-      acc[hour].quantity += lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
+      const quantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      acc[hour].quantity += quantity;
+      acc[hour].amount += lead.grandTotal || 0;
       return acc;
-    }, {} as Record<number, { customers: Set<string>; quantity: number }>);
+    }, {} as Record<number, { customers: Set<string>; quantity: number; amount: number }>);
 
     const totalCust = new Set<string>();
     let totalQty = 0;
@@ -219,16 +221,6 @@ export function TodaysPerformanceCard() {
         }
     });
     
-    const tableData = filteredLeads.map(lead => ({
-        timestamp: lead.submissionDateTime,
-        customerName: lead.customerName,
-        totalQuantity: lead.orders.reduce((sum, order) => sum + order.quantity, 0),
-        totalAmount: lead.grandTotal || 0,
-        payment: lead.paidAmount || 0,
-        balance: lead.balance || 0,
-        sces: lead.salesRepresentative,
-    }));
-
     // --- Historical Data Calculation ---
     const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
     const historicalDataKeys: string[] = [];
@@ -266,14 +258,15 @@ export function TodaysPerformanceCard() {
     const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
       const hourData = salesByHour[i];
       return {
-        hour: `${'\'\'\''}${i.toString().padStart(2, '0')}:00${'\'\'\''}`,
+        hour: `${i.toString().padStart(2, '0')}:00`,
         customerCount: hourData ? hourData.customers.size : 0,
         quantity: hourData ? hourData.quantity : 0,
+        amount: hourData ? hourData.amount : 0,
         ...historicalData[i],
       };
     });
 
-    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, salesTableData: tableData, salesData: finalSalesData };
+    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, salesData: finalSalesData };
   }, [leads, activeFilter, selectedDate]);
   
   const totalSales = useMemo(() => {
@@ -392,7 +385,7 @@ export function TodaysPerformanceCard() {
                                         yAxisId="left"
                                         orientation="left"
                                         stroke="hsl(var(--chart-2))"
-                                        tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}${'\'\''}`}
+                                        tickFormatter={(value) => `₱${Number(value) / 1000}k`}
                                     />
                                     <YAxis
                                         yAxisId="right"
@@ -421,12 +414,12 @@ export function TodaysPerformanceCard() {
                             </ResponsiveContainer>
                         </ChartContainer>
                     </div>
-                    <div className="flex justify-center items-end gap-8 mt-4">
+                     <div className="flex justify-center items-end gap-8 mt-4">
                         <div className="text-center">
                             <p className="text-sm font-medium text-gray-600">Total Quantity</p>
                             <p className="text-2xl font-bold">{totalItemsSold.toLocaleString()}</p>
                         </div>
-                        <div className="text-center">
+                         <div className="text-center">
                             <p className="text-sm font-medium text-gray-600">Total Sales</p>
                             <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
                         </div>
@@ -507,13 +500,13 @@ export function TodaysPerformanceCard() {
                 <div className="text-left mb-4">
                     <CardHeader className="p-0">
                         <CardTitle>Count of Clients per Interval</CardTitle>
-                        <CardDescription>Number of unique customers acquired per hour for the selected day.</CardDescription>
+                        <CardDescription>Number of unique customers and total sales amount acquired per hour for the selected day.</CardDescription>
                     </CardHeader>
                     <div style={{ height: '300px' }}>
                         <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={hourlySalesData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
-                                    <CartesianGrid stroke="hsl(var(--border) / 0.7)" vertical={true} horizontal={true}/>
+                                <ComposedChart data={hourlySalesData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                    <CartesianGrid stroke="hsl(var(--border) / 0.7)" vertical={false} />
                                     <XAxis
                                     dataKey="hour"
                                     tickLine={false}
@@ -523,16 +516,17 @@ export function TodaysPerformanceCard() {
                                         const hour = parseInt(value.split(':')[0], 10);
                                         if (hour === 0) return '12am';
                                         if (hour === 12) return '12pm';
-                                        if (hour > 12) return `${'\'\'\''}${hour - 12}${'\'\''}`;
-                                        return `${'\'\'\''}${hour}${'\'\''}`;
+                                        if (hour > 12) return `${hour - 12}`;
+                                        return `${hour}`;
                                     }}
                                     interval={0}
                                     />
-                                    <YAxis tickFormatter={(value) => `${'\'\'\''}${value}${'\'\''}`} />
+                                    <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tickFormatter={(value) => `${value}`} />
+                                    <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
                                     <Tooltip
                                         content={<ChartTooltipContent
                                             formatter={(value, name, item) => {
-                                                if (name === 'Customer Count') {
+                                                if (name === 'Customers') {
                                                     return (
                                                         <div className="flex flex-col">
                                                             <span>{item.payload.customerCount} customers</span>
@@ -540,10 +534,13 @@ export function TodaysPerformanceCard() {
                                                         </div>
                                                     );
                                                 }
+                                                if (name === 'Sales') {
+                                                    return formatCurrency(value as number);
+                                                }
                                                 const weekMatch = name.match(/(\d+) week(s)? ago/);
-                                                if(weekMatch) {
+                                                if (weekMatch) {
                                                     const weekNum = weekMatch[1];
-                                                     return (
+                                                    return (
                                                         <div className="flex flex-col">
                                                             <span>{value as number} customers</span>
                                                             <span className="text-muted-foreground">({weekNum} week{parseInt(weekNum, 10) > 1 ? 's' : ''} ago)</span>
@@ -558,9 +555,10 @@ export function TodaysPerformanceCard() {
                                     {historicalDataKeys.map((key, index) => (
                                         <Line
                                             key={key}
+                                            yAxisId="left"
                                             dataKey={key}
                                             type="monotone"
-                                            name={`${'\'\'\''}${index + 1}${'\'\''}`}
+                                            name={`${index + 1} week${index > 0 ? 's' : ''} ago`}
                                             stroke={COLORS[(index + 1) % COLORS.length]}
                                             strokeOpacity={0.4}
                                             strokeWidth={2}
@@ -568,10 +566,11 @@ export function TodaysPerformanceCard() {
                                             activeDot={false}
                                         />
                                     ))}
-                                    <Line type="monotone" dataKey="customerCount" name="Customer Count" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                                    <Area yAxisId="right" type="monotone" dataKey="amount" name="Sales" fill="hsl(var(--chart-2))" fillOpacity={0.4} stroke="hsl(var(--chart-2))" />
+                                    <Line yAxisId="left" type="monotone" dataKey="customerCount" name="Customers" stroke="hsl(var(--chart-1))" strokeWidth={2}>
                                         <LabelList dataKey="customerCount" content={renderHourlyLabel} />
                                     </Line>
-                                </LineChart>
+                                </ComposedChart>
                             </ResponsiveContainer>
                         </ChartContainer>
                     </div>
