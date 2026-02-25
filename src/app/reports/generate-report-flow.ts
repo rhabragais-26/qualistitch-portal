@@ -54,14 +54,7 @@ export type Lead = {
 };
 
 const getLeadSalesAmount = (lead: Lead): number => {
-    let amount = lead.grandTotal || 0;
-    if (lead.orderType === 'Item Sample' && lead.payments) {
-        const securityDeposit = lead.payments
-            .filter(p => p.type === 'securityDeposit')
-            .reduce((sum, p) => sum + p.amount, 0);
-        amount += securityDeposit;
-    }
-    return amount;
+    return lead.grandTotal || 0;
 };
 
 
