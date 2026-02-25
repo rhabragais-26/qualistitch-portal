@@ -27,6 +27,12 @@ import {
   parseISO
 } from 'date-fns';
 
+type Payment = {
+  type: 'down' | 'full' | 'balance' | 'additional' | 'securityDeposit';
+  amount: number;
+  [key: string]: any;
+};
+
 type Order = {
   quantity: number;
   productType: string;
@@ -42,8 +48,22 @@ export type Lead = {
   submissionDateTime: string;
   grandTotal?: number;
   city?: string;
+  orderType?: string;
+  payments?: Payment[];
   [key: string]: any;
 };
+
+const getLeadSalesAmount = (lead: Lead): number => {
+    let amount = lead.grandTotal || 0;
+    if (lead.orderType === 'Item Sample' && lead.payments) {
+        const securityDeposit = lead.payments
+            .filter(p => p.type === 'securityDeposit')
+            .reduce((sum, p) => sum + p.amount, 0);
+        amount += securityDeposit;
+    }
+    return amount;
+};
+
 
 const GenerateReportInputSchema = z.object({
   leads: z.array(z.any()).describe('An array of lead objects.'),
@@ -190,7 +210,7 @@ const generateReportFlow = ai.defineFlow(
           });
     })();
     
-    const totalSales = filteredLeads.reduce((sum, lead) => sum + (lead.grandTotal || 0), 0);
+    const totalSales = filteredLeads.reduce((sum, lead) => sum + getLeadSalesAmount(lead), 0);
 
     const salesRepData = (() => {
       const statsBySalesRep = filteredLeads.reduce(
@@ -202,7 +222,7 @@ const generateReportFlow = ai.defineFlow(
               0
             );
           const csr = lead.salesRepresentative;
-          const leadAmount = lead.grandTotal || 0;
+          const leadAmount = getLeadSalesAmount(lead);
 
           if (leadQuantity > 0 || leadAmount > 0) {
             if (!acc[csr]) {
@@ -266,7 +286,7 @@ const generateReportFlow = ai.defineFlow(
           const submissionDate = new Date(lead.submissionDateTime);
           const phtOffset = 8 * 60 * 60 * 1000;
           const phtDate = new Date(submissionDate.getTime() + phtOffset);
-          const date = format(Date.UTC(phtDate.getUTCFullYear(), phtDate.getUTCMonth(), phtDate.getUTCDate()), 'MMM-dd-yyyy');
+          const date = format(phtDate, 'MMM-dd-yyyy');
           
           const leadQuantity = lead.orders
             .filter(o => o.productType !== 'Patches')
@@ -275,7 +295,7 @@ const generateReportFlow = ai.defineFlow(
               0
             );
 
-          const leadAmount = lead.grandTotal || 0;
+          const leadAmount = getLeadSalesAmount(lead);
 
           if (leadQuantity > 0 || leadAmount > 0) {
             if (!acc[date]) {
@@ -306,17 +326,16 @@ const generateReportFlow = ai.defineFlow(
             const submissionDate = new Date(lead.submissionDateTime);
             const phtOffset = 8 * 60 * 60 * 1000;
             const phtDate = new Date(submissionDate.getTime() + phtOffset);
-            const date = new Date(Date.UTC(phtDate.getUTCFullYear(), phtDate.getUTCMonth(), phtDate.getUTCDate()));
             
-            const start = startOfWeek(date, { weekStartsOn: 1 });
-            const end = endOfWeek(date, { weekStartsOn: 1 });
+            const start = startOfWeek(phtDate, { weekStartsOn: 1 });
+            const end = endOfWeek(phtDate, { weekStartsOn: 1 });
             const weekRange = `${format(start, 'MMM dd')} - ${format(end, 'MMM dd')}`;
 
             const leadQuantity = lead.orders
                 .filter(o => o.productType !== 'Patches')
                 .reduce((sum, order) => sum + order.quantity, 0);
 
-            const leadAmount = lead.grandTotal || 0;
+            const leadAmount = getLeadSalesAmount(lead);
 
             if (leadQuantity > 0 || leadAmount > 0) {
                 if (!acc[weekRange]) {
@@ -370,7 +389,8 @@ const generateReportFlow = ai.defineFlow(
     const salesByCityData = (() => {
         const salesByCity = filteredLeads.reduce(
           (acc, lead) => {
-            if (lead.city && lead.grandTotal && lead.grandTotal > 0) {
+            const leadAmount = getLeadSalesAmount(lead);
+            if (lead.city && leadAmount > 0) {
               const cityLower = lead.city.trim().toLowerCase().replace('zambaonga', 'zamboanga');
               
               const normalizedCity = cityLower
@@ -390,7 +410,7 @@ const generateReportFlow = ai.defineFlow(
                 if (!acc[finalCityName]) {
                   acc[finalCityName] = { amount: 0, orderCount: 0 };
                 }
-                acc[finalCityName].amount += lead.grandTotal;
+                acc[finalCityName].amount += leadAmount;
                 acc[finalCityName].orderCount += 1;
               }
             }
