@@ -13,7 +13,7 @@ import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { Input } from '@/components/ui/input';
 import { DateRange } from 'react-day-picker';
-import { eachDayOfInterval, endOfMonth } from 'date-fns';
+import { eachDayOfInterval, endOfMonth, getMonth, getYear, parseISO } from 'date-fns';
 import { z, ZodError } from 'zod';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ScrollArea } from './ui/scroll-area';
@@ -148,9 +148,9 @@ export function TodaysPerformanceCard() {
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesData } = useMemo(() => {
-    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesData: [] };
+  
+  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesData, salesTableData } = useMemo(() => {
+    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesData: [], salesTableData: [] };
 
     let rangeStart: Date;
     let rangeEnd: Date;
@@ -214,16 +214,26 @@ export function TodaysPerformanceCard() {
 
     const totalCust = new Set<string>();
     let totalQty = 0;
-
-    filteredLeads.forEach(lead => {
-        const quantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+    
+    const tableData = filteredLeads.map(lead => {
+        const quantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
         totalQty += quantity;
         
         if (lead.customerName) {
            totalCust.add(lead.customerName.toLowerCase());
         }
-    });
-    
+
+        return {
+            time: lead.submissionDateTime,
+            customerName: lead.customerName,
+            quantity: quantity,
+            amount: lead.grandTotal || 0,
+            payment: (lead.paidAmount || 0),
+            balance: (lead.balance || 0),
+            sces: lead.salesRepresentative
+        };
+    }).sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+
     const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
     const historicalDataKeys: string[] = [];
 
@@ -268,7 +278,7 @@ export function TodaysPerformanceCard() {
       };
     });
 
-    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, salesData: finalSalesData };
+    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, salesData: finalSalesData, salesTableData: tableData };
   }, [leads, activeFilter, selectedDate]);
   
   const totalSales = useMemo(() => {
@@ -416,20 +426,6 @@ export function TodaysPerformanceCard() {
                             </ResponsiveContainer>
                         </ChartContainer>
                     </div>
-                     <div className="flex justify-center items-end gap-8 mt-4">
-                        <div className="text-center">
-                            <p className="text-sm font-medium text-gray-600">Total Quantity</p>
-                            <p className="text-2xl font-bold">{totalItemsSold.toLocaleString()}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                            <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-sm font-medium text-gray-600">Total Customers</p>
-                            <p className="text-2xl font-bold">{totalCustomers}</p>
-                        </div>
-                    </div>
                 </div>
                 <div className="w-full lg:col-span-1">
                      <CardHeader className="p-0 mb-4 text-center">
@@ -568,7 +564,9 @@ export function TodaysPerformanceCard() {
                                             activeDot={false}
                                         />
                                     ))}
-                                    <Area yAxisId="right" type="monotone" dataKey="amount" name="Sales" fill="hsl(var(--chart-2))" fillOpacity={0.4} stroke="hsl(var(--chart-2))" />
+                                    <Area yAxisId="right" type="monotone" dataKey="amount" name="Sales" fill="hsl(var(--chart-2))" fillOpacity={0.4} stroke="hsl(var(--chart-2))">
+                                        <LabelList dataKey="amount" content={renderAmountLabel} />
+                                    </Area>
                                     <Line yAxisId="left" type="monotone" dataKey="customerCount" name="Customers" stroke="hsl(var(--chart-1))" strokeWidth={2}>
                                         <LabelList dataKey="customerCount" content={renderHourlyLabel} />
                                     </Line>
