@@ -56,15 +56,30 @@ const chartConfig = {
 };
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, width, value } = props;
+    const { x, y, width, value, stroke } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
     
+    const rectWidth = 80;
+    const rectHeight = 18;
     const xPos = width ? x + width / 2 : x;
-  
+    
+    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
+
     return (
-      <text x={xPos} y={y} dy={-10} fill="black" fontSize={12} textAnchor="middle" fontWeight="bold">
-        {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-      </text>
+      <g>
+        <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
+        <text 
+          x={xPos} 
+          y={y - rectHeight/2 - 5}
+          textAnchor="middle" 
+          dominantBaseline="middle" 
+          fill="black"
+          fontSize={12} 
+          fontWeight="bold"
+        >
+          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+        </text>
+      </g>
     );
 };
 
@@ -172,8 +187,8 @@ export default function AnalyticsPage() {
                 <ComposedChart data={filteredData}>
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis yAxisId="left" stroke={chartConfig.adsSpent.color} tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} />
-                  <YAxis yAxisId="right" orientation="right" stroke={chartConfig.cpm.color} tickFormatter={(value) => formatCurrency(value)} />
+                  <YAxis yAxisId="left" stroke={chartConfig.adsSpent.color} tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
+                  <YAxis yAxisId="right" orientation="right" stroke={chartConfig.cpm.color} tickFormatter={(value) => formatCurrency(value)} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
                   <Tooltip content={<ChartTooltipContent formatter={(value, name) => formatCurrency(value as number)} />} />
                   <Legend />
                   <Bar dataKey="cpm" yAxisId="right" fill={chartConfig.cpm.color} name="CPM" radius={[4, 4, 0, 0]}>
