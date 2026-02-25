@@ -166,7 +166,7 @@ export default function AnalyticsPage() {
                 </div>
              </div>
           </CardHeader>
-          <CardContent className="h-[400px]">
+          <CardContent className="h-[300px]">
             <ChartContainer config={chartConfig} className="w-full h-full">
               <ResponsiveContainer>
                 <ComposedChart data={filteredData}>
