@@ -442,16 +442,14 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     const customerOrderGroups: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     leads.forEach(lead => {
-        // Defensive check to ensure lead.orders is an array before using it
-        if (!Array.isArray(lead.orders)) {
-            return; 
-        }
-
-        const name = lead.customerName.toLowerCase();
-        if (!customerOrderGroups[name]) {
-            customerOrderGroups[name] = { orders: [], totalCustomerQuantity: 0 };
-        }
-        customerOrderGroups[name].orders.push(lead);
+      if (!Array.isArray(lead.orders)) {
+          return; 
+      }
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderGroups[name]) {
+        customerOrderGroups[name] = { orders: [], totalCustomerQuantity: 0 };
+      }
+      customerOrderGroups[name].orders.push(lead);
     });
 
     const enrichedLeads: EnrichedLead[] = [];
@@ -466,7 +464,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
         
         const totalCustomerQuantity = orders.reduce((sum, o) => {
             if (!Array.isArray(o.orders)) return sum;
-            return sum + o.orders.reduce((orderSum, item) => sum + (item.quantity || 0), 0)
+            return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
         }, 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
@@ -491,6 +489,14 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     if (!processedLeads) return [];
 
     return processedLeads.filter(lead => {
+      const overallStatus = getOverallStatus(lead).text;
+      let matchesStatus = true;
+      if (filterType === 'COMPLETED') {
+        matchesStatus = overallStatus === 'COMPLETED';
+      } else if (filterType === 'ONGOING') {
+        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
+      }
+
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ? 
         (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
@@ -516,15 +522,6 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
         dateMatches = matchesYear && matchesMonth;
       }
       
-      const overallStatus = getOverallStatus(lead).text;
-      let matchesStatus = true;
-      if (filterType === 'COMPLETED') {
-        matchesStatus = overallStatus === 'COMPLETED';
-      } else if (filterType === 'ONGOING') {
-        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
-      }
-
-
       return matchesSearch && matchesCsr && dateMatches && matchesStatus;
     });
   }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, dateRange, filterType, getOverallStatus]);
@@ -747,5 +744,4 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
-
 

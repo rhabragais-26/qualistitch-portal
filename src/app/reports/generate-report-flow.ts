@@ -196,44 +196,41 @@ const generateReportFlow = ai.defineFlow(
     const totalSales = filteredLeads.reduce((sum, lead) => sum + (lead.grandTotal || 0), 0);
 
     const salesRepData = (() => {
-      const statsBySalesRep = filteredLeads.reduce(
-        (acc, lead) => {
-          const leadQuantity = lead.orders
-            .filter(o => o.productType !== 'Patches')
-            .reduce(
-              (sum, order) => sum + order.quantity,
-              0
-            );
-          const csr = lead.salesRepresentative;
-          const leadAmount = lead.grandTotal || 0;
-
-          if (leadQuantity > 0 || leadAmount > 0) {
+        const statsBySalesRep = filteredLeads.reduce(
+          (acc, lead) => {
+            const csr = lead.salesRepresentative;
+    
             if (!acc[csr]) {
               acc[csr] = { quantity: 0, amount: 0, uniqueCustomerDays: new Set() };
             }
-
-            acc[csr].quantity += leadQuantity;
-            acc[csr].amount += leadAmount;
-            
+    
             const submissionDate = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
             const uniqueKey = `${lead.customerName}-${submissionDate}`;
             acc[csr].uniqueCustomerDays.add(uniqueKey);
-          }
-
-          return acc;
-        },
-        {} as { [key: string]: { quantity: number; amount: number; uniqueCustomerDays: Set<string> } }
-      );
-
-      return Object.entries(statsBySalesRep)
-        .map(([name, { quantity, amount, uniqueCustomerDays }]) => ({
-          name,
-          quantity,
-          customerCount: uniqueCustomerDays.size,
-          amount,
-        }))
-        .sort((a, b) => b.quantity - a.quantity);
-    })();
+    
+            const leadQuantity = lead.orders
+              .filter(o => o.productType !== 'Patches')
+              .reduce((sum, order) => sum + order.quantity, 0);
+            
+            const leadAmount = lead.grandTotal || 0;
+    
+            acc[csr].quantity += leadQuantity;
+            acc[csr].amount += leadAmount;
+    
+            return acc;
+          },
+          {} as { [key: string]: { quantity: number; amount: number; uniqueCustomerDays: Set<string> } }
+        );
+    
+        return Object.entries(statsBySalesRep)
+          .map(([name, { quantity, amount, uniqueCustomerDays }]) => ({
+            name,
+            quantity,
+            customerCount: uniqueCustomerDays.size,
+            amount,
+          }))
+          .sort((a, b) => b.quantity - a.quantity);
+      })();
 
     const priorityData = (() => {
       const quantityByPriority = filteredLeads.reduce(
@@ -377,7 +374,7 @@ const generateReportFlow = ai.defineFlow(
 
               const finalCityName = normalizedCity
                 .split(' ')
-                .filter(Boolean) 
+                .filter(Boolean)
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' ');
 
