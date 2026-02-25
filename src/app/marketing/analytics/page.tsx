@@ -56,10 +56,12 @@ const chartConfig = {
 
 const renderAmountLabel = (props: any) => {
     const { x, y, width, value } = props;
-    if (value === 0) return null;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+    
+    const xPos = width ? x + width / 2 : x;
   
     return (
-      <text x={x + width / 2} y={y} dy={-4} fill="black" fontSize={12} textAnchor="middle" fontWeight="bold">
+      <text x={xPos} y={y} dy={-10} fill="black" fontSize={12} textAnchor="middle" fontWeight="bold">
         {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </text>
     );
@@ -173,7 +175,9 @@ export default function AnalyticsPage() {
                   <YAxis yAxisId="right" orientation="right" stroke={chartConfig.cpm.color} tickFormatter={(value) => formatCurrency(value)} />
                   <Tooltip content={<ChartTooltipContent formatter={(value, name) => formatCurrency(value as number)} />} />
                   <Legend />
-                  <Bar dataKey="cpm" yAxisId="right" fill={chartConfig.cpm.color} name="CPM" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cpm" yAxisId="right" fill={chartConfig.cpm.color} name="CPM" radius={[4, 4, 0, 0]}>
+                    <LabelList dataKey="cpm" position="top" formatter={(value: number) => value > 0 ? formatCurrency(value) : ''} fontSize={12} />
+                  </Bar>
                   <Line dataKey="adsSpent" type="monotone" yAxisId="left" stroke={chartConfig.adsSpent.color} name="Ads Spent" strokeWidth={2}>
                     <LabelList dataKey="adsSpent" content={renderAmountLabel} />
                   </Line>
