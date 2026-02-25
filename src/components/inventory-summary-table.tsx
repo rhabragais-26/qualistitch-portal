@@ -189,12 +189,12 @@ export function InventorySummaryTable() {
     
     const soldQuantities = new Map<string, number>();
     leads.forEach(lead => {
-        if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
-            lead.orders.forEach(order => {
-                const key = `${order.productType}-${order.color}-${order.size}`;
-                soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
-            });
-        }
+      if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
+        lead.orders.forEach(order => {
+          const key = `${order.productType}-${order.color}-${order.size}`;
+          soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
+        });
+      }
     });
 
     return inventoryItems.map(item => {
@@ -470,4 +470,3 @@ export function InventorySummaryTable() {
   );
 }
 
-    
