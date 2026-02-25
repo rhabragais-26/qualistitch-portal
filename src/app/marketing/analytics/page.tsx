@@ -145,7 +145,7 @@ export default function AnalyticsPage() {
     return (
       <Header>
         <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
-          <Skeleton className="h-[500px] w-full" />
+          <Skeleton className="h-[300px] w-full" />
         </main>
       </Header>
     );
@@ -192,7 +192,14 @@ export default function AnalyticsPage() {
                   <Tooltip content={<ChartTooltipContent formatter={(value, name) => formatCurrency(value as number)} />} />
                   <Legend />
                   <Bar dataKey="cpm" yAxisId="right" fill={chartConfig.cpm.color} name="CPM" radius={[4, 4, 0, 0]}>
-                    <LabelList dataKey="cpm" position="top" formatter={(value: number) => value > 0 ? formatCurrency(value) : ''} fontSize={12} />
+                    <LabelList
+                      dataKey="cpm"
+                      position="center"
+                      fill="#FFD700"
+                      formatter={(value: number) => value > 0 ? formatCurrency(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+                      fontSize={12}
+                      fontWeight="bold"
+                    />
                   </Bar>
                   <Line dataKey="adsSpent" type="monotone" yAxisId="left" stroke={chartConfig.adsSpent.color} name="Ads Spent" strokeWidth={2}>
                     <LabelList dataKey="adsSpent" content={renderAmountLabel} />
