@@ -23,10 +23,6 @@ type Order = {
   quantity: number;
 };
 
-type Layout = {
-  layoutImage?: string | null;
-};
-
 const leadSchema = z.object({
   id: z.string(),
   customerName: z.string(),
@@ -42,6 +38,8 @@ const leadSchema = z.object({
   })).optional(),
   paidAmount: z.number().optional(),
   balance: z.number().optional(),
+  orderType: z.string().optional(),
+  payments: z.array(z.any()).optional(),
 });
 
 type Lead = z.infer<typeof leadSchema>;
@@ -114,7 +112,7 @@ const renderQuantityLabel = (props: any) => {
 };
 
 const renderHourlyLabel = (props: any) => {
-    const { x, y, value } = props;
+    const { x, y, value, stroke } = props;
 
     if (typeof x !== 'number' || typeof y !== 'number' || typeof value !== 'number' || value <= 0) {
       return null;
@@ -127,7 +125,7 @@ const renderHourlyLabel = (props: any) => {
           x={x}
           y={y}
           dy={-10}
-          fill="hsl(var(--foreground))"
+          fill={stroke}
           fontSize={12}
           fontWeight="bold"
           textAnchor="middle"
@@ -146,8 +144,8 @@ export function TodaysPerformanceCard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = useState(false);
 
-  const { salesData, salesTableData } = useMemo(() => {
-    if (!leads) return { salesData: [], salesTableData: [] };
+  const salesData = useMemo(() => {
+    if (!leads) return [];
 
     let rangeStart: Date;
     let rangeEnd: Date;
@@ -174,7 +172,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead '${lead.id}': '${lead.submissionDateTime}'`);
+            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}'`, `'${'\'\''}${lead.submissionDateTime}'`);
             return false;
         }
     });
@@ -184,15 +182,7 @@ export function TodaysPerformanceCard() {
       if (!acc[rep]) {
         acc[rep] = { amount: 0, quantity: 0, layoutCount: 0 };
       }
-      let amount = lead.grandTotal || 0;
-      if (lead.orderType === 'Item Sample' && lead.payments) {
-          const securityDeposit = lead.payments
-              .filter(p => p.type === 'securityDeposit')
-              .reduce((sum, p) => sum + p.amount, 0);
-          amount += securityDeposit;
-      }
-      acc[rep].amount += amount;
-
+      acc[rep].amount += lead.grandTotal || 0;
       const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
       acc[rep].quantity += orderQuantity;
       const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
@@ -200,58 +190,27 @@ export function TodaysPerformanceCard() {
       return acc;
     }, {} as { [key: string]: { amount: number; quantity: number; layoutCount: number } });
 
-    const finalSalesData = Object.entries(salesByRep)
+    return Object.entries(salesByRep)
       .map(([name, data]) => ({ name, ...data }))
       .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
-      
-    const tableData = filteredLeads.map(lead => {
-        const quantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-        
-        let amount = lead.grandTotal || 0;
-        if (lead.orderType === 'Item Sample' && lead.payments) {
-            const securityDeposit = lead.payments
-                .filter(p => p.type === 'securityDeposit')
-                .reduce((sum, p) => sum + p.amount, 0);
-            amount += securityDeposit;
-        }
-
-        return {
-            time: lead.submissionDateTime,
-            customerName: lead.customerName,
-            quantity: quantity,
-            amount: amount,
-            payment: (lead.paidAmount || 0),
-            balance: (lead.balance || 0),
-            sces: lead.salesRepresentative
-        };
-    }).sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-
-    return { salesData: finalSalesData, salesTableData: tableData };
   }, [leads, activeFilter, selectedDate]);
   
   const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold } = useMemo(() => {
     if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0 };
 
     let rangeStart: Date;
-    let rangeEnd: Date;
     
     if (activeFilter === 'today') {
-        const today = new Date();
-        rangeStart = startOfDay(today);
-        rangeEnd = endOfDay(today);
+        rangeStart = startOfDay(new Date());
     } else if (activeFilter === 'yesterday') {
-        const yesterday = subDays(new Date(), 1);
-        rangeStart = startOfDay(yesterday);
-        rangeEnd = endOfDay(yesterday);
+        rangeStart = startOfDay(subDays(new Date(), 1));
     } else if (activeFilter === 'custom' && selectedDate) {
         rangeStart = startOfDay(selectedDate);
-        rangeEnd = endOfDay(selectedDate);
     } else {
-        const today = new Date();
-        rangeStart = startOfDay(today);
-        rangeEnd = endOfDay(today);
+        rangeStart = startOfDay(new Date());
     }
+    const rangeEnd = endOfDay(rangeStart);
     
     const filteredLeads = leads.filter(lead => {
         try {
@@ -301,7 +260,7 @@ export function TodaysPerformanceCard() {
       const historicalDate = subDays(rangeStart, i * 7);
       const historicalRangeStart = startOfDay(historicalDate);
       const historicalRangeEnd = endOfDay(historicalDate);
-      const historicalKey = `prevWeek${i}`;
+      const historicalKey = `prevWeek${'\'\'\''}${i}`;
       historicalDataKeys.push(historicalKey);
 
       const historicalLeads = leads.filter(lead => {
@@ -330,7 +289,7 @@ export function TodaysPerformanceCard() {
     const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
       const hourData = salesByHour[i];
       return {
-        hour: `${i.toString().padStart(2, '0')}:00`,
+        hour: `${'\'\'\''}${i.toString().padStart(2, '0')}:00`,
         customerCount: hourData ? hourData.customers.size : 0,
         quantity: hourData ? hourData.quantity : 0,
         amount: hourData ? hourData.amount : 0,
@@ -443,216 +402,214 @@ export function TodaysPerformanceCard() {
                 <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => { setActiveFilter('today'); setSelectedDate(undefined); }}>Today</Button>
             </div>
         </div>
-        <div className="mt-4 flex items-center justify-around bg-muted p-4 rounded-lg">
-            <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
-                <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
-            </div>
-            <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-                <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
-            </div>
-            <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
-                <p className="text-3xl font-bold">{totalCustomers}</p>
-            </div>
-        </div>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {salesData.length > 0 ? (
-            <>
-                <div className="lg:col-span-2">
-                    <CardHeader className="p-0 mb-4 text-center">
-                        <CardTitle>Sales & Items Sold</CardTitle>
-                    </CardHeader>
-                    <div style={{ height: '300px' }}>
-                        <ChartContainer config={chartConfig} className="w-full h-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart data={salesData} margin={{ top: 30 }}>
-                                    <CartesianGrid vertical={false} />
-                                    <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
-                                    <YAxis
-                                        yAxisId="left"
-                                        orientation="left"
-                                        stroke="hsl(var(--chart-2))"
-                                        tickFormatter={(value) => `₱${Number(value) / 1000}k`}
-                                    />
-                                    <YAxis
-                                        yAxisId="right"
-                                        orientation="right"
-                                        stroke="hsl(var(--chart-1))"
-                                    />
-                                    <Tooltip
-                                        cursor={{ fill: 'hsl(var(--muted))' }}
-                                        content={<ChartTooltipContent
-                                            formatter={(value, name) => {
-                                                if (name === 'Sales Amount') return formatCurrency(value as number);
-                                                return value.toLocaleString();
-                                            }}
-                                        />}
-                                    />
-                                    <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
-                                        {salesData.map((entry, index) => (
-                                            <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                        <LabelList dataKey="quantity" content={renderQuantityLabel} />
-                                    </Bar>
-                                    <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2}>
-                                        <LabelList content={renderAmountLabel} dataKey="amount" />
-                                    </Line>
-                                </ComposedChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
-                    </div>
-                </div>
-                <div className="w-full lg:col-span-1">
-                     <CardHeader className="p-0 mb-4 text-center">
-                        <CardTitle>Layouts converted to Sales</CardTitle>
-                    </CardHeader>
-                    <div style={{ height: '350px' }}>
-                       <ChartContainer config={{ layoutCount: { label: 'Layouts' } }} className="w-full h-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Tooltip
-                                        cursor={{ fill: 'hsl(var(--muted))' }}
-                                        content={<ChartTooltipContent nameKey="layoutCount" />}
-                                    />
-                                    <Pie
-                                        data={layoutChartData}
-                                        dataKey="layoutCount"
-                                        nameKey="name"
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={90}
-                                        labelLine={false}
-                                        label={({
-                                            cx,
-                                            cy,
-                                            midAngle,
-                                            innerRadius,
-                                            outerRadius,
-                                            value,
-                                        }) => {
-                                            const RADIAN = Math.PI / 180;
-                                            const radius = innerRadius + (outerRadius - innerRadius) * 0.7; 
-                                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+      <CardContent className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          {salesData.length > 0 ? (
+              <>
+                  <div className="lg:col-span-2">
+                      <CardHeader className="p-0 mb-4 text-center">
+                          <CardTitle>Sales & Items Sold</CardTitle>
+                      </CardHeader>
+                      <div style={{ height: '300px' }}>
+                          <ChartContainer config={chartConfig} className="w-full h-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                  <ComposedChart data={salesData} margin={{ top: 30 }}>
+                                      <CartesianGrid vertical={false} />
+                                      <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                                      <YAxis
+                                          yAxisId="left"
+                                          orientation="left"
+                                          stroke="hsl(var(--chart-2))"
+                                          tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}k`}
+                                      />
+                                      <YAxis
+                                          yAxisId="right"
+                                          orientation="right"
+                                          stroke="hsl(var(--chart-1))"
+                                      />
+                                      <Tooltip
+                                          cursor={{ fill: 'hsl(var(--muted))' }}
+                                          content={<ChartTooltipContent
+                                              formatter={(value, name) => {
+                                                  if (name === 'Sales Amount') return formatCurrency(value as number);
+                                                  return value.toLocaleString();
+                                              }}
+                                          />}
+                                      />
+                                      <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
+                                          {salesData.map((entry, index) => (
+                                              <Cell key={`cell-amount-${'\'\'\''}${index}`} fill={COLORS[index % COLORS.length]} />
+                                          ))}
+                                          <LabelList dataKey="quantity" content={renderQuantityLabel} />
+                                      </Bar>
+                                      <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2}>
+                                          <LabelList content={renderAmountLabel} dataKey="amount" />
+                                      </Line>
+                                  </ComposedChart>
+                              </ResponsiveContainer>
+                          </ChartContainer>
+                      </div>
+                  </div>
+                  <div className="w-full lg:col-span-1">
+                       <CardHeader className="p-0 mb-4 text-center">
+                          <CardTitle>Layouts converted to Sales</CardTitle>
+                      </CardHeader>
+                      <div style={{ height: '350px' }}>
+                         <ChartContainer config={{ layoutCount: { label: 'Layouts' } }} className="w-full h-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                  <PieChart>
+                                      <Tooltip
+                                          cursor={{ fill: 'hsl(var(--muted))' }}
+                                          content={<ChartTooltipContent nameKey="layoutCount" />}
+                                      />
+                                      <Pie
+                                          data={layoutChartData}
+                                          dataKey="layoutCount"
+                                          nameKey="name"
+                                          cx="50%"
+                                          cy="50%"
+                                          outerRadius={90}
+                                          labelLine={false}
+                                          label={({
+                                              cx,
+                                              cy,
+                                              midAngle,
+                                              innerRadius,
+                                              outerRadius,
+                                              value,
+                                          }) => {
+                                              const RADIAN = Math.PI / 180;
+                                              const radius = innerRadius + (outerRadius - innerRadius) * 0.7; 
+                                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-                                            return (
-                                            <text
-                                                x={x}
-                                                y={y}
-                                                fill="white"
-                                                textAnchor="middle"
-                                                dominantBaseline="central"
-                                                fontSize={12}
-                                                style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
-                                            >
-                                                {value}
-                                            </text>
-                                            );
-                                        }}
-                                    >
-                                        {layoutChartData.map((entry, index) => (
-                                            <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
-                    </div>
-                </div>
-            </>
-        ) : (
-            <div className="lg:col-span-3 flex items-center justify-center h-[300px]">
-                <p className="text-muted-foreground">No sales recorded for the selected date.</p>
-            </div>
-        )}
+                                              return (
+                                              <text
+                                                  x={x}
+                                                  y={y}
+                                                  fill="white"
+                                                  textAnchor="middle"
+                                                  dominantBaseline="central"
+                                                  fontSize={12}
+                                                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                                              >
+                                                  {value}
+                                              </text>
+                                              );
+                                          }}
+                                      >
+                                          {layoutChartData.map((entry, index) => (
+                                              <Cell key={`cell-layout-${'\'\'\''}${index}`} fill={COLORS[index % COLORS.length]} />
+                                          ))}
+                                      </Pie>
+                                      <Legend />
+                                  </PieChart>
+                              </ResponsiveContainer>
+                          </ChartContainer>
+                      </div>
+                  </div>
+              </>
+          ) : (
+              <div className="lg:col-span-3 flex items-center justify-center h-[300px]">
+                  <p className="text-muted-foreground">No sales recorded for the selected date.</p>
+              </div>
+          )}
+        </div>
+        <div className="flex items-center justify-around bg-muted p-4 rounded-lg">
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
+            <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
+            <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
+            <p className="text-3xl font-bold">{totalCustomers}</p>
+          </div>
+        </div>
+        <Separator className="my-4" />
+        <CardHeader className="p-0">
+          <CardTitle>Count of Clients per Interval</CardTitle>
+          <CardDescription>Number of unique customers and total sales amount acquired per hour for the selected day.</CardDescription>
+        </CardHeader>
+        <div style={{ height: '300px' }}>
+          <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={hourlySalesData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid stroke="hsl(var(--border) / 0.7)" vertical={false} />
+                <XAxis
+                  dataKey="hour"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => {
+                      const hour = parseInt(value.split(':')[0], 10);
+                      if (hour === 0) return '12am';
+                      if (hour === 12) return '12pm';
+                      if (hour > 12) return `${'\'\'\''}${hour - 12}`;
+                      return `${'\'\'\''}${hour}`;
+                  }}
+                  interval={0}
+                />
+                <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tickFormatter={(value) => `${'\'\'\''}${value}`} />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}k`} />
+                <Tooltip
+                  content={<ChartTooltipContent
+                      formatter={(value, name, item) => {
+                          if (name === 'Customers') {
+                              return (
+                                  <div className="flex flex-col">
+                                      <span>{item.payload.customerCount} customers</span>
+                                      <span className="text-muted-foreground">{item.payload.quantity} items</span>
+                                  </div>
+                              );
+                          }
+                          if (name === 'Sales') {
+                              return formatCurrency(value as number);
+                          }
+                          const weekMatch = name.match(/(\d+) week(s)? ago/);
+                          if (weekMatch) {
+                              const weekNum = weekMatch[1];
+                              return (
+                                  <div className="flex flex-col">
+                                      <span>{value as number} customers</span>
+                                      <span className="text-muted-foreground">({weekNum} week{parseInt(weekNum, 10) > 1 ? 's' : ''} ago)</span>
+                                  </div>
+                              );
+                          }
+                          return value;
+                      }}
+                  />}
+                />
+                <Legend />
+                {historicalDataKeys.map((key, index) => (
+                    <Line
+                        key={key}
+                        yAxisId="left"
+                        dataKey={key}
+                        type="monotone"
+                        name={`${'\'\'\''}${index + 1} week${index > 0 ? 's' : ''} ago`}
+                        stroke={COLORS[(index + 1) % COLORS.length]}
+                        strokeOpacity={0.4}
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={false}
+                    />
+                ))}
+                 <Area yAxisId="right" type="linear" dataKey="amount" name="Sales" fill="hsl(var(--chart-2))" fillOpacity={0.4} stroke="hsl(var(--chart-2))">
+                   <LabelList dataKey="amount" content={renderAmountLabel} />
+                </Area>
+                <Line yAxisId="left" type="monotone" dataKey="customerCount" name="Customers" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                    <LabelList dataKey="customerCount" content={(props) => renderHourlyLabel({...props, stroke: 'hsl(var(--chart-1))'})} />
+                </Line>
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </div>
       </CardContent>
-        <>
-            <Separator className="my-4" />
-             <CardHeader>
-                <CardTitle>Count of Clients per Interval</CardTitle>
-                <CardDescription>Number of unique customers and total sales amount acquired per hour for the selected day.</CardDescription>
-              </CardHeader>
-            <CardContent>
-                <div style={{ height: '300px' }}>
-                    <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <ComposedChart data={hourlySalesData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                <CartesianGrid stroke="hsl(var(--border) / 0.7)" vertical={false} />
-                                <XAxis
-                                dataKey="hour"
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                                tickFormatter={(value) => {
-                                    const hour = parseInt(value.split(':')[0], 10);
-                                    if (hour === 0) return '12am';
-                                    if (hour === 12) return '12pm';
-                                    if (hour > 12) return `${hour - 12}`;
-                                    return `${hour}`;
-                                }}
-                                interval={0}
-                                />
-                                <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tickFormatter={(value) => `${value}`} />
-                                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
-                                <Tooltip
-                                    content={<ChartTooltipContent
-                                        formatter={(value, name, item) => {
-                                            if (name === 'Customers') {
-                                                return (
-                                                    <div className="flex flex-col">
-                                                        <span>{item.payload.customerCount} customers</span>
-                                                        <span className="text-muted-foreground">{item.payload.quantity} items</span>
-                                                    </div>
-                                                );
-                                            }
-                                            if (name === 'Sales') {
-                                                return formatCurrency(value as number);
-                                            }
-                                            const weekMatch = name.match(/(\d+) week(s)? ago/);
-                                            if (weekMatch) {
-                                                const weekNum = weekMatch[1];
-                                                return (
-                                                    <div className="flex flex-col">
-                                                        <span>{value as number} customers</span>
-                                                        <span className="text-muted-foreground">({weekNum} week{parseInt(weekNum, 10) > 1 ? 's' : ''} ago)</span>
-                                                    </div>
-                                                );
-                                            }
-                                            return value;
-                                        }}
-                                    />}
-                                />
-                                <Legend />
-                                {historicalDataKeys.map((key, index) => (
-                                    <Line
-                                        key={key}
-                                        yAxisId="left"
-                                        dataKey={key}
-                                        type="monotone"
-                                        name={`${index + 1} week${index > 0 ? 's' : ''} ago`}
-                                        stroke={COLORS[(index + 1) % COLORS.length]}
-                                        strokeOpacity={0.4}
-                                        strokeWidth={2}
-                                        dot={false}
-                                        activeDot={false}
-                                    />
-                                ))}
-                                <Area yAxisId="right" dataKey="amount" name="Sales" fill="hsl(var(--chart-2))" fillOpacity={0.4} stroke="hsl(var(--chart-2))">
-                                  <LabelList dataKey="amount" content={renderAmountLabel} />
-                                </Area>
-                                <Line yAxisId="left" type="monotone" dataKey="customerCount" name="Customers" stroke="hsl(var(--chart-1))" strokeWidth={2}>
-                                    <LabelList dataKey="customerCount" content={renderHourlyLabel} />
-                                </Line>
-                            </ComposedChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
-                </div>
-            </CardContent>
-        </>
     </Card>
   );
 }
