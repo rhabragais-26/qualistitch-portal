@@ -98,6 +98,80 @@ const renderAmountLabel = (props: any) => {
       </g>
     );
 };
+
+
+const renderPieCountInside = (props: any) => {
+  const { x, y, value } = props;
+
+  const vx = typeof x === "number" ? x : Number(x);
+  const vy = typeof y === "number" ? y : Number(y);
+  const v = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(vx) || !Number.isFinite(vy)) return null;
+  if (!Number.isFinite(v) || v <= 0) return null;
+
+  return (
+    <text
+      x={vx}
+      y={vy}
+      fill="white"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight="bold"
+      style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+    >
+      {v}
+    </text>
+  );
+};
+
+const renderPieNameOutside = (props: any) => {
+  const { cx, cy, midAngle, innerRadius, outerRadius, name, fill } = props;
+
+  // ✅ guard
+  if (
+    typeof cx !== "number" ||
+    typeof cy !== "number" ||
+    typeof midAngle !== "number" ||
+    typeof innerRadius !== "number" ||
+    typeof outerRadius !== "number"
+  ) {
+    return null;
+  }
+
+  if (!name) return null;
+
+  const RADIAN = Math.PI / 180;
+
+  const sx = cx + (outerRadius + 4) * Math.cos(-midAngle * RADIAN);
+  const sy = cy + (outerRadius + 4) * Math.sin(-midAngle * RADIAN);
+
+  const mx = cx + (outerRadius + 10) * Math.cos(-midAngle * RADIAN);
+  const my = cy + (outerRadius + 10) * Math.sin(-midAngle * RADIAN); // ✅ was +16 (typo-ish), keep consistent
+
+  const isRight = mx > cx;
+  const ex = mx + (isRight ? 8 : -8);
+  const ey = my;
+
+  return (
+    <g>
+      <path d={`M${sx},${sy} L${mx},${my} L${ex},${ey}`} stroke={fill} fill="none" strokeWidth={2} />
+      <text
+        x={ex + (isRight ? 4 : -4)}
+        y={ey}
+        textAnchor={isRight ? "start" : "end"}
+        dominantBaseline="central"
+        fill={fill}
+        fontSize={12}
+        fontWeight={700}
+        style={{ paintOrder: "stroke", stroke: "white", strokeWidth: 3 }}
+      >
+        {name}
+      </text>
+    </g>
+  );
+};
   
 const renderQuantityLabel = (props: any) => {
     const { x, y, width, height, value } = props;
@@ -221,6 +295,53 @@ export function TodaysPerformanceCard() {
         }
     });
 
+    const renderPieNameOutside = (props: any) => {
+      const {
+        cx,
+        cy,
+        midAngle,
+        innerRadius,
+        outerRadius,
+        name,
+        fill,
+      } = props;
+    
+      const RADIAN = Math.PI / 180;
+    
+      // start point: just outside the slice
+      const sx = cx + (outerRadius + 4) * Math.cos(-midAngle * RADIAN);
+      const sy = cy + (outerRadius + 4) * Math.sin(-midAngle * RADIAN);
+    
+      // middle bend
+      const mx = cx + (outerRadius + 16) * Math.cos(-midAngle * RADIAN);
+      const my = cy + (outerRadius + 16) * Math.sin(-midAngle * RADIAN);
+    
+      // end point: push left/right
+      const isRight = mx > cx;
+      const ex = mx + (isRight ? 14 : -14);
+      const ey = my;
+    
+      return (
+        <g>
+          {/* leader line */}
+          <path d={`M${sx},${sy} L${mx},${my} L${ex},${ey}`} stroke={fill} fill="none" strokeWidth={2} />
+          {/* label */}
+          <text
+            x={ex + (isRight ? 4 : -4)}
+            y={ey}
+            textAnchor={isRight ? "start" : "end"}
+            dominantBaseline="central"
+            fill={fill}
+            fontSize={12}
+            fontWeight={700}
+            style={{ paintOrder: "stroke", stroke: "white", strokeWidth: 3 }} // makes it readable
+          >
+            {name}
+          </text>
+        </g>
+      );
+    };
+
     const salesByHour = filteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
       if (!acc[hour]) {
@@ -289,7 +410,7 @@ export function TodaysPerformanceCard() {
     const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
       const hourData = salesByHour[i];
       return {
-        hour: `${'\'\'\''}${i.toString().padStart(2, '0')}:00`,
+        hour: `${i.toString().padStart(2, '0')}:00`, // <-- FIX: no extra quotes
         customerCount: hourData ? hourData.customers.size : 0,
         quantity: hourData ? hourData.quantity : 0,
         amount: hourData ? hourData.amount : 0,
@@ -464,46 +585,103 @@ export function TodaysPerformanceCard() {
                                           content={<ChartTooltipContent nameKey="layoutCount" />}
                                       />
                                       <Pie
-                                          data={layoutChartData}
-                                          dataKey="layoutCount"
-                                          nameKey="name"
-                                          cx="50%"
-                                          cy="50%"
-                                          outerRadius={90}
-                                          labelLine={false}
-                                          label={({
-                                              cx,
-                                              cy,
-                                              midAngle,
-                                              innerRadius,
-                                              outerRadius,
-                                              value,
-                                          }) => {
-                                              const RADIAN = Math.PI / 180;
-                                              const radius = innerRadius + (outerRadius - innerRadius) * 0.7; 
-                                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                        data={layoutChartData}
+                                        dataKey="layoutCount"
+                                        nameKey="name"
+                                        cx="58%"
+                                        cy="50%"
+                                        outerRadius={90}
+                                        labelLine={false}
+                                        label={(p: any) => {
+                                          const { cx, cy, midAngle, innerRadius, outerRadius, value, name, fill } = p;
 
-                                              return (
+                                          if (
+                                            typeof cx !== "number" ||
+                                            typeof cy !== "number" ||
+                                            typeof midAngle !== "number" ||
+                                            typeof innerRadius !== "number" ||
+                                            typeof outerRadius !== "number"
+                                          ) return null;
+
+                                          const v = Number(value);
+                                          if (!Number.isFinite(v) || v <= 0) return null;
+
+                                          const RADIAN = Math.PI / 180;
+
+                                          // inside count
+                                          const rIn = innerRadius + (outerRadius - innerRadius) * 0.7;
+                                          const xIn = cx + rIn * Math.cos(-midAngle * RADIAN);
+                                          const yIn = cy + rIn * Math.sin(-midAngle * RADIAN);
+
+                                          // outside name
+                                          const sx = cx + (outerRadius + 4) * Math.cos(-midAngle * RADIAN);
+                                          const sy = cy + (outerRadius + 4) * Math.sin(-midAngle * RADIAN);
+                                          const mx = cx + (outerRadius + 12) * Math.cos(-midAngle * RADIAN);
+                                          const my = cy + (outerRadius + 12) * Math.sin(-midAngle * RADIAN);
+                                          const isRight = mx > cx;
+                                          const ex = mx + (isRight ? 10 : -10);
+                                          const ey = my;
+
+                                          return (
+                                            <g>
+                                              <path
+                                                d={`M${sx},${sy} L${mx},${my} L${ex},${ey}`}
+                                                stroke={fill}
+                                                fill="none"
+                                                strokeWidth={2}
+                                              />
                                               <text
-                                                  x={x}
-                                                  y={y}
-                                                  fill="white"
-                                                  textAnchor="middle"
-                                                  dominantBaseline="central"
-                                                  fontSize={12}
-                                                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                                                x={ex + (isRight ? 4 : -4)}
+                                                y={ey}
+                                                textAnchor={isRight ? "start" : "end"}
+                                                dominantBaseline="central"
+                                                fill={fill}
+                                                fontSize={12}
+                                                fontWeight={700}
+                                                style={{ paintOrder: "stroke", stroke: "white", strokeWidth: 3 }}
                                               >
-                                                  {value}
+                                                {name}
                                               </text>
-                                              );
-                                          }}
+
+                                              <text
+                                                x={xIn}
+                                                y={yIn}
+                                                fill="white"
+                                                textAnchor="middle"
+                                                dominantBaseline="central"
+                                                fontSize={12}
+                                                fontWeight="bold"
+                                                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+                                              >
+                                                {v}
+                                              </text>
+                                            </g>
+                                          );
+                                        }}
                                       >
-                                          {layoutChartData.map((entry, index) => (
-                                              <Cell key={`cell-layout-${'\'\'\''}${index}`} fill={COLORS[index % COLORS.length]} />
-                                          ))}
+                                        {layoutChartData.map((entry, index) => (
+                                          <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
                                       </Pie>
-                                      <Legend />
+                                      <g>
+                                        {layoutChartData.map((entry, index) => (
+                                          <React.Fragment key={`pie-name-${index}`}>
+                                            {/* reuse your existing function by manually passing slice fill */}
+                                            {renderPieNameOutside({
+                                              ...entry,
+                                              fill: COLORS[index % COLORS.length],
+                                            })}
+                                          </React.Fragment>
+                                        ))}
+                                      </g>  
+                                      
+                                      <Legend
+                                        layout="vertical"
+                                        align="left"
+                                        verticalAlign="middle"
+                                        wrapperStyle={{ paddingRight: 16 }}
+                                        formatter={(value) => <span style={{ display: 'inline-block', marginBottom: 10 }}>{value}</span>}
+                                      />
                                   </PieChart>
                               </ResponsiveContainer>
                           </ChartContainer>
@@ -546,11 +724,13 @@ export function TodaysPerformanceCard() {
                   axisLine={false}
                   tickMargin={8}
                   tickFormatter={(value) => {
-                      const hour = parseInt(value.split(':')[0], 10);
-                      if (hour === 0) return '12am';
-                      if (hour === 12) return '12pm';
-                      if (hour > 12) return `${'\'\'\''}${hour - 12}`;
-                      return `${'\'\'\''}${hour}`;
+                    const raw = typeof value === 'number' ? `${value}` : String(value ?? '');
+                    const match = raw.match(/^(\d{1,2})/); // grab leading hour safely
+                    const hour = match ? parseInt(match[1], 10) : 0;
+
+                    const h12 = hour % 12 || 12;
+                    const suffix = hour < 12 ? 'am' : 'pm';
+                    return `${h12}${suffix}`;
                   }}
                   interval={0}
                 />

@@ -6,7 +6,7 @@ import { AddItemForm } from '@/components/add-item-form';
 import { StagedItemsList } from '@/components/staged-items-list';
 import { useState } from 'react';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, runTransaction } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { hasEditPermission } from '@/lib/permissions';
@@ -54,30 +54,55 @@ export default function AddItemsPage() {
       });
       return;
     }
+    
+    // Group items by their unique Firestore document ID
+    const itemsByDocId = stagedItems.reduce((acc, item) => {
+      const itemId = `${item.productType}-${item.color}-${item.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
+      if (!acc[itemId]) {
+        acc[itemId] = { ...item, stock: 0 };
+      }
+      acc[itemId].stock += item.stock;
+      return acc;
+    }, {} as Record<string, StagedItem>);
 
     const inventoryRef = collection(firestore, 'inventory');
     let successCount = 0;
 
-    const savePromises = stagedItems.map(item => {
-      const { id: tempId, ...itemData } = item;
-      const itemId = `${itemData.productType}-${itemData.color}-${itemData.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
+    const transactionPromises = Object.entries(itemsByDocId).map(async ([itemId, itemData]) => {
       const itemDocRef = doc(inventoryRef, itemId);
-
-      const submissionData = {
-        id: itemId,
-        ...itemData,
-      };
-
-      return setDoc(itemDocRef, submissionData, { merge: true }).then(() => {
-        successCount++;
-      });
+      
+      try {
+        await runTransaction(firestore, async (transaction) => {
+          const itemDoc = await transaction.get(itemDocRef);
+          
+          if (!itemDoc.exists()) {
+            // If doc doesn't exist, create it with the total staged stock.
+            transaction.set(itemDocRef, {
+              id: itemId,
+              productType: itemData.productType,
+              color: itemData.color,
+              size: itemData.size,
+              stock: itemData.stock,
+            });
+          } else {
+            // If doc exists, increment stock.
+            const currentStock = itemDoc.data().stock || 0;
+            const newStock = currentStock + itemData.stock;
+            transaction.update(itemDocRef, { stock: newStock });
+          }
+        });
+        successCount += 1; // Count each unique item type as one successful save operation
+      } catch (e) {
+        console.error(`Transaction failed for ${itemId}: `, e);
+        throw e; // Re-throw to be caught by Promise.all's catch block
+      }
     });
 
     try {
-      await Promise.all(savePromises);
+      await Promise.all(transactionPromises);
       toast({
         title: 'Success!',
-        description: `${successCount} items have been saved to the inventory.`,
+        description: `${stagedItems.length} item(s) across ${successCount} unique product variant(s) have been saved.`,
       });
       setStagedItems([]);
     } catch (e: any) {
@@ -85,7 +110,7 @@ export default function AddItemsPage() {
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description: e.message || 'Could not save all items to the inventory.',
+        description: e.message || 'One or more items could not be saved to the inventory.',
       });
     }
   };
