@@ -263,7 +263,11 @@ const generateReportFlow = ai.defineFlow(
     const dailySalesData = (() => {
       const salesByDay = filteredLeads.reduce(
         (acc, lead) => {
-          const date = format(new Date(lead.submissionDateTime), 'MMM-dd-yyyy');
+          const submissionDate = new Date(lead.submissionDateTime);
+          const phtOffset = 8 * 60 * 60 * 1000;
+          const phtDate = new Date(submissionDate.getTime() + phtOffset);
+          const date = format(Date.UTC(phtDate.getUTCFullYear(), phtDate.getUTCMonth(), phtDate.getUTCDate()), 'MMM-dd-yyyy');
+          
           const leadQuantity = lead.orders
             .filter(o => o.productType !== 'Patches')
             .reduce(
@@ -299,7 +303,11 @@ const generateReportFlow = ai.defineFlow(
 
     const weeklySalesData = (() => {
         const salesByWeek = filteredLeads.reduce((acc, lead) => {
-            const date = new Date(lead.submissionDateTime);
+            const submissionDate = new Date(lead.submissionDateTime);
+            const phtOffset = 8 * 60 * 60 * 1000;
+            const phtDate = new Date(submissionDate.getTime() + phtOffset);
+            const date = new Date(Date.UTC(phtDate.getUTCFullYear(), phtDate.getUTCMonth(), phtDate.getUTCDate()));
+            
             const start = startOfWeek(date, { weekStartsOn: 1 });
             const end = endOfWeek(date, { weekStartsOn: 1 });
             const weekRange = `${format(start, 'MMM dd')} - ${format(end, 'MMM dd')}`;
