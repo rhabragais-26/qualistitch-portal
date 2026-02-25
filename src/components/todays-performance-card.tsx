@@ -36,11 +36,12 @@ const leadSchema = z.object({
   grandTotal: z.number().optional(),
   orders: z.array(z.object({
     quantity: z.number(),
+    productType: z.string(),
   })),
   layouts: z.array(z.object({
     layoutImage: z.string().nullable().optional(),
   })).optional(),
-  paymentType: z.string().optional(),
+  paidAmount: z.number().optional(),
   balance: z.number().optional(),
 });
 
@@ -173,7 +174,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead '${lead.id}': '${lead.submissionDateTime}'`);
+            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}${'\'\''}: '${'\'\''}${lead.submissionDateTime}${'\'\''}`);
             return false;
         }
     });
@@ -196,73 +197,6 @@ export function TodaysPerformanceCard() {
       .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
   }, [leads, activeFilter, selectedDate]);
-  
-  const totalSales = useMemo(() => {
-    if (!salesData) return 0;
-    return salesData.reduce((acc, curr) => acc + curr.amount, 0);
-  }, [salesData]);
-
-  const { title, description } = useMemo(() => {
-    if (activeFilter === 'today') {
-        return {
-            title: "Today's Performance",
-            description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
-        };
-    }
-    if (activeFilter === 'yesterday') {
-        return {
-            title: "Yesterday's Performance",
-            description: `Total sales amount and items sold by SCES for ${format(subDays(new Date(), 1), 'MMMM dd, yyyy')}.`
-        };
-    }
-    if (selectedDate) {
-        return {
-            title: `Performance for ${format(selectedDate, 'MMMM dd, yyyy')}`,
-            description: `Total sales amount and items sold by SCES for ${format(selectedDate, 'MMMM dd, yyyy')}.`
-        };
-    }
-    return {
-        title: "Today's Performance",
-        description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
-    };
-  }, [activeFilter, selectedDate]);
-  
-  const layoutChartData = salesData.filter(d => d.layoutCount > 0);
-
-  if (isLoading) {
-      return (
-           <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-            <CardHeader>
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start h-[400px]">
-                    <Skeleton className="lg:col-span-2 h-full w-full" />
-                    <Skeleton className="h-full w-full" />
-                </div>
-                <Separator />
-                <Skeleton className="h-[300px] w-full" />
-            </CardContent>
-          </Card>
-      )
-  }
-
-  if (error) {
-      return (
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-             <CardHeader>
-                <CardTitle>{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center justify-center h-[300px]">
-                    <p className="text-destructive">Error loading performance data: {error.message}</p>
-                </div>
-            </CardContent>
-        </Card>
-      )
-  }
   
   const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesTableData } = useMemo(() => {
     if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesTableData: [] };
@@ -364,7 +298,7 @@ export function TodaysPerformanceCard() {
     const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
       const hourData = salesByHour[i];
       return {
-        hour: `${i.toString().padStart(2, '0')}:00`,
+        hour: `${'\'\'\''}${i.toString().padStart(2, '0')}:00${'\'\'\''}`,
         customerCount: hourData ? hourData.customers.size : 0,
         quantity: hourData ? hourData.quantity : 0,
         ...historicalData[i],
@@ -374,6 +308,73 @@ export function TodaysPerformanceCard() {
     return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, salesTableData: tableData };
   }, [leads, activeFilter, selectedDate]);
   
+  const totalSales = useMemo(() => {
+    if (!salesData) return 0;
+    return salesData.reduce((acc, curr) => acc + curr.amount, 0);
+  }, [salesData]);
+
+  const { title, description } = useMemo(() => {
+    if (activeFilter === 'today') {
+        return {
+            title: "Today's Performance",
+            description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
+        };
+    }
+    if (activeFilter === 'yesterday') {
+        return {
+            title: "Yesterday's Performance",
+            description: `Total sales amount and items sold by SCES for ${format(subDays(new Date(), 1), 'MMMM dd, yyyy')}.`
+        };
+    }
+    if (selectedDate) {
+        return {
+            title: `Performance for ${format(selectedDate, 'MMMM dd, yyyy')}`,
+            description: `Total sales amount and items sold by SCES for ${format(selectedDate, 'MMMM dd, yyyy')}.`
+        };
+    }
+    return {
+        title: "Today's Performance",
+        description: `Total sales amount and items sold by SCES for ${format(new Date(), 'MMMM dd, yyyy')}.`
+    };
+  }, [activeFilter, selectedDate]);
+  
+  const layoutChartData = useMemo(() => salesData.filter(d => d.layoutCount > 0), [salesData]);
+
+  if (isLoading) {
+      return (
+           <Card>
+            <CardHeader>
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start h-[400px]">
+                    <Skeleton className="lg:col-span-2 h-full w-full" />
+                    <Skeleton className="h-full w-full" />
+                </div>
+                <Separator />
+                <Skeleton className="h-[300px] w-full" />
+            </CardContent>
+          </Card>
+      )
+  }
+
+  if (error) {
+      return (
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+             <CardHeader>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center justify-center h-[300px]">
+                    <p className="text-destructive">Error loading performance data: {error.message}</p>
+                </div>
+            </CardContent>
+        </Card>
+      )
+  }
+
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
       <CardHeader>
@@ -423,7 +424,7 @@ export function TodaysPerformanceCard() {
                                         yAxisId="left"
                                         orientation="left"
                                         stroke="hsl(var(--chart-2))"
-                                        tickFormatter={(value) => `₱${Number(value) / 1000}k`}
+                                        tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}${'\'\''}`}
                                     />
                                     <YAxis
                                         yAxisId="right"
@@ -460,6 +461,10 @@ export function TodaysPerformanceCard() {
                         <div className="text-center">
                             <p className="text-sm font-medium text-gray-600">Total Quantity</p>
                             <p className="text-2xl font-bold">{totalItemsSold.toLocaleString()}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm font-medium text-gray-600">Total Customers</p>
+                            <p className="text-2xl font-bold">{totalCustomers}</p>
                         </div>
                     </div>
                 </div>
@@ -549,12 +554,12 @@ export function TodaysPerformanceCard() {
                                     const hour = parseInt(value.split(':')[0], 10);
                                     if (hour === 0) return '12am';
                                     if (hour === 12) return '12pm';
-                                    if (hour > 12) return `${hour - 12}pm`;
-                                    return `${hour}am`;
+                                    if (hour > 12) return `${'\'\'\''}${hour - 12}${'\'\''}`;
+                                    return `${'\'\'\''}${hour}${'\'\''}`;
                                 }}
                                 interval={0}
                                 />
-                                <YAxis tickFormatter={(value) => `${value}`} />
+                                <YAxis tickFormatter={(value) => `${'\'\''}${value}${'\'\''}`} />
                                 <Tooltip
                                     content={<ChartTooltipContent
                                         formatter={(value, name, item) => {
@@ -586,7 +591,7 @@ export function TodaysPerformanceCard() {
                                         key={key}
                                         dataKey={key}
                                         type="monotone"
-                                        name={`${index + 1} week${index > 0 ? 's' : ''} ago`}
+                                        name={`${'\'\'\''}${index + 1}${'\'\''}`}
                                         stroke={COLORS[(index + 1) % COLORS.length]}
                                         strokeOpacity={0.4}
                                         strokeWidth={2}
@@ -605,36 +610,38 @@ export function TodaysPerformanceCard() {
              <Separator className="my-4" />
             <CardContent>
                 <div className="text-left mb-4">
-                    <CardTitle>Sales Breakdown</CardTitle>
-                </div>
-                <ScrollArea className="h-[350px]">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Time</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead className="text-right">Quantity</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                            <TableHead className="text-right">Payment</TableHead>
-                            <TableHead className="text-right">Balance</TableHead>
-                            <TableHead>SCES</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {salesTableData.map((sale, index) => (
-                            <TableRow key={index}>
-                                <TableCell>{format(new Date(sale.timestamp), 'h:mm a')}</TableCell>
-                                <TableCell>{sale.customerName}</TableCell>
-                                <TableCell className="text-right">{sale.totalQuantity}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(sale.totalAmount)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(sale.payment)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(sale.balance)}</TableCell>
-                                <TableCell>{sale.sces}</TableCell>
+                    <CardHeader className="p-0">
+                        <CardTitle>Sales Breakdown</CardTitle>
+                    </CardHeader>
+                    <ScrollArea className="h-[350px]">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Time</TableHead>
+                                <TableHead>Customer</TableHead>
+                                <TableHead className="text-right">Quantity</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                                <TableHead className="text-right">Payment</TableHead>
+                                <TableHead className="text-right">Balance</TableHead>
+                                <TableHead>SCES</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-                </ScrollArea>
+                        </TableHeader>
+                        <TableBody>
+                            {salesTableData.map((sale, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>{format(new Date(sale.timestamp), 'h:mm a')}</TableCell>
+                                    <TableCell>{sale.customerName}</TableCell>
+                                    <TableCell className="text-right">{sale.totalQuantity}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(sale.totalAmount)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(sale.payment)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(sale.balance)}</TableCell>
+                                    <TableCell>{sale.sces}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    </ScrollArea>
+                </div>
             </CardContent>
         </>
     </Card>
