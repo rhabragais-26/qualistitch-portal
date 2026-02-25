@@ -16,6 +16,8 @@ import { Input } from '@/components/ui/input';
 import { DateRange } from 'react-day-picker';
 import { eachDayOfInterval, endOfMonth } from 'date-fns';
 import { z, ZodError } from 'zod';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { ScrollArea } from './ui/scroll-area';
 
 
 type Order = {
@@ -38,6 +40,8 @@ const leadSchema = z.object({
   layouts: z.array(z.object({
     layoutImage: z.string().nullable().optional(),
   })).optional(),
+  paymentType: z.string().optional(),
+  balance: z.number().optional(),
 });
 
 type Lead = z.infer<typeof leadSchema>;
@@ -193,90 +197,6 @@ export function TodaysPerformanceCard() {
       .sort((a, b) => b.amount - a.amount);
   }, [leads, activeFilter, selectedDate]);
   
-  const { hourlySalesData, historicalDataKeys } = useMemo(() => {
-    if (!leads) return { hourlySalesData: [], historicalDataKeys: [] };
-
-    let currentDate: Date;
-    if (activeFilter === 'today') {
-      currentDate = new Date();
-    } else if (activeFilter === 'yesterday') {
-      currentDate = subDays(new Date(), 1);
-    } else if (activeFilter === 'custom' && selectedDate) {
-      currentDate = selectedDate;
-    } else {
-      currentDate = new Date(); // Fallback to today
-    }
-
-    const rangeStart = startOfDay(currentDate);
-    const rangeEnd = endOfDay(currentDate);
-
-    // Filter for the selected day
-    const filteredLeads = leads.filter(lead => {
-      try {
-        const submissionDate = new Date(lead.submissionDateTime);
-        return submissionDate >= rangeStart && submissionDate <= rangeEnd;
-      } catch (e) {
-        return false;
-      }
-    });
-
-    const salesByHour = filteredLeads.reduce((acc, lead) => {
-      const hour = new Date(lead.submissionDateTime).getHours();
-      if (!acc[hour]) {
-        acc[hour] = { customers: new Set(), quantity: 0 };
-      }
-      acc[hour].customers.add(lead.customerName);
-      acc[hour].quantity += lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
-      return acc;
-    }, {} as Record<number, { customers: Set<string>; quantity: number }>);
-
-    // --- Historical Data Calculation ---
-    const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
-    const historicalDataKeys: string[] = [];
-
-    for (let i = 1; i <= 4; i++) {
-      const historicalDate = subDays(currentDate, i * 7);
-      const historicalRangeStart = startOfDay(historicalDate);
-      const historicalRangeEnd = endOfDay(historicalDate);
-      const historicalKey = `prevWeek${i}`;
-      historicalDataKeys.push(historicalKey);
-
-      const historicalLeads = leads.filter(lead => {
-        try {
-          const submissionDate = new Date(lead.submissionDateTime);
-          return submissionDate >= historicalRangeStart && submissionDate <= historicalRangeEnd;
-        } catch (e) {
-          return false;
-        }
-      });
-
-      const historicalSalesByHour = historicalLeads.reduce((acc, lead) => {
-        const hour = new Date(lead.submissionDateTime).getHours();
-        if (!acc[hour]) {
-            acc[hour] = new Set<string>();
-        }
-        acc[hour].add(lead.customerName);
-        return acc;
-      }, {} as Record<number, Set<string>>);
-
-      for (let j = 0; j < 24; j++) {
-        historicalData[j][historicalKey] = historicalSalesByHour[j] ? historicalSalesByHour[j].size : 0;
-      }
-    }
-
-    const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
-      const hourData = salesByHour[i];
-      return {
-        hour: `${i.toString().padStart(2, '0')}:00`,
-        customerCount: hourData ? hourData.customers.size : 0,
-        quantity: hourData ? hourData.quantity : 0,
-        ...historicalData[i],
-      };
-    });
-
-    return { hourlySalesData: combinedHourlyData, historicalDataKeys };
-  }, [leads, activeFilter, selectedDate]);
-  
   const totalSales = useMemo(() => {
     if (!salesData) return 0;
     return salesData.reduce((acc, curr) => acc + curr.amount, 0);
@@ -343,6 +263,116 @@ export function TodaysPerformanceCard() {
         </Card>
       )
   }
+  
+  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, salesTableData } = useMemo(() => {
+    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, salesTableData: [] };
+
+    let rangeStart: Date;
+    let rangeEnd: Date;
+    
+    if (activeFilter === 'today') {
+        const today = new Date();
+        rangeStart = startOfDay(today);
+        rangeEnd = endOfDay(today);
+    } else if (activeFilter === 'yesterday') {
+        const yesterday = subDays(new Date(), 1);
+        rangeStart = startOfDay(yesterday);
+        rangeEnd = endOfDay(yesterday);
+    } else if (activeFilter === 'custom' && selectedDate) {
+        rangeStart = startOfDay(selectedDate);
+        rangeEnd = endOfDay(selectedDate);
+    } else {
+        const today = new Date();
+        rangeStart = startOfDay(today);
+        rangeEnd = endOfDay(today);
+    }
+    
+    const filteredLeads = leads.filter(lead => {
+        try {
+            const submissionDate = new Date(lead.submissionDateTime);
+            return submissionDate >= rangeStart && submissionDate <= rangeEnd;
+        } catch (e) {
+            return false;
+        }
+    });
+
+    const salesByHour = filteredLeads.reduce((acc, lead) => {
+      const hour = new Date(lead.submissionDateTime).getHours();
+      if (!acc[hour]) {
+        acc[hour] = { customers: new Set(), quantity: 0 };
+      }
+      acc[hour].customers.add(lead.customerName);
+      acc[hour].quantity += lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
+      return acc;
+    }, {} as Record<number, { customers: Set<string>; quantity: number }>);
+
+    const totalCust = new Set<string>();
+    let totalQty = 0;
+
+    filteredLeads.forEach(lead => {
+        totalQty += lead.orders.reduce((sum, currentOrder) => sum + (currentOrder.quantity || 0), 0);
+        
+        if (lead.customerName) {
+           totalCust.add(lead.customerName.toLowerCase());
+        }
+    });
+    
+    const tableData = filteredLeads.map(lead => ({
+        timestamp: lead.submissionDateTime,
+        customerName: lead.customerName,
+        totalQuantity: lead.orders.reduce((sum, order) => sum + order.quantity, 0),
+        totalAmount: lead.grandTotal || 0,
+        payment: lead.paidAmount || 0,
+        balance: lead.balance || 0,
+        sces: lead.salesRepresentative,
+    }));
+
+    // --- Historical Data Calculation ---
+    const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
+    const historicalDataKeys: string[] = [];
+
+    for (let i = 1; i <= 4; i++) {
+      const historicalDate = subDays(rangeStart, i * 7);
+      const historicalRangeStart = startOfDay(historicalDate);
+      const historicalRangeEnd = endOfDay(historicalDate);
+      const historicalKey = `prevWeek${i}`;
+      historicalDataKeys.push(historicalKey);
+
+      const historicalLeads = leads.filter(lead => {
+        try {
+          const submissionDate = new Date(lead.submissionDateTime);
+          return submissionDate >= historicalRangeStart && submissionDate <= historicalRangeEnd;
+        } catch (e) {
+          return false;
+        }
+      });
+
+      const historicalSalesByHour = historicalLeads.reduce((acc, lead) => {
+        const hour = new Date(lead.submissionDateTime).getHours();
+        if (!acc[hour]) {
+            acc[hour] = new Set<string>();
+        }
+        acc[hour].add(lead.customerName);
+        return acc;
+      }, {} as Record<number, Set<string>>);
+
+      for (let j = 0; j < 24; j++) {
+        historicalData[j][historicalKey] = historicalSalesByHour[j] ? historicalSalesByHour[j].size : 0;
+      }
+    }
+
+    const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
+      const hourData = salesByHour[i];
+      return {
+        hour: `${i.toString().padStart(2, '0')}:00`,
+        customerCount: hourData ? hourData.customers.size : 0,
+        quantity: hourData ? hourData.quantity : 0,
+        ...historicalData[i],
+      };
+    });
+
+    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, salesTableData: tableData };
+  }, [leads, activeFilter, selectedDate]);
   
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
@@ -422,9 +452,15 @@ export function TodaysPerformanceCard() {
                             </ResponsiveContainer>
                         </ChartContainer>
                     </div>
-                    <div className="text-center mt-4">
-                        <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                        <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
+                    <div className="flex justify-center items-end gap-8 mt-4">
+                        <div className="text-center">
+                            <p className="text-sm font-medium text-gray-600">Total Sales</p>
+                            <p className="text-2xl font-bold">{formatCurrency(totalSales)}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-sm font-medium text-gray-600">Total Quantity</p>
+                            <p className="text-2xl font-bold">{totalItemsSold.toLocaleString()}</p>
+                        </div>
                     </div>
                 </div>
                 <div className="w-full lg:col-span-1">
@@ -494,10 +530,10 @@ export function TodaysPerformanceCard() {
       </CardContent>
         <>
             <Separator className="my-4" />
-            <CardContent>
+             <CardContent>
                 <div className="text-left mb-4">
-                    <CardTitle>Count of Closed Clients per Interval</CardTitle>
-                    <CardDescription>Customer count per hour for the selected day, compared to previous weeks.</CardDescription>
+                    <CardTitle>Hourly Performance</CardTitle>
+                    <CardDescription>Customer count and items sold per hour for the selected day.</CardDescription>
                 </div>
                 <div style={{ height: '300px' }}>
                     <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
@@ -565,6 +601,40 @@ export function TodaysPerformanceCard() {
                         </ResponsiveContainer>
                     </ChartContainer>
                 </div>
+            </CardContent>
+             <Separator className="my-4" />
+            <CardContent>
+                <div className="text-left mb-4">
+                    <CardTitle>Sales Breakdown</CardTitle>
+                </div>
+                <ScrollArea className="h-[350px]">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Time</TableHead>
+                            <TableHead>Customer</TableHead>
+                            <TableHead className="text-right">Quantity</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead className="text-right">Payment</TableHead>
+                            <TableHead className="text-right">Balance</TableHead>
+                            <TableHead>SCES</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {salesTableData.map((sale, index) => (
+                            <TableRow key={index}>
+                                <TableCell>{format(new Date(sale.timestamp), 'h:mm a')}</TableCell>
+                                <TableCell>{sale.customerName}</TableCell>
+                                <TableCell className="text-right">{sale.totalQuantity}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(sale.totalAmount)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(sale.payment)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(sale.balance)}</TableCell>
+                                <TableCell>{sale.sces}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+                </ScrollArea>
             </CardContent>
         </>
     </Card>
