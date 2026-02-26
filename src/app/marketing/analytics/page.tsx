@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -51,7 +50,7 @@ const chartConfig = {
   },
   cpm: {
     label: 'CPM',
-    color: 'hsl(var(--chart-2))',
+    color: 'hsl(45, 90%, 55%)',
   },
 };
 
