@@ -119,11 +119,15 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               <span className="font-bold">{entry.value}</span>
             </div>
           ))}
-          <Separator className="my-2" />
-          <div className="flex items-center justify-between font-bold text-sm">
-              <span>Total:</span>
-              <span>{total}</span>
-          </div>
+          {payload.length > 1 && (
+            <>
+              <Separator className="my-2" />
+              <div className="flex items-center justify-between font-bold text-sm">
+                  <span>Total:</span>
+                  <span>{total}</span>
+              </div>
+            </>
+          )}
         </div>
       );
     }
@@ -431,7 +435,7 @@ export function DigitizingReportsSummary() {
                             {dailyProgressData.map((entry) => {
                                 const date = parse(entry.date as string, 'MMM-dd', new Date(parseInt(progressChartYear), parseInt(progressChartMonth) - 1));
                                 if (date.getDay() === 0) { // 0 is Sunday
-                                    return <ReferenceLine key={`sunday-line-${entry.date}`} x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeWidth={1.5} />;
+                                    return <ReferenceLine key={`sunday-line-${entry.date}`} x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeDasharray="3 3" />;
                                 }
                                 return null;
                             })}
@@ -459,7 +463,7 @@ export function DigitizingReportsSummary() {
                             <Tooltip content={<ChartTooltipContent />} />
                             <Legend />
                             {dailyProgressData.length > 0 && Object.keys(dailyProgressData[0]).filter(k => k !== 'date').map((key, index) => (
-                                <Line key={key} type="monotone" dataKey={key} stroke={COLORS[index % COLORS.length]} />
+                                <Line key={key} name={key} type="monotone" dataKey={key} stroke={COLORS[index % COLORS.length]} xAxisId="bottom" />
                             ))}
                         </LineChart>
                     </ResponsiveContainer>
@@ -484,13 +488,13 @@ export function DigitizingReportsSummary() {
                               <Tooltip content={<CustomTooltip />} />
                               <Legend />
                               <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo" stackId="a">
-                                <LabelList dataKey="logo" position="center" className="fill-background" fontSize={12} />
+                                <LabelList dataKey="logo" position="center" className="fill-background font-bold" fontSize={12} />
                               </Bar>
                               <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design" stackId="a">
-                                <LabelList dataKey="backDesign" position="center" className="fill-background" fontSize={12} />
+                                <LabelList dataKey="backDesign" position="center" className="fill-background font-bold" fontSize={12} />
                               </Bar>
                               <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names" stackId="a" radius={[0, 4, 4, 0]}>
-                                <LabelList dataKey="names" position="center" className="fill-background" fontSize={12} />
+                                <LabelList dataKey="names" position="center" className="fill-background font-bold" fontSize={12} />
                               </Bar>
                           </BarChart>
                       </ResponsiveContainer>
