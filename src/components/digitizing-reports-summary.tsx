@@ -269,12 +269,13 @@ export function DigitizingReportsSummary() {
                       verticalAlign="middle"
                       align="left"
                       iconType="circle"
+                      wrapperStyle={{ lineHeight: '2' }}
                     />
                     <Pie
                       data={overdueSummary}
                       dataKey="count"
                       nameKey="name"
-                      cx="65%"
+                      cx="60%"
                       cy="50%"
                       outerRadius={80}
                       labelLine={false}
