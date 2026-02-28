@@ -11,9 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { getYear, format, parse } from 'date-fns';
-import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
 import type { Lead } from '@/app/digitizing/reports/actions';
 import { Separator } from './ui/separator';
+import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
 
 const chartConfig = {
   count: {
@@ -435,7 +435,7 @@ export function DigitizingReportsSummary() {
                             {dailyProgressData.map((entry) => {
                                 const date = parse(entry.date as string, 'MMM-dd', new Date(parseInt(progressChartYear), parseInt(progressChartMonth) - 1));
                                 if (date.getDay() === 0) { // 0 is Sunday
-                                    return <ReferenceLine key={`sunday-line-${entry.date}`} x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeDasharray="3 3" />;
+                                    return <ReferenceLine key={`sunday-line-${entry.date}`} xAxisId="bottom" x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeDasharray="3 3" />;
                                 }
                                 return null;
                             })}
