@@ -14,6 +14,7 @@ import { addDays, differenceInDays } from 'date-fns';
 export type Lead = {
   id: string;
   joNumber?: number;
+  orderType: string;
   isUnderProgramming?: boolean;
   isInitialApproval?: boolean;
   isLogoTesting?: boolean;
@@ -61,8 +62,16 @@ const generateDigitizingReportFlow = ai.defineFlow(
   },
   async ({ leads, priorityFilter }) => {
     const typedLeads = leads as Lead[];
-    // Filter for leads that are in the programming queue (have a JO number and are not archived/completed)
-    const programmingLeads = typedLeads.filter(lead => lead.joNumber && !lead.isDigitizingArchived);
+    
+    // Define order types that should not be in the programming queue
+    const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
+
+    // Filter for leads that are in the programming queue
+    const programmingLeads = typedLeads.filter(lead => 
+        lead.joNumber && 
+        !lead.isDigitizingArchived &&
+        !orderTypesToSkip.includes(lead.orderType)
+    );
 
     const filteredLeads = programmingLeads.filter(lead => {
         if (priorityFilter === 'All') return true;
@@ -80,31 +89,31 @@ const generateDigitizingReportFlow = ai.defineFlow(
       };
 
       filteredLeads.forEach(lead => {
-        // This logic assigns each order to a single "queue" based on the next action required.
-        // The hierarchy is checked from latest stage to earliest.
+        // Skip if already fully completed
         if (lead.isFinalProgram) {
-            // 1. If Final Program is checked, it's completed and not counted.
             return;
         }
 
-        if (lead.isRevision) {
-            // 2. If Under Revision is checked, it's prioritized in this queue.
-            statusCounts['Revision']++;
-        } else if (lead.isFinalApproval) {
-            // 3. If Final Approval is checked, it's waiting for Final Program file.
-            statusCounts['Final Program']++;
-        } else if (lead.isLogoTesting) {
-            // 4. If Logo Testing is done (and not under revision), it's waiting for Final Approval.
-            statusCounts['Final Approval']++;
-        } else if (lead.isInitialApproval) {
-            // 5. If Initial Approval is checked, it's waiting for Test.
-            statusCounts['Test']++;
-        } else if (lead.isUnderProgramming) {
-            // 6. If Initial Program is done, it's waiting for Initial Approval.
-            statusCounts['Initial Approval']++;
-        } else {
-            // 7. If nothing else is checked, it's waiting for the Initial Program.
+        // Logic based on the next required step (the first *unchecked* box in the sequence)
+        if (!lead.isUnderProgramming) {
+            // 1. Pending Initial Program: This is the very first step.
             statusCounts['Initial Program']++;
+        } else if (!lead.isInitialApproval) {
+            // 2. Pending Initial Approval: Initial Program is done, now waiting for approval.
+            statusCounts['Initial Approval']++;
+        } else if (!lead.isLogoTesting) {
+            // 3. Pending Test: Initial Approval is done, now waiting for testing.
+            statusCounts['Test']++;
+        } else if (lead.isRevision) {
+            // 4. Under Revision: This state takes priority if checked.
+            // It means we are looping back before final approval.
+            statusCounts['Revision']++;
+        } else if (!lead.isFinalApproval) {
+            // 5. Pending Final Approval: Testing is done, not under revision, waiting for final sign-off.
+            statusCounts['Final Approval']++;
+        } else {
+            // 6. Pending Final Program: Final Approval is checked, the last step is to upload the final program.
+            statusCounts['Final Program']++;
         }
       });
       
@@ -124,6 +133,8 @@ const generateDigitizingReportFlow = ai.defineFlow(
         };
 
         filteredLeads.forEach(lead => {
+            if (lead.isFinalProgram) return; // Don't count completed leads in overdue summary
+            
             const remainingDays = calculateDigitizingDeadline(lead);
             if (remainingDays < 0) {
                 overdueCount++;
