@@ -77,20 +77,36 @@ const generateDigitizingReportFlow = ai.defineFlow(
         'Final Program': 0,
       };
 
+      // This logic iterates through each lead and assigns it to a single status bucket
+      // based on the next required action in the workflow.
       filteredLeads.forEach(lead => {
-        if (!lead.joNumber || lead.isFinalProgram) {
-            // Skip completed or invalid leads
-        } else if (lead.isFinalApproval) {
-            statusCounts['Final Program']++;
-        } else if (lead.isRevision) {
+        // If 'Final Program' is checked, the digitizing process is complete for this order,
+        // so it is not included in the status summary queue.
+        if (lead.isFinalProgram) {
+            // This lead is complete, do not count it in any active queue.
+        } 
+        // A lead under revision needs attention, so it's counted here first.
+        else if (lead.isRevision) {
             statusCounts['Revision']++; 
-        } else if (lead.isLogoTesting) {
+        }
+        // If 'Final Approval' is checked, the order is waiting for the 'Final Program' to be created.
+        else if (lead.isFinalApproval) {
+            statusCounts['Final Program']++;
+        } 
+        // If 'Logo Testing' is checked, the order is waiting for 'Final Approval'.
+        else if (lead.isLogoTesting) {
             statusCounts['Final Approval']++;
-        } else if (lead.isInitialApproval) {
+        } 
+        // If 'Initial Approval' is checked, the order is waiting for 'Test'.
+        else if (lead.isInitialApproval) {
             statusCounts['Test']++;
-        } else if (lead.isUnderProgramming) {
+        } 
+        // If 'Under Programming' is checked, the order is waiting for 'Initial Approval'.
+        else if (lead.isUnderProgramming) {
             statusCounts['Initial Approval']++;
-        } else {
+        } 
+        // If none of the above are checked, the order is waiting for the 'Initial Program'.
+        else {
             statusCounts['Initial Program']++;
         }
       });
