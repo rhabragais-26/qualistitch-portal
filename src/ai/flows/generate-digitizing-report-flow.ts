@@ -11,6 +11,31 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { addDays, differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval, startOfDay, endOfDay, isSameDay } from 'date-fns';
 
+type FileObject = {
+  name: string;
+  url: string;
+};
+
+type Layout = {
+  id: string;
+  logoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  logoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  backLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  backDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+
+  finalLogoDst?: (FileObject | null)[];
+  finalLogoDstUploadTimes?: (string | null)[];
+  finalLogoDstUploadedBy?: (string | null)[];
+
+  finalBackDesignDst?: (FileObject | null)[];
+  finalBackDesignDstUploadTimes?: (string | null)[];
+  finalBackDesignDstUploadedBy?: (string | null)[];
+
+  finalNamesDst?: (FileObject | null)[];
+  finalNamesDstUploadTimes?: (string | null)[];
+  finalNamesDstUploadedBy?: (string | null)[];
+};
+
 export type Lead = {
   id: string;
   joNumber?: number;
@@ -31,6 +56,7 @@ export type Lead = {
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   assignedDigitizer?: string | null;
+  layouts?: Layout[];
 };
 
 const GenerateDigitizingReportInputSchema = z.object({
@@ -191,31 +217,78 @@ const generateDigitizingReportFlow = ai.defineFlow(
         const start = startOfMonth(today);
         const end = endOfMonth(today);
         const daysInMonth = eachDayOfInterval({ start, end });
-        
-        const allDigitizersInLeads = Array.from(new Set(typedLeads.map(l => l.assignedDigitizer).filter((d): d is string => !!d))).sort();
-        
+
+        const allUploaders = new Set<string>();
+        typedLeads.forEach(lead => {
+            lead.layouts?.forEach(layout => {
+                const checkUploader = (uploader: string | null | undefined) => {
+                    if (uploader) allUploaders.add(uploader);
+                };
+
+                (layout.logoLeftImages || []).forEach(img => checkUploader(img.uploadedBy));
+                (layout.logoRightImages || []).forEach(img => checkUploader(img.uploadedBy));
+                (layout.backLogoImages || []).forEach(img => checkUploader(img.uploadedBy));
+                (layout.backDesignImages || []).forEach(img => checkUploader(img.uploadedBy));
+                
+                (layout.finalLogoDstUploadedBy || []).forEach(checkUploader);
+                (layout.finalBackDesignDstUploadedBy || []).forEach(checkUploader);
+                (layout.finalNamesDstUploadedBy || []).forEach(checkUploader);
+            });
+        });
+        const sortedUploaders = Array.from(allUploaders).sort();
+
         return daysInMonth.map(day => {
             const dailyCounts: { [key: string]: number | string } = { date: format(day, 'MMM-dd') };
             
-            allDigitizersInLeads.forEach(name => {
+            sortedUploaders.forEach(name => {
                 dailyCounts[name] = 0;
             });
 
             typedLeads.forEach(lead => {
-                if (lead.assignedDigitizer && allDigitizersInLeads.includes(lead.assignedDigitizer)) {
-                    const checkTimestamp = (timestamp: string | null | undefined) => {
-                        try {
-                            if (timestamp && isSameDay(new Date(timestamp), day)) {
-                                (dailyCounts[lead.assignedDigitizer!] as number)++;
+                lead.layouts?.forEach(layout => {
+                    const processUploads = (
+                        items: { uploadTime?: string; uploadedBy?: string; url?: string }[] | undefined,
+                    ) => {
+                        (items || []).forEach(item => {
+                            if (item?.uploadedBy && item?.uploadTime && sortedUploaders.includes(item.uploadedBy)) {
+                                try {
+                                    if (isSameDay(new Date(item.uploadTime), day)) {
+                                        (dailyCounts[item.uploadedBy] as number)++;
+                                    }
+                                } catch (e) { /* ignore invalid dates */ }
                             }
-                        } catch (e) {
-                            // ignore invalid date formats
-                        }
+                        });
                     };
 
-                    checkTimestamp(lead.underProgrammingTimestamp);
-                    checkTimestamp(lead.finalProgramTimestamp);
-                }
+                    const processFileArrays = (
+                        files: (FileObject | null)[] | undefined,
+                        times: (string | null)[] | undefined,
+                        uploaders: (string | null)[] | undefined,
+                    ) => {
+                         (files || []).forEach((file, index) => {
+                             if (file) {
+                                 const uploader = uploaders?.[index];
+                                 const time = times?.[index];
+                                 if (uploader && time && sortedUploaders.includes(uploader)) {
+                                    try {
+                                        if (isSameDay(new Date(time), day)) {
+                                            (dailyCounts[uploader] as number)++;
+                                        }
+                                    } catch (e) { /* ignore */ }
+                                 }
+                             }
+                         })
+                    };
+
+                    processUploads(layout.logoLeftImages);
+                    processUploads(layout.logoRightImages);
+                    processUploads(layout.backLogoImages);
+                    processUploads(layout.backDesignImages);
+
+                    processFileArrays(layout.finalLogoDst, layout.finalLogoDstUploadTimes, layout.finalLogoDstUploadedBy);
+                    processFileArrays(layout.finalBackDesignDst, layout.finalBackDesignDstUploadTimes, layout.finalBackDesignDstUploadedBy);
+                    processFileArrays(layout.finalNamesDst, layout.finalNamesDstUploadTimes, layout.finalNamesDstUploadedBy);
+                });
             });
             
             return dailyCounts;
