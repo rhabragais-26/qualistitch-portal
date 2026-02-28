@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -48,14 +47,14 @@ const StatusDoughnutCard = ({ title, count, total, color }: { title: string; cou
         { name: title, value: count },
         { name: 'other', value: Math.max(0, total - count) },
     ];
-    const chartColors = [color, '#f1f5f9']; // Active color and a light gray for the rest
+    const chartColors = [color, '#e5e7eb']; // Active color and a light gray for the rest
 
     return (
-        <Card className="flex flex-col items-center justify-start p-2 text-center">
-            <CardHeader className="p-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Card className="flex flex-col items-center justify-start p-4 text-center">
+            <CardHeader className="p-0 mb-2">
+                <CardTitle className="text-base font-medium">{title}</CardTitle>
             </CardHeader>
-            <CardContent className="p-0 relative w-24 h-24">
+            <CardContent className="p-0 relative w-32 h-32">
                 <ChartContainer config={{}} className="w-full h-full">
                     <ResponsiveContainer>
                         <PieChart>
@@ -78,7 +77,7 @@ const StatusDoughnutCard = ({ title, count, total, color }: { title: string; cou
                                 cx="50%"
                                 cy="50%"
                                 innerRadius="60%"
-                                outerRadius="80%"
+                                outerRadius="100%"
                                 startAngle={90}
                                 endAngle={450}
                                 stroke="none"
@@ -91,11 +90,11 @@ const StatusDoughnutCard = ({ title, count, total, color }: { title: string; cou
                     </ResponsiveContainer>
                 </ChartContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-bold">{count}</span>
+                    <span className="text-3xl font-bold">{count}</span>
                 </div>
             </CardContent>
             <div className="mt-2 text-center">
-                 <span className="text-xs font-bold">{percentage.toFixed(1)}%</span>
+                 <span className="text-sm font-bold">{percentage.toFixed(1)}%</span>
             </div>
         </Card>
     );
