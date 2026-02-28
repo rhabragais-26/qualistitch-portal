@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -230,7 +231,8 @@ export function DigitizingReportsSummary() {
                       cx="50%"
                       cy="50%"
                       outerRadius={120}
-                      label={({ name, count }) => `${name}: ${count}`}
+                      labelLine={false}
+                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                     >
                       {overdueSummary.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
