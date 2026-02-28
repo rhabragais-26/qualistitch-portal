@@ -1,9 +1,7 @@
-
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -12,18 +10,10 @@ import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 
-type GenerateDigitizingReportOutput = {
-  salesRepData: any[];
-  priorityData: { name: string; value: number }[];
-  dailySalesData: any[];
-  soldQtyByProductType: any[];
-  availableYears: number[];
-  availableWeeks: string[];
-};
-
 type Lead = {
   id: string;
   joNumber?: number;
+  orderType: string;
   isUnderProgramming?: boolean;
   isInitialApproval?: boolean;
   isLogoTesting?: boolean;
@@ -50,6 +40,66 @@ const COLORS = [
   'hsl(220, 70%, 70%)',
   'hsl(340, 70%, 70%)',
 ];
+
+const StatusDoughnutCard = ({ title, count, total, color }: { title: string; count: number; total: number; color: string }) => {
+    const percentage = total > 0 ? (count / total) * 100 : 0;
+    const data = [
+        { name: title, value: count },
+        { name: 'other', value: Math.max(0, total - count) },
+    ];
+    const chartColors = [color, '#f1f5f9']; // Active color and a light gray for the rest
+
+    return (
+        <Card className="flex flex-col items-center justify-start p-2 text-center">
+            <CardHeader className="p-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 relative w-24 h-24">
+                <ChartContainer config={{}} className="w-full h-full">
+                    <ResponsiveContainer>
+                        <PieChart>
+                            <Tooltip
+                                cursor={false}
+                                content={<ChartTooltipContent
+                                    hideLabel
+                                    formatter={(value, name) => (
+                                        <div className="flex flex-col">
+                                            <span className="font-bold">{name === 'other' ? 'Other' : title}</span>
+                                            <span>{value} orders</span>
+                                        </div>
+                                    )}
+                                />}
+                            />
+                            <Pie
+                                data={data}
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                innerRadius="60%"
+                                outerRadius="80%"
+                                startAngle={90}
+                                endAngle={450}
+                                stroke="none"
+                            >
+                                {data.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={chartColors[index]} />
+                                ))}
+                            </Pie>
+                        </PieChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-2xl font-bold">{count}</span>
+                </div>
+            </CardContent>
+            <div className="mt-2 text-center">
+                 <span className="text-xs font-bold">{percentage.toFixed(1)}%</span>
+            </div>
+        </Card>
+    );
+};
+
 
 export function DigitizingReportsSummary() {
   const [priorityFilter, setPriorityFilter] = useState('All');
@@ -92,12 +142,15 @@ export function DigitizingReportsSummary() {
   const error = leadsError || reportError;
 
   const { statusSummary, overdueSummary } = useMemo<{
-    statusSummary: any[];
+    statusSummary: {name: string, count: number}[];
     overdueSummary: any[];
   }>(() => {
     if (!reportData) return { statusSummary: [], overdueSummary: [] };
     return reportData as any;
   }, [reportData]);
+  
+  const totalStatusCount = useMemo(() => statusSummary.reduce((sum, item) => sum + item.count, 0), [statusSummary]);
+
 
   if (isLoading) {
     return (
@@ -146,36 +199,19 @@ export function DigitizingReportsSummary() {
             </div>
         </div>
       </div>
-      <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
-          <CardHeader>
-            <CardTitle>Programming Status Summary</CardTitle>
-            <CardDescription>Number of job orders in each programming stage.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: '350px' }}>
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statusSummary} layout="vertical" margin={{ left: 20, right: 60, top: 5, bottom: 5 }}>
-                    <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} width={120} />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent />}
-                    />
-                    <Bar dataKey="count" name="Count" radius={[0, 4, 4, 0]}>
-                       {statusSummary.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                       ))}
-                       <LabelList dataKey="count" position="right" fill="hsl(var(--foreground))" fontSize={12} fontWeight="bold" />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        {statusSummary.map((status, index) => (
+            <StatusDoughnutCard
+                key={status.name}
+                title={status.name}
+                count={status.count}
+                total={totalStatusCount}
+                color={COLORS[index % COLORS.length]}
+            />
+        ))}
+    </div>
+
+      <div className="printable-area grid grid-cols-1 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
           <CardHeader>
             <CardTitle>Overdue Status</CardTitle>
