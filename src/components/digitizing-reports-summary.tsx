@@ -12,7 +12,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { getYear, format, parse } from 'date-fns';
 import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
-import type { Lead, GenerateDigitizingReportInput } from '@/app/digitizing/reports/actions';
+import type { Lead } from '@/app/digitizing/reports/actions';
 import { Separator } from './ui/separator';
 
 const chartConfig = {
@@ -176,13 +176,12 @@ export function DigitizingReportsSummary() {
     const generate = async () => {
         setIsReportLoading(true);
         try {
-          const input: GenerateDigitizingReportInput = { 
+          const result = await generateDigitizingReportAction({ 
               leads,
               priorityFilter: 'All',
               selectedMonth: progressChartMonth,
               selectedYear: progressChartYear,
-          };
-          const result = await generateDigitizingReportAction(input);
+          });
           setReportData(result);
         } catch (e: any) {
           console.error('Failed to generate report:', e);
@@ -432,7 +431,7 @@ export function DigitizingReportsSummary() {
                              {dailyProgressData.map((entry) => {
                                 const date = parse(entry.date as string, 'MMM-dd', new Date(parseInt(progressChartYear), parseInt(progressChartMonth) - 1));
                                 if (date.getDay() === 0) { // 0 is Sunday
-                                    return <ReferenceLine key={`sunday-line-${entry.date}`} x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeWidth={1.5} />;
+                                    return <ReferenceLine key={`sunday-line-${entry.date}`} x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeWidth={1.5} strokeDasharray="3 3" />;
                                 }
                                 return null;
                             })}
