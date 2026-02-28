@@ -426,16 +426,35 @@ export function DigitizingReportsSummary() {
              <div className="h-80">
                 <ChartContainer config={{}} className="w-full h-full">
                     <ResponsiveContainer>
-                        <LineChart data={dailyProgressData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                             {dailyProgressData.map((entry) => {
+                        <LineChart data={dailyProgressData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            {dailyProgressData.map((entry) => {
                                 const date = parse(entry.date as string, 'MMM-dd', new Date(parseInt(progressChartYear), parseInt(progressChartMonth) - 1));
                                 if (date.getDay() === 0) { // 0 is Sunday
-                                    return <ReferenceLine key={`sunday-line-${entry.date}`} x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeWidth={1.5} strokeDasharray="3 3" />;
+                                    return <ReferenceLine key={`sunday-line-${entry.date}`} x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeWidth={1.5} />;
                                 }
                                 return null;
                             })}
-                            <XAxis dataKey="date" />
+                            <XAxis
+                                dataKey="date"
+                                xAxisId="bottom"
+                                tickLine={false}
+                                axisLine={false}
+                                dy={10}
+                                interval={0}
+                                tick={{ fontSize: 12 }}
+                            />
+                            <XAxis
+                                dataKey="date"
+                                xAxisId="top"
+                                orientation="top"
+                                tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(progressChartYear), parseInt(progressChartMonth) - 1)), 'E')}
+                                tickLine={false}
+                                axisLine={false}
+                                interval={0}
+                                height={1}
+                                tick={{ fontSize: 10 }}
+                            />
                             <YAxis allowDecimals={false} />
                             <Tooltip content={<ChartTooltipContent />} />
                             <Legend />
@@ -456,21 +475,22 @@ export function DigitizingReportsSummary() {
                       <ResponsiveContainer>
                           <BarChart
                               data={monthlyProgramsDone}
-                              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                              layout="vertical"
+                              margin={{ top: 20, right: 40, left: 30, bottom: 5 }}
                           >
-                              <CartesianGrid strokeDasharray="3 3" vertical={false}/>
-                              <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 'bold' }} />
-                              <YAxis allowDecimals={false} />
+                              <CartesianGrid horizontal={false}/>
+                              <XAxis type="number" hide />
+                              <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 12, fontWeight: 'bold' }} width={100} />
                               <Tooltip content={<CustomTooltip />} />
                               <Legend />
-                              <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo">
-                                <LabelList dataKey="logo" position="top" fontSize={14} fontWeight="bold" fill="black" />
+                              <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo" stackId="a">
+                                <LabelList dataKey="logo" position="center" className="fill-background" fontSize={12} />
                               </Bar>
-                              <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design">
-                                <LabelList dataKey="backDesign" position="top" fontSize={14} fontWeight="bold" fill="black" />
+                              <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design" stackId="a">
+                                <LabelList dataKey="backDesign" position="center" className="fill-background" fontSize={12} />
                               </Bar>
-                              <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names">
-                                <LabelList dataKey="names" position="top" fontSize={14} fontWeight="bold" fill="black" />
+                              <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names" stackId="a" radius={[0, 4, 4, 0]}>
+                                <LabelList dataKey="names" position="center" className="fill-background" fontSize={12} />
                               </Bar>
                           </BarChart>
                       </ResponsiveContainer>
