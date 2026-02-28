@@ -111,6 +111,7 @@ export function DigitizingReportsSummary() {
   
   const [reportData, setReportData] = useState<any>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
+  const [isProgressChartLoading, setIsProgressChartLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
 
   const [progressChartMonth, setProgressChartMonth] = useState((new Date().getMonth() + 1).toString());
@@ -118,7 +119,12 @@ export function DigitizingReportsSummary() {
 
   const processReport = useCallback(async (month: string, year: string) => {
     if (!leads) return;
-    setIsReportLoading(true);
+    
+    if (reportData) {
+        setIsProgressChartLoading(true);
+    } else {
+        setIsReportLoading(true);
+    }
     setReportError(null);
     try {
       const result = await generateDigitizingReportAction({
@@ -133,8 +139,9 @@ export function DigitizingReportsSummary() {
       setReportError(e.message || 'An unknown error occurred.');
     } finally {
       setIsReportLoading(false);
+      setIsProgressChartLoading(false);
     }
-  }, [leads]);
+  }, [leads, reportData]);
 
   useEffect(() => {
     if (leads && leads.length > 0) {
@@ -142,7 +149,8 @@ export function DigitizingReportsSummary() {
     } else if (!isLeadsLoading) {
         setIsReportLoading(false);
     }
-  }, [leads, processReport, isLeadsLoading, progressChartMonth, progressChartYear]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leads, isLeadsLoading, progressChartMonth, progressChartYear]);
   
   const { availableYears, monthOptions } = useMemo(() => {
     if (!leads) {
@@ -221,7 +229,7 @@ export function DigitizingReportsSummary() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {[...Array(2)].map((_, i) => (
+        {[...Array(3)].map((_, i) => (
           <Card key={i} className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
@@ -345,17 +353,13 @@ export function DigitizingReportsSummary() {
                     </div>
                     <div className="flex items-center gap-2">
                         <Select value={progressChartYear} onValueChange={setProgressChartYear}>
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue />
-                            </SelectTrigger>
+                            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Select value={progressChartMonth} onValueChange={setProgressChartMonth}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue />
-                            </SelectTrigger>
+                            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {monthOptions.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
                             </SelectContent>
@@ -364,6 +368,9 @@ export function DigitizingReportsSummary() {
                 </div>
             </CardHeader>
             <CardContent className="h-80">
+              {isProgressChartLoading ? (
+                  <Skeleton className="h-full w-full" />
+              ) : (
                 <ChartContainer config={{}} className="w-full h-full">
                     <ResponsiveContainer>
                         <LineChart data={dailyProgressData}>
@@ -378,6 +385,7 @@ export function DigitizingReportsSummary() {
                         </LineChart>
                     </ResponsiveContainer>
                 </ChartContainer>
+              )}
             </CardContent>
         </Card>
       </div>
