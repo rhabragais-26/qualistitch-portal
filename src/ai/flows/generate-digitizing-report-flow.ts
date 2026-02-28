@@ -66,10 +66,12 @@ const generateDigitizingReportFlow = ai.defineFlow(
     // Define order types that should not be in the programming queue
     const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
 
-    // Filter for leads that are in the programming queue
+    // Filter for leads that are in the programming queue.
+    // An order is considered "in the queue" if it has a JO Number, is not a type that skips this process,
+    // AND has not had its final program completed yet.
     const programmingLeads = typedLeads.filter(lead => 
         lead.joNumber && 
-        !lead.isDigitizingArchived &&
+        !lead.isFinalProgram && // Excludes completed orders from all calculations
         !orderTypesToSkip.includes(lead.orderType)
     );
 
@@ -88,31 +90,30 @@ const generateDigitizingReportFlow = ai.defineFlow(
         'Final Program': 0,
       };
 
+      // The logic determines the NEXT required step for an order.
       filteredLeads.forEach(lead => {
-        // Skip if already fully completed
-        if (lead.isFinalProgram) {
-            return;
-        }
-
-        // Logic based on the next required step (the first *unchecked* box in the sequence)
+        // 1. Pending Initial Program: This is the very first step.
         if (!lead.isUnderProgramming) {
-            // 1. Pending Initial Program: This is the very first step.
             statusCounts['Initial Program']++;
-        } else if (!lead.isInitialApproval) {
-            // 2. Pending Initial Approval: Initial Program is done, now waiting for approval.
+        } 
+        // 2. Pending Initial Approval: Initial Program is done, now waiting for approval.
+        else if (!lead.isInitialApproval) {
             statusCounts['Initial Approval']++;
-        } else if (!lead.isLogoTesting) {
-            // 3. Pending Test: Initial Approval is done, now waiting for testing.
+        } 
+        // 3. Pending Test: Initial Approval is done, now waiting for testing.
+        else if (!lead.isLogoTesting) {
             statusCounts['Test']++;
-        } else if (lead.isRevision) {
-            // 4. Under Revision: This state takes priority if checked.
-            // It means we are looping back before final approval.
+        } 
+        // 4. Under Revision: This state takes priority if checked.
+        else if (lead.isRevision) {
             statusCounts['Revision']++;
-        } else if (!lead.isFinalApproval) {
-            // 5. Pending Final Approval: Testing is done, not under revision, waiting for final sign-off.
+        } 
+        // 5. Pending Final Approval: Testing is done, not under revision, waiting for final sign-off.
+        else if (!lead.isFinalApproval) {
             statusCounts['Final Approval']++;
-        } else {
-            // 6. Pending Final Program: Final Approval is checked, the last step is to upload the final program.
+        } 
+        // 6. Pending Final Program: Final Approval is checked, the last step is to upload the final program.
+        else {
             statusCounts['Final Program']++;
         }
       });
@@ -132,16 +133,14 @@ const generateDigitizingReportFlow = ai.defineFlow(
             return differenceInDays(deadlineDate, new Date());
         };
 
+        // filteredLeads already excludes completed orders, so no need for an extra check here.
         filteredLeads.forEach(lead => {
-            if (lead.isFinalProgram) return; // Don't count completed leads in overdue summary
-            
             const remainingDays = calculateDigitizingDeadline(lead);
             if (remainingDays < 0) {
                 overdueCount++;
             } else if (remainingDays <= 2) {
                 nearlyOverdueCount++;
-            }
-            else {
+            } else {
                 onTrackCount++;
             }
         });
