@@ -431,13 +431,13 @@ export function DigitizingReportsSummary() {
                               <Tooltip content={<ChartTooltipContent />} />
                               <Legend />
                               <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo">
-                                <LabelList dataKey="logo" position="top" fontSize={12} />
+                                <LabelList dataKey="logo" position="top" fontSize={12} fontWeight="bold" fill="black" />
                               </Bar>
                               <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design">
-                                <LabelList dataKey="backDesign" position="top" fontSize={12} />
+                                <LabelList dataKey="backDesign" position="top" fontSize={12} fontWeight="bold" fill="black" />
                               </Bar>
                               <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names">
-                                <LabelList dataKey="names" position="top" fontSize={12} />
+                                <LabelList dataKey="names" position="top" fontSize={12} fontWeight="bold" fill="black" />
                               </Bar>
                           </BarChart>
                       </ResponsiveContainer>
