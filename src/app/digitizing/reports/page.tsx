@@ -8,7 +8,9 @@ import { DigitizingReportsSummary } from '@/components/digitizing-reports-summar
 export default function DigitizingReportsPage() {
   return (
     <Header>
-      <DigitizingReportsSummary />
+      <main className="p-4 sm:p-6 lg:p-8">
+        <DigitizingReportsSummary />
+      </main>
     </Header>
   );
 }

@@ -153,9 +153,13 @@ const generateDigitizingReportFlow = ai.defineFlow(
             counts[digitizer] = (counts[digitizer] || 0) + 1;
         });
 
-        return Object.entries(counts)
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count);
+        const allDigitizers = Object.entries(counts).map(([name, count]) => ({ name, count }));
+        const unassigned = allDigitizers.find(d => d.name === 'Unassigned');
+        const assigned = allDigitizers.filter(d => d.name !== 'Unassigned');
+
+        assigned.sort((a, b) => b.count - a.count);
+
+        return unassigned ? [...assigned, unassigned] : assigned;
     })();
 
     return {
