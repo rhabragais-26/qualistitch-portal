@@ -107,7 +107,7 @@ export function DigitizingReportsSummary() {
   
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const [reportData, setReportData] = useState<any>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
@@ -134,28 +134,37 @@ export function DigitizingReportsSummary() {
     return { availableYears: sortedYears, monthOptions: months };
   }, [leads]);
   
-  const processReport = useCallback(async () => {
-    if (!leads) return;
-    setIsReportLoading(true);
-    try {
-      const input: GenerateDigitizingReportInput = { 
-          leads,
-          priorityFilter: 'All', // This filter is now removed from UI, so we pass 'All'
-          selectedMonth: progressChartMonth,
-          selectedYear: progressChartYear,
-      };
-      const result = await generateDigitizingReportAction(input);
-      setReportData(result);
-    } catch (e: any) {
-      console.error('Failed to generate report:', e);
-    } finally {
-      setIsReportLoading(false);
+   useEffect(() => {
+    if (areLeadsLoading) {
+        setIsReportLoading(true);
+        return;
     }
-  }, [leads, progressChartMonth, progressChartYear]);
-
-  useEffect(() => {
-    processReport();
-  }, [processReport]);
+    if (!leads) {
+        setIsReportLoading(false);
+        setReportData(null);
+        return;
+    }
+    
+    const generate = async () => {
+        setIsReportLoading(true);
+        try {
+          const input: GenerateDigitizingReportInput = { 
+              leads,
+              priorityFilter: 'All',
+              selectedMonth: progressChartMonth,
+              selectedYear: progressChartYear,
+          };
+          const result = await generateDigitizingReportAction(input);
+          setReportData(result);
+        } catch (e: any) {
+          console.error('Failed to generate report:', e);
+          setReportData(null);
+        } finally {
+          setIsReportLoading(false);
+        }
+    };
+    generate();
+  }, [leads, areLeadsLoading, progressChartMonth, progressChartYear]);
 
 
   const { statusSummary, overdueSummary, digitizerSummary, dailyProgressData, totalStatusCount, ongoingVsCompletedData, monthlyProgramsDone } = useMemo(() => {
@@ -202,21 +211,29 @@ export function DigitizingReportsSummary() {
       'Overdue': '#ef4444', // red
   };
 
+  const isLoading = areLeadsLoading || isReportLoading;
 
-  if (areLeadsLoading) {
+  if (isLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-            <CardHeader>
-              <Skeleton className="h-8 w-1/2" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-[250px] w-full" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-48 w-full" />
+            ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => (
+            <Card key={i} className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+                <CardHeader>
+                <Skeleton className="h-8 w-1/2" />
+                <Skeleton className="h-4 w-3/4" />
+                </CardHeader>
+                <CardContent>
+                <Skeleton className="h-[250px] w-full" />
+                </CardContent>
+            </Card>
+            ))}
+        </div>
         <Card className="lg:col-span-3">
              <CardHeader>
               <Skeleton className="h-8 w-1/2" />
@@ -230,9 +247,18 @@ export function DigitizingReportsSummary() {
     );
   }
 
-  if (leadsError || !reportData) {
-     return <p>No data available to generate reports.</p>;
+  if (leadsError) {
+    return <p className="text-destructive p-4">Error loading data: {leadsError.message}</p>;
   }
+  
+  if (!leads || leads.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full p-8">
+            <p>No data available to generate reports.</p>
+        </div>
+      );
+  }
+
 
   return (
     <>
@@ -354,13 +380,13 @@ export function DigitizingReportsSummary() {
                         <CardDescription>Combined count of Uploaded Initial Program Images and Final DST Files (Logo, Back Design and Names) on a daily basis</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Select value={progressChartYear} onValueChange={(value) => { setProgressChartYear(value); processReport(); }}>
+                        <Select value={progressChartYear} onValueChange={setProgressChartYear}>
                             <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                        <Select value={progressChartMonth} onValueChange={(value) => { setProgressChartMonth(value); processReport(); }}>
+                        <Select value={progressChartMonth} onValueChange={setProgressChartMonth}>
                             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {monthOptions.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
@@ -371,24 +397,20 @@ export function DigitizingReportsSummary() {
             </CardHeader>
             <CardContent className="space-y-8">
              <div className="h-80">
-                {isReportLoading ? (
-                    <Skeleton className="h-full w-full" />
-                ) : (
-                    <ChartContainer config={{}} className="w-full h-full">
-                        <ResponsiveContainer>
-                            <LineChart data={dailyProgressData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="date" />
-                                <YAxis allowDecimals={false} />
-                                <Tooltip content={<ChartTooltipContent />} />
-                                <Legend />
-                                {dailyProgressData.length > 0 && Object.keys(dailyProgressData[0]).filter(k => k !== 'date').map((key, index) => (
-                                    <Line key={key} type="monotone" dataKey={key} stroke={COLORS[index % COLORS.length]} />
-                                ))}
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
-                )}
+                <ChartContainer config={{}} className="w-full h-full">
+                    <ResponsiveContainer>
+                        <LineChart data={dailyProgressData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip content={<ChartTooltipContent />} />
+                            <Legend />
+                            {dailyProgressData.length > 0 && Object.keys(dailyProgressData[0]).filter(k => k !== 'date').map((key, index) => (
+                                <Line key={key} type="monotone" dataKey={key} stroke={COLORS[index % COLORS.length]} />
+                            ))}
+                        </LineChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
              </div>
               <Separator />
               <div>
@@ -407,9 +429,9 @@ export function DigitizingReportsSummary() {
                               <YAxis allowDecimals={false} />
                               <Tooltip content={<ChartTooltipContent />} />
                               <Legend />
-                              <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo" radius={[4, 4, 0, 0]} />
-                              <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design" radius={[4, 4, 0, 0]} />
-                              <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo" />
+                              <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design" />
+                              <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names" />
                           </BarChart>
                       </ResponsiveContainer>
                   </ChartContainer>
