@@ -77,21 +77,31 @@ const generateDigitizingReportFlow = ai.defineFlow(
         'Final Program': 0,
       };
 
-      // This logic counts a lead in its NEXT pending stage.
+      // --- Logic for Counting Status ---
+      // This logic counts each job order based on the NEXT step it is waiting for in the production queue.
+      // An order is only counted in one category. Once a stage is complete, it moves to the next.
+      // Orders that have the 'Final Program' checkbox checked are considered complete and are not counted.
       filteredLeads.forEach(lead => {
-        if (lead.isFinalProgram) {
-            // Completed, do nothing.
+        if (!lead.joNumber || lead.isFinalProgram) {
+            // 1. Skip if no J.O. number is assigned.
+            // 2. Skip if 'Final Program' is checked (already completed).
         } else if (lead.isFinalApproval) {
+            // 3. If 'Final Approval' is checked, it's waiting for the 'Final Program'.
             statusCounts['Final Program']++;
         } else if (lead.isRevision) {
-            statusCounts['Revision']++;
+            // 4. If 'Revision' is checked, it stays in the 'Revision' queue.
+            statusCounts['Revision']++; 
         } else if (lead.isLogoTesting) {
+            // 5. If 'Test' is checked, it's waiting for 'Final Approval'.
             statusCounts['Final Approval']++;
         } else if (lead.isInitialApproval) {
+            // 6. If 'Initial Approval' is checked, it's waiting for 'Test'.
             statusCounts['Test']++;
         } else if (lead.isUnderProgramming) {
+            // 7. If 'Initial Program' is checked, it's waiting for 'Initial Approval'.
             statusCounts['Initial Approval']++;
         } else {
+            // 8. If no other status is checked, it's waiting for the 'Initial Program'.
             statusCounts['Initial Program']++;
         }
       });
