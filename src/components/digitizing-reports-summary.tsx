@@ -461,7 +461,7 @@ export function DigitizingReportsSummary() {
                             />
                             <YAxis allowDecimals={false} />
                             <Tooltip content={<ChartTooltipContent />} />
-                            <Legend />
+                            <Legend wrapperStyle={{ paddingTop: '20px' }} />
                             {dailyProgressData.length > 0 && Object.keys(dailyProgressData[0]).filter(k => k !== 'date').map((key, index) => (
                                 <Line key={key} name={key} type="monotone" dataKey={key} stroke={COLORS[index % COLORS.length]} xAxisId="bottom" />
                             ))}
@@ -479,19 +479,17 @@ export function DigitizingReportsSummary() {
                       <ResponsiveContainer>
                           <BarChart
                               data={monthlyProgramsDone}
-                              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                           >
                               <CartesianGrid strokeDasharray="3 3" vertical={false} />
                               <XAxis 
                                   dataKey="name" 
                                   tick={{ fontSize: 12, fontWeight: 'bold' }}
                                   interval={0}
-                                  angle={-45}
-                                  textAnchor="end"
                               />
                               <YAxis allowDecimals={false} />
                               <Tooltip content={<CustomTooltip />} />
-                              <Legend wrapperStyle={{ bottom: 25 }} />
+                              <Legend wrapperStyle={{ bottom: 0 }}/>
                               <Bar dataKey="logo" fill="hsl(var(--chart-2))" name="Logo" radius={[4, 4, 0, 0]}>
                                   <LabelList dataKey="logo" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
                               </Bar>
