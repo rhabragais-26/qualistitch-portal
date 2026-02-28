@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import { getYear, format } from 'date-fns';
 
 type Lead = {
   id: string;
@@ -112,14 +113,19 @@ export function DigitizingReportsSummary() {
   const [isReportLoading, setIsReportLoading] = useState(true);
   const [reportError, setReportError] = useState<string | null>(null);
 
-  const processReport = useCallback(async () => {
+  const [progressChartMonth, setProgressChartMonth] = useState((new Date().getMonth() + 1).toString());
+  const [progressChartYear, setProgressChartYear] = useState(new Date().getFullYear().toString());
+
+  const processReport = useCallback(async (month: string, year: string) => {
     if (!leads) return;
     setIsReportLoading(true);
     setReportError(null);
     try {
       const result = await generateDigitizingReportAction({
         leads,
-        priorityFilter: 'All', 
+        priorityFilter: 'All',
+        selectedMonth: month,
+        selectedYear: year,
       });
       setReportData(result);
     } catch (e: any) {
@@ -132,12 +138,31 @@ export function DigitizingReportsSummary() {
 
   useEffect(() => {
     if (leads && leads.length > 0) {
-      processReport();
+      processReport(progressChartMonth, progressChartYear);
     } else if (!isLeadsLoading) {
         setIsReportLoading(false);
     }
-  }, [leads, processReport, isLeadsLoading]);
+  }, [leads, processReport, isLeadsLoading, progressChartMonth, progressChartYear]);
   
+  const { availableYears, monthOptions } = useMemo(() => {
+    if (!leads) {
+        const currentYear = new Date().getFullYear();
+        return {
+            availableYears: [currentYear.toString()],
+            monthOptions: Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: format(new Date(2000, i), 'MMMM') }))
+        };
+    }
+    const yearsSet = new Set(leads.map(l => getYear(new Date(l.submissionDateTime))));
+    const sortedYears = Array.from(yearsSet).sort((a, b) => b - a).map(String);
+
+    const months = Array.from({ length: 12 }, (_, i) => ({
+      value: (i + 1).toString(),
+      label: format(new Date(2000, i), 'MMMM')
+    }));
+
+    return { availableYears: sortedYears, monthOptions: months };
+  }, [leads]);
+
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
@@ -313,8 +338,30 @@ export function DigitizingReportsSummary() {
         </Card>
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Daily Productivity per Digitizer</CardTitle>
-                <CardDescription>Combined count of "Initial Program" and "Final Program" tasks completed each day.</CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Daily Productivity per Digitizer</CardTitle>
+                        <CardDescription>Combined count of Uploaded Initial Program Images and Final DST Files (Logo, Back Design and Names) on a daily basis</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Select value={progressChartYear} onValueChange={setProgressChartYear}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select value={progressChartMonth} onValueChange={setProgressChartMonth}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {monthOptions.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent className="h-80">
                 <ChartContainer config={{}} className="w-full h-full">

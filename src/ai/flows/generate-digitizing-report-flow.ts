@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { addDays, differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval, startOfDay, endOfDay, isSameDay } from 'date-fns';
+import { addDays, differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval, startOfDay, endOfDay, isSameDay, getYear, getMonth } from 'date-fns';
 
 type FileObject = {
   name: string;
@@ -62,6 +62,8 @@ export type Lead = {
 const GenerateDigitizingReportInputSchema = z.object({
   leads: z.array(z.any()).describe('An array of lead objects with digitizing status.'),
   priorityFilter: z.string().describe('Filter by priority type: All, Rush, or Regular.'),
+  selectedMonth: z.string().describe('The selected month for the productivity chart (1-12).'),
+  selectedYear: z.string().describe('The selected year for the productivity chart.'),
 });
 export type GenerateDigitizingReportInput = z.infer<typeof GenerateDigitizingReportInputSchema>;
 
@@ -104,7 +106,7 @@ const generateDigitizingReportFlow = ai.defineFlow(
     inputSchema: GenerateDigitizingReportInputSchema,
     outputSchema: GenerateDigitizingReportOutputSchema,
   },
-  async ({ leads, priorityFilter }) => {
+  async ({ leads, priorityFilter, selectedMonth, selectedYear }) => {
     const typedLeads = leads as Lead[];
     
     // Define order types that should not be in the programming queue
@@ -213,9 +215,12 @@ const generateDigitizingReportFlow = ai.defineFlow(
     })();
 
      const dailyProgressData = (() => {
-        const today = new Date();
-        const start = startOfMonth(today);
-        const end = endOfMonth(today);
+        const year = parseInt(selectedYear, 10);
+        const month = parseInt(selectedMonth, 10) - 1;
+        const targetDate = new Date(year, month);
+        
+        const start = startOfMonth(targetDate);
+        const end = endOfMonth(targetDate);
         const daysInMonth = eachDayOfInterval({ start, end });
 
         const allUploaders = new Set<string>();
