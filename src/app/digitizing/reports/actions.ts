@@ -260,7 +260,7 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
             name, 
             ...data,
             total: data.logo + data.backDesign + data.names
-        })).sort((a,b) => b.total - a.total);
+        })).sort((a,b) => a.name.localeCompare(b.name));
     })();
 
     const completedCount = typedLeads.filter(lead =>

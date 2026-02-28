@@ -282,7 +282,7 @@ export function DigitizingReportsSummary() {
     return <p className="text-destructive p-4">Error loading data: {leadsError.message}</p>;
   }
   
-  if (!leads || leads.length === 0) {
+  if (!leads || leads.length === 0 || !reportData) {
       return (
         <div className="flex items-center justify-center h-full p-8">
             <p>No data available to generate reports.</p>
@@ -479,22 +479,27 @@ export function DigitizingReportsSummary() {
                       <ResponsiveContainer>
                           <BarChart
                               data={monthlyProgramsDone}
-                              layout="vertical"
-                              margin={{ top: 20, right: 40, left: 30, bottom: 5 }}
+                              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                           >
-                              <CartesianGrid horizontal={false}/>
-                              <XAxis type="number" hide />
-                              <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 12, fontWeight: 'bold' }} width={100} />
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                              <XAxis 
+                                  dataKey="name" 
+                                  tick={{ fontSize: 12, fontWeight: 'bold' }}
+                                  interval={0}
+                                  angle={-45}
+                                  textAnchor="end"
+                              />
+                              <YAxis allowDecimals={false} />
                               <Tooltip content={<CustomTooltip />} />
-                              <Legend />
-                              <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo" stackId="a">
-                                <LabelList dataKey="logo" position="center" className="fill-background font-bold" fontSize={12} />
+                              <Legend wrapperStyle={{ bottom: 25 }} />
+                              <Bar dataKey="logo" fill="hsl(var(--chart-2))" name="Logo" radius={[4, 4, 0, 0]}>
+                                  <LabelList dataKey="logo" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
                               </Bar>
-                              <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design" stackId="a">
-                                <LabelList dataKey="backDesign" position="center" className="fill-background font-bold" fontSize={12} />
+                              <Bar dataKey="backDesign" fill="hsl(var(--chart-3))" name="Back Design" radius={[4, 4, 0, 0]}>
+                                  <LabelList dataKey="backDesign" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
                               </Bar>
-                              <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names" stackId="a" radius={[0, 4, 4, 0]}>
-                                <LabelList dataKey="names" position="center" className="fill-background font-bold" fontSize={12} />
+                              <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names" radius={[4, 4, 0, 0]}>
+                                  <LabelList dataKey="names" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
                               </Bar>
                           </BarChart>
                       </ResponsiveContainer>
