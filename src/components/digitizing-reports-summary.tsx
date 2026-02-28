@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -8,9 +9,9 @@ import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { getYear, format, addDays, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, getMonth } from 'date-fns';
-import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
-import type { Lead } from '@/app/digitizing/reports/actions';
+import { getYear, format } from 'date-fns';
+import { generateDigitizingReport } from '@/ai/flows/generate-digitizing-report-flow';
+import type { Lead } from '@/ai/flows/generate-digitizing-report-flow';
 
 const chartConfig = {
   count: {
@@ -105,7 +106,7 @@ export function DigitizingReportsSummary() {
   
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: true });
   
   const [reportData, setReportData] = useState<any>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
@@ -136,7 +137,7 @@ export function DigitizingReportsSummary() {
     if (!leads) return;
     setIsReportLoading(true);
     try {
-      const result = await generateDigitizingReportAction({
+      const result = await generateDigitizingReport({
         leads,
         priorityFilter: 'All', // This is now a fixed value
         selectedMonth: progressChartMonth,
@@ -294,7 +295,7 @@ export function DigitizingReportsSummary() {
                       verticalAlign="middle"
                       align="left"
                       iconType="circle"
-                      wrapperStyle={{ lineHeight: 2.5, fontSize: 12 }}
+                      wrapperStyle={{ lineHeight: 2, fontSize: 12 }}
                     />
                     <Pie
                       data={overdueSummary}
@@ -347,7 +348,7 @@ export function DigitizingReportsSummary() {
                             />
                             <Bar dataKey="count" name="Orders" radius={[0, 4, 4, 0]}>
                                 {digitizerSummary.map((entry: any, index: any) => (
-                                    <Cell key={`cell-${index}`} fill={entry.name === 'Unassigned' ? 'hsl(var(--chart-2))' : COLORS[index % COLORS.length]} />
+                                    <Cell key={`cell-${index}`} fill={entry.name === 'Unassigned' ? '#696969' : COLORS[index % COLORS.length]} />
                                 ))}
                                 <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
                             </Bar>
