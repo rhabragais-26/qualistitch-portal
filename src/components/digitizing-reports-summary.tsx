@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -142,11 +142,12 @@ export function DigitizingReportsSummary() {
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
-  const { statusSummary, overdueSummary } = useMemo<{
+  const { statusSummary, overdueSummary, digitizerSummary } = useMemo<{
     statusSummary: {name: string, count: number}[];
     overdueSummary: any[];
+    digitizerSummary: {name: string, count: number}[];
   }>(() => {
-    if (!reportData) return { statusSummary: [], overdueSummary: [] };
+    if (!reportData) return { statusSummary: [], overdueSummary: [], digitizerSummary: [] };
     return reportData as any;
   }, [reportData]);
   
@@ -212,7 +213,7 @@ export function DigitizingReportsSummary() {
         ))}
     </div>
 
-      <div className="printable-area grid grid-cols-1 gap-8">
+      <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
           <CardHeader>
             <CardTitle>Overdue Status</CardTitle>
@@ -244,6 +245,46 @@ export function DigitizingReportsSummary() {
               </ChartContainer>
             </div>
           </CardContent>
+        </Card>
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
+            <CardHeader>
+                <CardTitle>Assigned Orders per Digitizer</CardTitle>
+                <CardDescription>Number of active orders assigned to each digitizer.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div style={{ height: '350px' }}>
+                    <ChartContainer config={chartConfig} className="w-full h-full">
+                        <ResponsiveContainer>
+                            <BarChart
+                                data={digitizerSummary}
+                                layout="vertical"
+                                margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+                            >
+                                <CartesianGrid horizontal={false} />
+                                <XAxis type="number" hide />
+                                <YAxis
+                                    dataKey="name"
+                                    type="category"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tick={{ fontSize: 12 }}
+                                    width={100}
+                                />
+                                <Tooltip
+                                    cursor={{ fill: 'hsl(var(--muted))' }}
+                                    content={<ChartTooltipContent />}
+                                />
+                                <Bar dataKey="count" name="Orders" radius={[0, 4, 4, 0]}>
+                                    {digitizerSummary.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                    <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                </div>
+            </CardContent>
         </Card>
       </div>
     </>
