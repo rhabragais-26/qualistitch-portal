@@ -20,6 +20,7 @@ export type Lead = {
   isRevision?: boolean;
   isFinalApproval?: boolean;
   isFinalProgram?: boolean;
+  isDigitizingArchived?: boolean;
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
 };
@@ -60,7 +61,8 @@ const generateDigitizingReportFlow = ai.defineFlow(
   },
   async ({ leads, priorityFilter }) => {
     const typedLeads = leads as Lead[];
-    const programmingLeads = typedLeads.filter(lead => lead.joNumber);
+    // Filter for leads that are in the programming queue (have a JO number and are not archived/completed)
+    const programmingLeads = typedLeads.filter(lead => lead.joNumber && !lead.isDigitizingArchived);
 
     const filteredLeads = programmingLeads.filter(lead => {
         if (priorityFilter === 'All') return true;
@@ -77,35 +79,37 @@ const generateDigitizingReportFlow = ai.defineFlow(
         'Final Program': 0,
       };
 
-      // This logic iterates through each lead and assigns it to a single status bucket
-      // based on the next required action in the workflow.
       filteredLeads.forEach(lead => {
-        // If 'Final Program' is checked, the digitizing process is complete for this order,
-        // so it is not included in the status summary queue.
+        // This logic assigns each order to a single "queue" based on the next action required.
+
+        // If 'Final Program' is checked, the order is complete for this process and is excluded.
         if (lead.isFinalProgram) {
-            // This lead is complete, do not count it in any active queue.
+            return;
         } 
-        // A lead under revision needs attention, so it's counted here first.
-        else if (lead.isRevision) {
-            statusCounts['Revision']++; 
-        }
-        // If 'Final Approval' is checked, the order is waiting for the 'Final Program' to be created.
+        // 6. Queue: Final Program. If 'Final Approval' is done, it's waiting for the final program file.
         else if (lead.isFinalApproval) {
             statusCounts['Final Program']++;
         } 
-        // If 'Logo Testing' is checked, the order is waiting for 'Final Approval'.
+        // This stage is after testing but before final approval. A revision can be requested here.
         else if (lead.isLogoTesting) {
-            statusCounts['Final Approval']++;
+            // 4. Queue: Revision. If the 'isRevision' flag is active, it's in the revision queue.
+            if (lead.isRevision) {
+                statusCounts['Revision']++;
+            } 
+            // 5. Queue: Final Approval. If not in revision, it's waiting for final approval.
+            else {
+                statusCounts['Final Approval']++;
+            }
         } 
-        // If 'Initial Approval' is checked, the order is waiting for 'Test'.
+        // 3. Queue: Test. If 'Initial Approval' is done, it's waiting for testing.
         else if (lead.isInitialApproval) {
             statusCounts['Test']++;
         } 
-        // If 'Under Programming' is checked, the order is waiting for 'Initial Approval'.
+        // 2. Queue: Initial Approval. If 'Initial Program' is done, it's waiting for initial approval.
         else if (lead.isUnderProgramming) {
             statusCounts['Initial Approval']++;
         } 
-        // If none of the above are checked, the order is waiting for the 'Initial Program'.
+        // 1. Queue: Initial Program. If nothing is checked yet, it's waiting for the initial program.
         else {
             statusCounts['Initial Program']++;
         }
