@@ -9,18 +9,24 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { addDays, differenceInDays } from 'date-fns';
+import { addDays, differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval, startOfDay, endOfDay } from 'date-fns';
 
 export type Lead = {
   id: string;
   joNumber?: number;
   orderType: string;
   isUnderProgramming?: boolean;
+  underProgrammingTimestamp?: string | null;
   isInitialApproval?: boolean;
+  initialApprovalTimestamp?: string | null;
   isLogoTesting?: boolean;
+  logoTestingTimestamp?: string | null;
   isRevision?: boolean;
+  revisionTimestamp?: string | null;
   isFinalApproval?: boolean;
+  finalApprovalTimestamp?: string | null;
   isFinalProgram?: boolean;
+  finalProgramTimestamp?: string | null;
   isDigitizingArchived?: boolean;
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
@@ -51,7 +57,17 @@ const GenerateDigitizingReportOutputSchema = z.object({
         name: z.string(),
         count: z.number(),
     })
-  )
+  ),
+  dailyProgressData: z.array(
+    z.object({
+      date: z.string(),
+      'Initial Program': z.number(),
+      'Initial Approval': z.number(),
+      'Testing': z.number(),
+      'Final Approval': z.number(),
+      'Final Program': z.number(),
+    })
+  ),
 });
 export type GenerateDigitizingReportOutput = z.infer<typeof GenerateDigitizingReportOutputSchema>;
 
@@ -162,10 +178,44 @@ const generateDigitizingReportFlow = ai.defineFlow(
         return unassigned ? [...assigned, unassigned] : assigned;
     })();
 
+     const dailyProgressData = (() => {
+        const today = new Date();
+        const start = startOfMonth(today);
+        const end = endOfMonth(today);
+        const daysInMonth = eachDayOfInterval({ start, end });
+
+        const statusTimestamps: { key: keyof Lead, name: string }[] = [
+            { key: 'underProgrammingTimestamp', name: 'Initial Program' },
+            { key: 'initialApprovalTimestamp', name: 'Initial Approval' },
+            { key: 'logoTestingTimestamp', name: 'Testing' },
+            { key: 'finalApprovalTimestamp', name: 'Final Approval' },
+            { key: 'finalProgramTimestamp', name: 'Final Program' },
+        ];
+
+        return daysInMonth.map(day => {
+            const dayEnd = endOfDay(day);
+            const counts: {[key: string]: any} = { date: format(day, 'MMM-dd') };
+
+            statusTimestamps.forEach(status => {
+                counts[status.name] = filteredLeads.filter(lead => {
+                    const timestamp = lead[status.key] as string;
+                    if (!timestamp || typeof timestamp !== 'string') return false;
+                    try {
+                       return new Date(timestamp) <= dayEnd;
+                    } catch (e) {
+                       return false;
+                    }
+                }).length;
+            });
+            return counts;
+        });
+    })();
+
     return {
       statusSummary,
       overdueSummary,
       digitizerSummary,
+      dailyProgressData,
     };
   }
 );

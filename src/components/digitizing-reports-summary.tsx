@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -141,12 +141,13 @@ export function DigitizingReportsSummary() {
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
-  const { statusSummary, overdueSummary, digitizerSummary } = useMemo<{
+  const { statusSummary, overdueSummary, digitizerSummary, dailyProgressData } = useMemo<{
     statusSummary: {name: string, count: number}[];
     overdueSummary: any[];
     digitizerSummary: {name: string, count: number}[];
+    dailyProgressData: any[];
   }>(() => {
-    if (!reportData) return { statusSummary: [], overdueSummary: [], digitizerSummary: [] };
+    if (!reportData) return { statusSummary: [], overdueSummary: [], digitizerSummary: [], dailyProgressData: [] };
     return reportData as any;
   }, [reportData]);
   
@@ -306,6 +307,28 @@ export function DigitizingReportsSummary() {
                                 <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
                             </Bar>
                         </BarChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+            </CardContent>
+        </Card>
+        <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle>Daily Progress for Current Month</CardTitle>
+                <CardDescription>Cumulative count of orders reaching each stage per day.</CardDescription>
+            </CardHeader>
+            <CardContent className="h-80">
+                <ChartContainer config={{}} className="w-full h-full">
+                    <ResponsiveContainer>
+                        <LineChart data={dailyProgressData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip content={<ChartTooltipContent />} />
+                            <Legend />
+                            {dailyProgressData.length > 0 && Object.keys(dailyProgressData[0]).filter(k => k !== 'date').map((key, index) => (
+                                <Line key={key} type="monotone" dataKey={key} stroke={COLORS[index % COLORS.length]} />
+                            ))}
+                        </LineChart>
                     </ResponsiveContainer>
                 </ChartContainer>
             </CardContent>
