@@ -119,7 +119,7 @@ export function DigitizingReportsSummary() {
     try {
       const result = await generateDigitizingReportAction({
         leads,
-        priorityFilter: 'All', // Hardcoded to 'All' as per user request to remove filter
+        priorityFilter: 'All', 
       });
       setReportData(result);
     } catch (e: any) {
@@ -313,8 +313,8 @@ export function DigitizingReportsSummary() {
         </Card>
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Daily Progress for Current Month</CardTitle>
-                <CardDescription>Cumulative count of orders reaching each stage per day.</CardDescription>
+                <CardTitle>Daily Productivity per Digitizer</CardTitle>
+                <CardDescription>Combined count of "Initial Program" and "Final Program" tasks completed each day.</CardDescription>
             </CardHeader>
             <CardContent className="h-80">
                 <ChartContainer config={{}} className="w-full h-full">
@@ -322,7 +322,7 @@ export function DigitizingReportsSummary() {
                         <LineChart data={dailyProgressData}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
-                            <YAxis />
+                            <YAxis allowDecimals={false} />
                             <Tooltip content={<ChartTooltipContent />} />
                             <Legend />
                             {dailyProgressData.length > 0 && Object.keys(dailyProgressData[0]).filter(k => k !== 'date').map((key, index) => (

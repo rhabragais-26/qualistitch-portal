@@ -9,7 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { addDays, differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval, startOfDay, endOfDay } from 'date-fns';
+import { addDays, differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval, startOfDay, endOfDay, isSameDay } from 'date-fns';
 
 export type Lead = {
   id: string;
@@ -61,12 +61,7 @@ const GenerateDigitizingReportOutputSchema = z.object({
   dailyProgressData: z.array(
     z.object({
       date: z.string(),
-      'Initial Program': z.number(),
-      'Initial Approval': z.number(),
-      'Testing': z.number(),
-      'Final Approval': z.number(),
-      'Final Program': z.number(),
-    })
+    }).catchall(z.number())
   ),
 });
 export type GenerateDigitizingReportOutput = z.infer<typeof GenerateDigitizingReportOutputSchema>;
@@ -140,10 +135,23 @@ const generateDigitizingReportFlow = ai.defineFlow(
             const submissionDate = new Date(lead.submissionDateTime);
             const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
             const deadlineDate = addDays(submissionDate, deadlineDays);
+            
+            // If the order is already done, calculate against completion date
+            if (lead.isFinalProgram && lead.finalProgramTimestamp) {
+                const completionDate = new Date(lead.finalProgramTimestamp);
+                return differenceInDays(deadlineDate, completionDate);
+            }
+            
             return differenceInDays(deadlineDate, new Date());
         };
 
-        filteredLeads.forEach(lead => {
+        const leadsForOverdue = typedLeads.filter(lead => 
+            lead.joNumber && 
+            !lead.isDigitizingArchived && // Exclude archived
+            !orderTypesToSkip.includes(lead.orderType)
+        );
+
+        leadsForOverdue.forEach(lead => {
             const remainingDays = calculateDigitizingDeadline(lead);
             if (remainingDays < 0) {
                 overdueCount++;
@@ -183,31 +191,34 @@ const generateDigitizingReportFlow = ai.defineFlow(
         const start = startOfMonth(today);
         const end = endOfMonth(today);
         const daysInMonth = eachDayOfInterval({ start, end });
-
-        const statusTimestamps: { key: keyof Lead, name: string }[] = [
-            { key: 'underProgrammingTimestamp', name: 'Initial Program' },
-            { key: 'initialApprovalTimestamp', name: 'Initial Approval' },
-            { key: 'logoTestingTimestamp', name: 'Testing' },
-            { key: 'finalApprovalTimestamp', name: 'Final Approval' },
-            { key: 'finalProgramTimestamp', name: 'Final Program' },
-        ];
-
+        
+        const allDigitizersInLeads = Array.from(new Set(typedLeads.map(l => l.assignedDigitizer).filter((d): d is string => !!d))).sort();
+        
         return daysInMonth.map(day => {
-            const dayEnd = endOfDay(day);
-            const counts: {[key: string]: any} = { date: format(day, 'MMM-dd') };
-
-            statusTimestamps.forEach(status => {
-                counts[status.name] = filteredLeads.filter(lead => {
-                    const timestamp = lead[status.key] as string;
-                    if (!timestamp || typeof timestamp !== 'string') return false;
-                    try {
-                       return new Date(timestamp) <= dayEnd;
-                    } catch (e) {
-                       return false;
-                    }
-                }).length;
+            const dailyCounts: { [key: string]: number | string } = { date: format(day, 'MMM-dd') };
+            
+            allDigitizersInLeads.forEach(name => {
+                dailyCounts[name] = 0;
             });
-            return counts;
+
+            typedLeads.forEach(lead => {
+                if (lead.assignedDigitizer && allDigitizersInLeads.includes(lead.assignedDigitizer)) {
+                    const checkTimestamp = (timestamp: string | null | undefined) => {
+                        try {
+                            if (timestamp && isSameDay(new Date(timestamp), day)) {
+                                (dailyCounts[lead.assignedDigitizer!] as number)++;
+                            }
+                        } catch (e) {
+                            // ignore invalid date formats
+                        }
+                    };
+
+                    checkTimestamp(lead.underProgrammingTimestamp);
+                    checkTimestamp(lead.finalProgramTimestamp);
+                }
+            });
+            
+            return dailyCounts;
         });
     })();
 
