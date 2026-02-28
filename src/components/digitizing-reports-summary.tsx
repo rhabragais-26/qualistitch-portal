@@ -9,9 +9,9 @@ import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { getYear, format } from 'date-fns';
-import { generateDigitizingReport } from '@/ai/flows/generate-digitizing-report-flow';
+import { getYear, format, addDays, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, getMonth } from 'date-fns';
 import type { Lead } from '@/ai/flows/generate-digitizing-report-flow';
+import { Separator } from './ui/separator';
 
 const chartConfig = {
   count: {
@@ -108,9 +108,6 @@ export function DigitizingReportsSummary() {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: true });
   
-  const [reportData, setReportData] = useState<any>(null);
-  const [isReportLoading, setIsReportLoading] = useState(true);
-  
   const [progressChartMonth, setProgressChartMonth] = useState((new Date().getMonth() + 1).toString());
   const [progressChartYear, setProgressChartYear] = useState(new Date().getFullYear().toString());
 
@@ -133,44 +130,197 @@ export function DigitizingReportsSummary() {
     return { availableYears: sortedYears, monthOptions: months };
   }, [leads]);
   
-  const processReport = useCallback(async () => {
-    if (!leads) return;
-    setIsReportLoading(true);
-    try {
-      const result = await generateDigitizingReport({
-        leads,
-        priorityFilter: 'All', // This is now a fixed value
-        selectedMonth: progressChartMonth,
-        selectedYear: progressChartYear,
-      });
-      setReportData(result);
-    } catch (e: any) {
-      console.error("Error generating report: ", e);
-    } finally {
-        setIsReportLoading(false);
-    }
-  }, [leads, progressChartMonth, progressChartYear]);
-  
-  useEffect(() => {
-    if (leads && leads.length > 0) {
-      processReport();
-    } else if (!areLeadsLoading) {
-      setIsReportLoading(false);
-    }
-  }, [leads, areLeadsLoading, processReport]);
+  const reportData = useMemo(() => {
+    if (!leads) return null;
 
-  const { statusSummary, overdueSummary, digitizerSummary, dailyProgressData, totalStatusCount, ongoingVsCompletedData } = useMemo(() => {
-    if (!reportData) return { statusSummary: [], overdueSummary: [], digitizerSummary: [], dailyProgressData: [], totalStatusCount: 0, ongoingVsCompletedData: [] };
-    
     const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
-
-    const programmingLeads = (leads || []).filter(lead => 
+    
+    const programmingLeads = leads.filter(lead => 
         lead.joNumber && 
         !lead.isFinalProgram &&
         !orderTypesToSkip.includes(lead.orderType)
     );
 
-    const completedCount = (leads || []).filter(lead =>
+    const statusSummary = (() => {
+      const statusCounts = {
+        'Pending Initial Program': 0,
+        'For Initial Approval': 0,
+        'For Testing': 0,
+        'Under Revision': 0,
+        'Awaiting Final Approval': 0,
+        'For Final Program Uploading': 0,
+      };
+      programmingLeads.forEach(lead => {
+        if (lead.isRevision) statusCounts['Under Revision']++;
+        else if (!lead.isUnderProgramming) statusCounts['Pending Initial Program']++;
+        else if (!lead.isInitialApproval) statusCounts['For Initial Approval']++;
+        else if (!lead.isLogoTesting) statusCounts['For Testing']++;
+        else if (!lead.isFinalApproval) statusCounts['Awaiting Final Approval']++;
+        else statusCounts['For Final Program Uploading']++;
+      });
+      return Object.entries(statusCounts).map(([name, count]) => ({ name, count }));
+    })();
+
+    const overdueSummary = (() => {
+        let overdueCount = 0;
+        let onTrackCount = 0;
+        let nearlyOverdueCount = 0;
+        const leadsForOverdue = leads.filter(lead => 
+            lead.joNumber && 
+            !lead.isDigitizingArchived && 
+            !orderTypesToSkip.includes(lead.orderType)
+        );
+        leadsForOverdue.forEach(lead => {
+            const submissionDate = new Date(lead.submissionDateTime);
+            const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
+            const deadlineDate = addDays(submissionDate, deadlineDays);
+            const completionDate = (lead.isFinalProgram && lead.finalProgramTimestamp) ? new Date(lead.finalProgramTimestamp) : new Date();
+            const remainingDays = differenceInDays(deadlineDate, completionDate);
+            if (remainingDays < 0) overdueCount++;
+            else if (remainingDays <= 2) nearlyOverdueCount++;
+            else onTrackCount++;
+        });
+        return [
+            { name: 'On Track', count: onTrackCount },
+            { name: 'Nearly Overdue', count: nearlyOverdueCount },
+            { name: 'Overdue', count: overdueCount },
+        ];
+    })();
+    
+    const digitizerSummary = (() => {
+        const counts: Record<string, number> = {};
+        programmingLeads.forEach(lead => {
+            const digitizer = lead.assignedDigitizer || 'Unassigned';
+            counts[digitizer] = (counts[digitizer] || 0) + 1;
+        });
+        const allDigitizers = Object.entries(counts).map(([name, count]) => ({ name, count }));
+        const unassigned = allDigitizers.find(d => d.name === 'Unassigned');
+        const assigned = allDigitizers.filter(d => d.name !== 'Unassigned').sort((a, b) => b.count - a.count);
+        return unassigned ? [...assigned, unassigned] : assigned;
+    })();
+
+    const dailyProgressData = (() => {
+        const year = parseInt(progressChartYear, 10);
+        const month = parseInt(progressChartMonth, 10) - 1;
+        
+        const allUploaders = new Set<string>();
+        leads.forEach(lead => {
+            lead.layouts?.forEach(layout => {
+                const checkUploader = (uploader: string | null | undefined) => { if (uploader) allUploaders.add(uploader); };
+                const checkUploaders = (uploaders: (string | null)[] | undefined) => { (uploaders || []).forEach(checkUploader); };
+                ((layout as any).logoLeftImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
+                ((layout as any).logoRightImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
+                ((layout as any).backLogoImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
+                ((layout as any).backDesignImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
+                checkUploaders((layout as any).finalLogoDstUploadedBy);
+                checkUploaders((layout as any).finalBackDesignDstUploadedBy);
+                checkUploaders((layout as any).finalNamesDstUploadedBy);
+            });
+        });
+        const sortedUploaders = Array.from(allUploaders).sort();
+        
+        const dailyCounts: { [date: string]: { [uploader: string]: number } } = {};
+        
+        leads.forEach(lead => {
+            lead.layouts?.forEach(layout => {
+                const processUploads = (items: { uploadTime?: string; uploadedBy?: string; }[] | undefined) => {
+                    (items || []).forEach(item => {
+                        if (item?.uploadedBy && item.uploadTime) {
+                            try {
+                                const uploadDate = new Date(item.uploadTime);
+                                if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
+                                    const dateStr = format(uploadDate, 'MMM-dd');
+                                    if (!dailyCounts[dateStr]) dailyCounts[dateStr] = {};
+                                    if (!dailyCounts[dateStr][item.uploadedBy!]) dailyCounts[dateStr][item.uploadedBy!] = 0;
+                                    dailyCounts[dateStr][item.uploadedBy!]++;
+                                }
+                            } catch (e) { /* ignore invalid dates */ }
+                        }
+                    });
+                };
+
+                const processFileArrays = (files: ({name: string, url: string} | null)[] | undefined, times: (string | null)[] | undefined, uploaders: (string | null)[] | undefined) => {
+                    (files || []).forEach((file, index) => {
+                         if (file) {
+                             const uploader = uploaders?.[index];
+                             const time = times?.[index];
+                             if (uploader && time) {
+                                try {
+                                    const uploadDate = new Date(time);
+                                    if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
+                                        const dateStr = format(uploadDate, 'MMM-dd');
+                                        if (!dailyCounts[dateStr]) dailyCounts[dateStr] = {};
+                                        if (!dailyCounts[dateStr][uploader]) dailyCounts[dateStr][uploader] = 0;
+                                        dailyCounts[dateStr][uploader]++;
+                                    }
+                                } catch (e) { /* ignore */ }
+                             }
+                         }
+                     })
+                };
+                
+                processUploads((layout as any).logoLeftImages);
+                processUploads((layout as any).logoRightImages);
+                processUploads((layout as any).backLogoImages);
+                processUploads((layout as any).backDesignImages);
+                processFileArrays(layout.finalLogoDst, (layout as any).finalLogoDstUploadTimes, (layout as any).finalLogoDstUploadedBy);
+                processFileArrays(layout.finalBackDesignDst, (layout as any).finalBackDesignDstUploadTimes, (layout as any).finalBackDesignDstUploadedBy);
+                processFileArrays(layout.finalNamesDst, (layout as any).finalNamesDstUploadTimes, (layout as any).finalNamesDstUploadedBy);
+            });
+        });
+
+        const start = startOfMonth(new Date(year, month));
+        const end = endOfMonth(start);
+        const daysInMonth = eachDayOfInterval({ start, end });
+
+        return daysInMonth.map(day => {
+            const dateStr = format(day, 'MMM-dd');
+            const countsForDay = dailyCounts[dateStr] || {};
+            const result: { [key: string]: string | number } = { date: dateStr };
+            sortedUploaders.forEach(uploader => {
+                result[uploader] = countsForDay[uploader] || 0;
+            });
+            return result;
+        });
+    })();
+    
+    const monthlyProgramsDone = (() => {
+        const year = parseInt(progressChartYear, 10);
+        const month = parseInt(progressChartMonth, 10) - 1;
+        const counts: Record<string, number> = {};
+
+        leads.forEach(lead => {
+            lead.layouts?.forEach(layout => {
+                const processFileArrays = (files: any[] | undefined, times: (string | null)[] | undefined, uploaders: (string | null)[] | undefined) => {
+                    (files || []).forEach((file, index) => {
+                        if (file) {
+                            const time = times?.[index];
+                            if (time) {
+                                try {
+                                    const uploadDate = new Date(time);
+                                    if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
+                                        const uploader = uploaders?.[index];
+                                        if (uploader) {
+                                            counts[uploader] = (counts[uploader] || 0) + 1;
+                                        }
+                                    }
+                                } catch (e) { /* ignore */ }
+                            }
+                        }
+                    });
+                };
+                
+                processFileArrays((layout as any).finalLogoDst, (layout as any).finalLogoDstUploadTimes, (layout as any).finalLogoDstUploadedBy);
+                processFileArrays((layout as any).finalBackDesignDst, (layout as any).finalBackDesignDstUploadTimes, (layout as any).finalBackDesignDstUploadedBy);
+                processFileArrays((layout as any).finalNamesDst, (layout as any).finalNamesDstUploadTimes, (layout as any).finalNamesDstUploadedBy);
+            });
+        });
+        
+        return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a,b) => b.count - a.count);
+    })();
+
+
+    const completedCount = leads.filter(lead =>
         lead.isDigitizingArchived &&
         !orderTypesToSkip.includes(lead.orderType)
     ).length;
@@ -180,8 +330,24 @@ export function DigitizingReportsSummary() {
         { name: 'Completed', count: completedCount, fill: 'hsl(var(--chart-2))' }
     ];
 
-    return { ...reportData, totalStatusCount: reportData.statusSummary.reduce((a: any,b: any) => a+b.count, 0), ongoingVsCompletedData };
-  }, [reportData, leads]);
+    const totalStatusCount = statusSummary.reduce((a: any,b: any) => a+b.count, 0);
+
+    return {
+        statusSummary,
+        overdueSummary,
+        digitizerSummary,
+        dailyProgressData,
+        totalStatusCount,
+        ongoingVsCompletedData,
+        monthlyProgramsDone,
+    };
+  }, [leads, progressChartMonth, progressChartYear]);
+
+
+  const { statusSummary, overdueSummary, digitizerSummary, dailyProgressData, totalStatusCount, ongoingVsCompletedData, monthlyProgramsDone } = useMemo(() => {
+    if (!reportData) return { statusSummary: [], overdueSummary: [], digitizerSummary: [], dailyProgressData: [], totalStatusCount: 0, ongoingVsCompletedData: [], monthlyProgramsDone: [] };
+    return reportData;
+  }, [reportData]);
 
   const totalPrograms = useMemo(() => {
     if (!ongoingVsCompletedData) return 0;
@@ -223,7 +389,7 @@ export function DigitizingReportsSummary() {
   };
 
 
-  if (isReportLoading || areLeadsLoading) {
+  if (areLeadsLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {[...Array(3)].map((_, i) => (
@@ -295,7 +461,7 @@ export function DigitizingReportsSummary() {
                       verticalAlign="middle"
                       align="left"
                       iconType="circle"
-                      wrapperStyle={{ lineHeight: 2, fontSize: 12 }}
+                      wrapperStyle={{ lineHeight: 2.5, fontSize: 12 }}
                     />
                     <Pie
                       data={overdueSummary}
@@ -380,10 +546,8 @@ export function DigitizingReportsSummary() {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="h-80">
-              {isReportLoading ? (
-                  <Skeleton className="h-full w-full" />
-              ) : (
+            <CardContent className="space-y-8">
+              <div className="h-80">
                 <ChartContainer config={{}} className="w-full h-full">
                     <ResponsiveContainer>
                         <LineChart data={dailyProgressData}>
@@ -398,10 +562,50 @@ export function DigitizingReportsSummary() {
                         </LineChart>
                     </ResponsiveContainer>
                 </ChartContainer>
-              )}
+              </div>
+              <Separator />
+              <div>
+                <CardHeader className="p-0 mb-4">
+                    <CardTitle>Monthly Programs Done by each Digitizers</CardTitle>
+                </CardHeader>
+                <CardContent className="h-80 p-0">
+                  <ChartContainer config={chartConfig} className="w-full h-full">
+                      <ResponsiveContainer>
+                          <BarChart
+                              data={monthlyProgramsDone}
+                              layout="vertical"
+                              margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+                          >
+                              <CartesianGrid horizontal={false} />
+                              <XAxis type="number" hide />
+                              <YAxis
+                                  dataKey="name"
+                                  type="category"
+                                  tickLine={false}
+                                  axisLine={false}
+                                  tick={{ fontSize: 12 }}
+                                  width={100}
+                              />
+                              <Tooltip
+                                  cursor={{ fill: 'hsl(var(--muted))' }}
+                                  content={<ChartTooltipContent />}
+                              />
+                              <Bar dataKey="count" name="DST Files" radius={[0, 4, 4, 0]}>
+                                  {monthlyProgramsDone.map((entry: any, index: any) => (
+                                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                  ))}
+                                  <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
+                              </Bar>
+                          </BarChart>
+                      </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </div>
             </CardContent>
         </Card>
       </div>
     </>
   );
 }
+
+    
