@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A report generation AI agent for digitizing process.
@@ -78,14 +79,13 @@ const generateDigitizingReportFlow = ai.defineFlow(
       };
 
       // This logic counts a lead in its NEXT pending stage.
-      // E.g., if isInitialApproval is true, it's waiting for Testing.
       filteredLeads.forEach(lead => {
         if (lead.isFinalProgram) {
+            // It's completed, so don't count it.
+        } else if (lead.isFinalApproval) {
             statusCounts['Final Program']++;
         } else if (lead.isRevision) {
             statusCounts['Revision']++;
-        } else if (lead.isFinalApproval) {
-            statusCounts['Final Program']++;
         } else if (lead.isLogoTesting) {
             statusCounts['Final Approval']++;
         } else if (lead.isInitialApproval) {
