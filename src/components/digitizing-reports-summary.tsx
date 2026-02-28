@@ -138,7 +138,7 @@ export function DigitizingReportsSummary() {
     try {
       const result = await generateDigitizingReportAction({
         leads,
-        priorityFilter: 'All',
+        priorityFilter: 'All', // This is now a fixed value
         selectedMonth: progressChartMonth,
         selectedYear: progressChartYear,
       });
@@ -294,7 +294,7 @@ export function DigitizingReportsSummary() {
                       verticalAlign="middle"
                       align="left"
                       iconType="circle"
-                      wrapperStyle={{ lineHeight: 2.5, fontSize: 14 }}
+                      wrapperStyle={{ lineHeight: 2.5, fontSize: 12 }}
                     />
                     <Pie
                       data={overdueSummary}
@@ -347,7 +347,7 @@ export function DigitizingReportsSummary() {
                             />
                             <Bar dataKey="count" name="Orders" radius={[0, 4, 4, 0]}>
                                 {digitizerSummary.map((entry: any, index: any) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    <Cell key={`cell-${index}`} fill={entry.name === 'Unassigned' ? 'hsl(var(--chart-2))' : COLORS[index % COLORS.length]} />
                                 ))}
                                 <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
                             </Bar>
