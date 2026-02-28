@@ -10,10 +10,9 @@ import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { getYear, format, addDays, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, getMonth } from 'date-fns';
-import type { Lead, GenerateDigitizingReportInput } from '@/app/digitizing/reports/actions';
+import { getYear, format } from 'date-fns';
+import { generateDigitizingReportAction, type Lead, type GenerateDigitizingReportInput } from '@/app/digitizing/reports/actions';
 import { Separator } from './ui/separator';
-import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
 
 const chartConfig = {
   count: {
@@ -155,12 +154,8 @@ export function DigitizingReportsSummary() {
   }, [leads, progressChartMonth, progressChartYear]);
 
   useEffect(() => {
-    if (leads && leads.length > 0) {
-      processReport();
-    } else if (!areLeadsLoading) {
-      setIsReportLoading(false);
-    }
-  }, [leads, processReport, areLeadsLoading]);
+    processReport();
+  }, [processReport]);
 
 
   const { statusSummary, overdueSummary, digitizerSummary, dailyProgressData, totalStatusCount, ongoingVsCompletedData, monthlyProgramsDone } = useMemo(() => {
@@ -342,7 +337,7 @@ export function DigitizingReportsSummary() {
                             />
                             <Bar dataKey="count" name="Orders" radius={[0, 4, 4, 0]}>
                                 {digitizerSummary.map((entry: any, index: any) => (
-                                    <Cell key={`cell-${index}`} fill={entry.name === 'Unassigned' ? '#696969' : COLORS[index % COLORS.length]} />
+                                    <Cell key={`cell-${index}`} fill={entry.name === 'Unassigned' ? '#6B7280' : COLORS[index % COLORS.length]} />
                                 ))}
                                 <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
                             </Bar>
@@ -359,13 +354,13 @@ export function DigitizingReportsSummary() {
                         <CardDescription>Combined count of Uploaded Initial Program Images and Final DST Files (Logo, Back Design and Names) on a daily basis</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Select value={progressChartYear} onValueChange={setProgressChartYear}>
+                        <Select value={progressChartYear} onValueChange={(value) => { setProgressChartYear(value); processReport(); }}>
                             <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                        <Select value={progressChartMonth} onValueChange={setProgressChartMonth}>
+                        <Select value={progressChartMonth} onValueChange={(value) => { setProgressChartMonth(value); processReport(); }}>
                             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {monthOptions.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
@@ -412,11 +407,9 @@ export function DigitizingReportsSummary() {
                               <YAxis allowDecimals={false} />
                               <Tooltip content={<ChartTooltipContent />} />
                               <Legend />
-                              <Bar dataKey="logo" stackId="a" fill="hsl(var(--chart-1))" name="Logo" />
-                              <Bar dataKey="backDesign" stackId="a" fill="hsl(var(--chart-2))" name="Back Design" />
-                              <Bar dataKey="names" stackId="a" fill="hsl(var(--chart-3))" name="Names" radius={[4, 4, 0, 0]}>
-                                <LabelList dataKey="total" position="top" />
-                              </Bar>
+                              <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names" radius={[4, 4, 0, 0]} />
                           </BarChart>
                       </ResponsiveContainer>
                   </ChartContainer>
@@ -428,4 +421,3 @@ export function DigitizingReportsSummary() {
     </>
   );
 }
-
