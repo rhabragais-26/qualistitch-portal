@@ -104,6 +104,33 @@ const PriorityBar = ({ percentage, count, label, color }: { percentage: number, 
     )
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
+      return (
+        <div className="bg-card p-2.5 text-card-foreground rounded-md border shadow-md">
+          <p className="font-bold mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-sm">
+              <div className="flex items-center">
+                <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: entry.fill }} />
+                <span>{entry.name}:</span>
+              </div>
+              <span className="font-bold">{entry.value}</span>
+            </div>
+          ))}
+          <Separator className="my-2" />
+          <div className="flex items-center justify-between font-bold text-sm">
+              <span>Total:</span>
+              <span>{total}</span>
+          </div>
+        </div>
+      );
+    }
+  
+    return null;
+};
+
 export function DigitizingReportsSummary() {
   
   const firestore = useFirestore();
@@ -428,16 +455,16 @@ export function DigitizingReportsSummary() {
                               <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                               <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 'bold' }} />
                               <YAxis allowDecimals={false} />
-                              <Tooltip content={<ChartTooltipContent />} />
+                              <Tooltip content={<CustomTooltip />} />
                               <Legend />
                               <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo">
-                                <LabelList dataKey="logo" position="top" fontSize={12} fontWeight="bold" fill="black" />
+                                <LabelList dataKey="logo" position="top" fontSize={14} fontWeight="bold" fill="black" />
                               </Bar>
                               <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design">
-                                <LabelList dataKey="backDesign" position="top" fontSize={12} fontWeight="bold" fill="black" />
+                                <LabelList dataKey="backDesign" position="top" fontSize={14} fontWeight="bold" fill="black" />
                               </Bar>
                               <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names">
-                                <LabelList dataKey="names" position="top" fontSize={12} fontWeight="bold" fill="black" />
+                                <LabelList dataKey="names" position="top" fontSize={14} fontWeight="bold" fill="black" />
                               </Bar>
                           </BarChart>
                       </ResponsiveContainer>
