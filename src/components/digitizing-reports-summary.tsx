@@ -155,10 +155,10 @@ export function DigitizingReportsSummary() {
             <div style={{ height: '350px' }}>
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statusSummary} layout="vertical" margin={{ left: 40 }}>
+                  <BarChart data={statusSummary} layout="vertical" margin={{ left: 20, right: 40 }}>
                     <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                     <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} width={160} />
+                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} width={120} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
