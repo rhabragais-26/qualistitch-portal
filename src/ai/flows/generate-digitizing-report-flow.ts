@@ -82,39 +82,39 @@ const generateDigitizingReportFlow = ai.defineFlow(
 
     const statusSummary = (() => {
       const statusCounts = {
-        'Initial Program': 0,
-        'Initial Approval': 0,
-        'Test': 0,
-        'Revision': 0,
-        'Final Approval': 0,
-        'Final Program': 0,
+        'Pending Initial Program': 0,
+        'For Initial Approval': 0,
+        'For Testing': 0,
+        'Under Revision': 0,
+        'Awaiting Final Approval': 0,
+        'For Final Program Uploading': 0,
       };
 
       // The logic determines the NEXT required step for an order.
       filteredLeads.forEach(lead => {
         // 1. Pending Initial Program: This is the very first step.
         if (!lead.isUnderProgramming) {
-            statusCounts['Initial Program']++;
+            statusCounts['Pending Initial Program']++;
         } 
-        // 2. Pending Initial Approval: Initial Program is done, now waiting for approval.
+        // 2. For Initial Approval: Initial Program is done, now waiting for approval.
         else if (!lead.isInitialApproval) {
-            statusCounts['Initial Approval']++;
+            statusCounts['For Initial Approval']++;
         } 
-        // 3. Pending Test: Initial Approval is done, now waiting for testing.
+        // 3. For Testing: Initial Approval is done, now waiting for testing.
         else if (!lead.isLogoTesting) {
-            statusCounts['Test']++;
+            statusCounts['For Testing']++;
         } 
         // 4. Under Revision: This state takes priority if checked.
         else if (lead.isRevision) {
-            statusCounts['Revision']++;
+            statusCounts['Under Revision']++;
         } 
-        // 5. Pending Final Approval: Testing is done, not under revision, waiting for final sign-off.
+        // 5. Awaiting Final Approval: Testing is done, not under revision, waiting for final sign-off.
         else if (!lead.isFinalApproval) {
-            statusCounts['Final Approval']++;
+            statusCounts['Awaiting Final Approval']++;
         } 
-        // 6. Pending Final Program: Final Approval is checked, the last step is to upload the final program.
+        // 6. For Final Program Uploading: Final Approval is checked, the last step is to upload the final program.
         else {
-            statusCounts['Final Program']++;
+            statusCounts['For Final Program Uploading']++;
         }
       });
       
