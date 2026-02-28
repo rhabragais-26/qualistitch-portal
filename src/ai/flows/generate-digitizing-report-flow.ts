@@ -77,19 +77,23 @@ const generateDigitizingReportFlow = ai.defineFlow(
         'Final Program': 0,
       };
 
+      // This logic counts a lead in its NEXT pending stage.
+      // E.g., if isInitialApproval is true, it's waiting for Testing.
       filteredLeads.forEach(lead => {
         if (lead.isFinalProgram) {
-          statusCounts['Final Program']++;
-        } else if (lead.isFinalApproval) {
-          statusCounts['Final Approval']++;
+            statusCounts['Final Program']++;
         } else if (lead.isRevision) {
-          statusCounts['Revision']++;
+            statusCounts['Revision']++;
+        } else if (lead.isFinalApproval) {
+            statusCounts['Final Program']++;
         } else if (lead.isLogoTesting) {
-          statusCounts['Test']++;
+            statusCounts['Final Approval']++;
         } else if (lead.isInitialApproval) {
-          statusCounts['Initial Approval']++;
+            statusCounts['Test']++;
         } else if (lead.isUnderProgramming) {
-          statusCounts['Initial Program']++;
+            statusCounts['Initial Approval']++;
+        } else {
+            statusCounts['Initial Program']++;
         }
       });
       
