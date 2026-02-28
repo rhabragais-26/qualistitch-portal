@@ -156,7 +156,7 @@ export function DigitizingReportsSummary() {
             <div style={{ height: '350px' }}>
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statusSummary} layout="vertical" margin={{ left: 0, right: 50 }}>
+                  <BarChart data={statusSummary} layout="vertical" margin={{ left: 20, right: 60, top: 5, bottom: 5 }}>
                     <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                     <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} width={120} />
@@ -168,7 +168,7 @@ export function DigitizingReportsSummary() {
                        {statusSummary.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                        ))}
-                       <LabelList dataKey="count" position="insideRight" fill="white" fontSize={12} fontWeight="bold" />
+                       <LabelList dataKey="count" position="right" fill="hsl(var(--foreground))" fontSize={12} fontWeight="bold" />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>

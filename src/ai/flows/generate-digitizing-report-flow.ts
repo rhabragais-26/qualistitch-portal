@@ -81,36 +81,29 @@ const generateDigitizingReportFlow = ai.defineFlow(
 
       filteredLeads.forEach(lead => {
         // This logic assigns each order to a single "queue" based on the next action required.
-
-        // If 'Final Program' is checked, the order is complete for this process and is excluded.
+        // The hierarchy is checked from latest stage to earliest.
         if (lead.isFinalProgram) {
+            // 1. If Final Program is checked, it's completed and not counted.
             return;
-        } 
-        // 6. Queue: Final Program. If 'Final Approval' is done, it's waiting for the final program file.
-        else if (lead.isFinalApproval) {
+        }
+
+        if (lead.isRevision) {
+            // 2. If Under Revision is checked, it's prioritized in this queue.
+            statusCounts['Revision']++;
+        } else if (lead.isFinalApproval) {
+            // 3. If Final Approval is checked, it's waiting for Final Program file.
             statusCounts['Final Program']++;
-        } 
-        // This stage is after testing but before final approval. A revision can be requested here.
-        else if (lead.isLogoTesting) {
-            // 4. Queue: Revision. If the 'isRevision' flag is active, it's in the revision queue.
-            if (lead.isRevision) {
-                statusCounts['Revision']++;
-            } 
-            // 5. Queue: Final Approval. If not in revision, it's waiting for final approval.
-            else {
-                statusCounts['Final Approval']++;
-            }
-        } 
-        // 3. Queue: Test. If 'Initial Approval' is done, it's waiting for testing.
-        else if (lead.isInitialApproval) {
+        } else if (lead.isLogoTesting) {
+            // 4. If Logo Testing is done (and not under revision), it's waiting for Final Approval.
+            statusCounts['Final Approval']++;
+        } else if (lead.isInitialApproval) {
+            // 5. If Initial Approval is checked, it's waiting for Test.
             statusCounts['Test']++;
-        } 
-        // 2. Queue: Initial Approval. If 'Initial Program' is done, it's waiting for initial approval.
-        else if (lead.isUnderProgramming) {
+        } else if (lead.isUnderProgramming) {
+            // 6. If Initial Program is done, it's waiting for Initial Approval.
             statusCounts['Initial Approval']++;
-        } 
-        // 1. Queue: Initial Program. If nothing is checked yet, it's waiting for the initial program.
-        else {
+        } else {
+            // 7. If nothing else is checked, it's waiting for the Initial Program.
             statusCounts['Initial Program']++;
         }
       });
