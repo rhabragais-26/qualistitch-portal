@@ -262,24 +262,32 @@ export function DigitizingReportsSummary() {
           <CardContent className="h-80">
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
-                        <Tooltip content={<ChartTooltipContent nameKey="count" />} />
-                        <Pie
-                          data={overdueSummary}
-                          dataKey="count"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          labelLine={false}
-                          label={renderCustomizedLabel}
-                        >
-                          {overdueSummary.map((entry) => (
-                            <Cell key={`cell-${entry.name}`} fill={overdueColors[entry.name as keyof typeof overdueColors]} />
-                          ))}
-                        </Pie>
-                        <Legend iconType="circle" />
-                    </PieChart>
+                  <PieChart>
+                    <Tooltip content={<ChartTooltipContent nameKey="count" />} />
+                    <Legend
+                      layout="vertical"
+                      verticalAlign="middle"
+                      align="left"
+                      iconType="circle"
+                    />
+                    <Pie
+                      data={overdueSummary}
+                      dataKey="count"
+                      nameKey="name"
+                      cx="65%"
+                      cy="50%"
+                      outerRadius={80}
+                      labelLine={false}
+                      label={renderCustomizedLabel}
+                    >
+                      {overdueSummary.map((entry) => (
+                        <Cell
+                          key={`cell-${entry.name}`}
+                          fill={overdueColors[entry.name as keyof typeof overdueColors]}
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
           </CardContent>
