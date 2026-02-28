@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { getYear, format } from 'date-fns';
-import { generateDigitizingReportAction, type Lead, type GenerateDigitizingReportInput } from '@/app/digitizing/reports/actions';
+import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
+import type { Lead, GenerateDigitizingReportInput } from '@/app/digitizing/reports/actions';
 import { Separator } from './ui/separator';
 
 const chartConfig = {
@@ -425,13 +426,19 @@ export function DigitizingReportsSummary() {
                               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                           >
                               <CartesianGrid strokeDasharray="3 3" vertical={false}/>
-                              <XAxis dataKey="name" />
+                              <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 'bold' }} />
                               <YAxis allowDecimals={false} />
                               <Tooltip content={<ChartTooltipContent />} />
                               <Legend />
-                              <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo" />
-                              <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design" />
-                              <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names" />
+                              <Bar dataKey="logo" fill="hsl(var(--chart-1))" name="Logo">
+                                <LabelList dataKey="logo" position="top" fontSize={12} />
+                              </Bar>
+                              <Bar dataKey="backDesign" fill="hsl(var(--chart-4))" name="Back Design">
+                                <LabelList dataKey="backDesign" position="top" fontSize={12} />
+                              </Bar>
+                              <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names">
+                                <LabelList dataKey="names" position="top" fontSize={12} />
+                              </Bar>
                           </BarChart>
                       </ResponsiveContainer>
                   </ChartContainer>
