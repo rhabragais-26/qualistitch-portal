@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -10,54 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { getYear, format, addDays, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, getMonth } from 'date-fns';
-
-type FileObject = {
-  name: string;
-  url: string;
-};
-
-type Layout = {
-  id: string;
-  logoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
-  logoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
-  backLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
-  backDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
-
-  finalLogoDst?: (FileObject | null)[];
-  finalLogoDstUploadTimes?: (string | null)[];
-  finalLogoDstUploadedBy?: (string | null)[];
-
-  finalBackDesignDst?: (FileObject | null)[];
-  finalBackDesignDstUploadTimes?: (string | null)[];
-  finalBackDesignDstUploadedBy?: (string | null)[];
-
-  finalNamesDst?: (FileObject | null)[];
-  finalNamesDstUploadTimes?: (string | null)[];
-  finalNamesDstUploadedBy?: (string | null)[];
-};
-
-type Lead = {
-  id: string;
-  joNumber?: number;
-  orderType: string;
-  isUnderProgramming?: boolean;
-  underProgrammingTimestamp?: string | null;
-  isInitialApproval?: boolean;
-  initialApprovalTimestamp?: string | null;
-  isLogoTesting?: boolean;
-  logoTestingTimestamp?: string | null;
-  isRevision?: boolean;
-  revisionTimestamp?: string | null;
-  isFinalApproval?: boolean;
-  finalApprovalTimestamp?: string | null;
-  isFinalProgram?: boolean;
-  finalProgramTimestamp?: string | null;
-  isDigitizingArchived?: boolean;
-  priorityType: 'Rush' | 'Regular';
-  submissionDateTime: string;
-  assignedDigitizer?: string | null;
-  layouts?: Layout[];
-};
+import { generateDigitizingReportAction } from './digitizing/reports/actions';
+import type { Lead } from './digitizing/reports/actions';
 
 const chartConfig = {
   count: {
@@ -134,196 +87,32 @@ const StatusDoughnutCard = ({ title, count, total, color }: { title: string; cou
     );
 };
 
+const PriorityBar = ({ percentage, count, label, color }: { percentage: number, count: number, label: string, color: string }) => {
+    return (
+        <div className="flex flex-col items-center w-full">
+            <p className="font-medium text-sm self-start">{label}</p>
+            <div className="w-full h-8 bg-gray-200 rounded-lg my-1 relative overflow-hidden">
+                <div style={{ width: `${percentage}%`, backgroundColor: color }} className="h-full rounded-lg flex items-center justify-center transition-all duration-500">
+                    <span className="text-white font-bold text-sm">{percentage.toFixed(0)}%</span>
+                </div>
+            </div>
+            <p className="text-sm font-bold self-end">{count} orders</p>
+        </div>
+    )
+}
 
 export function DigitizingReportsSummary() {
   
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
-  const [isProgressChartLoading, setIsProgressChartLoading] = useState(true);
-
+  const [reportData, setReportData] = useState<any>(null);
+  const [isReportLoading, setIsReportLoading] = useState(true);
+  
   const [progressChartMonth, setProgressChartMonth] = useState((new Date().getMonth() + 1).toString());
   const [progressChartYear, setProgressChartYear] = useState(new Date().getFullYear().toString());
-  
-  const { statusSummary, overdueSummary, digitizerSummary, totalStatusCount, ongoingVsCompletedData } = useMemo(() => {
-    if (!leads) return { statusSummary: [], overdueSummary: [], digitizerSummary: [], totalStatusCount: 0, ongoingVsCompletedData: [] };
-    
-    const typedLeads = leads as Lead[];
-    const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
 
-    const programmingLeads = typedLeads.filter(lead => 
-        lead.joNumber && 
-        !lead.isFinalProgram &&
-        !orderTypesToSkip.includes(lead.orderType)
-    );
-
-    const completedCount = typedLeads.filter(lead =>
-        lead.isDigitizingArchived &&
-        !orderTypesToSkip.includes(lead.orderType)
-    ).length;
-
-    const ongoingVsCompletedData = [
-        { name: 'Ongoing', count: programmingLeads.length, fill: 'hsl(var(--chart-4))' },
-        { name: 'Completed', count: completedCount, fill: 'hsl(var(--chart-2))' }
-    ];
-
-    const statusCounts = {
-      'Pending Initial Program': 0,
-      'For Initial Approval': 0,
-      'For Testing': 0,
-      'Under Revision': 0,
-      'Awaiting Final Approval': 0,
-      'For Final Program Uploading': 0,
-    };
-    programmingLeads.forEach(lead => {
-      if (lead.isRevision) statusCounts['Under Revision']++;
-      else if (!lead.isUnderProgramming) statusCounts['Pending Initial Program']++;
-      else if (!lead.isInitialApproval) statusCounts['For Initial Approval']++;
-      else if (!lead.isLogoTesting) statusCounts['For Testing']++;
-      else if (!lead.isFinalApproval) statusCounts['Awaiting Final Approval']++;
-      else statusCounts['For Final Program Uploading']++;
-    });
-    const statusSummary = Object.entries(statusCounts).map(([name, count]) => ({ name, count }));
-
-    let overdueCount = 0;
-    let onTrackCount = 0;
-    let nearlyOverdueCount = 0;
-    const leadsForOverdue = typedLeads.filter(lead => 
-        lead.joNumber && 
-        !lead.isDigitizingArchived &&
-        !orderTypesToSkip.includes(lead.orderType)
-    );
-    leadsForOverdue.forEach(lead => {
-        const submissionDate = new Date(lead.submissionDateTime);
-        const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
-        const deadlineDate = addDays(submissionDate, deadlineDays);
-        const completionDate = (lead.isFinalProgram && lead.finalProgramTimestamp) ? new Date(lead.finalProgramTimestamp) : new Date();
-        const remainingDays = differenceInDays(deadlineDate, completionDate);
-        if (remainingDays < 0) overdueCount++;
-        else if (remainingDays <= 2) nearlyOverdueCount++;
-        else onTrackCount++;
-    });
-    const overdueSummary = [
-        { name: 'On Track', count: onTrackCount },
-        { name: 'Nearly Overdue', count: nearlyOverdueCount },
-        { name: 'Overdue', count: overdueCount },
-    ];
-
-    const digitizerCounts: Record<string, number> = {};
-    programmingLeads.forEach(lead => {
-        const digitizer = lead.assignedDigitizer || 'Unassigned';
-        digitizerCounts[digitizer] = (digitizerCounts[digitizer] || 0) + 1;
-    });
-    const allDigitizers = Object.entries(digitizerCounts).map(([name, count]) => ({ name, count }));
-    const unassigned = allDigitizers.find(d => d.name === 'Unassigned');
-    const assigned = allDigitizers.filter(d => d.name !== 'Unassigned').sort((a, b) => b.count - a.count);
-    const digitizerSummary = unassigned ? [...assigned, unassigned] : assigned;
-
-    return { 
-        statusSummary, 
-        overdueSummary, 
-        digitizerSummary,
-        totalStatusCount: programmingLeads.length,
-        ongoingVsCompletedData,
-    };
-  }, [leads]);
-  
-  const dailyProgressData = useMemo(() => {
-    setIsProgressChartLoading(true);
-    if (!leads) {
-        setIsProgressChartLoading(false);
-        return [];
-    }
-
-    const typedLeads = leads as Lead[];
-    const year = parseInt(progressChartYear, 10);
-    const month = parseInt(progressChartMonth, 10) - 1;
-    
-    const allUploaders = new Set<string>();
-    typedLeads.forEach(lead => {
-        lead.layouts?.forEach(layout => {
-            const checkUploader = (uploader: string | null | undefined) => { if (uploader) allUploaders.add(uploader); };
-            const checkUploaders = (uploaders: (string | null)[] | undefined) => { (uploaders || []).forEach(checkUploader); };
-            ((layout as any).logoLeftImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
-            ((layout as any).logoRightImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
-            ((layout as any).backLogoImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
-            ((layout as any).backDesignImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
-            checkUploaders((layout as any).finalLogoDstUploadedBy);
-            checkUploaders((layout as any).finalBackDesignDstUploadedBy);
-            checkUploaders((layout as any).finalNamesDstUploadedBy);
-        });
-    });
-    const sortedUploaders = Array.from(allUploaders).sort();
-    
-    const dailyCounts: { [date: string]: { [uploader: string]: number } } = {};
-    
-    typedLeads.forEach(lead => {
-        lead.layouts?.forEach(layout => {
-            const processUploads = (items: { uploadTime?: string; uploadedBy?: string; }[] | undefined) => {
-                (items || []).forEach(item => {
-                    if (item?.uploadedBy && item.uploadTime) {
-                        try {
-                            const uploadDate = new Date(item.uploadTime);
-                            if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
-                                const dateStr = format(uploadDate, 'MMM-dd');
-                                if (!dailyCounts[dateStr]) dailyCounts[dateStr] = {};
-                                if (!dailyCounts[dateStr][item.uploadedBy!]) dailyCounts[dateStr][item.uploadedBy!] = 0;
-                                dailyCounts[dateStr][item.uploadedBy!]++;
-                            }
-                        } catch (e) { /* ignore invalid dates */ }
-                    }
-                });
-            };
-
-            const processFileArrays = (files: (FileObject | null)[] | undefined, times: (string | null)[] | undefined, uploaders: (string | null)[] | undefined) => {
-                (files || []).forEach((file, index) => {
-                     if (file) {
-                         const uploader = uploaders?.[index];
-                         const time = times?.[index];
-                         if (uploader && time) {
-                            try {
-                                const uploadDate = new Date(time);
-                                if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
-                                    const dateStr = format(uploadDate, 'MMM-dd');
-                                    if (!dailyCounts[dateStr]) dailyCounts[dateStr] = {};
-                                    if (!dailyCounts[dateStr][uploader]) dailyCounts[dateStr][uploader] = 0;
-                                    dailyCounts[dateStr][uploader]++;
-                                }
-                            } catch (e) { /* ignore */ }
-                         }
-                     }
-                 })
-            };
-            
-            processUploads((layout as any).logoLeftImages);
-            processUploads((layout as any).logoRightImages);
-            processUploads((layout as any).backLogoImages);
-            processUploads((layout as any).backDesignImages);
-            processFileArrays(layout.finalLogoDst, (layout as any).finalLogoDstUploadTimes, (layout as any).finalLogoDstUploadedBy);
-            processFileArrays(layout.finalBackDesignDst, (layout as any).finalBackDesignDstUploadTimes, (layout as any).finalBackDesignDstUploadedBy);
-            processFileArrays(layout.finalNamesDst, (layout as any).finalNamesDstUploadTimes, (layout as any).finalNamesDstUploadedBy);
-        });
-    });
-
-    const start = startOfMonth(new Date(year, month));
-    const end = endOfMonth(start);
-    const daysInMonth = eachDayOfInterval({ start, end });
-
-    const data = daysInMonth.map(day => {
-        const dateStr = format(day, 'MMM-dd');
-        const countsForDay = dailyCounts[dateStr] || {};
-        const result: { [key: string]: string | number } = { date: dateStr };
-        sortedUploaders.forEach(uploader => {
-            result[uploader] = countsForDay[uploader] || 0;
-        });
-        return result;
-    });
-
-    setIsProgressChartLoading(false);
-    return data;
-  }, [leads, progressChartMonth, progressChartYear]);
-  
   const { availableYears, monthOptions } = useMemo(() => {
     if (!leads) {
         const currentYear = new Date().getFullYear();
@@ -342,16 +131,71 @@ export function DigitizingReportsSummary() {
 
     return { availableYears: sortedYears, monthOptions: months };
   }, [leads]);
+  
+  const processReport = useCallback(async () => {
+    if (!leads) return;
+    setIsReportLoading(true);
+    try {
+      const result = await generateDigitizingReportAction({
+        leads,
+        priorityFilter: 'All',
+        selectedMonth: progressChartMonth,
+        selectedYear: progressChartYear,
+      });
+      setReportData(result);
+    } catch (e: any) {
+      console.error("Error generating report: ", e);
+    } finally {
+        setIsReportLoading(false);
+    }
+  }, [leads, progressChartMonth, progressChartYear]);
+  
+  useEffect(() => {
+    if (leads && leads.length > 0) {
+      processReport();
+    } else if (!areLeadsLoading) {
+      setIsReportLoading(false);
+    }
+  }, [leads, areLeadsLoading, processReport]);
+
+  const { statusSummary, overdueSummary, digitizerSummary, dailyProgressData, totalStatusCount, ongoingVsCompletedData } = useMemo(() => {
+    if (!reportData) return { statusSummary: [], overdueSummary: [], digitizerSummary: [], dailyProgressData: [], totalStatusCount: 0, ongoingVsCompletedData: [] };
+    
+    const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
+
+    const programmingLeads = (leads || []).filter(lead => 
+        lead.joNumber && 
+        !lead.isFinalProgram &&
+        !orderTypesToSkip.includes(lead.orderType)
+    );
+
+    const completedCount = (leads || []).filter(lead =>
+        lead.isDigitizingArchived &&
+        !orderTypesToSkip.includes(lead.orderType)
+    ).length;
+
+    const ongoingVsCompletedData = [
+        { name: 'Ongoing', count: programmingLeads.length, fill: 'hsl(var(--chart-4))' },
+        { name: 'Completed', count: completedCount, fill: 'hsl(var(--chart-2))' }
+    ];
+
+    return { ...reportData, totalStatusCount: reportData.statusSummary.reduce((a: any,b: any) => a+b.count, 0), ongoingVsCompletedData };
+  }, [reportData, leads]);
+
+  const totalPrograms = useMemo(() => {
+    if (!ongoingVsCompletedData) return 0;
+    return ongoingVsCompletedData.reduce((sum, item) => sum + item.count, 0);
+  }, [ongoingVsCompletedData]);
+
 
   const RADIAN = Math.PI / 180;
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, count, fill }: any) => {
-    // Percentage label inside the slice
+    if (percent === 0) return null;
     const radiusInside = innerRadius + (outerRadius - innerRadius) * 0.5;
     const xInside = cx + radiusInside * Math.cos(-midAngle * RADIAN);
     const yInside = cy + radiusInside * Math.sin(-midAngle * RADIAN);
   
-    // Line and count label outside the slice
-    const radiusOutside = outerRadius + 15; // extend line
+    const radiusOutside = outerRadius + 15;
     const xStart = cx + outerRadius * Math.cos(-midAngle * RADIAN);
     const yStart = cy + outerRadius * Math.sin(-midAngle * RADIAN);
     const xEnd = cx + radiusOutside * Math.cos(-midAngle * RADIAN);
@@ -360,15 +204,10 @@ export function DigitizingReportsSummary() {
   
     return (
       <g>
-        {/* Percentage inside */}
         <text x={xInside} y={yInside} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={14}>
           {`${(percent * 100).toFixed(0)}%`}
         </text>
-        
-        {/* Line for outside label */}
         <path d={`M${xStart},${yStart} L${xEnd},${yEnd}`} stroke={fill} fill="none" />
-        
-        {/* Count outside */}
         <text x={xEnd + (xEnd > cx ? 1 : -1) * 4} y={yEnd} textAnchor={textAnchor} fill="#333" dominantBaseline="central" fontWeight="bold">
           {`${count}`}
         </text>
@@ -383,7 +222,7 @@ export function DigitizingReportsSummary() {
   };
 
 
-  if (isLoading) {
+  if (isReportLoading || areLeadsLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {[...Array(3)].map((_, i) => (
@@ -401,18 +240,14 @@ export function DigitizingReportsSummary() {
     );
   }
 
-  if (error) {
-    return <p className="text-destructive">Error loading data: {error.message}</p>;
-  }
-  
-  if (!leads) {
+  if (leadsError || !reportData) {
      return <p>No data available to generate reports.</p>;
   }
 
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        {statusSummary.map((status, index) => (
+        {statusSummary.map((status: any, index: any) => (
             <StatusDoughnutCard
                 key={status.name}
                 title={status.name}
@@ -429,37 +264,19 @@ export function DigitizingReportsSummary() {
             <CardTitle>Program Status</CardTitle>
             <CardDescription>Comparison of ongoing vs. completed programs.</CardDescription>
           </CardHeader>
-          <CardContent className="h-80">
-            <ChartContainer config={{ count: { label: 'Count' } }} className="w-full h-full">
-              <ResponsiveContainer>
-                <BarChart
-                    data={ongoingVsCompletedData}
-                    layout="vertical"
-                    margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
-                >
-                    <CartesianGrid horizontal={false} />
-                    <XAxis type="number" hide />
-                    <YAxis
-                        dataKey="name"
-                        type="category"
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fontSize: 14, fontWeight: 'bold' }}
-                        width={100}
-                    />
-                    <Tooltip
-                        cursor={{ fill: 'hsl(var(--muted))' }}
-                        content={<ChartTooltipContent />}
-                    />
-                    <Bar dataKey="count" name="Orders" radius={[0, 4, 4, 0]}>
-                        {ongoingVsCompletedData.map((entry) => (
-                            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                        ))}
-                        <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={14} />
-                    </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+          <CardContent className="h-80 flex flex-col justify-center items-center gap-4">
+            {ongoingVsCompletedData.map(item => {
+              const percentage = totalPrograms > 0 ? (item.count / totalPrograms) * 100 : 0;
+              return (
+                <PriorityBar
+                  key={item.name}
+                  percentage={percentage}
+                  count={item.count}
+                  label={item.name}
+                  color={item.fill}
+                />
+              )
+            })}
           </CardContent>
         </Card>
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
@@ -489,7 +306,7 @@ export function DigitizingReportsSummary() {
                       labelLine={false}
                       label={renderCustomizedLabel}
                     >
-                      {overdueSummary.map((entry) => (
+                      {overdueSummary.map((entry: any) => (
                         <Cell
                           key={`cell-${entry.name}`}
                           fill={overdueColors[entry.name as keyof typeof overdueColors]}
@@ -529,7 +346,7 @@ export function DigitizingReportsSummary() {
                                 content={<ChartTooltipContent />}
                             />
                             <Bar dataKey="count" name="Orders" radius={[0, 4, 4, 0]}>
-                                {digitizerSummary.map((entry, index) => (
+                                {digitizerSummary.map((entry: any, index: any) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                                 <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
@@ -563,7 +380,7 @@ export function DigitizingReportsSummary() {
                 </div>
             </CardHeader>
             <CardContent className="h-80">
-              {isProgressChartLoading ? (
+              {isReportLoading ? (
                   <Skeleton className="h-full w-full" />
               ) : (
                 <ChartContainer config={{}} className="w-full h-full">
