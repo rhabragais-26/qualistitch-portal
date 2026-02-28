@@ -1,3 +1,4 @@
+'use server';
 /**
  * @fileOverview A report generation AI agent for digitizing process.
  *
@@ -77,12 +78,19 @@ const generateDigitizingReportFlow = ai.defineFlow(
       };
 
       filteredLeads.forEach(lead => {
-        if (lead.isUnderProgramming) statusCounts['Initial Program']++;
-        if (lead.isInitialApproval) statusCounts['Initial Approval']++;
-        if (lead.isLogoTesting) statusCounts['Test']++;
-        if (lead.isRevision) statusCounts['Revision']++;
-        if (lead.isFinalApproval) statusCounts['Final Approval']++;
-        if (lead.isFinalProgram) statusCounts['Final Program']++;
+        if (lead.isFinalProgram) {
+          statusCounts['Final Program']++;
+        } else if (lead.isFinalApproval) {
+          statusCounts['Final Approval']++;
+        } else if (lead.isRevision) {
+          statusCounts['Revision']++;
+        } else if (lead.isLogoTesting) {
+          statusCounts['Test']++;
+        } else if (lead.isInitialApproval) {
+          statusCounts['Initial Approval']++;
+        } else if (lead.isUnderProgramming) {
+          statusCounts['Initial Program']++;
+        }
       });
       
       return Object.entries(statusCounts).map(([name, count]) => ({ name, count }));
