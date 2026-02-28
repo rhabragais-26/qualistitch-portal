@@ -24,6 +24,7 @@ type Lead = {
   isDigitizingArchived?: boolean;
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
+  assignedDigitizer?: string | null;
 };
 
 const chartConfig = {
@@ -153,6 +154,45 @@ export function DigitizingReportsSummary() {
   
   const totalStatusCount = useMemo(() => statusSummary.reduce((sum, item) => sum + item.count, 0), [statusSummary]);
 
+  const RADIAN = Math.PI / 180;
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, count, fill }: any) => {
+    // Percentage label inside the slice
+    const radiusInside = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const xInside = cx + radiusInside * Math.cos(-midAngle * RADIAN);
+    const yInside = cy + radiusInside * Math.sin(-midAngle * RADIAN);
+  
+    // Line and count label outside the slice
+    const radiusOutside = outerRadius + 30; // extend line
+    const xStart = cx + outerRadius * Math.cos(-midAngle * RADIAN);
+    const yStart = cy + outerRadius * Math.sin(-midAngle * RADIAN);
+    const xEnd = cx + radiusOutside * Math.cos(-midAngle * RADIAN);
+    const yEnd = cy + radiusOutside * Math.sin(-midAngle * RADIAN);
+    const textAnchor = xEnd > cx ? 'start' : 'end';
+  
+    return (
+      <g>
+        {/* Percentage inside */}
+        <text x={xInside} y={yInside} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={14}>
+          {`${(percent * 100).toFixed(0)}%`}
+        </text>
+        
+        {/* Line for outside label */}
+        <path d={`M${xStart},${yStart} L${xEnd},${yEnd}`} stroke={fill} fill="none" />
+        
+        {/* Count outside */}
+        <text x={xEnd + (xEnd > cx ? 1 : -1) * 4} y={yEnd} textAnchor={textAnchor} fill="#333" dominantBaseline="central" fontWeight="bold">
+          {`${count}`}
+        </text>
+      </g>
+    );
+  };
+
+  const overdueColors: { [key: string]: string } = {
+      'On Track': '#22c55e', // green
+      'Nearly Overdue': '#eab308', // yellow
+      'Overdue': '#ef4444', // red
+  };
+
 
   if (isLoading) {
     return (
@@ -219,31 +259,29 @@ export function DigitizingReportsSummary() {
             <CardTitle>Overdue Status</CardTitle>
             <CardDescription>Breakdown of overdue job orders.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div style={{ height: '350px' }}>
+          <CardContent className="h-80">
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Tooltip content={<ChartTooltipContent nameKey="count" />} />
-                    <Pie
-                      data={overdueSummary}
-                      dataKey="count"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={120}
-                      labelLine={false}
-                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                    >
-                      {overdueSummary.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Legend verticalAlign="bottom" height={36}/>
-                  </PieChart>
+                    <PieChart margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
+                        <Tooltip content={<ChartTooltipContent nameKey="count" />} />
+                        <Pie
+                          data={overdueSummary}
+                          dataKey="count"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          labelLine={false}
+                          label={renderCustomizedLabel}
+                        >
+                          {overdueSummary.map((entry) => (
+                            <Cell key={`cell-${entry.name}`} fill={overdueColors[entry.name as keyof typeof overdueColors]} />
+                          ))}
+                        </Pie>
+                        <Legend iconType="circle" />
+                    </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
-            </div>
           </CardContent>
         </Card>
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
@@ -251,39 +289,37 @@ export function DigitizingReportsSummary() {
                 <CardTitle>Assigned Orders per Digitizer</CardTitle>
                 <CardDescription>Number of active orders assigned to each digitizer.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <div style={{ height: '350px' }}>
-                    <ChartContainer config={chartConfig} className="w-full h-full">
-                        <ResponsiveContainer>
-                            <BarChart
-                                data={digitizerSummary}
-                                layout="vertical"
-                                margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
-                            >
-                                <CartesianGrid horizontal={false} />
-                                <XAxis type="number" hide />
-                                <YAxis
-                                    dataKey="name"
-                                    type="category"
-                                    tickLine={false}
-                                    axisLine={false}
-                                    tick={{ fontSize: 12 }}
-                                    width={100}
-                                />
-                                <Tooltip
-                                    cursor={{ fill: 'hsl(var(--muted))' }}
-                                    content={<ChartTooltipContent />}
-                                />
-                                <Bar dataKey="count" name="Orders" radius={[0, 4, 4, 0]}>
-                                    {digitizerSummary.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                    <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
-                </div>
+            <CardContent className="h-80">
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                    <ResponsiveContainer>
+                        <BarChart
+                            data={digitizerSummary}
+                            layout="vertical"
+                            margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+                        >
+                            <CartesianGrid horizontal={false} />
+                            <XAxis type="number" hide />
+                            <YAxis
+                                dataKey="name"
+                                type="category"
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fontSize: 12 }}
+                                width={100}
+                            />
+                            <Tooltip
+                                cursor={{ fill: 'hsl(var(--muted))' }}
+                                content={<ChartTooltipContent />}
+                            />
+                            <Bar dataKey="count" name="Orders" radius={[0, 4, 4, 0]}>
+                                {digitizerSummary.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                                <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
             </CardContent>
         </Card>
       </div>
