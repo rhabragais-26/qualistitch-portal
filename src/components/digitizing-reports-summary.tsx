@@ -146,8 +146,8 @@ export function DigitizingReportsSummary() {
   const [progressChartMonth, setProgressChartMonth] = useState((new Date().getMonth() + 1).toString());
   const [progressChartYear, setProgressChartYear] = useState(new Date().getFullYear().toString());
   
-  const { statusSummary, overdueSummary, digitizerSummary, totalStatusCount } = useMemo(() => {
-    if (!leads) return { statusSummary: [], overdueSummary: [], digitizerSummary: [], totalStatusCount: 0 };
+  const { statusSummary, overdueSummary, digitizerSummary, totalStatusCount, ongoingVsCompletedData } = useMemo(() => {
+    if (!leads) return { statusSummary: [], overdueSummary: [], digitizerSummary: [], totalStatusCount: 0, ongoingVsCompletedData: [] };
     
     const typedLeads = leads as Lead[];
     const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
@@ -157,6 +157,16 @@ export function DigitizingReportsSummary() {
         !lead.isFinalProgram &&
         !orderTypesToSkip.includes(lead.orderType)
     );
+
+    const completedCount = typedLeads.filter(lead =>
+        lead.isDigitizingArchived &&
+        !orderTypesToSkip.includes(lead.orderType)
+    ).length;
+
+    const ongoingVsCompletedData = [
+        { name: 'Ongoing', count: programmingLeads.length, fill: 'hsl(var(--chart-4))' },
+        { name: 'Completed', count: completedCount, fill: 'hsl(var(--chart-2))' }
+    ];
 
     const statusCounts = {
       'Pending Initial Program': 0,
@@ -214,7 +224,8 @@ export function DigitizingReportsSummary() {
         statusSummary, 
         overdueSummary, 
         digitizerSummary,
-        totalStatusCount: programmingLeads.length
+        totalStatusCount: programmingLeads.length,
+        ongoingVsCompletedData,
     };
   }, [leads]);
   
@@ -412,7 +423,45 @@ export function DigitizingReportsSummary() {
         ))}
     </div>
 
-      <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="printable-area grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
+          <CardHeader>
+            <CardTitle>Program Status</CardTitle>
+            <CardDescription>Comparison of ongoing vs. completed programs.</CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ChartContainer config={{ count: { label: 'Count' } }} className="w-full h-full">
+              <ResponsiveContainer>
+                <BarChart
+                    data={ongoingVsCompletedData}
+                    layout="vertical"
+                    margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+                >
+                    <CartesianGrid horizontal={false} />
+                    <XAxis type="number" hide />
+                    <YAxis
+                        dataKey="name"
+                        type="category"
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fontSize: 14, fontWeight: 'bold' }}
+                        width={100}
+                    />
+                    <Tooltip
+                        cursor={{ fill: 'hsl(var(--muted))' }}
+                        content={<ChartTooltipContent />}
+                    />
+                    <Bar dataKey="count" name="Orders" radius={[0, 4, 4, 0]}>
+                        {ongoingVsCompletedData.map((entry) => (
+                            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                        ))}
+                        <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={14} />
+                    </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
           <CardHeader>
             <CardTitle>Overdue Status</CardTitle>
@@ -490,7 +539,7 @@ export function DigitizingReportsSummary() {
                 </ChartContainer>
             </CardContent>
         </Card>
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-3">
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
