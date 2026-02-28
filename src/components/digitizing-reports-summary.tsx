@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
@@ -148,7 +148,7 @@ export function DigitizingReportsSummary() {
       <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
           <CardHeader>
-            <CardTitle>Job Order Status Summary</CardTitle>
+            <CardTitle>Programming Status Summary</CardTitle>
             <CardDescription>Number of job orders in each programming stage.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -163,7 +163,10 @@ export function DigitizingReportsSummary() {
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Bar dataKey="count" name="Count" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="count" name="Count" radius={[0, 4, 4, 0]}>
+                       {statusSummary.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                       ))}
                        <LabelList dataKey="count" position="right" fill="hsl(var(--foreground))" fontSize={12} />
                     </Bar>
                   </BarChart>
@@ -207,5 +210,3 @@ export function DigitizingReportsSummary() {
     </>
   );
 }
-
-    
