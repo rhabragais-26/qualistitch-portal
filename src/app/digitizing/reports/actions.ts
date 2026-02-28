@@ -1,4 +1,5 @@
 
+
 'use server';
 import { z } from 'zod';
 import { addDays, differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval, getYear, getMonth } from 'date-fns';
@@ -219,11 +220,68 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
             return result;
         });
     })();
+    
+    const monthlyProgramsDone = (() => {
+        const year = parseInt(selectedYear, 10);
+        const month = parseInt(selectedMonth, 10) - 1;
+        const counts: Record<string, { logo: number, backDesign: number, names: number }> = {};
+
+        typedLeads.forEach(lead => {
+            lead.layouts?.forEach(layout => {
+                const processFileArrays = (files: (FileObject | null)[] | undefined, times: (string | null)[] | undefined, uploaders: (string | null)[] | undefined, type: 'logo' | 'backDesign' | 'names') => {
+                    (files || []).forEach((file, index) => {
+                         if (file) {
+                             const time = times?.[index];
+                             if (time) {
+                                try {
+                                    const uploadDate = new Date(time);
+                                    if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
+                                        const uploader = uploaders?.[index];
+                                        if (uploader) {
+                                            if (!counts[uploader]) {
+                                                counts[uploader] = { logo: 0, backDesign: 0, names: 0 };
+                                            }
+                                            counts[uploader][type]++;
+                                        }
+                                    }
+                                } catch (e) { /* ignore */ }
+                             }
+                         }
+                     })
+                };
+                
+                processFileArrays(layout.finalLogoDst, (layout as any).finalLogoDstUploadTimes, (layout as any).finalLogoDstUploadedBy, 'logo');
+                processFileArrays(layout.finalBackDesignDst, (layout as any).finalBackDesignDstUploadTimes, (layout as any).finalBackDesignDstUploadedBy, 'backDesign');
+                processFileArrays(layout.finalNamesDst, (layout as any).finalNamesDstUploadTimes, (layout as any).finalNamesDstUploadedBy, 'names');
+            });
+        });
+        
+        return Object.entries(counts).map(([name, data]) => ({ 
+            name, 
+            ...data,
+            total: data.logo + data.backDesign + data.names
+        })).sort((a,b) => b.total - a.total);
+    })();
+
+    const completedCount = typedLeads.filter(lead =>
+        lead.isDigitizingArchived &&
+        !orderTypesToSkip.includes(lead.orderType)
+    ).length;
+
+    const ongoingVsCompletedData = [
+        { name: 'Ongoing', count: programmingLeads.length, fill: 'hsl(var(--chart-4))' },
+        { name: 'Completed', count: completedCount, fill: 'hsl(var(--chart-2))' }
+    ];
+
+    const totalStatusCount = statusSummary.reduce((a: any,b: any) => a+b.count, 0);
 
     return {
       statusSummary,
       overdueSummary,
       digitizerSummary,
       dailyProgressData,
+      totalStatusCount,
+      ongoingVsCompletedData,
+      monthlyProgramsDone
     };
 }
