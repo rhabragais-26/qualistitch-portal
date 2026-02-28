@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { getYear, format, addDays, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, getMonth } from 'date-fns';
-import { generateDigitizingReportAction } from './digitizing/reports/actions';
-import type { Lead } from './digitizing/reports/actions';
+import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
+import type { Lead } from '@/app/digitizing/reports/actions';
 
 const chartConfig = {
   count: {
@@ -294,7 +294,7 @@ export function DigitizingReportsSummary() {
                       verticalAlign="middle"
                       align="left"
                       iconType="circle"
-                      wrapperStyle={{ lineHeight: '2.5', fontSize: '14px' }}
+                      wrapperStyle={{ lineHeight: 2.5, fontSize: 14 }}
                     />
                     <Pie
                       data={overdueSummary}
