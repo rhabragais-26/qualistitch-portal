@@ -3,14 +3,14 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { getYear, format } from 'date-fns';
+import { getYear, format, parse } from 'date-fns';
 import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
 import type { Lead, GenerateDigitizingReportInput } from '@/app/digitizing/reports/actions';
 import { Separator } from './ui/separator';
@@ -429,6 +429,13 @@ export function DigitizingReportsSummary() {
                     <ResponsiveContainer>
                         <LineChart data={dailyProgressData}>
                             <CartesianGrid strokeDasharray="3 3" />
+                             {dailyProgressData.map((entry) => {
+                                const date = parse(entry.date as string, 'MMM-dd', new Date(parseInt(progressChartYear), parseInt(progressChartMonth) - 1));
+                                if (date.getDay() === 0) { // 0 is Sunday
+                                    return <ReferenceLine key={`sunday-line-${entry.date}`} x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeWidth={1.5} />;
+                                }
+                                return null;
+                            })}
                             <XAxis dataKey="date" />
                             <YAxis allowDecimals={false} />
                             <Tooltip content={<ChartTooltipContent />} />
