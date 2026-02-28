@@ -214,89 +214,97 @@ const generateDigitizingReportFlow = ai.defineFlow(
         return unassigned ? [...assigned, unassigned] : assigned;
     })();
 
-     const dailyProgressData = (() => {
+    const dailyProgressData = (() => {
         const year = parseInt(selectedYear, 10);
         const month = parseInt(selectedMonth, 10) - 1;
-        const targetDate = new Date(year, month);
         
-        const start = startOfMonth(targetDate);
-        const end = endOfMonth(targetDate);
-        const daysInMonth = eachDayOfInterval({ start, end });
-
+        // 1. Get all unique uploaders from all leads
         const allUploaders = new Set<string>();
         typedLeads.forEach(lead => {
             lead.layouts?.forEach(layout => {
-                const checkUploader = (uploader: string | null | undefined) => {
-                    if (uploader) allUploaders.add(uploader);
-                };
+                const checkUploader = (uploader: string | null | undefined) => { if (uploader) allUploaders.add(uploader); };
+                const checkUploaders = (uploaders: (string | null)[] | undefined) => { (uploaders || []).forEach(checkUploader); };
 
-                (layout.logoLeftImages || []).forEach(img => checkUploader(img.uploadedBy));
-                (layout.logoRightImages || []).forEach(img => checkUploader(img.uploadedBy));
-                (layout.backLogoImages || []).forEach(img => checkUploader(img.uploadedBy));
-                (layout.backDesignImages || []).forEach(img => checkUploader(img.uploadedBy));
-                
-                (layout.finalLogoDstUploadedBy || []).forEach(checkUploader);
-                (layout.finalBackDesignDstUploadedBy || []).forEach(checkUploader);
-                (layout.finalNamesDstUploadedBy || []).forEach(checkUploader);
+                // Initial program images
+                ((layout as any).logoLeftImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
+                ((layout as any).logoRightImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
+                ((layout as any).backLogoImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
+                ((layout as any).backDesignImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
+
+                // Final DST files
+                checkUploaders((layout as any).finalLogoDstUploadedBy);
+                checkUploaders((layout as any).finalBackDesignDstUploadedBy);
+                checkUploaders((layout as any).finalNamesDstUploadedBy);
             });
         });
         const sortedUploaders = Array.from(allUploaders).sort();
 
-        return daysInMonth.map(day => {
-            const dailyCounts: { [key: string]: number | string } = { date: format(day, 'MMM-dd') };
-            
-            sortedUploaders.forEach(name => {
-                dailyCounts[name] = 0;
-            });
+        // 2. Initialize a map to hold daily counts for each uploader
+        const dailyCounts: { [date: string]: { [uploader: string]: number } } = {};
+        
+        // 3. Iterate through leads ONCE to populate the daily counts
+        typedLeads.forEach(lead => {
+            lead.layouts?.forEach(layout => {
+                const processUploads = (items: { uploadTime?: string; uploadedBy?: string; }[] | undefined) => {
+                    (items || []).forEach(item => {
+                        if (item?.uploadedBy && item.uploadTime) {
+                            try {
+                                const uploadDate = new Date(item.uploadTime);
+                                if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
+                                    const dateStr = format(uploadDate, 'MMM-dd');
+                                    if (!dailyCounts[dateStr]) dailyCounts[dateStr] = {};
+                                    if (!dailyCounts[dateStr][item.uploadedBy!]) dailyCounts[dateStr][item.uploadedBy!] = 0;
+                                    dailyCounts[dateStr][item.uploadedBy!]++;
+                                }
+                            } catch (e) { /* ignore invalid dates */ }
+                        }
+                    });
+                };
 
-            typedLeads.forEach(lead => {
-                lead.layouts?.forEach(layout => {
-                    const processUploads = (
-                        items: { uploadTime?: string; uploadedBy?: string; url?: string }[] | undefined,
-                    ) => {
-                        (items || []).forEach(item => {
-                            if (item?.uploadedBy && item?.uploadTime && sortedUploaders.includes(item.uploadedBy)) {
+                const processFileArrays = (files: (FileObject | null)[] | undefined, times: (string | null)[] | undefined, uploaders: (string | null)[] | undefined) => {
+                    (files || []).forEach((file, index) => {
+                         if (file) {
+                             const uploader = uploaders?.[index];
+                             const time = times?.[index];
+                             if (uploader && time) {
                                 try {
-                                    if (isSameDay(new Date(item.uploadTime), day)) {
-                                        (dailyCounts[item.uploadedBy] as number)++;
+                                    const uploadDate = new Date(time);
+                                    if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
+                                        const dateStr = format(uploadDate, 'MMM-dd');
+                                        if (!dailyCounts[dateStr]) dailyCounts[dateStr] = {};
+                                        if (!dailyCounts[dateStr][uploader]) dailyCounts[dateStr][uploader] = 0;
+                                        dailyCounts[dateStr][uploader]++;
                                     }
-                                } catch (e) { /* ignore invalid dates */ }
-                            }
-                        });
-                    };
-
-                    const processFileArrays = (
-                        files: (FileObject | null)[] | undefined,
-                        times: (string | null)[] | undefined,
-                        uploaders: (string | null)[] | undefined,
-                    ) => {
-                         (files || []).forEach((file, index) => {
-                             if (file) {
-                                 const uploader = uploaders?.[index];
-                                 const time = times?.[index];
-                                 if (uploader && time && sortedUploaders.includes(uploader)) {
-                                    try {
-                                        if (isSameDay(new Date(time), day)) {
-                                            (dailyCounts[uploader] as number)++;
-                                        }
-                                    } catch (e) { /* ignore */ }
-                                 }
+                                } catch (e) { /* ignore */ }
                              }
-                         })
-                    };
-
-                    processUploads(layout.logoLeftImages);
-                    processUploads(layout.logoRightImages);
-                    processUploads(layout.backLogoImages);
-                    processUploads(layout.backDesignImages);
-
-                    processFileArrays(layout.finalLogoDst, layout.finalLogoDstUploadTimes, layout.finalLogoDstUploadedBy);
-                    processFileArrays(layout.finalBackDesignDst, layout.finalBackDesignDstUploadTimes, layout.finalBackDesignDstUploadedBy);
-                    processFileArrays(layout.finalNamesDst, layout.finalNamesDstUploadTimes, layout.finalNamesDstUploadedBy);
-                });
+                         }
+                     })
+                };
+                
+                // The files we care about for productivity
+                processUploads((layout as any).logoLeftImages);
+                processUploads((layout as any).logoRightImages);
+                processUploads((layout as any).backLogoImages);
+                processUploads((layout as any).backDesignImages);
+                processFileArrays(layout.finalLogoDst, (layout as any).finalLogoDstUploadTimes, (layout as any).finalLogoDstUploadedBy);
+                processFileArrays(layout.finalBackDesignDst, (layout as any).finalBackDesignDstUploadTimes, (layout as any).finalBackDesignDstUploadedBy);
+                processFileArrays(layout.finalNamesDst, (layout as any).finalNamesDstUploadTimes, (layout as any).finalNamesDstUploadedBy);
             });
-            
-            return dailyCounts;
+        });
+
+        // 4. Format the data for Recharts, ensuring all days of the month are present
+        const start = startOfMonth(new Date(year, month));
+        const end = endOfMonth(start);
+        const daysInMonth = eachDayOfInterval({ start, end });
+
+        return daysInMonth.map(day => {
+            const dateStr = format(day, 'MMM-dd');
+            const countsForDay = dailyCounts[dateStr] || {};
+            const result: { [key: string]: string | number } = { date: dateStr };
+            sortedUploaders.forEach(uploader => {
+                result[uploader] = countsForDay[uploader] || 0;
+            });
+            return result;
         });
     })();
 
