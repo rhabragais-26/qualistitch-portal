@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -222,25 +221,6 @@ export function DigitizingReportsSummary() {
 
   return (
     <>
-      <div className="mb-8 p-4 bg-card text-card-foreground rounded-lg shadow-xl no-print">
-        <div className="flex justify-between items-center">
-            <div className="flex gap-4 items-center">
-                <div className='flex items-center gap-2'>
-                    <span className="text-sm font-medium text-card-foreground">Priority:</span>
-                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select Priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="All">All</SelectItem>
-                            <SelectItem value="Rush">Rush</SelectItem>
-                            <SelectItem value="Regular">Regular</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-        </div>
-      </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         {statusSummary.map((status, index) => (
             <StatusDoughnutCard
