@@ -53,9 +53,9 @@ const StatusDoughnutCard = ({ title, count, total, color }: { title: string; cou
     return (
         <Card className="flex flex-col items-center justify-start p-4 text-center">
             <CardHeader className="p-0 mb-2">
-                <CardTitle className="text-base font-medium">{title}</CardTitle>
+                <CardTitle className="text-lg font-medium">{title}</CardTitle>
             </CardHeader>
-            <CardContent className="p-0 relative w-32 h-32">
+            <CardContent className="p-0 relative w-36 h-36">
                 <ChartContainer config={{}} className="w-full h-full">
                     <ResponsiveContainer>
                         <PieChart>
@@ -103,7 +103,6 @@ const StatusDoughnutCard = ({ title, count, total, color }: { title: string; cou
 
 
 export function DigitizingReportsSummary() {
-  const [priorityFilter, setPriorityFilter] = useState('All');
   
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -120,7 +119,7 @@ export function DigitizingReportsSummary() {
     try {
       const result = await generateDigitizingReportAction({
         leads,
-        priorityFilter,
+        priorityFilter: 'All', // Hardcoded to 'All' as per user request to remove filter
       });
       setReportData(result);
     } catch (e: any) {
@@ -129,7 +128,7 @@ export function DigitizingReportsSummary() {
     } finally {
       setIsReportLoading(false);
     }
-  }, [leads, priorityFilter]);
+  }, [leads]);
 
   useEffect(() => {
     if (leads && leads.length > 0) {
@@ -161,7 +160,7 @@ export function DigitizingReportsSummary() {
     const yInside = cy + radiusInside * Math.sin(-midAngle * RADIAN);
   
     // Line and count label outside the slice
-    const radiusOutside = outerRadius + 30; // extend line
+    const radiusOutside = outerRadius + 15; // extend line
     const xStart = cx + outerRadius * Math.cos(-midAngle * RADIAN);
     const yStart = cy + outerRadius * Math.sin(-midAngle * RADIAN);
     const xEnd = cx + radiusOutside * Math.cos(-midAngle * RADIAN);
@@ -249,7 +248,7 @@ export function DigitizingReportsSummary() {
                       verticalAlign="middle"
                       align="left"
                       iconType="circle"
-                      wrapperStyle={{ lineHeight: '2' }}
+                      wrapperStyle={{ lineHeight: '2.5', fontSize: '14px' }}
                     />
                     <Pie
                       data={overdueSummary}
