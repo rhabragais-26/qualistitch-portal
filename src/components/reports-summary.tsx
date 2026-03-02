@@ -231,8 +231,8 @@ export function ReportsSummary() {
             } else if (selectedWeek) {
                  const [startStr, endStr] = selectedWeek.split('-');
                  const year = parseInt(selectedYear, 10);
-                 const weekStart = parse(`${'\'\'\''}${startStr}.${'\'\'\''}${year}`, 'MM.dd.yyyy', new Date());
-                 const weekEnd = parse(`${'\'\'\''}${endStr}.${'\'\'\''}${year}`, 'MM.dd.yyyy', new Date());
+                 const weekStart = parse(`'''${startStr}.${'\'\''}${year}`, 'MM.dd.yyyy', new Date());
+                 const weekEnd = parse(`'''${endStr}.${'\'\''}${year}`, 'MM.dd.yyyy', new Date());
                  isInDateRange = submissionDate >= startOfDay(weekStart) && submissionDate <= endOfDay(weekEnd);
             }
             else {
@@ -665,26 +665,19 @@ export function ReportsSummary() {
                       }} />}
                       />
                       <Legend />
-                      <ReferenceLine 
-                        y={fixedDailyTarget} 
-                        yAxisId="right" 
-                        stroke="red" 
-                        strokeDasharray="3 3" 
-                        strokeOpacity={0.7}
-                      >
-                        <RechartsLabel
-                            value={`Fixed Daily Target (${formatCurrency(fixedDailyTarget, { maximumFractionDigits: 0 })})`}
-                            position="insideTopLeft"
-                            fill="red"
-                            fontSize={10}
-                        />
-                      </ReferenceLine>
                       <Bar yAxisId="left" dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
                         <LabelList dataKey="quantity" content={renderQuantityLabel} />
                       </Bar>
                       <Line yAxisId="right" type="monotone" dataKey="amount" name="Amount" stroke="hsl(var(--chart-2))" strokeWidth={2}>
                         <LabelList content={(props) => renderAmountLabel(props)} dataKey="amount" />
                       </Line>
+                       <ReferenceLine 
+                        y={fixedDailyTarget} 
+                        yAxisId="right" 
+                        stroke="red" 
+                        strokeDasharray="3 3" 
+                        strokeOpacity={0.7}
+                      />
                   </ComposedChart>
                   </ResponsiveContainer>
               </ChartContainer>
@@ -989,3 +982,6 @@ export function ReportsSummary() {
     </>
   );
 }
+
+
+    
