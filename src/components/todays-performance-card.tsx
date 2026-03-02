@@ -145,54 +145,21 @@ const ticketColors: Record<string, string> = {
   'VIP (1k+)': 'hsl(var(--chart-5))',
 };
 
-const TicketDoughnutCard = ({ title, count, total }: { title: string; count: number; total: number }) => {
-    const percentage = total > 0 ? (count / total) * 100 : 0;
-    const color = ticketColors[title] || '#ccc';
-    const data = [
-        { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
-        { name: 'remaining', value: Math.max(0, 100 - Math.max(0, Math.min(100, percentage))) },
-    ];
-    
-    const chartColors = [color, '#e5e7eb'];
-
-    return (
-        <div className="flex flex-col items-center gap-1">
-            <div className="w-20 h-20 relative">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie data={data} dataKey="value" innerRadius="60%" outerRadius="80%" fill={color} stroke="none" startAngle={90} endAngle={450}>
-                            {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-                            ))}
-                        </Pie>
-                    </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-bold">{count}</span>
-                </div>
-            </div>
-            <p className="text-xs font-semibold text-center h-8 flex items-center">{title}</p>
-            <p className="text-sm font-bold">{percentage.toFixed(0)}%</p>
-        </div>
-    );
-};
-
-const renderLayoutPieLabel = (props: any) => {
+const renderPieNameOutside = (props: any) => {
     const { cx, cy, midAngle, outerRadius, name, value, fill, percent } = props;
-    
     if (percent === 0) return null;
 
     const RADIAN = Math.PI / 180;
     
     // Position for the count (value) inside the slice
-    const radiusForCount = outerRadius * 0.6;
+    const radiusForCount = outerRadius * 0.7;
     const xCount = cx + radiusForCount * Math.cos(-midAngle * RADIAN);
     const yCount = cy + radiusForCount * Math.sin(-midAngle * RADIAN);
 
     // Positions for the external line and label
     const radiusForLine = outerRadius + 20;
-    const xStart = cx + (outerRadius + 2) * Math.cos(-midAngle * RADIAN);
-    const yStart = cy + (outerRadius + 2) * Math.sin(-midAngle * RADIAN);
+    const xStart = cx + (outerRadius + 5) * Math.cos(-midAngle * RADIAN);
+    const yStart = cy + (outerRadius + 5) * Math.sin(-midAngle * RADIAN);
     const xEnd = cx + radiusForLine * Math.cos(-midAngle * RADIAN);
     const yEnd = cy + radiusForLine * Math.sin(-midAngle * RADIAN);
     
@@ -211,6 +178,40 @@ const renderLayoutPieLabel = (props: any) => {
         </g>
     );
 };
+
+const TicketDoughnutCard = ({ title, count, total }: { title: string; count: number; total: number }) => {
+    const percentage = total > 0 ? (count / total) * 100 : 0;
+    const color = ticketColors[title] || '#ccc';
+    const data = [
+        { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
+        { name: 'remaining', value: Math.max(0, 100 - Math.max(0, Math.min(100, percentage))) },
+    ];
+    
+    const chartColors = [color, '#e5e7eb'];
+
+    const fullTitle = title === 'Medium (10-99)' ? 'Medium (10-99)' : title;
+
+    return (
+        <div className="flex flex-col items-center gap-1">
+            <div className="w-20 h-20 relative">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie data={data} dataKey="value" innerRadius="60%" outerRadius="80%" fill={color} stroke="none" startAngle={90} endAngle={450}>
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                            ))}
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-2xl font-bold">{count}</span>
+                </div>
+            </div>
+            <p className="text-xs font-semibold text-center h-8 flex items-center">{fullTitle}</p>
+            <p className="text-sm font-bold">{percentage.toFixed(0)}%</p>
+        </div>
+    )
+}
 
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
@@ -249,7 +250,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead '${lead.id}'`, `'${lead.submissionDateTime}'`);
+            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}'`, `'${'\'\''}${lead.submissionDateTime}'`);
             return false;
         }
     });
@@ -590,7 +591,7 @@ export function TodaysPerformanceCard() {
                                         cy="50%"
                                         outerRadius={90}
                                         labelLine={false}
-                                        label={renderLayoutPieLabel}
+                                        label={(props) => renderPieNameOutside({ ...props })}
                                       >
                                         {layoutChartData.map((entry, index) => (
                                           <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -691,30 +692,3 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
-
-```
-- src/firebase/auth/use-user.tsx:
-```tsx
-
-// use-user.tsx
-'use client';
-import { useContext } from 'react';
-import { FirebaseContext, UserHookResult } from '../provider';
-
-/**
- * Hook specifically for accessing the authenticated user's state.
- * This provides the User object, loading status, and any auth errors.
- * It's a simplified alias for useFirebase().
- * @returns {UserHookResult} Object with user, isUserLoading, userError.
- */
-export const useUser = (): UserHookResult => {
-  const context = useContext(FirebaseContext);
-  if (context === undefined) {
-    throw new Error('useUser must be used within a FirebaseProvider');
-  }
-
-  const { user, userProfile, isAdmin, isUserLoading, userError } = context;
-  return { user, userProfile, isAdmin, isUserLoading, userError };
-};
-
-```
