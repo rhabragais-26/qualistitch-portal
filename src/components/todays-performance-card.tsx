@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, Bar } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -18,6 +17,7 @@ import { eachDayOfInterval, endOfMonth, getMonth, getYear, parseISO } from 'date
 import { z, ZodError } from 'zod';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ScrollArea } from './ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type Order = {
   quantity: number;
@@ -40,6 +40,7 @@ const leadSchema = z.object({
   balance: z.number().optional(),
   orderType: z.string().optional(),
   payments: z.array(z.any()).optional(),
+  priorityType: z.string(),
 });
 
 type Lead = z.infer<typeof leadSchema>;
@@ -146,9 +147,10 @@ const ticketColors: Record<string, string> = {
 const TicketDoughnutCard = ({ title, count, total, color }: { title: string; count: number; total: number; color: string }) => {
     const percentage = total > 0 ? (count / total) * 100 : 0;
     const data = [
-        { name: title, value: percentage },
-        { name: 'other', value: 100 - percentage },
+        { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
+        { name: 'remaining', value: 100 - Math.max(0, Math.min(100, percentage)) },
     ];
+    
     const chartColors = [color, '#e5e7eb'];
 
     return (
@@ -158,7 +160,7 @@ const TicketDoughnutCard = ({ title, count, total, color }: { title: string; cou
                     <PieChart>
                         <Pie data={data} dataKey="value" innerRadius="60%" outerRadius="80%" fill={color} stroke="none" startAngle={90} endAngle={450}>
                             {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={chartColors[index]} />
+                                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                             ))}
                         </Pie>
                     </PieChart>
@@ -210,7 +212,7 @@ export function TodaysPerformanceCard() {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
         } catch (e) {
-            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}'`, `'${'\'\''}${lead.submissionDateTime}'`);
+            console.warn(`Invalid date format for lead '${lead.id}'`, `'${lead.submissionDateTime}'`);
             return false;
         }
     });
@@ -317,7 +319,7 @@ export function TodaysPerformanceCard() {
       const historicalDate = subDays(rangeStart, i * 7);
       const historicalRangeStart = startOfDay(historicalDate);
       const historicalRangeEnd = endOfDay(historicalDate);
-      const historicalKey = `prevWeek${'\'\'\''}${i}`;
+      const historicalKey = `prevWeek${i}`;
       historicalDataKeys.push(historicalKey);
 
       const historicalLeads = leads.filter(lead => {
@@ -346,7 +348,7 @@ export function TodaysPerformanceCard() {
     const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
       const hourData = salesByHour[i];
       return {
-        hour: `${'\'\'\''}${i}:00`,
+        hour: `${i}:00`,
         customerCount: hourData ? hourData.customers.size : 0,
         quantity: hourData ? hourData.quantity : 0,
         amount: hourData ? hourData.amount : 0,
@@ -392,6 +394,30 @@ export function TodaysPerformanceCard() {
   }, [activeFilter, selectedDate]);
   
   const layoutChartData = useMemo(() => salesData.filter(d => d.layoutCount > 0), [salesData]);
+
+  const renderPieNameOutside = (props: any) => {
+    const { cx, cy, midAngle, outerRadius, name } = props;
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 20; // Adjust this value to position the label
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const textAnchor = x > cx ? 'start' : 'end';
+  
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="black"
+        textAnchor={textAnchor}
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {name}
+      </text>
+    );
+  };
+
 
   if (isLoading || !isClient) {
       return (
@@ -478,7 +504,7 @@ export function TodaysPerformanceCard() {
                                           yAxisId="left"
                                           orientation="left"
                                           stroke="hsl(var(--chart-2))"
-                                          tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}k`}
+                                          tickFormatter={(value) => `₱${Number(value) / 1000}k`}
                                       />
                                       <YAxis
                                           yAxisId="right"
@@ -496,7 +522,7 @@ export function TodaysPerformanceCard() {
                                       />
                                       <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
                                           {salesData.map((entry, index) => (
-                                              <Cell key={`cell-amount-${'\'\'\''}${index}`} fill={COLORS[index % COLORS.length]} />
+                                              <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
                                           ))}
                                           <LabelList dataKey="quantity" content={renderQuantityLabel} />
                                       </Bar>
@@ -596,8 +622,8 @@ export function TodaysPerformanceCard() {
                   }}
                   interval={0}
                 />
-                <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tickFormatter={(value) => `${'\'\'\''}${value}`} />
-                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}k`} />
+                <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" tickFormatter={(value) => `${value}`} />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" tickFormatter={(value) => `₱${Number(value) / 1000}k`} />
                 <Tooltip
                   content={<ChartTooltipContent
                       formatter={(value, name, item) => {
@@ -633,7 +659,7 @@ export function TodaysPerformanceCard() {
                         yAxisId="left"
                         dataKey={key}
                         type="monotone"
-                        name={`${'\'\'\''}${index + 1} week${index > 0 ? 's' : ''} ago`}
+                        name={`${index + 1} week${index > 0 ? 's' : ''} ago`}
                         stroke={COLORS[(index + 1) % COLORS.length]}
                         strokeOpacity={0.4}
                         strokeWidth={2}
