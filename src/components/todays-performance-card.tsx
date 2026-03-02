@@ -9,7 +9,7 @@ import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
 import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, Bar } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { Input } from '@/components/ui/input';
@@ -99,80 +99,6 @@ const renderAmountLabel = (props: any) => {
     );
 };
 
-
-const renderPieCountInside = (props: any) => {
-  const { x, y, value } = props;
-
-  const vx = typeof x === "number" ? x : Number(x);
-  const vy = typeof y === "number" ? y : Number(y);
-  const v = typeof value === "number" ? value : Number(value);
-
-  if (!Number.isFinite(vx) || !Number.isFinite(vy)) return null;
-  if (!Number.isFinite(v) || v <= 0) return null;
-
-  return (
-    <text
-      x={vx}
-      y={vy}
-      fill="white"
-      textAnchor="middle"
-      dominantBaseline="central"
-      fontSize={12}
-      fontWeight="bold"
-      style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
-    >
-      {v}
-    </text>
-  );
-};
-
-const renderPieNameOutside = (props: any) => {
-  const { cx, cy, midAngle, innerRadius, outerRadius, name, fill } = props;
-
-  // ✅ guard
-  if (
-    typeof cx !== "number" ||
-    typeof cy !== "number" ||
-    typeof midAngle !== "number" ||
-    typeof innerRadius !== "number" ||
-    typeof outerRadius !== "number"
-  ) {
-    return null;
-  }
-
-  if (!name) return null;
-
-  const RADIAN = Math.PI / 180;
-
-  const sx = cx + (outerRadius + 4) * Math.cos(-midAngle * RADIAN);
-  const sy = cy + (outerRadius + 4) * Math.sin(-midAngle * RADIAN);
-
-  const mx = cx + (outerRadius + 10) * Math.cos(-midAngle * RADIAN);
-  const my = cy + (outerRadius + 10) * Math.sin(-midAngle * RADIAN); // ✅ was +16 (typo-ish), keep consistent
-
-  const isRight = mx > cx;
-  const ex = mx + (isRight ? 8 : -8);
-  const ey = my;
-
-  return (
-    <g>
-      <path d={`M${sx},${sy} L${mx},${my} L${ex},${ey}`} stroke={fill} fill="none" strokeWidth={2} />
-      <text
-        x={ex + (isRight ? 4 : -4)}
-        y={ey}
-        textAnchor={isRight ? "start" : "end"}
-        dominantBaseline="central"
-        fill={fill}
-        fontSize={12}
-        fontWeight={700}
-        style={{ paintOrder: "stroke", stroke: "white", strokeWidth: 3 }}
-      >
-        {name}
-      </text>
-    </g>
-  );
-};
-  
 const renderQuantityLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     
@@ -209,6 +135,44 @@ const renderHourlyLabel = (props: any) => {
     );
 };
 
+const ticketColors: Record<string, string> = {
+  'Small (1-9)': 'hsl(var(--chart-1))',
+  'Medium (10-99)': 'hsl(var(--chart-2))',
+  'Large (100-199)': 'hsl(var(--chart-3))',
+  'High (200-999)': 'hsl(var(--chart-4))',
+  'VIP (1k+)': 'hsl(var(--chart-5))',
+};
+
+const TicketDoughnutCard = ({ title, count, total, color }: { title: string; count: number; total: number; color: string }) => {
+    const percentage = total > 0 ? (count / total) * 100 : 0;
+    const data = [
+        { name: title, value: percentage },
+        { name: 'other', value: 100 - percentage },
+    ];
+    const chartColors = [color, '#e5e7eb'];
+
+    return (
+        <div className="flex flex-col items-center gap-1">
+            <div className="w-20 h-20 relative">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie data={data} dataKey="value" innerRadius="60%" outerRadius="80%" fill={color} stroke="none" startAngle={90} endAngle={450}>
+                            {data.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={chartColors[index]} />
+                            ))}
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-xl font-bold">{percentage.toFixed(0)}%</span>
+                </div>
+            </div>
+            <p className="text-xs font-semibold text-center w-20 truncate">{title}</p>
+            <p className="text-sm font-bold">{count}</p>
+        </div>
+    );
+};
+
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -217,8 +181,8 @@ export function TodaysPerformanceCard() {
   const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = useState(false);
-
-  const salesData = useMemo(() => {
+  
+  const filteredLeads = useMemo(() => {
     if (!leads) return [];
 
     let rangeStart: Date;
@@ -241,7 +205,7 @@ export function TodaysPerformanceCard() {
         rangeEnd = endOfDay(today);
     }
     
-    const filteredLeads = leads.filter(lead => {
+    return leads.filter(lead => {
         try {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
@@ -250,7 +214,10 @@ export function TodaysPerformanceCard() {
             return false;
         }
     });
+  }, [leads, activeFilter, selectedDate]);
 
+  const salesData = useMemo(() => {
+    if (!filteredLeads) return [];
     const salesByRep = filteredLeads.reduce((acc, lead) => {
       const rep = lead.salesRepresentative;
       if (!acc[rep]) {
@@ -268,10 +235,10 @@ export function TodaysPerformanceCard() {
       .map(([name, data]) => ({ name, ...data }))
       .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
-  }, [leads, activeFilter, selectedDate]);
+  }, [filteredLeads]);
   
-  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold } = useMemo(() => {
-    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0 };
+  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, ticketData } = useMemo(() => {
+    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, ticketData: [] };
 
     let rangeStart: Date;
     
@@ -295,53 +262,6 @@ export function TodaysPerformanceCard() {
         }
     });
 
-    const renderPieNameOutside = (props: any) => {
-      const {
-        cx,
-        cy,
-        midAngle,
-        innerRadius,
-        outerRadius,
-        name,
-        fill,
-      } = props;
-    
-      const RADIAN = Math.PI / 180;
-    
-      // start point: just outside the slice
-      const sx = cx + (outerRadius + 4) * Math.cos(-midAngle * RADIAN);
-      const sy = cy + (outerRadius + 4) * Math.sin(-midAngle * RADIAN);
-    
-      // middle bend
-      const mx = cx + (outerRadius + 16) * Math.cos(-midAngle * RADIAN);
-      const my = cy + (outerRadius + 16) * Math.sin(-midAngle * RADIAN);
-    
-      // end point: push left/right
-      const isRight = mx > cx;
-      const ex = mx + (isRight ? 14 : -14);
-      const ey = my;
-    
-      return (
-        <g>
-          {/* leader line */}
-          <path d={`M${sx},${sy} L${mx},${my} L${ex},${ey}`} stroke={fill} fill="none" strokeWidth={2} />
-          {/* label */}
-          <text
-            x={ex + (isRight ? 4 : -4)}
-            y={ey}
-            textAnchor={isRight ? "start" : "end"}
-            dominantBaseline="central"
-            fill={fill}
-            fontSize={12}
-            fontWeight={700}
-            style={{ paintOrder: "stroke", stroke: "white", strokeWidth: 3 }} // makes it readable
-          >
-            {name}
-          </text>
-        </g>
-      );
-    };
-
     const salesByHour = filteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
       if (!acc[hour]) {
@@ -363,6 +283,11 @@ export function TodaysPerformanceCard() {
       return acc;
     }, {} as Record<number, { customers: Set<string>; quantity: number; amount: number }>);
 
+    const ticketCounts: { [key: string]: Set<string> } = {
+      'Small (1-9)': new Set(), 'Medium (10-99)': new Set(), 'Large (100-199)': new Set(),
+      'High (200-999)': new Set(), 'VIP (1k+)': new Set(),
+    };
+    
     const totalCust = new Set<string>();
     let totalQty = 0;
     
@@ -372,7 +297,18 @@ export function TodaysPerformanceCard() {
         if(lead.orderType !== 'Item Sample') {
             totalCust.add(lead.customerName.toLowerCase());
         }
+
+        if (quantity >= 1 && quantity <= 9) ticketCounts['Small (1-9)'].add(lead.customerName);
+        else if (quantity >= 10 && quantity <= 99) ticketCounts['Medium (10-99)'].add(lead.customerName);
+        else if (quantity >= 100 && quantity <= 199) ticketCounts['Large (100-199)'].add(lead.customerName);
+        else if (quantity >= 200 && quantity <= 999) ticketCounts['High (200-999)'].add(lead.customerName);
+        else if (quantity >= 1000) ticketCounts['VIP (1k+)'].add(lead.customerName);
     });
+
+    const ticketDataArr = Object.entries(ticketCounts).map(([category, customers]) => ({
+      category,
+      customers: customers.size,
+    })).filter(item => item.customers > 0);
 
     const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
     const historicalDataKeys: string[] = [];
@@ -410,7 +346,7 @@ export function TodaysPerformanceCard() {
     const combinedHourlyData = Array.from({ length: 24 }, (_, i) => {
       const hourData = salesByHour[i];
       return {
-        hour: `${i.toString().padStart(2, '0')}:00`, // <-- FIX: no extra quotes
+        hour: `${'\'\'\''}${i}:00`,
         customerCount: hourData ? hourData.customers.size : 0,
         quantity: hourData ? hourData.quantity : 0,
         amount: hourData ? hourData.amount : 0,
@@ -418,7 +354,7 @@ export function TodaysPerformanceCard() {
       };
     });
 
-    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty };
+    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, ticketData: ticketDataArr };
   }, [leads, activeFilter, selectedDate]);
   
   useEffect(() => {
@@ -592,96 +528,12 @@ export function TodaysPerformanceCard() {
                                         cy="50%"
                                         outerRadius={90}
                                         labelLine={false}
-                                        label={(p: any) => {
-                                          const { cx, cy, midAngle, innerRadius, outerRadius, value, name, fill } = p;
-
-                                          if (
-                                            typeof cx !== "number" ||
-                                            typeof cy !== "number" ||
-                                            typeof midAngle !== "number" ||
-                                            typeof innerRadius !== "number" ||
-                                            typeof outerRadius !== "number"
-                                          ) return null;
-
-                                          const v = Number(value);
-                                          if (!Number.isFinite(v) || v <= 0) return null;
-
-                                          const RADIAN = Math.PI / 180;
-
-                                          // inside count
-                                          const rIn = innerRadius + (outerRadius - innerRadius) * 0.7;
-                                          const xIn = cx + rIn * Math.cos(-midAngle * RADIAN);
-                                          const yIn = cy + rIn * Math.sin(-midAngle * RADIAN);
-
-                                          // outside name
-                                          const sx = cx + (outerRadius + 4) * Math.cos(-midAngle * RADIAN);
-                                          const sy = cy + (outerRadius + 4) * Math.sin(-midAngle * RADIAN);
-                                          const mx = cx + (outerRadius + 12) * Math.cos(-midAngle * RADIAN);
-                                          const my = cy + (outerRadius + 12) * Math.sin(-midAngle * RADIAN);
-                                          const isRight = mx > cx;
-                                          const ex = mx + (isRight ? 10 : -10);
-                                          const ey = my;
-
-                                          return (
-                                            <g>
-                                              <path
-                                                d={`M${sx},${sy} L${mx},${my} L${ex},${ey}`}
-                                                stroke={fill}
-                                                fill="none"
-                                                strokeWidth={2}
-                                              />
-                                              <text
-                                                x={ex + (isRight ? 4 : -4)}
-                                                y={ey}
-                                                textAnchor={isRight ? "start" : "end"}
-                                                dominantBaseline="central"
-                                                fill={fill}
-                                                fontSize={12}
-                                                fontWeight={700}
-                                                style={{ paintOrder: "stroke", stroke: "white", strokeWidth: 3 }}
-                                              >
-                                                {name}
-                                              </text>
-
-                                              <text
-                                                x={xIn}
-                                                y={yIn}
-                                                fill="white"
-                                                textAnchor="middle"
-                                                dominantBaseline="central"
-                                                fontSize={12}
-                                                fontWeight="bold"
-                                                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
-                                              >
-                                                {v}
-                                              </text>
-                                            </g>
-                                          );
-                                        }}
+                                        label={(props) => renderPieNameOutside({ ...props })}
                                       >
                                         {layoutChartData.map((entry, index) => (
                                           <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                       </Pie>
-                                      <g>
-                                        {layoutChartData.map((entry, index) => (
-                                          <React.Fragment key={`pie-name-${index}`}>
-                                            {/* reuse your existing function by manually passing slice fill */}
-                                            {renderPieNameOutside({
-                                              ...entry,
-                                              fill: COLORS[index % COLORS.length],
-                                            })}
-                                          </React.Fragment>
-                                        ))}
-                                      </g>  
-                                      
-                                      <Legend
-                                        layout="vertical"
-                                        align="left"
-                                        verticalAlign="middle"
-                                        wrapperStyle={{ paddingRight: 16 }}
-                                        formatter={(value) => <span style={{ display: 'inline-block', marginBottom: 10 }}>{value}</span>}
-                                      />
                                   </PieChart>
                               </ResponsiveContainer>
                           </ChartContainer>
@@ -707,6 +559,18 @@ export function TodaysPerformanceCard() {
             <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
             <p className="text-3xl font-bold">{totalCustomers}</p>
           </div>
+          <Separator orientation="vertical" className="h-20 mx-4" />
+          <div className="flex items-center gap-4">
+            {ticketData.map((ticket, index) => (
+                <TicketDoughnutCard 
+                    key={ticket.category} 
+                    title={ticket.category} 
+                    count={ticket.customers} 
+                    total={totalCustomers}
+                    color={ticketColors[ticket.category] || COLORS[index % COLORS.length]}
+                />
+            ))}
+          </div>
         </div>
         <Separator className="my-4" />
         <CardHeader className="p-0">
@@ -724,10 +588,8 @@ export function TodaysPerformanceCard() {
                   axisLine={false}
                   tickMargin={8}
                   tickFormatter={(value) => {
-                    const raw = typeof value === 'number' ? `${value}` : String(value ?? '');
-                    const match = raw.match(/^(\d{1,2})/); // grab leading hour safely
+                    const match = value.match(/^(\d{1,2})/);
                     const hour = match ? parseInt(match[1], 10) : 0;
-
                     const h12 = hour % 12 || 12;
                     const suffix = hour < 12 ? 'am' : 'pm';
                     return `${h12}${suffix}`;

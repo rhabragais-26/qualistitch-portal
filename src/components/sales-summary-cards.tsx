@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -102,120 +102,6 @@ const renderAmountLabel = (props: any) => {
 };
 
 
-const renderPieCountInside = (props: any) => {
-  const { x, y, value } = props;
-
-  const vx = typeof x === "number" ? x : Number(x);
-  const vy = typeof y === "number" ? y : Number(y);
-  const v = typeof value === "number" ? value : Number(value);
-
-  if (!Number.isFinite(vx) || !Number.isFinite(vy)) return null;
-  if (!Number.isFinite(v) || v <= 0) return null;
-
-  return (
-    <text
-      x={vx}
-      y={vy}
-      fill="white"
-      textAnchor="middle"
-      dominantBaseline="central"
-      fontSize={12}
-      fontWeight="bold"
-      style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
-    >
-      {v}
-    </text>
-  );
-};
-
-const renderPieNameOutside = (props: any) => {
-  const { cx, cy, midAngle, innerRadius, outerRadius, name, fill } = props;
-
-  // ✅ guard
-  if (
-    typeof cx !== "number" ||
-    typeof cy !== "number" ||
-    typeof midAngle !== "number" ||
-    typeof innerRadius !== "number" ||
-    typeof outerRadius !== "number"
-  ) {
-    return null;
-  }
-
-  if (!name) return null;
-
-  const RADIAN = Math.PI / 180;
-
-  // start point: just outside the slice
-  const sx = cx + (outerRadius + 4) * Math.cos(-midAngle * RADIAN);
-  const sy = cy + (outerRadius + 4) * Math.sin(-midAngle * RADIAN);
-
-  // middle bend
-  const mx = cx + (outerRadius + 16) * Math.cos(-midAngle * RADIAN);
-  const my = cy + (outerRadius + 16) * Math.sin(-midAngle * RADIAN);
-
-  // end point: push left/right
-  const isRight = mx > cx;
-  const ex = mx + (isRight ? 14 : -14);
-  const ey = my;
-
-  return (
-    <g>
-      {/* leader line */}
-      <path d={`M${sx},${sy} L${mx},${my} L${ex},${ey}`} stroke={fill} fill="none" strokeWidth={2} />
-      {/* label */}
-      <text
-        x={ex + (isRight ? 4 : -4)}
-        y={ey}
-        textAnchor={isRight ? "start" : "end"}
-        dominantBaseline="central"
-        fill={fill}
-        fontSize={12}
-        fontWeight={700}
-        style={{ paintOrder: "stroke", stroke: "white", strokeWidth: 3 }} // makes it readable
-      >
-        {name}
-      </text>
-    </g>
-  );
-};
-  
-const renderQuantityLabel = (props: any) => {
-    const { x, y, width, height, value } = props;
-    
-    if (value === 0 || !height || typeof x !== 'number' || typeof y !== 'number') return null;
-  
-    return (
-      <text x={x + width / 2} y={y + height / 2} fill="white" fontSize={12} textAnchor="middle" dominantBaseline="middle" fontWeight="bold">
-        {value}
-      </text>
-    );
-};
-
-const renderHourlyLabel = (props: any) => {
-    const { x, y, value, stroke } = props;
-
-    if (typeof x !== 'number' || typeof y !== 'number' || typeof value !== 'number' || value <= 0) {
-      return null;
-    }
-    
-    const labelText = `${value}`;
-
-    return (
-        <text
-          x={x}
-          y={y}
-          dy={-10}
-          fill={stroke}
-          fontSize={12}
-          fontWeight="bold"
-          textAnchor="middle"
-        >
-          {labelText}
-        </text>
-    );
-};
-
 const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string; amount: number; percentage: number; color: string }) => {
     const data = [
         { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
@@ -274,33 +160,6 @@ const PriorityBar = ({ percentage, count, label, color }: { percentage: number, 
         </div>
     )
 }
-
-const TicketDoughnut = ({ title, count, color }: { title: string; count: number; color: string }) => {
-    const data = [{ value: count }];
-    return (
-        <div className="flex flex-col items-center gap-1">
-            <div className="w-16 h-16 relative">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie data={data} dataKey="value" innerRadius="60%" outerRadius="80%" fill={color} stroke="none">
-                           <LabelList dataKey="value" position="center" className="fill-foreground font-bold" fontSize={14} />
-                        </Pie>
-                    </PieChart>
-                </ResponsiveContainer>
-            </div>
-            <p className="text-[10px] font-semibold text-center w-16">{title}</p>
-        </div>
-    );
-};
-
-const ticketColors: Record<string, string> = {
-  'Small (1-9)': 'hsl(var(--chart-1))',
-  'Medium (10-99)': 'hsl(var(--chart-2))',
-  'Large (100-199)': 'hsl(var(--chart-3))',
-  'High (200-999)': 'hsl(var(--chart-4))',
-  'VIP (1k+)': 'hsl(var(--chart-5))',
-};
-
 
 export function SalesSummaryCards() {
   const firestore = useFirestore();
@@ -397,28 +256,8 @@ export function SalesSummaryCards() {
     };
   }, [filteredLeads]);
 
-  const salesData = useMemo(() => {
-    const salesByRep = filteredLeads.reduce((acc, lead) => {
-      const rep = lead.salesRepresentative;
-      if (!acc[rep]) {
-        acc[rep] = { amount: 0, quantity: 0, layoutCount: 0 };
-      }
-      acc[rep].amount += lead.grandTotal || 0;
-      const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
-      acc[rep].quantity += orderQuantity;
-      const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
-      acc[rep].layoutCount += layoutCount;
-      return acc;
-    }, {} as { [key: string]: { amount: number; quantity: number; layoutCount: number } });
-
-    return Object.entries(salesByRep)
-      .map(([name, data]) => ({ name, ...data }))
-      .filter(rep => rep.amount > 0 || rep.quantity > 0)
-      .sort((a, b) => b.amount - a.amount);
-  }, [filteredLeads]);
-
-  const { ticketData, totalUniqueCustomers, totalItemsSold } = useMemo(() => {
-    if (!filteredLeads) return { ticketData: [], totalUniqueCustomers: 0, totalItemsSold: 0 };
+  const ticketData = useMemo(() => {
+    if (!filteredLeads) return [];
 
     const ticketCounts: {
       'Small (1-9)': Set<string>,
@@ -434,14 +273,9 @@ export function SalesSummaryCards() {
       'VIP (1k+)': new Set(),
     };
 
-    const allCustomers = new Set<string>();
-    let totalItems = 0;
-
     filteredLeads.forEach(lead => {
-      allCustomers.add(lead.customerName.toLowerCase());
       const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-      totalItems += totalQuantity;
-
+      
       if (totalQuantity >= 1 && totalQuantity <= 9) {
         ticketCounts['Small (1-9)'].add(lead.customerName.toLowerCase());
       } else if (totalQuantity >= 10 && totalQuantity <= 99) {
@@ -455,33 +289,15 @@ export function SalesSummaryCards() {
       }
     });
 
-    const totalCustomers = allCustomers.size;
-
-    const data = [
+    return [
       { category: 'Small (1-9)', customers: ticketCounts['Small (1-9)'].size },
       { category: 'Medium (10-99)', customers: ticketCounts['Medium (10-99)'].size },
       { category: 'Large (100-199)', customers: ticketCounts['Large (100-199)'].size },
       { category: 'High (200-999)', customers: ticketCounts['High (200-999)'].size },
       { category: 'VIP (1k+)', customers: ticketCounts['VIP (1k+)'].size },
     ].filter(item => item.customers > 0);
-    
-    return { ticketData: data, totalUniqueCustomers: totalCustomers, totalItemsSold: totalItems };
-
   }, [filteredLeads]);
 
-
-  const salesByRepTitle = useMemo(() => {
-    let period;
-    if (selectedYear === 'all') {
-        period = 'All Time';
-    } else if (selectedMonth === 'all') {
-        period = `the Year ${selectedYear}`;
-    } else {
-        const monthLabel = months.find(m => m.value === selectedMonth)?.label || '';
-        period = `${monthLabel} ${selectedYear}`;
-    }
-    return `Sold Amount per Sales Specialist for ${period}`;
-  }, [selectedYear, selectedMonth, months]);
 
   if (isLoading || !isClient) {
       return (
@@ -494,8 +310,6 @@ export function SalesSummaryCards() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
                     {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
                 </div>
-                <Separator />
-                <Skeleton className="h-[300px] w-full" />
             </CardContent>
           </Card>
       )
@@ -540,7 +354,7 @@ export function SalesSummaryCards() {
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
             <DoughnutChartCard title="Total Sales" amount={totalSales} percentage={totalSalesPercentage} color="hsl(var(--chart-1))" />
             <DoughnutChartCard title="Total Paid" amount={totalPaid} percentage={totalPaidPercentage} color="hsl(var(--chart-2))" />
             <DoughnutChartCard title="Total Balance" amount={totalBalance} percentage={totalBalancePercentage} color="hsl(var(--chart-3))" />
@@ -554,13 +368,14 @@ export function SalesSummaryCards() {
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={ticketData}>
                       <PolarGrid />
                       <PolarAngleAxis dataKey="category" tick={{ fontSize: 10 }} />
-                      <PolarRadiusAxis angle={30} domain={[0, totalUniqueCustomers > 0 ? totalUniqueCustomers : 1]} tick={false} axisLine={false} />
+                      <PolarRadiusAxis angle={30} domain={[0, 'dataMax']} tick={false} axisLine={false} />
                       <Radar name="Customers" dataKey="customers" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
                        <Tooltip
                           content={({ payload }) => {
                               if (!payload || payload.length === 0) return null;
                               const { category, customers } = payload[0].payload;
-                              const percentage = totalUniqueCustomers > 0 ? (customers / totalUniqueCustomers * 100).toFixed(2) : 0;
+                              const totalCustomers = ticketData.reduce((sum, item) => sum + item.customers, 0);
+                              const percentage = totalCustomers > 0 ? (customers / totalCustomers * 100).toFixed(2) : 0;
                               return (
                                   <div className="bg-white p-2 border rounded shadow-lg text-xs">
                                       <p className="font-bold">{category}</p>
@@ -585,73 +400,7 @@ export function SalesSummaryCards() {
                 </CardContent>
             </Card>
         </div>
-        <div className="flex items-center justify-around bg-muted p-4 rounded-lg">
-          <div className="text-center">
-            <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
-            <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-            <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
-            <p className="text-3xl font-bold">{totalUniqueCustomers}</p>
-          </div>
-             <Separator orientation="vertical" className="h-20 mx-4" />
-              <div className="flex items-center gap-4">
-                {ticketData.map((ticket, index) => (
-                    <TicketDoughnut 
-                        key={ticket.category} 
-                        title={ticket.category} 
-                        count={ticket.customers} 
-                        color={ticketColors[ticket.category] || COLORS[index % COLORS.length]}
-                    />
-                ))}
-              </div>
-        </div>
-        <div>
-            <CardHeader className="p-0 mb-4">
-              <CardTitle>{salesByRepTitle}</CardTitle>
-              <CardDescription>Total sales amount by SCES for the selected period.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {salesData.length > 0 ? (
-                  <div style={{ height: '300px' }}>
-                  <ChartContainer config={chartConfig} className="w-full h-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={salesData} margin={{ top: 30 }}>
-                              <CartesianGrid vertical={false} />
-                              <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
-                              <YAxis
-                                  tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}k`}
-                              />
-                              <Tooltip
-                                  cursor={{ fill: 'hsl(var(--muted))' }}
-                                  content={<ChartTooltipContent
-                                      formatter={(value) => formatCurrency(value as number)}
-                                  />}
-                              />
-                              <Bar dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
-                                  {salesData.map((entry, index) => (
-                                      <Cell key={`cell-amount-${'\'\'\''}${index}`} fill={COLORS[index % COLORS.length]} />
-                                  ))}
-                                  <LabelList dataKey="amount" content={renderAmountLabel} />
-                              </Bar>
-                          </BarChart>
-                      </ResponsiveContainer>
-                  </ChartContainer>
-                  </div>
-              ) : (
-                  <div className="flex items-center justify-center h-[300px]">
-                      <p className="text-muted-foreground">No sales recorded for the selected period.</p>
-                  </div>
-              )}
-            </CardContent>
-        </div>
       </CardContent>
     </Card>
   );
 }
-
-    
