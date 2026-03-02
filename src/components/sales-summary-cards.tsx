@@ -5,31 +5,56 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import { formatCurrency } from '@/lib/utils';
-import {
-    PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
-    RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
-} from 'recharts';
+import { format, startOfDay, endOfDay, subDays } from 'date-fns';
+import { formatCurrency, cn } from '@/lib/utils';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { getMonth, getYear, format } from 'date-fns';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Button } from './ui/button';
 import { Separator } from './ui/separator';
+import { Input } from '@/components/ui/input';
+import { DateRange } from 'react-day-picker';
+import { eachDayOfInterval, endOfMonth, getMonth, getYear, parseISO } from 'date-fns';
+import { z, ZodError } from 'zod';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { ScrollArea } from './ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-type Lead = {
-  grandTotal?: number;
-  paidAmount?: number;
-  balance?: number;
-  submissionDateTime: string;
-  salesRepresentative: string;
-  priorityType: string;
-  customerName: string;
-  orders: { quantity: number }[];
+type Order = {
+  quantity: number;
 };
+
+const leadSchema = z.object({
+  id: z.string(),
+  customerName: z.string(),
+  salesRepresentative: z.string(),
+  submissionDateTime: z.string(),
+  grandTotal: z.number().optional(),
+  orders: z.array(z.object({
+    quantity: z.number(),
+    productType: z.string(),
+  })),
+  layouts: z.array(z.object({
+    layoutImage: z.string().nullable().optional(),
+  })).optional(),
+  paidAmount: z.number().optional(),
+  balance: z.number().optional(),
+  orderType: z.string().optional(),
+  payments: z.array(z.any()).optional(),
+  priorityType: z.string(),
+});
+
+type Lead = z.infer<typeof leadSchema>;
 
 const chartConfig = {
   amount: {
     label: "Sales Amount",
   },
+  quantity: {
+    label: "Items Sold",
+  },
+  layoutCount: {
+    label: "Layouts"
+  }
 };
 
 const COLORS = [
@@ -48,23 +73,155 @@ const COLORS = [
 ];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, width, value } = props;
-    if (value === 0) return null;
+    const { x, y, width, value, stroke } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+  
+    const rectWidth = 80;
+    const rectHeight = 18;
+    const xPos = width ? x + width / 2 : x;
+    
+    const rectFill = stroke ? stroke.replace('hsl(', 'hsla(').replace(')', ', 0.2)') : 'hsla(160, 60%, 45%, 0.2)';
+
+    return (
+      <g>
+        <rect x={xPos - rectWidth / 2} y={y - rectHeight - 5} width={rectWidth} height={rectHeight} fill={rectFill} rx={4} ry={4} />
+        <text 
+          x={xPos} 
+          y={y - rectHeight/2 - 5}
+          textAnchor="middle" 
+          dominantBaseline="middle" 
+          fill="black"
+          fontSize={12} 
+          fontWeight="bold"
+        >
+          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+        </text>
+      </g>
+    );
+};
+
+
+const renderPieCountInside = (props: any) => {
+  const { x, y, value } = props;
+
+  const vx = typeof x === "number" ? x : Number(x);
+  const vy = typeof y === "number" ? y : Number(y);
+  const v = typeof value === "number" ? value : Number(value);
+
+  if (!Number.isFinite(vx) || !Number.isFinite(vy)) return null;
+  if (!Number.isFinite(v) || v <= 0) return null;
+
+  return (
+    <text
+      x={vx}
+      y={vy}
+      fill="white"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight="bold"
+      style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+    >
+      {v}
+    </text>
+  );
+};
+
+const renderPieNameOutside = (props: any) => {
+  const { cx, cy, midAngle, innerRadius, outerRadius, name, fill } = props;
+
+  // ✅ guard
+  if (
+    typeof cx !== "number" ||
+    typeof cy !== "number" ||
+    typeof midAngle !== "number" ||
+    typeof innerRadius !== "number" ||
+    typeof outerRadius !== "number"
+  ) {
+    return null;
+  }
+
+  if (!name) return null;
+
+  const RADIAN = Math.PI / 180;
+
+  // start point: just outside the slice
+  const sx = cx + (outerRadius + 4) * Math.cos(-midAngle * RADIAN);
+  const sy = cy + (outerRadius + 4) * Math.sin(-midAngle * RADIAN);
+
+  // middle bend
+  const mx = cx + (outerRadius + 16) * Math.cos(-midAngle * RADIAN);
+  const my = cy + (outerRadius + 16) * Math.sin(-midAngle * RADIAN);
+
+  // end point: push left/right
+  const isRight = mx > cx;
+  const ex = mx + (isRight ? 14 : -14);
+  const ey = my;
+
+  return (
+    <g>
+      {/* leader line */}
+      <path d={`M${sx},${sy} L${mx},${my} L${ex},${ey}`} stroke={fill} fill="none" strokeWidth={2} />
+      {/* label */}
+      <text
+        x={ex + (isRight ? 4 : -4)}
+        y={ey}
+        textAnchor={isRight ? "start" : "end"}
+        dominantBaseline="central"
+        fill={fill}
+        fontSize={12}
+        fontWeight={700}
+        style={{ paintOrder: "stroke", stroke: "white", strokeWidth: 3 }} // makes it readable
+      >
+        {name}
+      </text>
+    </g>
+  );
+};
+  
+const renderQuantityLabel = (props: any) => {
+    const { x, y, width, height, value } = props;
+    
+    if (value === 0 || !height || typeof x !== 'number' || typeof y !== 'number') return null;
   
     return (
-      <text x={x + width / 2} y={y} dy={-4} fill="black" fontSize={12} textAnchor="middle" fontWeight="bold">
-        {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+      <text x={x + width / 2} y={y + height / 2} fill="white" fontSize={12} textAnchor="middle" dominantBaseline="middle" fontWeight="bold">
+        {value}
       </text>
     );
 };
-  
+
+const renderHourlyLabel = (props: any) => {
+    const { x, y, value, stroke } = props;
+
+    if (typeof x !== 'number' || typeof y !== 'number' || typeof value !== 'number' || value <= 0) {
+      return null;
+    }
+    
+    const labelText = `${value}`;
+
+    return (
+        <text
+          x={x}
+          y={y}
+          dy={-10}
+          fill={stroke}
+          fontSize={12}
+          fontWeight="bold"
+          textAnchor="middle"
+        >
+          {labelText}
+        </text>
+    );
+};
+
 const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string; amount: number; percentage: number; color: string }) => {
     const data = [
         { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
         { name: 'remaining', value: Math.max(0, 100 - Math.max(0, Math.min(100, percentage))) },
     ];
     
-    const COLORS = [color, '#e5e7eb'];
+    const chartColors = [color, '#e5e7eb'];
 
     return (
         <Card className="flex flex-col items-center justify-center p-2">
@@ -87,12 +244,12 @@ const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string
                           stroke="none"
                       >
                           {data.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                           ))}
                       </Pie>
                   </PieChart>
                 </ChartContainer>
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <span className="text-3xl font-bold">{percentage.toFixed(0)}%</span>
                 </div>
             </CardContent>
@@ -117,13 +274,45 @@ const PriorityBar = ({ percentage, count, label, color }: { percentage: number, 
     )
 }
 
+const TicketDoughnut = ({ title, count, color }: { title: string; count: number; color: string }) => {
+    const data = [{ value: count }];
+    return (
+        <div className="flex flex-col items-center gap-1">
+            <div className="w-16 h-16 relative">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie data={data} dataKey="value" innerRadius="60%" outerRadius="80%" fill={color} stroke="none">
+                           <LabelList dataKey="value" position="center" className="fill-foreground font-bold" fontSize={14} />
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
+            <p className="text-[10px] font-semibold text-center w-16">{title}</p>
+        </div>
+    );
+};
+
+const ticketColors: Record<string, string> = {
+  'Small (1-9)': 'hsl(var(--chart-1))',
+  'Medium (10-99)': 'hsl(var(--chart-2))',
+  'Large (100-199)': 'hsl(var(--chart-3))',
+  'High (200-999)': 'hsl(var(--chart-4))',
+  'VIP (1k+)': 'hsl(var(--chart-5))',
+};
+
+
 export function SalesSummaryCards() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
 
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const availableYears = useMemo(() => {
     if (!leads) return [new Date().getFullYear().toString()];
@@ -223,53 +412,55 @@ export function SalesSummaryCards() {
       .sort((a, b) => b.amount - a.amount);
   }, [filteredLeads]);
 
-  const { ticketData, totalUniqueCustomers } = useMemo(() => {
-    if (!filteredLeads) return { ticketData: [], totalUniqueCustomers: 0 };
+  const { ticketData, totalUniqueCustomers, totalItemsSold } = useMemo(() => {
+    if (!filteredLeads) return { ticketData: [], totalUniqueCustomers: 0, totalItemsSold: 0 };
 
     const ticketCounts: {
-      'Small Ticket': Set<string>,
-      'Medium Ticket': Set<string>,
-      'Large Ticket': Set<string>,
-      'High Ticket': Set<string>,
-      'VIP Ticket': Set<string>,
+      'Small (1-9)': Set<string>,
+      'Medium (10-99)': Set<string>,
+      'Large (100-199)': Set<string>,
+      'High (200-999)': Set<string>,
+      'VIP (1k+)': Set<string>,
     } = {
-      'Small Ticket': new Set(),
-      'Medium Ticket': new Set(),
-      'Large Ticket': new Set(),
-      'High Ticket': new Set(),
-      'VIP Ticket': new Set(),
+      'Small (1-9)': new Set(),
+      'Medium (10-99)': new Set(),
+      'Large (100-199)': new Set(),
+      'High (200-999)': new Set(),
+      'VIP (1k+)': new Set(),
     };
 
     const allCustomers = new Set<string>();
+    let totalItems = 0;
 
     filteredLeads.forEach(lead => {
       allCustomers.add(lead.customerName.toLowerCase());
       const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+      totalItems += totalQuantity;
 
       if (totalQuantity >= 1 && totalQuantity <= 9) {
-        ticketCounts['Small Ticket'].add(lead.customerName.toLowerCase());
+        ticketCounts['Small (1-9)'].add(lead.customerName.toLowerCase());
       } else if (totalQuantity >= 10 && totalQuantity <= 99) {
-        ticketCounts['Medium Ticket'].add(lead.customerName.toLowerCase());
+        ticketCounts['Medium (10-99)'].add(lead.customerName.toLowerCase());
       } else if (totalQuantity >= 100 && totalQuantity <= 199) {
-        ticketCounts['Large Ticket'].add(lead.customerName.toLowerCase());
+        ticketCounts['Large (100-199)'].add(lead.customerName.toLowerCase());
       } else if (totalQuantity >= 200 && totalQuantity <= 999) {
-        ticketCounts['High Ticket'].add(lead.customerName.toLowerCase());
+        ticketCounts['High (200-999)'].add(lead.customerName.toLowerCase());
       } else if (totalQuantity >= 1000) {
-        ticketCounts['VIP Ticket'].add(lead.customerName.toLowerCase());
+        ticketCounts['VIP (1k+)'].add(lead.customerName.toLowerCase());
       }
     });
 
     const totalCustomers = allCustomers.size;
 
     const data = [
-      { category: 'Small (1-9)', customers: ticketCounts['Small Ticket'].size, fullMark: totalCustomers },
-      { category: 'Medium (10-99)', customers: ticketCounts['Medium Ticket'].size, fullMark: totalCustomers },
-      { category: 'Large (100-199)', customers: ticketCounts['Large Ticket'].size, fullMark: totalCustomers },
-      { category: 'High (200-999)', customers: ticketCounts['High Ticket'].size, fullMark: totalCustomers },
-      { category: 'VIP (1k+)', customers: ticketCounts['VIP Ticket'].size, fullMark: totalCustomers },
-    ];
+      { category: 'Small (1-9)', customers: ticketCounts['Small (1-9)'].size },
+      { category: 'Medium (10-99)', customers: ticketCounts['Medium (10-99)'].size },
+      { category: 'Large (100-199)', customers: ticketCounts['Large (100-199)'].size },
+      { category: 'High (200-999)', customers: ticketCounts['High (200-999)'].size },
+      { category: 'VIP (1k+)', customers: ticketCounts['VIP (1k+)'].size },
+    ].filter(item => item.customers > 0);
     
-    return { ticketData: data, totalUniqueCustomers: totalCustomers };
+    return { ticketData: data, totalUniqueCustomers: totalCustomers, totalItemsSold: totalItems };
 
   }, [filteredLeads]);
 
@@ -287,7 +478,7 @@ export function SalesSummaryCards() {
     return `Sold Amount per Sales Specialist for ${period}`;
   }, [selectedYear, selectedMonth, months]);
 
-  if (isLoading) {
+  if (isLoading || !isClient) {
       return (
            <Card>
             <CardHeader>
@@ -313,7 +504,7 @@ export function SalesSummaryCards() {
   const totalPaidPercentage = totalSales > 0 ? (totalPaid / totalSales) * 100 : 0;
   const totalBalancePercentage = totalSales > 0 ? (totalBalance / totalSales) * 100 : 0;
   const monthlySalesTarget = 12000000;
-  const totalSalesPercentage = monthlySalesTarget > 0 ? (totalSales / monthlySalesTarget) * 100 : 0;
+  const totalSalesPercentage = monthlySalesTarget > 0 && selectedMonth !== 'all' ? (totalSales / monthlySalesTarget) * 100 : 0;
 
   return (
     <Card>
@@ -345,7 +536,7 @@ export function SalesSummaryCards() {
       </CardHeader>
       <CardContent className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-2">
-            <DoughnutChartCard title="Total Sales of the Period" amount={totalSales} percentage={totalSalesPercentage} color="hsl(var(--chart-1))" />
+            <DoughnutChartCard title="Total Sales" amount={totalSales} percentage={totalSalesPercentage} color="hsl(var(--chart-1))" />
             <DoughnutChartCard title="Total Paid" amount={totalPaid} percentage={totalPaidPercentage} color="hsl(var(--chart-2))" />
             <DoughnutChartCard title="Total Balance" amount={totalBalance} percentage={totalBalancePercentage} color="hsl(var(--chart-3))" />
             <Card className="flex flex-col items-center justify-center p-2">
@@ -389,7 +580,31 @@ export function SalesSummaryCards() {
                 </CardContent>
             </Card>
         </div>
-        <Separator />
+        <div className="flex items-center justify-around bg-muted p-4 rounded-lg">
+            <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
+                <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
+            </div>
+            <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
+                <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
+            </div>
+            <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
+                <p className="text-3xl font-bold">{totalUniqueCustomers}</p>
+            </div>
+             <Separator orientation="vertical" className="h-20 mx-4" />
+              <div className="flex items-center gap-4">
+                {ticketData.map((ticket, index) => (
+                    <TicketDoughnut 
+                        key={ticket.category} 
+                        title={ticket.category} 
+                        count={ticket.customers} 
+                        color={ticketColors[ticket.category] || COLORS[index % COLORS.length]}
+                    />
+                ))}
+              </div>
+        </div>
         <div>
             <CardHeader className="p-0 mb-4">
               <CardTitle>{salesByRepTitle}</CardTitle>
@@ -404,7 +619,7 @@ export function SalesSummaryCards() {
                               <CartesianGrid vertical={false} />
                               <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                               <YAxis
-                                  tickFormatter={(value) => `₱${Number(value) / 1000}k`}
+                                  tickFormatter={(value) => `₱${value / 1000}k`}
                               />
                               <Tooltip
                                   cursor={{ fill: 'hsl(var(--muted))' }}
