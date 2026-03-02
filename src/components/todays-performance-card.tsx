@@ -149,8 +149,8 @@ const TicketDoughnutCard = ({ title, count, total }: { title: string; count: num
     const percentage = total > 0 ? (count / total) * 100 : 0;
     const color = ticketColors[title] || '#ccc';
     const data = [
-        { name: 'value', value: percentage },
-        { name: 'remaining', value: 100 - percentage },
+        { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
+        { name: 'remaining', value: Math.max(0, 100 - Math.max(0, Math.min(100, percentage))) },
     ];
     
     const chartColors = [color, '#e5e7eb'];
@@ -168,7 +168,7 @@ const TicketDoughnutCard = ({ title, count, total }: { title: string; count: num
                     </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-xl font-bold">{count}</span>
+                    <span className="text-2xl font-bold">{count}</span>
                 </div>
             </div>
             <p className="text-xs font-semibold text-center h-8 flex items-center">{title}</p>
@@ -178,28 +178,37 @@ const TicketDoughnutCard = ({ title, count, total }: { title: string; count: num
 };
 
 const renderLayoutPieLabel = (props: any) => {
-    const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props;
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const { cx, cy, midAngle, outerRadius, name, value, fill, percent } = props;
+    
+    if (percent === 0) return null;
 
-    if (percent < 0.05) { // Don't render labels for tiny slices
-        return null;
-    }
+    const RADIAN = Math.PI / 180;
+    
+    // Position for the count (value) inside the slice
+    const radiusForCount = outerRadius * 0.6;
+    const xCount = cx + radiusForCount * Math.cos(-midAngle * RADIAN);
+    const yCount = cy + radiusForCount * Math.sin(-midAngle * RADIAN);
+
+    // Positions for the external line and label
+    const radiusForLine = outerRadius + 20;
+    const xStart = cx + (outerRadius + 2) * Math.cos(-midAngle * RADIAN);
+    const yStart = cy + (outerRadius + 2) * Math.sin(-midAngle * RADIAN);
+    const xEnd = cx + radiusForLine * Math.cos(-midAngle * RADIAN);
+    const yEnd = cy + radiusForLine * Math.sin(-midAngle * RADIAN);
+    
+    const textAnchor = xEnd > cx ? 'start' : 'end';
+    const xHookEnd = xEnd + (xEnd > cx ? 1 : -1) * 5;
 
     return (
-        <text
-            x={x}
-            y={y}
-            fill="white"
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize={12}
-            fontWeight="bold"
-        >
-            {name}
-        </text>
+        <g>
+            <text x={xCount} y={yCount} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={16}>
+                {value}
+            </text>
+            <path d={`M${xStart},${yStart} L${xEnd},${yEnd} L${xHookEnd},${yEnd}`} stroke={fill} fill="none" />
+            <text x={xHookEnd + (xHookEnd > cx ? 3 : -3)} y={yEnd} textAnchor={textAnchor} fill={fill} dominantBaseline="central" fontWeight="bold">
+                {name}
+            </text>
+        </g>
     );
 };
 
@@ -311,7 +320,7 @@ export function TodaysPerformanceCard() {
         else if (quantity >= 200 && quantity <= 999) ticketCounts['High (200-999)'].add(lead.customerName);
         else if (quantity >= 1000) ticketCounts['VIP (1k+)'].add(lead.customerName);
     });
-
+    
     const ticketDataArr = ticketCategories.map(category => ({
       category,
       customers: ticketCounts[category].size,
@@ -489,6 +498,31 @@ export function TodaysPerformanceCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
+        <div className="flex items-center justify-around bg-muted p-4 rounded-lg">
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
+            <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
+            <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
+            <p className="text-3xl font-bold">{totalCustomers}</p>
+          </div>
+          <Separator orientation="vertical" className="h-20 mx-4" />
+          <div className="flex items-center justify-around flex-wrap gap-4">
+            {ticketData.map((ticket, index) => (
+                <TicketDoughnutCard 
+                    key={ticket.category} 
+                    title={ticket.category} 
+                    count={ticket.customers} 
+                    total={totalCustomers}
+                />
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {salesData.length > 0 ? (
               <>
@@ -543,7 +577,7 @@ export function TodaysPerformanceCard() {
                       <div style={{ height: '350px' }}>
                          <ChartContainer config={{ layoutCount: { label: 'Layouts' } }} className="w-full h-full">
                               <ResponsiveContainer width="100%" height="100%">
-                                  <PieChart>
+                                  <PieChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
                                       <Tooltip
                                           cursor={{ fill: 'hsl(var(--muted))' }}
                                           content={<ChartTooltipContent nameKey="layoutCount" />}
@@ -554,7 +588,7 @@ export function TodaysPerformanceCard() {
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={120}
+                                        outerRadius={90}
                                         labelLine={false}
                                         label={renderLayoutPieLabel}
                                       >
@@ -562,7 +596,6 @@ export function TodaysPerformanceCard() {
                                           <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                       </Pie>
-                                      <Legend />
                                   </PieChart>
                               </ResponsiveContainer>
                           </ChartContainer>
@@ -574,31 +607,6 @@ export function TodaysPerformanceCard() {
                   <p className="text-muted-foreground">No sales recorded for the selected date.</p>
               </div>
           )}
-        </div>
-        <div className="flex items-center justify-around bg-muted p-4 rounded-lg">
-          <div className="text-center">
-            <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
-            <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-            <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
-            <p className="text-3xl font-bold">{totalCustomers}</p>
-          </div>
-          <Separator orientation="vertical" className="h-20 mx-4" />
-          <div className="flex items-center justify-around flex-wrap gap-4">
-            {ticketData.map((ticket, index) => (
-                <TicketDoughnutCard 
-                    key={ticket.category} 
-                    title={ticket.category} 
-                    count={ticket.customers} 
-                    total={totalCustomers}
-                />
-            ))}
-          </div>
         </div>
         <Separator className="my-4" />
         <CardHeader className="p-0">
@@ -683,3 +691,30 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
+
+```
+- src/firebase/auth/use-user.tsx:
+```tsx
+
+// use-user.tsx
+'use client';
+import { useContext } from 'react';
+import { FirebaseContext, UserHookResult } from '../provider';
+
+/**
+ * Hook specifically for accessing the authenticated user's state.
+ * This provides the User object, loading status, and any auth errors.
+ * It's a simplified alias for useFirebase().
+ * @returns {UserHookResult} Object with user, isUserLoading, userError.
+ */
+export const useUser = (): UserHookResult => {
+  const context = useContext(FirebaseContext);
+  if (context === undefined) {
+    throw new Error('useUser must be used within a FirebaseProvider');
+  }
+
+  const { user, userProfile, isAdmin, isUserLoading, userError } = context;
+  return { user, userProfile, isAdmin, isUserLoading, userError };
+};
+
+```
