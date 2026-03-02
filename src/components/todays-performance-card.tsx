@@ -145,17 +145,30 @@ const ticketColors: Record<string, string> = {
   'VIP (1k+)': 'hsl(var(--chart-5))',
 };
 
-const renderPieNameOutside = ({ cx, cy, midAngle, outerRadius, name, count }: any) => {
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, name, layoutCount, percent }: any) => {
+  if (percent === 0) return null;
   const RADIAN = Math.PI / 180;
-  const radius = outerRadius + 20; 
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  const textAnchor = x > cx ? 'start' : 'end';
+
+  // For the count inside the pie slice
+  const radiusInside = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const xInside = cx + radiusInside * Math.cos(-midAngle * RADIAN);
+  const yInside = cy + radiusInside * Math.sin(-midAngle * RADIAN);
+
+  // For the name outside the pie slice
+  const radiusOutside = outerRadius + 25;
+  const xOutside = cx + radiusOutside * Math.cos(-midAngle * RADIAN);
+  const yOutside = cy + radiusOutside * Math.sin(-midAngle * RADIAN);
+  const textAnchor = xOutside > cx ? 'start' : 'end';
 
   return (
-    <text x={x} y={y} fill="black" textAnchor={textAnchor} dominantBaseline="central" fontSize={12}>
-      {`${name}: ${count}`}
-    </text>
+    <g>
+      <text x={xInside} y={yInside} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight="bold">
+        {layoutCount}
+      </text>
+      <text x={xOutside} y={yOutside} fill="black" textAnchor={textAnchor} dominantBaseline="central" fontSize={12}>
+        {name}
+      </text>
+    </g>
   );
 };
 
@@ -570,9 +583,10 @@ export function TodaysPerformanceCard() {
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={90}
+                                        innerRadius={40}
+                                        outerRadius={80}
                                         labelLine={false}
-                                        label={(props) => renderPieNameOutside({ ...props, count: props.layoutCount })}
+                                        label={renderCustomizedLabel}
                                       >
                                         {layoutChartData.map((entry, index) => (
                                           <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -673,3 +687,4 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
+
