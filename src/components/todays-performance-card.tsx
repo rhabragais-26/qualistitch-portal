@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Bar } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Bar, Legend } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -174,7 +173,7 @@ const renderCustomizedLabelForPie = (props: any) => {
         </text>
       </g>
     );
-  };
+};
 
 
 const DoughnutChartCard = ({ title, count, total }: { title: string; count: number; total: number }) => {
@@ -207,6 +206,20 @@ const DoughnutChartCard = ({ title, count, total }: { title: string; count: numb
             </div>
             <p className="text-xs font-semibold text-center h-8 flex items-center">{fullTitle}</p>
             <p className="text-sm font-bold" style={{ color: color }}>{percentage.toFixed(0)}%</p>
+        </div>
+    )
+}
+
+const PriorityBar = ({ percentage, count, label, color }: { percentage: number, count: number, label: string, color: string }) => {
+    return (
+        <div className="flex flex-col items-center w-full">
+            <p className="font-medium text-sm self-start">{label}</p>
+            <div className="w-full h-8 bg-gray-200 rounded-lg my-1 relative overflow-hidden">
+                <div style={{ width: `${percentage}%`, backgroundColor: color }} className="h-full rounded-lg flex items-center justify-center transition-all duration-500">
+                    <span className="text-white font-bold text-sm">{percentage.toFixed(0)}%</span>
+                </div>
+            </div>
+            <p className="text-sm font-bold self-end">{count} orders</p>
         </div>
     )
 }
@@ -462,7 +475,7 @@ export function TodaysPerformanceCard() {
   }
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+    <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
             <div className="flex-1">
