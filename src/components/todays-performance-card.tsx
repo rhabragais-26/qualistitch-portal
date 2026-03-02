@@ -174,7 +174,7 @@ const renderCustomizedLabelForPie = ({ cx, cy, midAngle, outerRadius, fill, name
   };
 
 
-const DoughnutChartCard = ({ title, count, total }: { title: string; count: number; total: number }) => {
+const DoughnutChartCard = ({ title, count, total }: { title: string; count: number; total: number; }) => {
     const percentage = total > 0 ? (count / total) * 100 : 0;
     const color = ticketColors[title] || '#ccc';
     const data = [
@@ -199,7 +199,7 @@ const DoughnutChartCard = ({ title, count, total }: { title: string; count: numb
                     </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-bold">{count}</span>
+                    <span className="text-3xl font-bold">{count}</span>
                 </div>
             </div>
             <p className="text-xs font-semibold text-center h-8 flex items-center">{fullTitle}</p>
@@ -221,6 +221,29 @@ const PriorityBar = ({ percentage, count, label, color }: { percentage: number, 
         </div>
     )
 }
+
+const renderPolarAngleAxisTick = ({ payload, x, y, cx, cy, ...rest }: any) => {
+    const [label, range] = payload.value.split(' (');
+    const rangeText = range ? `(${range}` : '';
+  
+    return (
+      <g
+        transform={`translate(${x},${y})`}
+      >
+        <text
+          {...rest}
+          y={0}
+          dy={0}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={12}
+        >
+          <tspan x={0} dy="0em" fontWeight="bold">{label}</tspan>
+          {rangeText && <tspan x={0} dy="1.2em">{rangeText}</tspan>}
+        </text>
+      </g>
+    );
+};
 
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
@@ -308,7 +331,10 @@ export function TodaysPerformanceCard() {
       customers: ticketCounts[category].size,
     }));
     
-    const totalTicketCustomerCount = Object.values(ticketCounts).reduce((sum, currentSet) => sum + currentSet.size, 0);
+    const totalTicketCustomerCount = Object.values(ticketCounts).reduce((sum, currentSet) => {
+        currentSet.forEach(customer => sum.add(customer));
+        return sum;
+    }, new Set<string>()).size;
 
     const salesByHour = filteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
