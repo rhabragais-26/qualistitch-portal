@@ -145,31 +145,17 @@ const ticketColors: Record<string, string> = {
   'VIP (1k+)': 'hsl(var(--chart-5))',
 };
 
-const renderPieNameOutside = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, count }: any) => {
-  if (percent === 0) return null;
+const renderPieNameOutside = ({ cx, cy, midAngle, outerRadius, name, count }: any) => {
   const RADIAN = Math.PI / 180;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const radius = outerRadius + 20; 
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  const sin = Math.sin(-RADIAN * midAngle);
-  const cos = Math.cos(-RADIAN * midAngle);
-  const sx = cx + (outerRadius + 10) * cos;
-  const sy = cy + (outerRadius + 10) * sin;
-  const mx = cx + (outerRadius + 30) * cos;
-  const my = cy + (outerRadius + 30) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-  const ey = my;
-  const textAnchor = cos >= 0 ? 'start' : 'end';
+  const textAnchor = x > cx ? 'start' : 'end';
 
   return (
-    <g>
-      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold">
-        {count}
-      </text>
-      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke="black" fill="none" />
-      <circle cx={sx} cy={sy} r={2} fill="black" stroke="none" />
-      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333" dominantBaseline="central">{name}</text>
-    </g>
+    <text x={x} y={y} fill="black" textAnchor={textAnchor} dominantBaseline="central" fontSize={12}>
+      {`${name}: ${count}`}
+    </text>
   );
 };
 
@@ -203,7 +189,7 @@ const DoughnutChartCard = ({ title, count, total }: { title: string; count: numb
                 </div>
             </div>
             <p className="text-xs font-semibold text-center h-8 flex items-center">{fullTitle}</p>
-            <p className="text-sm font-bold">{percentage.toFixed(0)}%</p>
+            <p className="text-sm font-bold" style={{ color: color }}>{percentage.toFixed(0)}%</p>
         </div>
     )
 }
@@ -494,7 +480,7 @@ export function TodaysPerformanceCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
-        <div className="flex items-center justify-around bg-primary/20 p-4 rounded-lg">
+        <div className="flex items-center justify-around bg-teal-500/10 p-4 rounded-lg">
           <div className="text-center">
             <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
             <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
@@ -586,7 +572,7 @@ export function TodaysPerformanceCard() {
                                         cy="50%"
                                         outerRadius={90}
                                         labelLine={false}
-                                        label={(props) => renderPieNameOutside({ ...props })}
+                                        label={(props) => renderPieNameOutside({ ...props, count: props.layoutCount })}
                                       >
                                         {layoutChartData.map((entry, index) => (
                                           <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
