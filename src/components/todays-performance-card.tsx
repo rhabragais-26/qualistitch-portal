@@ -203,7 +203,7 @@ const DoughnutChartCard = ({ title, count, total }: { title: string; count: numb
                 </div>
             </div>
             <p className="text-xs font-semibold text-center h-8 flex items-center">{fullTitle}</p>
-            <p className="text-sm font-bold" style={{ color: color }}>{percentage.toFixed(0)}%</p>
+            <p className="text-sm font-bold" style={{ color }}>{percentage.toFixed(0)}%</p>
         </div>
     )
 }
@@ -230,6 +230,33 @@ export function TodaysPerformanceCard() {
   const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = useState(false);
+
+  const filteredLeads = useMemo(() => {
+    if (!leads) return [];
+
+    let rangeStart: Date;
+    
+    if (activeFilter === 'today') {
+        rangeStart = startOfDay(new Date());
+    } else if (activeFilter === 'yesterday') {
+        rangeStart = startOfDay(subDays(new Date(), 1));
+    } else if (activeFilter === 'custom' && selectedDate) {
+        rangeStart = startOfDay(selectedDate);
+    } else {
+        rangeStart = startOfDay(new Date());
+    }
+    const rangeEnd = endOfDay(rangeStart);
+    
+    const filtered = leads.filter(lead => {
+        try {
+            const submissionDate = new Date(lead.submissionDateTime);
+            return submissionDate >= rangeStart && submissionDate <= rangeEnd;
+        } catch (e) {
+            return false;
+        }
+    });
+    return filtered;
+  }, [leads, activeFilter, selectedDate]);
   
   const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, ticketData, totalTicketCustomers } = useMemo(() => {
     if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, ticketData: [], totalTicketCustomers: 0 };
@@ -281,7 +308,7 @@ export function TodaysPerformanceCard() {
       customers: ticketCounts[category].size,
     }));
     
-    const totalTicketCustomerCount = ticketDataArr.reduce((sum, item) => sum + item.customers, 0);
+    const totalTicketCustomerCount = Object.values(ticketCounts).reduce((sum, currentSet) => sum + currentSet.size, 0);
 
     const salesByHour = filteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
