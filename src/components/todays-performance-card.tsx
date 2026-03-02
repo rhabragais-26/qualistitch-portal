@@ -145,41 +145,36 @@ const ticketColors: Record<string, string> = {
   'VIP (1k+)': 'hsl(var(--chart-5))',
 };
 
-const renderPieNameOutside = (props: any) => {
-    const { cx, cy, midAngle, outerRadius, name, value, fill, percent } = props;
-    if (percent === 0) return null;
+const renderPieNameOutside = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, count }: any) => {
+  if (percent === 0) return null;
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const sx = cx + (outerRadius + 10) * cos;
+  const sy = cy + (outerRadius + 10) * sin;
+  const mx = cx + (outerRadius + 30) * cos;
+  const my = cy + (outerRadius + 30) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+  const ey = my;
+  const textAnchor = cos >= 0 ? 'start' : 'end';
 
-    const RADIAN = Math.PI / 180;
-    
-    // Position for the count (value) inside the slice
-    const radiusForCount = outerRadius * 0.7;
-    const xCount = cx + radiusForCount * Math.cos(-midAngle * RADIAN);
-    const yCount = cy + radiusForCount * Math.sin(-midAngle * RADIAN);
-
-    // Positions for the external line and label
-    const radiusForLine = outerRadius + 20;
-    const xStart = cx + (outerRadius + 5) * Math.cos(-midAngle * RADIAN);
-    const yStart = cy + (outerRadius + 5) * Math.sin(-midAngle * RADIAN);
-    const xEnd = cx + radiusForLine * Math.cos(-midAngle * RADIAN);
-    const yEnd = cy + radiusForLine * Math.sin(-midAngle * RADIAN);
-    
-    const textAnchor = xEnd > cx ? 'start' : 'end';
-    const xHookEnd = xEnd + (xEnd > cx ? 1 : -1) * 5;
-
-    return (
-        <g>
-            <text x={xCount} y={yCount} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={16}>
-                {value}
-            </text>
-            <path d={`M${xStart},${yStart} L${xEnd},${yEnd} L${xHookEnd},${yEnd}`} stroke={fill} fill="none" />
-            <text x={xHookEnd + (xHookEnd > cx ? 3 : -3)} y={yEnd} textAnchor={textAnchor} fill={fill} dominantBaseline="central" fontWeight="bold">
-                {name}
-            </text>
-        </g>
-    );
+  return (
+    <g>
+      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold">
+        {count}
+      </text>
+      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke="black" fill="none" />
+      <circle cx={sx} cy={sy} r={2} fill="black" stroke="none" />
+      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333" dominantBaseline="central">{name}</text>
+    </g>
+  );
 };
 
-const TicketDoughnutCard = ({ title, count, total }: { title: string; count: number; total: number }) => {
+
+const DoughnutChartCard = ({ title, count, total }: { title: string; count: number; total: number }) => {
     const percentage = total > 0 ? (count / total) * 100 : 0;
     const color = ticketColors[title] || '#ccc';
     const data = [
@@ -188,8 +183,8 @@ const TicketDoughnutCard = ({ title, count, total }: { title: string; count: num
     ];
     
     const chartColors = [color, '#e5e7eb'];
-
-    const fullTitle = title === 'Medium (10-99)' ? 'Medium (10-99)' : title;
+    
+    const fullTitle = title;
 
     return (
         <div className="flex flex-col items-center gap-1">
@@ -499,7 +494,7 @@ export function TodaysPerformanceCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
-        <div className="flex items-center justify-around bg-muted p-4 rounded-lg">
+        <div className="flex items-center justify-around bg-primary/20 p-4 rounded-lg">
           <div className="text-center">
             <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
             <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
@@ -515,7 +510,7 @@ export function TodaysPerformanceCard() {
           <Separator orientation="vertical" className="h-20 mx-4" />
           <div className="flex items-center justify-around flex-wrap gap-4">
             {ticketData.map((ticket, index) => (
-                <TicketDoughnutCard 
+                <DoughnutChartCard 
                     key={ticket.category} 
                     title={ticket.category} 
                     count={ticket.customers} 
