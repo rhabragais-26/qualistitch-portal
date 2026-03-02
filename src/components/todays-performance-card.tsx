@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Bar } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -145,27 +145,31 @@ const ticketColors: Record<string, string> = {
   'VIP (1k+)': 'hsl(var(--chart-5))',
 };
 
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, name, layoutCount, percent }: any) => {
-  if (percent === 0) return null;
+const renderCustomizedLabelForPie = (props: any) => {
+  const { cx, cy, midAngle, outerRadius, fill, name, layoutCount, percent } = props;
+  if(percent === 0) return null;
   const RADIAN = Math.PI / 180;
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const sx = cx + outerRadius * cos;
+  const sy = cy + outerRadius * sin;
+  const mx = cx + (outerRadius + 10) * cos;
+  const my = cy + (outerRadius + 10) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
+  const ey = my;
+  const textAnchor = cos >= 0 ? 'start' : 'end';
 
-  // For the count inside the pie slice
-  const radiusInside = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const xInside = cx + radiusInside * Math.cos(-midAngle * RADIAN);
-  const yInside = cy + radiusInside * Math.sin(-midAngle * RADIAN);
-
-  // For the name outside the pie slice
-  const radiusOutside = outerRadius + 25;
-  const xOutside = cx + radiusOutside * Math.cos(-midAngle * RADIAN);
-  const yOutside = cy + radiusOutside * Math.sin(-midAngle * RADIAN);
-  const textAnchor = xOutside > cx ? 'start' : 'end';
+  const radiusForCount = outerRadius * 0.5;
+  const xCount = cx + radiusForCount * Math.cos(-midAngle * RADIAN);
+  const yCount = cy + radiusForCount * Math.sin(-midAngle * RADIAN);
 
   return (
     <g>
-      <text x={xInside} y={yInside} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight="bold">
+      <text x={xCount} y={yCount} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={14}>
         {layoutCount}
       </text>
-      <text x={xOutside} y={yOutside} fill="black" textAnchor={textAnchor} dominantBaseline="central" fontSize={12}>
+      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
+      <text x={ex + (cos >= 0 ? 3 : -3)} y={ey} textAnchor={textAnchor} fill={fill} fontWeight="bold" fontSize={12}>
         {name}
       </text>
     </g>
@@ -190,7 +194,7 @@ const DoughnutChartCard = ({ title, count, total }: { title: string; count: numb
             <div className="w-20 h-20 relative">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                        <Pie data={data} dataKey="value" innerRadius="60%" outerRadius="80%" fill={color} stroke="none" startAngle={90} endAngle={450}>
+                        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="60%" outerRadius="80%" fill={color} stroke="none" startAngle={90} endAngle={450}>
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                             ))}
@@ -433,12 +437,9 @@ export function TodaysPerformanceCard() {
               <Skeleton className="h-4 w-1/2" />
             </CardHeader>
             <CardContent className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start h-[400px]">
-                    <Skeleton className="lg:col-span-2 h-full w-full" />
-                    <Skeleton className="h-full w-full" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+                    {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
                 </div>
-                <Separator />
-                <Skeleton className="h-[300px] w-full" />
             </CardContent>
           </Card>
       )
@@ -572,7 +573,7 @@ export function TodaysPerformanceCard() {
                       <div style={{ height: '350px' }}>
                          <ChartContainer config={{ layoutCount: { label: 'Layouts' } }} className="w-full h-full">
                               <ResponsiveContainer width="100%" height="100%">
-                                  <PieChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
+                                  <PieChart margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
                                       <Tooltip
                                           cursor={{ fill: 'hsl(var(--muted))' }}
                                           content={<ChartTooltipContent nameKey="layoutCount" />}
@@ -583,10 +584,10 @@ export function TodaysPerformanceCard() {
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={40}
+                                        innerRadius={0}
                                         outerRadius={80}
                                         labelLine={false}
-                                        label={renderCustomizedLabel}
+                                        label={renderCustomizedLabelForPie}
                                       >
                                         {layoutChartData.map((entry, index) => (
                                           <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -687,4 +688,3 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
-
