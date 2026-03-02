@@ -144,9 +144,7 @@ const ticketColors: Record<string, string> = {
   'VIP (1k+)': 'hsl(var(--chart-5))',
 };
 
-const renderCustomizedLabelForPie = (props: any) => {
-    const { cx, cy, midAngle, outerRadius, fill, name, layoutCount, percent } = props;
-    if (percent === 0) return null;
+const renderCustomizedLabelForPie = ({ cx, cy, midAngle, outerRadius, fill, name, layoutCount }: any) => {
     const RADIAN = Math.PI / 180;
     const sin = Math.sin(-RADIAN * midAngle);
     const cos = Math.cos(-RADIAN * midAngle);
@@ -173,7 +171,7 @@ const renderCustomizedLabelForPie = (props: any) => {
         </text>
       </g>
     );
-};
+  };
 
 
 const DoughnutChartCard = ({ title, count, total }: { title: string; count: number; total: number }) => {
@@ -233,63 +231,8 @@ export function TodaysPerformanceCard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = useState(false);
   
-  const filteredLeads = useMemo(() => {
-    if (!leads) return [];
-
-    let rangeStart: Date;
-    let rangeEnd: Date;
-    
-    if (activeFilter === 'today') {
-        const today = new Date();
-        rangeStart = startOfDay(today);
-        rangeEnd = endOfDay(today);
-    } else if (activeFilter === 'yesterday') {
-        const yesterday = subDays(new Date(), 1);
-        rangeStart = startOfDay(yesterday);
-        rangeEnd = endOfDay(yesterday);
-    } else if (activeFilter === 'custom' && selectedDate) {
-        rangeStart = startOfDay(selectedDate);
-        rangeEnd = endOfDay(selectedDate);
-    } else {
-        const today = new Date();
-        rangeStart = startOfDay(today);
-        rangeEnd = endOfDay(today);
-    }
-    
-    return leads.filter(lead => {
-        try {
-            const submissionDate = new Date(lead.submissionDateTime);
-            return submissionDate >= rangeStart && submissionDate <= rangeEnd;
-        } catch (e) {
-            console.warn(`Invalid date format for lead '${'\'\''}${lead.id}'`, `'${'\'\''}${lead.submissionDateTime}'`);
-            return false;
-        }
-    });
-  }, [leads, activeFilter, selectedDate]);
-
-  const salesData = useMemo(() => {
-    if (!filteredLeads) return [];
-    const salesByRep = filteredLeads.reduce((acc, lead) => {
-      const rep = lead.salesRepresentative;
-      if (!acc[rep]) {
-        acc[rep] = { amount: 0, quantity: 0, layoutCount: 0 };
-      }
-      acc[rep].amount += lead.grandTotal || 0;
-      const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
-      acc[rep].quantity += orderQuantity;
-      const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
-      acc[rep].layoutCount += layoutCount;
-      return acc;
-    }, {} as { [key: string]: { amount: number; quantity: number; layoutCount: number } });
-
-    return Object.entries(salesByRep)
-      .map(([name, data]) => ({ name, ...data }))
-      .filter(rep => rep.amount > 0 || rep.quantity > 0)
-      .sort((a, b) => b.amount - a.amount);
-  }, [filteredLeads]);
-  
-  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, ticketData } = useMemo(() => {
-    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, ticketData: [] };
+  const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, ticketData, totalTicketCustomers } = useMemo(() => {
+    if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, ticketData: [], totalTicketCustomers: 0 };
 
     let rangeStart: Date;
     
@@ -326,10 +269,10 @@ export function TodaysPerformanceCard() {
             totalCust.add(lead.customerName.toLowerCase());
         }
 
-        if (quantity >= 1 && totalQty <= 9) ticketCounts['Small (1-9)'].add(lead.customerName);
-        else if (quantity >= 10 && totalQty <= 99) ticketCounts['Medium (10-99)'].add(lead.customerName);
-        else if (quantity >= 100 && totalQty <= 199) ticketCounts['Large (100-199)'].add(lead.customerName);
-        else if (quantity >= 200 && totalQty <= 999) ticketCounts['High (200-999)'].add(lead.customerName);
+        if (quantity >= 1 && quantity <= 9) ticketCounts['Small (1-9)'].add(lead.customerName);
+        else if (quantity >= 10 && quantity <= 99) ticketCounts['Medium (10-99)'].add(lead.customerName);
+        else if (quantity >= 100 && quantity <= 199) ticketCounts['Large (100-199)'].add(lead.customerName);
+        else if (quantity >= 200 && quantity <= 999) ticketCounts['High (200-999)'].add(lead.customerName);
         else if (quantity >= 1000) ticketCounts['VIP (1k+)'].add(lead.customerName);
     });
     
@@ -338,6 +281,8 @@ export function TodaysPerformanceCard() {
       customers: ticketCounts[category].size,
     }));
     
+    const totalTicketCustomerCount = ticketDataArr.reduce((sum, item) => sum + item.customers, 0);
+
     const salesByHour = filteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
       if (!acc[hour]) {
@@ -403,12 +348,33 @@ export function TodaysPerformanceCard() {
       };
     });
 
-    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, ticketData: ticketDataArr };
+    return { hourlySalesData: combinedHourlyData, historicalDataKeys, totalCustomers: totalCust.size, totalItemsSold: totalQty, ticketData: ticketDataArr, totalTicketCustomers: totalTicketCustomerCount };
   }, [leads, activeFilter, selectedDate]);
   
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const salesData = useMemo(() => {
+    if (!filteredLeads) return [];
+    const salesByRep = filteredLeads.reduce((acc, lead) => {
+      const rep = lead.salesRepresentative;
+      if (!acc[rep]) {
+        acc[rep] = { amount: 0, quantity: 0, layoutCount: 0 };
+      }
+      acc[rep].amount += lead.grandTotal || 0;
+      const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
+      acc[rep].quantity += orderQuantity;
+      const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
+      acc[rep].layoutCount += layoutCount;
+      return acc;
+    }, {} as { [key: string]: { amount: number; quantity: number; layoutCount: number } });
+
+    return Object.entries(salesByRep)
+      .map(([name, data]) => ({ name, ...data }))
+      .filter(rep => rep.amount > 0 || rep.quantity > 0)
+      .sort((a, b) => b.amount - a.amount);
+  }, [filteredLeads]);
 
   const totalSales = useMemo(() => {
     if (!salesData) return 0;
@@ -522,12 +488,12 @@ export function TodaysPerformanceCard() {
           </div>
           <Separator orientation="vertical" className="h-20 mx-4" />
           <div className="flex items-center justify-around flex-wrap gap-4">
-            {ticketData.map((ticket, index) => (
+            {ticketData.map((ticket) => (
                 <DoughnutChartCard 
                     key={ticket.category} 
                     title={ticket.category} 
                     count={ticket.customers} 
-                    total={totalCustomers}
+                    total={totalTicketCustomers}
                 />
             ))}
           </div>
@@ -600,7 +566,7 @@ export function TodaysPerformanceCard() {
                                         innerRadius={0}
                                         outerRadius={90}
                                         labelLine={false}
-                                        label={renderCustomizedLabelForPie}
+                                        label={(props) => renderCustomizedLabelForPie({ ...props })}
                                       >
                                         {layoutChartData.map((entry, index) => (
                                           <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -621,7 +587,7 @@ export function TodaysPerformanceCard() {
         <Separator className="my-4" />
         <CardHeader className="p-0">
           <CardTitle>Count of Clients per Interval</CardTitle>
-          <CardDescription>Number of unique customers and total sales amount acquired per hour for the selected day.</CardDescription>
+          <CardDescription>Number of unique customers acquired per hour for the selected day vs. the last 4 weeks.</CardDescription>
         </CardHeader>
         <div style={{ height: '300px' }}>
           <ChartContainer config={{ customerCount: { label: 'Customers' } }} className="w-full h-full">
