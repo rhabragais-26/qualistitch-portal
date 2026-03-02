@@ -145,8 +145,9 @@ const ticketColors: Record<string, string> = {
   'VIP (1k+)': 'hsl(var(--chart-5))',
 };
 
-const TicketDoughnutCard = ({ title, count, total, color }: { title: string; count: number; total: number; color: string }) => {
+const TicketDoughnutCard = ({ title, count, total }: { title: string; count: number; total: number }) => {
     const percentage = total > 0 ? (count / total) * 100 : 0;
+    const color = ticketColors[title] || '#ccc';
     const data = [
         { name: 'value', value: percentage },
         { name: 'remaining', value: 100 - percentage },
@@ -176,29 +177,31 @@ const TicketDoughnutCard = ({ title, count, total, color }: { title: string; cou
     );
 };
 
-const renderPieNameOutside = (props: any) => {
-    const { cx, cy, midAngle, outerRadius, name } = props;
-    if (!name) return null;
+const renderLayoutPieLabel = (props: any) => {
+    const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props;
     const RADIAN = Math.PI / 180;
-    const radius = outerRadius + 20; 
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
-    const textAnchor = x > cx ? 'start' : 'end';
-  
+
+    if (percent < 0.05) { // Don't render labels for tiny slices
+        return null;
+    }
+
     return (
-      <text
-        x={x}
-        y={y}
-        fill="black"
-        textAnchor={textAnchor}
-        dominantBaseline="central"
-        fontSize={12}
-        fontWeight="bold"
-      >
-        {name}
-      </text>
+        <text
+            x={x}
+            y={y}
+            fill="white"
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={12}
+            fontWeight="bold"
+        >
+            {name}
+        </text>
     );
-  };
+};
 
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
@@ -288,7 +291,7 @@ export function TodaysPerformanceCard() {
             return false;
         }
     });
-
+    
     const ticketCategories = ['Small (1-9)', 'Medium (10-99)', 'Large (100-199)', 'High (200-999)', 'VIP (1k+)'];
     const ticketCounts: { [key: string]: Set<string> } = Object.fromEntries(ticketCategories.map(cat => [cat, new Set()]));
     
@@ -519,15 +522,15 @@ export function TodaysPerformanceCard() {
                                               }}
                                           />}
                                       />
+                                      <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2}>
+                                          <LabelList content={renderAmountLabel} dataKey="amount" />
+                                      </Line>
                                       <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
                                           {salesData.map((entry, index) => (
                                               <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
                                           ))}
                                           <LabelList dataKey="quantity" content={renderQuantityLabel} />
                                       </Bar>
-                                      <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2}>
-                                          <LabelList content={renderAmountLabel} dataKey="amount" />
-                                      </Line>
                                   </ComposedChart>
                               </ResponsiveContainer>
                           </ChartContainer>
@@ -549,16 +552,17 @@ export function TodaysPerformanceCard() {
                                         data={layoutChartData}
                                         dataKey="layoutCount"
                                         nameKey="name"
-                                        cx="58%"
+                                        cx="50%"
                                         cy="50%"
-                                        outerRadius={90}
+                                        outerRadius={120}
                                         labelLine={false}
-                                        label={(props) => renderPieNameOutside({ ...props })}
+                                        label={renderLayoutPieLabel}
                                       >
                                         {layoutChartData.map((entry, index) => (
                                           <Cell key={`cell-layout-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                       </Pie>
+                                      <Legend />
                                   </PieChart>
                               </ResponsiveContainer>
                           </ChartContainer>
@@ -592,7 +596,6 @@ export function TodaysPerformanceCard() {
                     title={ticket.category} 
                     count={ticket.customers} 
                     total={totalCustomers}
-                    color={ticketColors[ticket.category] || COLORS[index % COLORS.length]}
                 />
             ))}
           </div>
@@ -680,5 +683,3 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
-
-    
