@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -147,8 +148,8 @@ const ticketColors: Record<string, string> = {
 const TicketDoughnutCard = ({ title, count, total, color }: { title: string; count: number; total: number; color: string }) => {
     const percentage = total > 0 ? (count / total) * 100 : 0;
     const data = [
-        { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
-        { name: 'remaining', value: 100 - Math.max(0, Math.min(100, percentage)) },
+        { name: 'value', value: percentage },
+        { name: 'remaining', value: 100 - percentage },
     ];
     
     const chartColors = [color, '#e5e7eb'];
@@ -166,14 +167,39 @@ const TicketDoughnutCard = ({ title, count, total, color }: { title: string; cou
                     </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-xl font-bold">{percentage.toFixed(0)}%</span>
+                    <span className="text-xl font-bold">{count}</span>
                 </div>
             </div>
-            <p className="text-xs font-semibold text-center w-20 truncate">{title}</p>
-            <p className="text-sm font-bold">{count}</p>
+            <p className="text-xs font-semibold text-center">{title}</p>
+            <p className="text-sm font-bold">{percentage.toFixed(0)}%</p>
         </div>
     );
 };
+
+const renderPieNameOutside = (props: any) => {
+    const { cx, cy, midAngle, outerRadius, name } = props;
+    if (!name) return null;
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 20; // Adjust this value to position the label
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const textAnchor = x > cx ? 'start' : 'end';
+  
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="black"
+        textAnchor={textAnchor}
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {name}
+      </text>
+    );
+};
+
 
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
@@ -264,31 +290,8 @@ export function TodaysPerformanceCard() {
         }
     });
 
-    const salesByHour = filteredLeads.reduce((acc, lead) => {
-      const hour = new Date(lead.submissionDateTime).getHours();
-      if (!acc[hour]) {
-        acc[hour] = { customers: new Set(), quantity: 0, amount: 0 };
-      }
-      acc[hour].customers.add(lead.customerName);
-      const quantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      acc[hour].quantity += quantity;
-      
-      let amount = lead.grandTotal || 0;
-      if (lead.orderType === 'Item Sample' && lead.payments) {
-        const securityDeposit = lead.payments
-            .filter(p => p.type === 'securityDeposit')
-            .reduce((sum, p) => sum + p.amount, 0);
-        amount += securityDeposit;
-      }
-      acc[hour].amount += amount;
-
-      return acc;
-    }, {} as Record<number, { customers: Set<string>; quantity: number; amount: number }>);
-
-    const ticketCounts: { [key: string]: Set<string> } = {
-      'Small (1-9)': new Set(), 'Medium (10-99)': new Set(), 'Large (100-199)': new Set(),
-      'High (200-999)': new Set(), 'VIP (1k+)': new Set(),
-    };
+    const ticketCategories = ['Small (1-9)', 'Medium (10-99)', 'Large (100-199)', 'High (200-999)', 'VIP (1k+)'];
+    const ticketCounts: { [key: string]: Set<string> } = Object.fromEntries(ticketCategories.map(cat => [cat, new Set()]));
     
     const totalCust = new Set<string>();
     let totalQty = 0;
@@ -310,7 +313,28 @@ export function TodaysPerformanceCard() {
     const ticketDataArr = Object.entries(ticketCounts).map(([category, customers]) => ({
       category,
       customers: customers.size,
-    })).filter(item => item.customers > 0);
+    }));
+    
+    const salesByHour = filteredLeads.reduce((acc, lead) => {
+      const hour = new Date(lead.submissionDateTime).getHours();
+      if (!acc[hour]) {
+        acc[hour] = { customers: new Set(), quantity: 0, amount: 0 };
+      }
+      acc[hour].customers.add(lead.customerName);
+      const quantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      acc[hour].quantity += quantity;
+      
+      let amount = lead.grandTotal || 0;
+      if (lead.orderType === 'Item Sample' && lead.payments) {
+        const securityDeposit = lead.payments
+            .filter(p => p.type === 'securityDeposit')
+            .reduce((sum, p) => sum + p.amount, 0);
+        amount += securityDeposit;
+      }
+      acc[hour].amount += amount;
+
+      return acc;
+    }, {} as Record<number, { customers: Set<string>; quantity: number; amount: number }>);
 
     const historicalData: Record<string, number>[] = Array.from({ length: 24 }, () => ({}));
     const historicalDataKeys: string[] = [];
@@ -394,30 +418,6 @@ export function TodaysPerformanceCard() {
   }, [activeFilter, selectedDate]);
   
   const layoutChartData = useMemo(() => salesData.filter(d => d.layoutCount > 0), [salesData]);
-
-  const renderPieNameOutside = (props: any) => {
-    const { cx, cy, midAngle, outerRadius, name } = props;
-    const RADIAN = Math.PI / 180;
-    const radius = outerRadius + 20; // Adjust this value to position the label
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-    const textAnchor = x > cx ? 'start' : 'end';
-  
-    return (
-      <text
-        x={x}
-        y={y}
-        fill="black"
-        textAnchor={textAnchor}
-        dominantBaseline="central"
-        fontSize={12}
-        fontWeight="bold"
-      >
-        {name}
-      </text>
-    );
-  };
-
 
   if (isLoading || !isClient) {
       return (
@@ -586,7 +586,7 @@ export function TodaysPerformanceCard() {
             <p className="text-3xl font-bold">{totalCustomers}</p>
           </div>
           <Separator orientation="vertical" className="h-20 mx-4" />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-around flex-wrap gap-4">
             {ticketData.map((ticket, index) => (
                 <TicketDoughnutCard 
                     key={ticket.category} 
