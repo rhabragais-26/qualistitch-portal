@@ -50,7 +50,7 @@ const chartConfig = {
   },
   cpm: {
     label: 'CPM',
-    color: 'hsl(45, 90%, 55%)',
+    color: 'hsl(180, 80%, 40%)',
   },
 };
 
@@ -190,11 +190,11 @@ export default function AnalyticsPage() {
                   <YAxis yAxisId="right" orientation="right" stroke={chartConfig.cpm.color} tickFormatter={(value) => formatCurrency(value)} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
                   <Tooltip content={<ChartTooltipContent formatter={(value, name) => formatCurrency(value as number)} />} />
                   <Legend />
-                  <Bar dataKey="cpm" yAxisId="right" fill={chartConfig.cpm.color} name="CPM" radius={[4, 4, 0, 0]}>
+                  <Bar dataKey="cpm" yAxisId="right" fill="var(--color-cpm)" name="CPM" radius={[4, 4, 0, 0]}>
                     <LabelList
                       dataKey="cpm"
                       position="center"
-                      fill="#800000"
+                      fill="#004d4d"
                       formatter={(value: number) => value > 0 ? formatCurrency(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
                       fontSize={12}
                       fontWeight="bold"
