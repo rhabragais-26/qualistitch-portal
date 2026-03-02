@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -349,7 +350,7 @@ export function SalesSummaryCards() {
         
         return true;
       } catch (e) {
-        console.warn(`Invalid date format for lead`);
+        console.warn(`Invalid date format for lead '${'\'\''}${lead.id}'`, `'${'\'\''}${lead.submissionDateTime}'`);
         return false;
       }
     });
@@ -400,15 +401,19 @@ export function SalesSummaryCards() {
     const salesByRep = filteredLeads.reduce((acc, lead) => {
       const rep = lead.salesRepresentative;
       if (!acc[rep]) {
-        acc[rep] = { amount: 0 };
+        acc[rep] = { amount: 0, quantity: 0, layoutCount: 0 };
       }
       acc[rep].amount += lead.grandTotal || 0;
+      const orderQuantity = lead.orders?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
+      acc[rep].quantity += orderQuantity;
+      const layoutCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
+      acc[rep].layoutCount += layoutCount;
       return acc;
-    }, {} as { [key: string]: { amount: number } });
+    }, {} as { [key: string]: { amount: number; quantity: number; layoutCount: number } });
 
     return Object.entries(salesByRep)
       .map(([name, data]) => ({ name, ...data }))
-      .filter(rep => rep.amount > 0)
+      .filter(rep => rep.amount > 0 || rep.quantity > 0)
       .sort((a, b) => b.amount - a.amount);
   }, [filteredLeads]);
 
@@ -581,18 +586,18 @@ export function SalesSummaryCards() {
             </Card>
         </div>
         <div className="flex items-center justify-around bg-muted p-4 rounded-lg">
-            <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
-                <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
-            </div>
-            <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-                <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
-            </div>
-            <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
-                <p className="text-3xl font-bold">{totalUniqueCustomers}</p>
-            </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Total Quantity</p>
+            <p className="text-3xl font-bold">{totalItemsSold.toLocaleString()}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
+            <p className="text-3xl font-bold">{formatCurrency(totalSales)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
+            <p className="text-3xl font-bold">{totalUniqueCustomers}</p>
+          </div>
              <Separator orientation="vertical" className="h-20 mx-4" />
               <div className="flex items-center gap-4">
                 {ticketData.map((ticket, index) => (
@@ -619,7 +624,7 @@ export function SalesSummaryCards() {
                               <CartesianGrid vertical={false} />
                               <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                               <YAxis
-                                  tickFormatter={(value) => `₱${value / 1000}k`}
+                                  tickFormatter={(value) => `₱${'\'\'\''}${Number(value) / 1000}k`}
                               />
                               <Tooltip
                                   cursor={{ fill: 'hsl(var(--muted))' }}
@@ -629,7 +634,7 @@ export function SalesSummaryCards() {
                               />
                               <Bar dataKey="amount" name="Sales Amount" radius={[4, 4, 0, 0]}>
                                   {salesData.map((entry, index) => (
-                                      <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
+                                      <Cell key={`cell-amount-${'\'\'\''}${index}`} fill={COLORS[index % COLORS.length]} />
                                   ))}
                                   <LabelList dataKey="amount" content={renderAmountLabel} />
                               </Bar>
@@ -648,3 +653,5 @@ export function SalesSummaryCards() {
     </Card>
   );
 }
+
+    
