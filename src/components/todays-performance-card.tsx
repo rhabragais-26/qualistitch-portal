@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, BarChart, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Bar } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -170,7 +170,7 @@ const TicketDoughnutCard = ({ title, count, total, color }: { title: string; cou
                     <span className="text-xl font-bold">{count}</span>
                 </div>
             </div>
-            <p className="text-xs font-semibold text-center">{title}</p>
+            <p className="text-xs font-semibold text-center h-8 flex items-center">{title}</p>
             <p className="text-sm font-bold">{percentage.toFixed(0)}%</p>
         </div>
     );
@@ -180,7 +180,7 @@ const renderPieNameOutside = (props: any) => {
     const { cx, cy, midAngle, outerRadius, name } = props;
     if (!name) return null;
     const RADIAN = Math.PI / 180;
-    const radius = outerRadius + 20; // Adjust this value to position the label
+    const radius = outerRadius + 20; 
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     const textAnchor = x > cx ? 'start' : 'end';
@@ -198,8 +198,7 @@ const renderPieNameOutside = (props: any) => {
         {name}
       </text>
     );
-};
-
+  };
 
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
@@ -310,9 +309,9 @@ export function TodaysPerformanceCard() {
         else if (quantity >= 1000) ticketCounts['VIP (1k+)'].add(lead.customerName);
     });
 
-    const ticketDataArr = Object.entries(ticketCounts).map(([category, customers]) => ({
+    const ticketDataArr = ticketCategories.map(category => ({
       category,
-      customers: customers.size,
+      customers: ticketCounts[category].size,
     }));
     
     const salesByHour = filteredLeads.reduce((acc, lead) => {
@@ -681,3 +680,5 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
+
+    
