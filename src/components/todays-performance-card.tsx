@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from './ui/skeleton';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 import { formatCurrency, cn } from '@/lib/utils';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Bar } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -146,35 +146,35 @@ const ticketColors: Record<string, string> = {
 };
 
 const renderCustomizedLabelForPie = (props: any) => {
-  const { cx, cy, midAngle, outerRadius, fill, name, layoutCount, percent } = props;
-  if(percent === 0) return null;
-  const RADIAN = Math.PI / 180;
-  const sin = Math.sin(-RADIAN * midAngle);
-  const cos = Math.cos(-RADIAN * midAngle);
-  const sx = cx + outerRadius * cos;
-  const sy = cy + outerRadius * sin;
-  const mx = cx + (outerRadius + 10) * cos;
-  const my = cy + (outerRadius + 10) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
-  const ey = my;
-  const textAnchor = cos >= 0 ? 'start' : 'end';
-
-  const radiusForCount = outerRadius * 0.5;
-  const xCount = cx + radiusForCount * Math.cos(-midAngle * RADIAN);
-  const yCount = cy + radiusForCount * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <g>
-      <text x={xCount} y={yCount} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={14}>
-        {layoutCount}
-      </text>
-      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
-      <text x={ex + (cos >= 0 ? 3 : -3)} y={ey} textAnchor={textAnchor} fill={fill} fontWeight="bold" fontSize={12}>
-        {name}
-      </text>
-    </g>
-  );
-};
+    const { cx, cy, midAngle, outerRadius, fill, name, layoutCount, percent } = props;
+    if (percent === 0) return null;
+    const RADIAN = Math.PI / 180;
+    const sin = Math.sin(-RADIAN * midAngle);
+    const cos = Math.cos(-RADIAN * midAngle);
+    const sx = cx + outerRadius * cos;
+    const sy = cy + outerRadius * sin;
+    const mx = cx + (outerRadius + 10) * cos;
+    const my = cy + (outerRadius + 10) * sin;
+    const ex = mx + (cos >= 0 ? 1 : -1) * 12;
+    const ey = my;
+    const textAnchor = cos >= 0 ? 'start' : 'end';
+  
+    const radiusForCount = outerRadius * 0.5;
+    const xCount = cx + radiusForCount * Math.cos(-midAngle * RADIAN);
+    const yCount = cy + radiusForCount * Math.sin(-midAngle * RADIAN);
+  
+    return (
+      <g>
+        <text x={xCount} y={yCount} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={14}>
+          {layoutCount}
+        </text>
+        <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
+        <text x={ex + (cos >= 0 ? 3 : -3)} y={ey} textAnchor={textAnchor} fill={fill} fontWeight="bold" fontSize={12}>
+          {name}
+        </text>
+      </g>
+    );
+  };
 
 
 const DoughnutChartCard = ({ title, count, total }: { title: string; count: number; total: number }) => {
@@ -313,10 +313,10 @@ export function TodaysPerformanceCard() {
             totalCust.add(lead.customerName.toLowerCase());
         }
 
-        if (quantity >= 1 && quantity <= 9) ticketCounts['Small (1-9)'].add(lead.customerName);
-        else if (quantity >= 10 && quantity <= 99) ticketCounts['Medium (10-99)'].add(lead.customerName);
-        else if (quantity >= 100 && quantity <= 199) ticketCounts['Large (100-199)'].add(lead.customerName);
-        else if (quantity >= 200 && quantity <= 999) ticketCounts['High (200-999)'].add(lead.customerName);
+        if (quantity >= 1 && totalQty <= 9) ticketCounts['Small (1-9)'].add(lead.customerName);
+        else if (quantity >= 10 && totalQty <= 99) ticketCounts['Medium (10-99)'].add(lead.customerName);
+        else if (quantity >= 100 && totalQty <= 199) ticketCounts['Large (100-199)'].add(lead.customerName);
+        else if (quantity >= 200 && totalQty <= 999) ticketCounts['High (200-999)'].add(lead.customerName);
         else if (quantity >= 1000) ticketCounts['VIP (1k+)'].add(lead.customerName);
     });
     
@@ -585,7 +585,7 @@ export function TodaysPerformanceCard() {
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={0}
-                                        outerRadius={80}
+                                        outerRadius={90}
                                         labelLine={false}
                                         label={renderCustomizedLabelForPie}
                                       >
