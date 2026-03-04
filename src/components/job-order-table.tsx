@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -32,7 +33,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog"
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
@@ -43,6 +44,7 @@ import { startOfDay, endOfDay, subDays, getYear, getMonth, parse } from 'date-fn
 import { DateRange } from 'react-day-picker';
 import { z, ZodError } from 'zod';
 import { EditLeadFullDialog } from './edit-lead-full-dialog';
+import { FieldErrors } from 'react-hook-form';
 
 type Order = {
   productType: string;
@@ -164,7 +166,7 @@ const leadSchema = z.object({
   qualityApprovedBy: z.string().optional(),
   isPacked: z.boolean().optional(),
   packedTimestamp: z.string().optional(),
-  adjustedDeliveryDate: z.string().optional(),
+  adjustedDeliveryDate: z.string().optional().nullable(),
   deliveryDate: z.string().optional(),
   isCutting: z.boolean().optional(),
   isEmbroideryDone: z.boolean().optional(),
@@ -1233,15 +1235,15 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                           handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
                           handleDeleteLead={handleDeleteLead}
                           setOpenLeadId={setOpenLeadId}
-                          handlePrintedChange={()=>{}} // no-op
+                          handlePrintedChange={handlePrintedChange}
                           confirmingPrint={confirmingPrint}
                           setConfirmingPrint={setConfirmingPrint}
                           uncheckConsentConfirmation={uncheckConsentConfirmation}
                           setUncheckConsentConfirmation={setUncheckConsentConfirmation}
-                          handleConsentChange={()=>{}} // no-op
-                          confirmUncheckConsent={()=>{}} // no-op
-                          getJoStatus={() => null} // no-op
-                          getPrintingStatus={() => ({text: '', variant: 'secondary'})} // no-op
+                          handleConsentChange={handleConsentChange}
+                          confirmUncheckConsent={confirmUncheckConsent}
+                          getJoStatus={getJoStatus}
+                          getPrintingStatus={getPrintingStatus}
                           isCompleted={isCompleted}
                           openReferenceImages={openReferenceImages}
                           toggleReferenceImages={toggleReferenceImages}
