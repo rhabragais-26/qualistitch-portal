@@ -1,4 +1,3 @@
-
 'use client';
 
 import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -40,7 +39,7 @@ import { ScrollArea } from './ui/scroll-area';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
-import { startOfDay, endOfDay, subDays, getYear, getMonth } from 'date-fns';
+import { startOfDay, endOfDay, subDays, getYear, getMonth, parse } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
 type Order = {
@@ -136,7 +135,7 @@ type Lead = {
   postingConsentTimestamp?: string;
   isFinalApproval?: boolean;
   forceNewCustomer?: boolean;
-}
+};
 
 type EnrichedLead = Lead & {
   orderNumber: number;
@@ -293,7 +292,7 @@ const RecordsTableRow = React.memo(({
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="flex items-center gap-1.5 cursor-pointer">
+                              <div className="flex items-center gap-1.5 cursor-pointer mt-1">
                                 <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                 <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                   {lead.orderNumber}
@@ -450,7 +449,6 @@ const RecordsTableRow = React.memo(({
 });
 RecordsTableRow.displayName = 'RecordsTableRow';
 
-
 export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const [title, setTitle] = useState('Process Job Order');
   const firestore = useFirestore();
@@ -479,9 +477,11 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
 
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading, error, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const canEdit = !isReadOnly;
   const isCompleted = filterType === 'COMPLETED';
@@ -603,7 +603,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         isJoPrinted: checked,
         joPrintedTimestamp: checked ? new Date().toISOString() : null
       });
-      refetch();
+      refetchLeads();
     } catch (e: any) {
       console.error("Error updating printed status:", e);
       toast({
@@ -628,7 +628,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         isPostingConsentGranted: checked,
         postingConsentTimestamp: checked ? new Date().toISOString() : null
       });
-      refetch();
+      refetchLeads();
     } catch (e: any) {
       toast({
         variant: "destructive",
@@ -712,9 +712,9 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
 
     let leadsToFilter;
     if (filterType === 'COMPLETED') {
-      leadsToFilter = processedLeads.filter(lead => lead.shipmentStatus === 'Delivered');
+      leadsToFilter = processedLeads.filter(lead => lead.joNumber && lead.shipmentStatus === 'Delivered');
     } else { // ONGOING
-      leadsToFilter = processedLeads.filter(lead => lead.shipmentStatus !== 'Delivered');
+      leadsToFilter = processedLeads.filter(lead => lead.joNumber && lead.shipmentStatus !== 'Delivered');
     }
 
     return leadsToFilter.filter(lead => {
@@ -732,7 +732,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
       const matchesJo = joNumberSearch ? 
         (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
         : true;
-
+      
       let dateMatches = true;
       if (dateRange?.from) {
           const submissionDate = new Date(lead.submissionDateTime);
@@ -748,11 +748,15 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         const matchesMonth = selectedMonth === 'all' || (getMonth(submissionDate) + 1) === month;
         dateMatches = matchesYear && matchesMonth;
       }
-            
+      
       return matchesSearch && matchesCsr && matchesJo && dateMatches;
     });
   }, [processedLeads, searchTerm, csrFilter, joNumberSearch, filterType, selectedYear, selectedMonth, dateRange, formatJoNumberUtil]);
 
+  const handleOpenEditLeadDialog = useCallback((lead: Lead & EnrichedLead) => {
+    setEditingLead(lead);
+    setIsEditDialogOpen(true);
+  }, []);
   
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -883,7 +887,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
             description: 'The reference images have been saved.',
         });
         setUploadLead(null);
-        refetch();
+        refetchLeads();
     } catch (e: any) {
         console.error("Error saving images: ", e);
         toast({
@@ -892,7 +896,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
             description: e.message || "Could not save the images.",
         });
     }
-  }, [uploadLead, firestore, userProfile, toast, refetch, refLogoLeftImages, refLogoRightImages, refBackLogoImages, refBackDesignImages]);
+  }, [uploadLead, firestore, userProfile, toast, refetchLeads, refLogoLeftImages, refLogoRightImages, refBackLogoImages, refBackDesignImages]);
   
   const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     if (!canEdit) return;
@@ -924,7 +928,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                         "focus:outline-none focus:border-solid focus:border-teal-500 select-none"
                     )}
                     onClick={() => image && setImageInView(image)}
-                    onDoubleClick={() => canEdit && !image && document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
+                    onDoubleClick={() => canEdit && !image && document.getElementById(`file-input-${label}-${index}`)?.click()}
                     onPaste={(e) => canEdit && handleImagePaste(e, setter, index)}
                     onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                   >
@@ -944,7 +948,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                             </Button>
                         )}
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{canEdit ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
+                      <input id={`file-input-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
                   </div>
                   {canEdit && displayImages.length > 1 && (
                       <Button
@@ -962,6 +966,11 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     );
   };
 
+  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    e.stopPropagation();
+    setter(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleDeleteLead = useCallback(async (leadId: string) => {
     if(!leadId || !firestore) return;
 
@@ -973,7 +982,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         title: "Lead Deleted!",
         description: "The lead has been removed from the records.",
       });
-      refetch();
+      refetchLeads();
     } catch (e: any) {
       console.error("Error deleting lead: ", e);
       toast({
@@ -982,7 +991,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         description: e.message || "Could not delete the lead.",
       });
     }
-  }, [firestore, toast, refetch]);
+  }, [firestore, toast, refetchLeads]);
 
   if (isLoading) {
     return (
@@ -1081,48 +1090,67 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
               </CardDescription>
             </div>
             <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-4">
-                    <Select value={csrFilter} onValueChange={setCsrFilter}>
-                        <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                        <SelectValue placeholder="Filter by SCES" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        <SelectItem value="All">All SCES</SelectItem>
-                        {salesRepresentatives.map(csr => (
-                            <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <Input
-                        placeholder="Search by J.O. No..."
-                        value={joNumberSearch}
-                        onChange={(e) => setJoNumberSearch(e.target.value)}
-                        className="bg-gray-100 text-black placeholder:text-gray-500"
-                    />
-                    <Input
+                <div className="flex items-center gap-2">
+                  <div className='flex items-center gap-2'>
+                      <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
+                      <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
+                      <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
+                  </div>
+                  <Select value={csrFilter} onValueChange={setCsrFilter}>
+                      <SelectTrigger className="w-[180px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                      <SelectValue placeholder="Filter by SCES" />
+                      </SelectTrigger>
+                      <SelectContent>
+                      <SelectItem value="All">All SCES</SelectItem>
+                      {salesRepresentatives.map(csr => (
+                          <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                      ))}
+                      </SelectContent>
+                  </Select>
+                  <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
+                    <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                      <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Years</SelectItem>
+                      {availableYears.map(year => (
+                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
+                    <SelectTrigger className="w-[140px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {months.map(month => (
+                        <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                      placeholder="Search by J.O. No..."
+                      value={joNumberSearch}
+                      onChange={(e) => setJoNumberSearch(e.target.value)}
+                      className="bg-gray-100 text-black placeholder:text-gray-500 w-48 h-9"
+                  />
+                  <Input
                     placeholder="Search by customer, company, or contact..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500"
-                    />
+                    className="bg-gray-100 text-black placeholder:text-gray-500 w-56 h-9"
+                  />
                 </div>
-                 <div className="w-full flex justify-between items-center mt-2">
-                    <div className="flex items-center gap-2">
-                        <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
-                        <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
-                        <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
-                    </div>
-                    <div className="w-full text-right">
-                        {filterType === 'COMPLETED' ? (
-                            <Link href="/job-order" className="text-sm text-primary hover:underline">
-                            View Ongoing Job Orders
-                            </Link>
-                        ) : (
-                            <Link href="/job-order/completed" className="text-sm text-primary hover:underline">
-                            View Completed Job Orders
-                            </Link>
-                        )}
-                    </div>
+                 <div className="w-full text-right">
+                  {filterType === 'COMPLETED' ? (
+                      <Link href="/job-order" className="text-sm text-primary hover:underline">
+                          View Ongoing Job Orders
+                      </Link>
+                  ) : (
+                      <Link href="/job-order/completed" className="text-sm text-primary hover:underline">
+                          View Completed Job Orders
+                      </Link>
+                  )}
                 </div>
             </div>
         </div>
@@ -1187,6 +1215,14 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
             </Table>
           </div>
       </CardContent>
+      {editingLead && (
+        <EditLeadFullDialog
+          isOpen={isEditDialogOpen}
+          onClose={() => { setEditingLead(null); setIsEditDialogOpen(false); }}
+          lead={editingLead}
+          onUpdate={refetchLeads}
+        />
+      )}
     </Card>
     </>
   );
