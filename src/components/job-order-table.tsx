@@ -297,7 +297,7 @@ const RecordsTableRow = React.memo(({
                             <div className="flex items-center gap-1.5 cursor-pointer">
                                 <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                 <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                {lead.orderNumber + 1}
+                                {lead.orderNumber}
                                 </span>
                             </div>
                             </TooltipTrigger>
@@ -1063,24 +1063,20 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                         ))}
                         </SelectContent>
                     </Select>
-                    <div className="w-full max-w-xs">
-                        <Input
-                            placeholder="Search by J.O. No..."
-                            value={joNumberSearch}
-                            onChange={(e) => setJoNumberSearch(e.target.value)}
-                            className="bg-gray-100 text-black placeholder:text-gray-500"
-                        />
-                    </div>
-                    <div className="w-full max-w-sm">
-                        <Input
-                        placeholder="Search by customer, company, or contact..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                    <Input
+                        placeholder="Search by J.O. No..."
+                        value={joNumberSearch}
+                        onChange={(e) => setJoNumberSearch(e.target.value)}
                         className="bg-gray-100 text-black placeholder:text-gray-500"
-                        />
-                    </div>
+                    />
+                    <Input
+                    placeholder="Search by customer, company, or contact..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
                 </div>
-                 <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                     <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
                     <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
                     <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
@@ -1163,4 +1159,3 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     </>
   );
 }
-```
