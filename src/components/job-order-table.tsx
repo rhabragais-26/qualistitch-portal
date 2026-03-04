@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -318,7 +317,7 @@ const RecordsTableRow = React.memo(({
                     </div>
                 </div>
                 </TableCell>
-                <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.salesRepresentative}</TableCell>
+                <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
                 <TableCell className="align-middle py-2 text-center">
                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                     {lead.priorityType}
@@ -620,6 +619,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   
     const customerOrderGroups: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
+    // Group all orders by customer
     leads.forEach(lead => {
       if (!Array.isArray(lead.orders)) {
           return; 
@@ -663,27 +663,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   
     return enrichedLeads.sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
   }, [leads]);
-
-  const handleQuickFilter = (filter: 'today' | 'yesterday') => {
-    const targetDate = filter === 'today' ? new Date() : subDays(new Date(), 1);
-    const newRange = { from: startOfDay(targetDate), to: endOfDay(targetDate) };
-  
-    if (activeQuickFilter === filter) {
-        setActiveQuickFilter(null);
-        setDateRange(undefined);
-    } else {
-        setActiveQuickFilter(filter);
-        setDateRange(newRange);
-    }
-  };
-
-  const handleResetFilters = () => {
-      setSearchTerm('');
-      setJoNumberSearch('');
-      setCsrFilter('All');
-      setDateRange(undefined);
-      setActiveQuickFilter(null);
-  };
   
   const filteredLeads = useMemo(() => {
     if (!processedLeads) return [];
@@ -1076,11 +1055,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                     className="bg-gray-100 text-black placeholder:text-gray-500"
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
-                    <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
-                    <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
-                </div>
                 <div className="w-full text-right">
                   {filterType === 'COMPLETED' ? (
                     <Link href="/job-order" className="text-sm text-primary hover:underline">
@@ -1159,3 +1133,5 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     </>
   );
 }
+
+    
