@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -179,8 +180,7 @@ const RecordsTableRow = React.memo(({
     filterType,
     getContactDisplay,
     toggleCustomerDetails,
-    handleProcessJobOrder,
-    handleOpenUploadDialog,
+    handleOpenEditLeadDialog,
     handleDeleteLead,
     setOpenLeadId,
     handlePrintedChange,
@@ -206,8 +206,7 @@ const RecordsTableRow = React.memo(({
     filterType?: 'ONGOING' | 'COMPLETED';
     getContactDisplay: (lead: Lead) => string | null;
     toggleCustomerDetails: (id: string) => void;
-    handleProcessJobOrder: (lead: Lead) => void;
-    handleOpenUploadDialog: (lead: Lead) => void;
+    handleOpenEditLeadDialog: (lead: Lead) => void;
     handleDeleteLead: (id: string) => void;
     setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
     handlePrintedChange: (leadId: string, checked: boolean) => void;
@@ -454,10 +453,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const firestore = useFirestore();
   const { userProfile, isAdmin } = useUser();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [joNumberSearch, setJoNumberSearch] = React.useState('');
-  const [csrFilter, setCsrFilter] = React.useState('All');
-  const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
   const [confirmingPrint, setConfirmingPrint] = useState<Lead | null>(null);
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
@@ -475,41 +470,50 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
 
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  const [selectedYear, setSelectedYear] = useState<string>(() => filterType === 'COMPLETED' ? 'all' : new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => filterType === 'COMPLETED' ? 'all' : (new Date().getMonth() + 1).toString());
   const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [joNumberSearch, setJoNumberSearch] = React.useState('');
+  const [csrFilter, setCsrFilter] = React.useState('All');
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  
+  const handleOpenEditLeadDialog = useCallback((lead: Lead) => {
+    setEditingLead(lead as Lead & EnrichedLead);
+    setIsEditDialogOpen(true);
+  }, []);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading, error, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
+
+  const canDelete = isAdmin || userProfile?.nickname === editingLead?.salesRepresentative;
   
-  const canEdit = !isReadOnly;
-  const isCompleted = filterType === 'COMPLETED';
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setCsrFilter('All');
+    setJoNumberSearch('');
+    setSelectedYear(filterType === 'COMPLETED' ? 'all' : new Date().getFullYear().toString());
+    setSelectedMonth(filterType === 'COMPLETED' ? 'all' : (new Date().getMonth() + 1).toString());
+    setDateRange(undefined);
+    setActiveQuickFilter(null);
+  };
+  
+  const handleQuickFilter = (filter: 'today' | 'yesterday') => {
+    const targetDate = filter === 'today' ? new Date() : subDays(new Date(), 1);
+    const newRange = { from: startOfDay(targetDate), to: endOfDay(targetDate) };
 
-    const handleQuickFilter = (filter: 'today' | 'yesterday') => {
-        const targetDate = filter === 'today' ? new Date() : subDays(new Date(), 1);
-        const newRange = { from: startOfDay(targetDate), to: endOfDay(targetDate) };
-
-        if (activeQuickFilter === filter) {
-            setActiveQuickFilter(null);
-            setDateRange(undefined);
-        } else {
-            setActiveQuickFilter(filter);
-            setDateRange(newRange);
-            setSelectedYear('all');
-            setSelectedMonth('all');
-        }
-    };
-
-    const handleResetFilters = () => {
-        setSearchTerm('');
-        setCsrFilter('All');
-        setJoNumberSearch('');
-        setSelectedYear(new Date().getFullYear().toString());
-        setSelectedMonth((new Date().getMonth() + 1).toString());
-        setDateRange(undefined);
+    if (activeQuickFilter === filter) {
         setActiveQuickFilter(null);
-    };
+        setDateRange(undefined);
+    } else {
+        setActiveQuickFilter(filter);
+        setDateRange(newRange);
+        setSelectedYear('all');
+        setSelectedMonth('all');
+    }
+  };
   
   useEffect(() => {
     if (filterType === 'COMPLETED') {
@@ -752,11 +756,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
       return matchesSearch && matchesCsr && matchesJo && dateMatches;
     });
   }, [processedLeads, searchTerm, csrFilter, joNumberSearch, filterType, selectedYear, selectedMonth, dateRange, formatJoNumberUtil]);
-
-  const handleOpenEditLeadDialog = useCallback((lead: Lead & EnrichedLead) => {
-    setEditingLead(lead);
-    setIsEditDialogOpen(true);
-  }, []);
   
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -966,10 +965,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     );
   };
 
-  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    e.stopPropagation();
-    setter(prev => prev.filter((_, i) => i !== index));
-  };
 
   const handleDeleteLead = useCallback(async (leadId: string) => {
     if(!leadId || !firestore) return;
@@ -1081,8 +1076,8 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
           </div>
         </div>
       )}
-      <CardHeader>
-        <div className="flex justify-between items-center">
+      <CardHeader className="pb-4">
+        <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-black">{title}</CardTitle>
               <CardDescription className="text-gray-600">
@@ -1155,64 +1150,65 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-auto">
-           <div className="border rounded-md h-full">
-            <Table>
-              <TableHeader className="bg-neutral-800 sticky top-0 z-10">
-                <TableRow>
-                  <TableHead className="text-white font-bold align-middle text-center">Order Created</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Customer Name</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">SCES</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
-                  <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Uploaded Layout</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Printing Status</TableHead>
-                  <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
-                  <TableHead className="text-center text-white font-bold align-middle w-[150px]">Posting Consent from Client</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
-                   {filterType === 'COMPLETED' && <TableHead className="text-white font-bold align-middle text-center">Date Completed</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayedLeads.map((lead) => {
-                  const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
-                  
-                  return (
-                    <RecordsTableRow
-                        key={lead.id}
-                        lead={lead}
-                        openLeadId={hoveredLeadId}
-                        openCustomerDetails={openCustomerDetails}
-                        isRepeat={!lead.forceNewCustomer && lead.orderNumber > 0}
-                        isReadOnly={isReadOnly}
-                        canDelete={canDelete}
-                        filterType={filterType}
-                        getContactDisplay={getContactDisplay}
-                        toggleCustomerDetails={toggleCustomerDetails}
-                        handleProcessJobOrder={handleProcessJobOrder}
-                        handleOpenUploadDialog={handleOpenUploadDialog}
-                        handleDeleteLead={handleDeleteLead}
-                        setOpenLeadId={setHoveredLeadId}
-                        handlePrintedChange={handlePrintedChange}
-                        confirmingPrint={confirmingPrint}
-                        setConfirmingPrint={setConfirmingPrint}
-                        uncheckConsentConfirmation={uncheckConsentConfirmation}
-                        setUncheckConsentConfirmation={setUncheckConsentConfirmation}
-                        handleConsentChange={handleConsentChange}
-                        confirmUncheckConsent={confirmUncheckConsent}
-                        getJoStatus={getJoStatus}
-                        getPrintingStatus={getPrintingStatus}
-                        isCompleted={isCompleted}
-                        openReferenceImages={openReferenceImages}
-                        toggleReferenceImages={toggleReferenceImages}
-                        setImageInView={setImageInView}
-                    />
-                  );
-                })}
-              </TableBody>
-            </Table>
+      <CardContent className="flex-1 overflow-y-auto">
+          <div className="border rounded-md relative h-full">
+            <ScrollArea className="h-full">
+              <Table>
+                  <TableHeader className="bg-neutral-800 sticky top-0 z-10">
+                    <TableRow>
+                      <TableHead className="text-white font-bold align-middle text-center">Order Created</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Customer Name</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">SCES</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
+                      <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Uploaded Layout</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Printing Status</TableHead>
+                      <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
+                      <TableHead className="text-center text-white font-bold align-middle w-[150px]">Posting Consent from Client</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
+                      {filterType === 'COMPLETED' && <TableHead className="text-white font-bold align-middle text-center">Date Completed</TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                  {displayedLeads.map((lead) => {
+                    const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
+                    
+                    return (
+                      <RecordsTableRow
+                          key={lead.id}
+                          lead={lead}
+                          openLeadId={openLeadId}
+                          openCustomerDetails={openCustomerDetails}
+                          isRepeat={!lead.forceNewCustomer && lead.orderNumber > 0}
+                          isReadOnly={isReadOnly}
+                          canDelete={canDelete}
+                          filterType={filterType}
+                          getContactDisplay={getContactDisplay}
+                          toggleCustomerDetails={toggleCustomerDetails}
+                          handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
+                          handleDeleteLead={handleDeleteLead}
+                          setOpenLeadId={setOpenLeadId}
+                          handlePrintedChange={handlePrintedChange}
+                          confirmingPrint={confirmingPrint}
+                          setConfirmingPrint={setConfirmingPrint}
+                          uncheckConsentConfirmation={uncheckConsentConfirmation}
+                          setUncheckConsentConfirmation={setUncheckConsentConfirmation}
+                          handleConsentChange={handleConsentChange}
+                          confirmUncheckConsent={confirmUncheckConsent}
+                          getJoStatus={getJoStatus}
+                          getPrintingStatus={getPrintingStatus}
+                          isCompleted={isCompleted}
+                          openReferenceImages={openReferenceImages}
+                          toggleReferenceImages={toggleReferenceImages}
+                          setImageInView={setImageInView}
+                      />
+                    );
+                  })}
+                  </TableBody>
+              </Table>
+            </ScrollArea>
           </div>
       </CardContent>
       {editingLead && (
