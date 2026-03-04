@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -130,7 +131,7 @@ const leadSchema = z.object({
   orders: z.array(z.any()),
   submissionDateTime: z.string(),
   lastModified: z.string(),
-  lastModifiedBy: z.string().optional(),
+  lastModifiedBy: z.string().nullable().optional(),
   grandTotal: z.number().optional(),
   paidAmount: z.number().optional(),
   paymentType: z.string().optional(),
@@ -143,31 +144,31 @@ const leadSchema = z.object({
   layouts: z.array(z.any()).optional(),
   joNumber: z.number().optional(),
   shipmentStatus: z.string().optional(),
-  shippedTimestamp: z.string().optional(),
+  shippedTimestamp: z.string().nullable().optional(),
   isJoPrinted: z.boolean().optional(),
-  joPrintedTimestamp: z.string().optional(),
+  joPrintedTimestamp: z.string().nullable().optional(),
   isUnderProgramming: z.boolean().optional(),
   isPreparedForProduction: z.boolean().optional(),
   isSentToProduction: z.boolean().optional(),
   isEndorsedToLogistics: z.boolean().optional(),
   isRecheckingQuality: z.boolean().optional(),
   isPostingConsentGranted: z.boolean().optional(),
-  postingConsentTimestamp: z.string().optional(),
+  postingConsentTimestamp: z.string().nullable().optional(),
   isFinalApproval: z.boolean().optional(),
   forceNewCustomer: z.boolean().optional(),
   isSalesAuditRequested: z.boolean().optional(),
-  salesAuditRequestedTimestamp: z.string().optional(),
+  salesAuditRequestedTimestamp: z.string().nullable().optional(),
   isSalesAuditComplete: z.boolean().optional(),
-  salesAuditCompleteTimestamp: z.string().optional(),
+  salesAuditCompleteTimestamp: z.string().nullable().optional(),
   isWaybillPrinted: z.boolean().optional(),
   waybillNumbers: z.array(z.string()).optional(),
   isQualityApproved: z.boolean().optional(),
-  qualityApprovedTimestamp: z.string().optional(),
-  qualityApprovedBy: z.string().optional(),
+  qualityApprovedTimestamp: z.string().nullable().optional(),
+  qualityApprovedBy: z.string().nullable().optional(),
   isPacked: z.boolean().optional(),
-  packedTimestamp: z.string().optional(),
+  packedTimestamp: z.string().nullable().optional(),
   adjustedDeliveryDate: z.string().optional().nullable(),
-  deliveryDate: z.string().optional(),
+  deliveryDate: z.string().nullable().optional(),
   isCutting: z.boolean().optional(),
   isEmbroideryDone: z.boolean().optional(),
   isSewing: z.boolean().optional(),
@@ -175,7 +176,7 @@ const leadSchema = z.object({
   isDone: z.boolean().optional(),
   finalApprovalTimestamp: z.string().nullable().optional(),
   isJoHardcopyReceived: z.boolean().optional(),
-  joHardcopyReceivedTimestamp: z.string().optional(),
+  joHardcopyReceivedTimestamp: z.string().nullable().optional(),
   isDigitizingArchived: z.boolean().optional(),
   scesFullName: z.string().optional(),
   recipientName: z.string().optional(),
@@ -183,28 +184,28 @@ const leadSchema = z.object({
   isLogoTesting: z.boolean().optional(),
   isRevision: z.boolean().optional(),
   isFinalProgram: z.boolean().optional(),
-  underProgrammingTimestamp: z.string().optional().nullable(),
-  initialApprovalTimestamp: z.string().optional().nullable(),
-  logoTestingTimestamp: z.string().optional().nullable(),
-  revisionTimestamp: z.string().optional().nullable(),
-  finalProgramTimestamp: z.string().optional().nullable(),
-  digitizingArchivedTimestamp: z.string().optional().nullable(),
-  sentToProductionTimestamp: z.string().optional().nullable(),
-  cuttingTimestamp: z.string().optional().nullable(),
-  sewingTimestamp: z.string().optional().nullable(),
-  trimmingTimestamp: z.string().optional().nullable(),
-  doneProductionTimestamp: z.string().optional().nullable(),
-  endorsedToLogisticsTimestamp: z.string().optional().nullable(),
-  endorsedToLogisticsBy: z.string().optional(),
-  deliveredTimestamp: z.string().optional().nullable(),
-  embroideryDoneTimestamp: z.string().optional().nullable(),
+  underProgrammingTimestamp: z.string().nullable().optional(),
+  initialApprovalTimestamp: z.string().nullable().optional(),
+  logoTestingTimestamp: z.string().nullable().optional(),
+  revisionTimestamp: z.string().nullable().optional(),
+  finalProgramTimestamp: z.string().nullable().optional(),
+  digitizingArchivedTimestamp: z.string().nullable().optional(),
+  sentToProductionTimestamp: z.string().nullable().optional(),
+  cuttingTimestamp: z.string().nullable().optional(),
+  sewingTimestamp: z.string().nullable().optional(),
+  trimmingTimestamp: z.string().nullable().optional(),
+  doneProductionTimestamp: z.string().nullable().optional(),
+  endorsedToLogisticsTimestamp: z.string().nullable().optional(),
+  endorsedToLogisticsBy: z.string().nullable().optional(),
+  deliveredTimestamp: z.string().nullable().optional(),
+  embroideryDoneTimestamp: z.string().nullable().optional(),
   editedUnitPrices: z.record(z.number()).optional(),
   editedAddOnPrices: z.record(z.number()).optional(),
   editedProgrammingFees: z.record(z.object({ logoFee: z.number().optional(), backTextFee: z.number().optional() })).optional(),
   productionType: z.string().optional(),
   sewerType: z.string().optional(),
   publiclyPrintable: z.boolean().optional(),
-  photoshootDate: z.string().optional(),
+  photoshootDate: z.string().nullable().optional(),
 });
 type Lead = z.infer<typeof leadSchema>;
 
@@ -485,7 +486,7 @@ const RecordsTableRow = React.memo(({
                     </TableCell>
                 )}
             </TableRow>
-             {isCompleted && openReferenceImages === lead.id && (
+             {openReferenceImages === lead.id && (
                 <TableRow>
                     <TableCell colSpan={13}>
                         <div className="p-4 bg-gray-50 rounded-md my-2">
@@ -500,11 +501,12 @@ const RecordsTableRow = React.memo(({
 RecordsTableRow.displayName = 'RecordsTableRow';
 
 export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
-  const [title, setTitle] = useState('Process Job Order');
   const firestore = useFirestore();
   const { userProfile, isAdmin } = useUser();
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
+
   const [confirmingPrint, setConfirmingPrint] = useState<Lead | null>(null);
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   const [imageInView, setImageInView] = useState<string | null>(null);
@@ -521,15 +523,16 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
 
-  const [selectedYear, setSelectedYear] = useState<string>(() => filterType === 'COMPLETED' ? 'all' : new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => filterType === 'COMPLETED' ? 'all' : (new Date().getMonth() + 1).toString());
+  const defaultYear = filterType === 'COMPLETED' ? 'all' : new Date().getFullYear().toString();
+  const defaultMonth = filterType === 'COMPLETED' ? 'all' : (new Date().getMonth() + 1).toString();
+  const [selectedYear, setSelectedYear] = useState<string>(defaultYear);
+  const [selectedMonth, setSelectedMonth] = useState<string>(defaultMonth);
   const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const [searchTerm, setSearchTerm] = React.useState('');
   const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
-  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   
   const handleOpenEditLeadDialog = useCallback((lead: Lead) => {
     setEditingLead(lead as Lead & EnrichedLead);
@@ -545,8 +548,8 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     setSearchTerm('');
     setCsrFilter('All');
     setJoNumberSearch('');
-    setSelectedYear(filterType === 'COMPLETED' ? 'all' : new Date().getFullYear().toString());
-    setSelectedMonth(filterType === 'COMPLETED' ? 'all' : (new Date().getMonth() + 1).toString());
+    setSelectedYear(defaultYear);
+    setSelectedMonth(defaultMonth);
     setDateRange(undefined);
     setActiveQuickFilter(null);
   };
@@ -565,14 +568,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         setSelectedMonth('all');
     }
   };
-  
-  useEffect(() => {
-    if (filterType === 'COMPLETED') {
-        setTitle('Completed Job Orders');
-    } else {
-        setTitle('Process Job Order');
-    }
-  }, [filterType]);
   
 
   const salesRepresentatives = useMemo(() => {
@@ -803,7 +798,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
       
       return matchesSearch && matchesCsr && matchesJo && dateMatches;
     });
-  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, filterType, selectedYear, selectedMonth, dateRange, formatJoNumberUtil]);
+  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, dateRange, filterType, getOverallStatus]);
   
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -1034,7 +1029,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
       });
     }
   }, [firestore, toast, refetchLeads]);
-
+  
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
@@ -1048,10 +1043,10 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   if (error) {
     return <div className="text-red-500 p-4">Error loading records: {error.message}</div>;
   }
-  
+
   return (
     <>
-      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
        <AlertDialog open={!!confirmingPrint} onOpenChange={(open) => !open && setConfirmingPrint(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1126,9 +1121,9 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-black">{title}</CardTitle>
+              <CardTitle className="text-black">{isReadOnly ? 'Completed Job Orders' : 'Process Job Order'}</CardTitle>
               <CardDescription className="text-gray-600">
-                {filterType === 'COMPLETED' ? 'A list of all customer orders that have been completed.' : 'Leads that have not yet been processed into Job Orders.'}
+                {isReadOnly ? 'A list of all customer orders that have been completed.' : 'Leads that have not yet been processed into Job Orders.'}
               </CardDescription>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -1196,66 +1191,64 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
-          <div className="border rounded-md relative h-full">
-            <ScrollArea className="h-full">
-              <Table>
-                  <TableHeader className="bg-neutral-800 sticky top-0 z-10">
-                    <TableRow>
-                      <TableHead className="text-white font-bold align-middle text-center">Order Created</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Customer Name</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">SCES</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
-                      <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Uploaded Layout</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Printing Status</TableHead>
-                      <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
-                      <TableHead className="text-center text-white font-bold align-middle w-[150px]">Posting Consent from Client</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
-                      {filterType === 'COMPLETED' && <TableHead className="text-white font-bold align-middle text-center">Date Completed</TableHead>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                  {displayedLeads.map((lead) => {
-                    const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
-                    
-                    return (
-                      <RecordsTableRow
-                          key={lead.id}
-                          lead={lead}
-                          openLeadId={openLeadId}
-                          openCustomerDetails={openCustomerDetails}
-                          isRepeat={!lead.forceNewCustomer && lead.orderNumber > 0}
-                          isReadOnly={isReadOnly}
-                          canDelete={!!canDelete}
-                          filterType={filterType}
-                          getContactDisplay={getContactDisplay}
-                          toggleCustomerDetails={toggleCustomerDetails}
-                          handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
-                          handleDeleteLead={handleDeleteLead}
-                          setOpenLeadId={setOpenLeadId}
-                          handlePrintedChange={handlePrintedChange}
-                          confirmingPrint={confirmingPrint}
-                          setConfirmingPrint={setConfirmingPrint}
-                          uncheckConsentConfirmation={uncheckConsentConfirmation}
-                          setUncheckConsentConfirmation={setUncheckConsentConfirmation}
-                          handleConsentChange={handleConsentChange}
-                          confirmUncheckConsent={confirmUncheckConsent}
-                          getJoStatus={getJoStatus}
-                          getPrintingStatus={getPrintingStatus}
-                          isCompleted={isCompleted}
-                          openReferenceImages={openReferenceImages}
-                          toggleReferenceImages={toggleReferenceImages}
-                          setImageInView={setImageInView}
-                          handleProcessJobOrder={handleProcessJobOrder}
-                          handleOpenUploadDialog={handleOpenUploadDialog}
-                      />
-                    );
-                  })}
-                  </TableBody>
-              </Table>
-            </ScrollArea>
+          <div className="border rounded-md relative">
+            <Table>
+                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
+                  <TableRow>
+                    <TableHead className="text-white font-bold align-middle text-center">Order Created</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Customer Name</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">SCES</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Uploaded Layout</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Printing Status</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Posting Consent from Client</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
+                    {filterType === 'COMPLETED' && <TableHead className="text-white font-bold align-middle text-center">Date Completed</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                {displayedLeads.map((lead) => {
+                  const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
+                  
+                  return (
+                    <RecordsTableRow
+                        key={lead.id}
+                        lead={lead}
+                        openLeadId={openLeadId}
+                        openCustomerDetails={openCustomerDetails}
+                        isRepeat={!lead.forceNewCustomer && lead.orderNumber > 0}
+                        isReadOnly={isReadOnly}
+                        canDelete={canDelete}
+                        filterType={filterType}
+                        getContactDisplay={getContactDisplay}
+                        toggleCustomerDetails={toggleCustomerDetails}
+                        handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
+                        handleDeleteLead={handleDeleteLead}
+                        setOpenLeadId={setOpenLeadId}
+                        handlePrintedChange={handlePrintedChange}
+                        confirmingPrint={confirmingPrint}
+                        setConfirmingPrint={setConfirmingPrint}
+                        uncheckConsentConfirmation={uncheckConsentConfirmation}
+                        setUncheckConsentConfirmation={setUncheckConsentConfirmation}
+                        handleConsentChange={handleConsentChange}
+                        confirmUncheckConsent={confirmUncheckConsent}
+                        getJoStatus={getJoStatus}
+                        getPrintingStatus={getPrintingStatus}
+                        isCompleted={isCompleted}
+                        openReferenceImages={openReferenceImages}
+                        toggleReferenceImages={toggleReferenceImages}
+                        setImageInView={setImageInView}
+                        handleProcessJobOrder={handleProcessJobOrder}
+                        handleOpenUploadDialog={handleOpenUploadDialog}
+                    />
+                  );
+                })}
+                </TableBody>
+            </Table>
           </div>
       </CardContent>
       {editingLead && (
@@ -1270,3 +1263,4 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     </>
   );
 }
+```
