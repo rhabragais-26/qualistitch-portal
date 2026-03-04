@@ -329,8 +329,8 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
             </div>
              <div className="space-y-1">
                 <p className="font-bold italic">Noted by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
-                <p className="text-center font-bold">Sales Head</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">Dorotio Betito</p>
+                <p className="text-center font-bold">Sales Manager</p>
                 <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
 

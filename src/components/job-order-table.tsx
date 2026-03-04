@@ -41,6 +41,8 @@ import { ScrollArea } from './ui/scroll-area';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { startOfDay, endOfDay, subDays } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
 type Order = {
   productType: string;
@@ -451,6 +453,7 @@ RecordsTableRow.displayName = 'RecordsTableRow';
 
 
 export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
+  const [title, setTitle] = useState('Process Job Order');
   const firestore = useFirestore();
   const { userProfile, isAdmin } = useUser();
   const { toast } = useToast();
@@ -472,12 +475,23 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [openReferenceImages, setOpenReferenceImages] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const canEdit = !isReadOnly;
   const isCompleted = filterType === 'COMPLETED';
+  
+  useEffect(() => {
+    if (filterType === 'COMPLETED') {
+        setTitle('Completed Job Orders');
+    } else {
+        setTitle('Process Job Order');
+    }
+  }, [filterType]);
+  
 
   const salesRepresentatives = useMemo(() => {
     if (!leads) return [];
@@ -601,23 +615,12 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     }
   };
   
-  const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
-    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
-        return { text: 'COMPLETED', variant: 'success' };
-    }
-    if (!lead.joNumber) {
-        return { text: 'PENDING', variant: 'secondary' };
-    }
-    return { text: 'ONGOING', variant: 'warning' };
-  }, []);
-  
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
     const customerOrderGroups: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     leads.forEach(lead => {
-      // Defensive check
       if (!Array.isArray(lead.orders)) {
           return; 
       }
@@ -661,36 +664,65 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     return enrichedLeads.sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
   }, [leads]);
 
-  const filteredLeads = React.useMemo(() => {
+  const handleQuickFilter = (filter: 'today' | 'yesterday') => {
+    const targetDate = filter === 'today' ? new Date() : subDays(new Date(), 1);
+    const newRange = { from: startOfDay(targetDate), to: endOfDay(targetDate) };
+  
+    if (activeQuickFilter === filter) {
+        setActiveQuickFilter(null);
+        setDateRange(undefined);
+    } else {
+        setActiveQuickFilter(filter);
+        setDateRange(newRange);
+    }
+  };
+
+  const handleResetFilters = () => {
+      setSearchTerm('');
+      setJoNumberSearch('');
+      setCsrFilter('All');
+      setDateRange(undefined);
+      setActiveQuickFilter(null);
+  };
+  
+  const filteredLeads = useMemo(() => {
     if (!processedLeads) return [];
     
-    return processedLeads.filter(lead => {
-      const overallStatus = getOverallStatus(lead).text;
-      let matchesStatus = true;
-      if (filterType === 'COMPLETED') {
-        matchesStatus = overallStatus === 'COMPLETED';
-      } else if (filterType === 'ONGOING') {
-        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
-      }
+    let leadsToFilter = processedLeads;
+    if (filterType === 'ONGOING') {
+        leadsToFilter = processedLeads.filter(lead => !lead.joNumber);
+    } else if (filterType === 'COMPLETED') {
+        leadsToFilter = processedLeads.filter(lead => lead.joNumber);
+    }
 
-      const lowercasedSearchTerm = searchTerm.toLowerCase();
-      const matchesSearch = searchTerm ?
-        (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
-        (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
-        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
-        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
-        : true;
-      
-      const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
+    return leadsToFilter.filter(lead => {
+        const lowercasedSearchTerm = searchTerm.toLowerCase();
+        const matchesSearch = searchTerm ?
+            (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
+            (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
+            (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+            (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
+            : true;
+        
+        const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
+        
+        const joString = formatJoNumber(lead.joNumber);
+        const matchesJo = joNumberSearch ? 
+            (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
+            : true;
 
-      const joString = formatJoNumber(lead.joNumber);
-      const matchesJo = joNumberSearch ? 
-        (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
-        : true;
-
-      return matchesSearch && matchesCsr && matchesJo && matchesStatus;
+        let dateMatches = true;
+        if (dateRange?.from) {
+            const submissionDate = new Date(lead.submissionDateTime);
+            const from = startOfDay(dateRange.from);
+            const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+            dateMatches = submissionDate >= from && submissionDate <= to;
+        }
+            
+        return matchesSearch && matchesCsr && matchesJo && dateMatches;
     });
-  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, filterType, formatJoNumber, getOverallStatus]);
+  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, filterType, dateRange, formatJoNumber]);
+
   
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -911,6 +943,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         title: "Lead Deleted!",
         description: "The lead has been removed from the records.",
       });
+      refetch();
     } catch (e: any) {
       console.error("Error deleting lead: ", e);
       toast({
@@ -919,13 +952,13 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         description: e.message || "Could not delete the lead.",
       });
     }
-  }, [firestore, toast]);
+  }, [firestore, toast, refetch]);
 
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+          <Skeleton key={i} className="h-16 w-full" />
         ))}
       </div>
     );
@@ -937,25 +970,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   
   return (
     <>
-      {imageInView && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
-          onClick={() => setImageInView(null)}
-        >
-          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
-            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
-            <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setImageInView(null)}
-                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
-            >
-                <X className="h-6 w-6" />
-                <span className="sr-only">Close</span>
-            </Button>
-          </div>
-        </div>
-      )}
       <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
        <AlertDialog open={!!confirmingPrint} onOpenChange={(open) => !open && setConfirmingPrint(null)}>
         <AlertDialogContent>
@@ -993,8 +1007,8 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                     Upload logos or back design for the Digitizing team's reference.
                 </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="max-h-[70vh] p-4">
-              <div className="grid grid-cols-2 gap-6">
+            <ScrollArea className="max-h-[70vh] modern-scrollbar">
+              <div className="grid grid-cols-2 gap-6 p-4">
                   {renderUploadBoxes('Logo Left', refLogoLeftImages, setRefLogoLeftImages)}
                   {renderUploadBoxes('Logo Right', refLogoRightImages, setRefLogoRightImages)}
                   {renderUploadBoxes('Back Logo', refBackLogoImages, setRefBackLogoImages)}
@@ -1009,45 +1023,69 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
             </DialogFooter>
         </DialogContent>
       </Dialog>
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </div>
+        </div>
+      )}
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Job Orders' : 'Process Job Order'}</CardTitle>
+              <CardTitle className="text-black">{title}</CardTitle>
               <CardDescription className="text-gray-600">
-                {filterType === 'COMPLETED' ? 'A list of all customer orders that have been shipped or delivered.' : 'A list of all customer orders that have not been completed.'}
+                {filterType === 'COMPLETED' ? 'A list of all customer orders that have been completed.' : 'Leads that have not yet been processed into Job Orders.'}
               </CardDescription>
             </div>
-             <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-4">
-                  <Select value={csrFilter} onValueChange={setCsrFilter}>
-                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                      <SelectValue placeholder="Filter by SCES" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All SCES</SelectItem>
-                      {salesRepresentatives.map(csr => (
-                        <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="w-full max-w-xs">
-                    <Input
-                      placeholder="Search by J.O. No..."
-                      value={joNumberSearch}
-                      onChange={(e) => setJoNumberSearch(e.target.value)}
-                      className="bg-gray-100 text-black placeholder:text-gray-500"
-                    />
-                  </div>
-                  <div className="w-full max-w-sm">
-                    <Input
-                      placeholder="Search by customer, company, or contact..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="bg-gray-100 text-black placeholder:text-gray-500"
-                    />
-                  </div>
+                    <Select value={csrFilter} onValueChange={setCsrFilter}>
+                        <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Filter by SCES" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="All">All SCES</SelectItem>
+                        {salesRepresentatives.map(csr => (
+                            <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <div className="w-full max-w-xs">
+                        <Input
+                            placeholder="Search by J.O. No..."
+                            value={joNumberSearch}
+                            onChange={(e) => setJoNumberSearch(e.target.value)}
+                            className="bg-gray-100 text-black placeholder:text-gray-500"
+                        />
+                    </div>
+                    <div className="w-full max-w-sm">
+                        <Input
+                        placeholder="Search by customer, company, or contact..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500"
+                        />
+                    </div>
                 </div>
-                 <div className="w-full text-right">
+                 <div className="flex items-center gap-2">
+                    <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
+                    <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
+                    <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
+                </div>
+                <div className="w-full text-right">
                   {filterType === 'COMPLETED' ? (
                     <Link href="/job-order" className="text-sm text-primary hover:underline">
                       View Ongoing Job Orders
@@ -1091,7 +1129,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                         lead={lead}
                         openLeadId={hoveredLeadId}
                         openCustomerDetails={openCustomerDetails}
-                        isRepeat={!lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0}
+                        isRepeat={!lead.forceNewCustomer && lead.orderNumber > 0}
                         isReadOnly={isReadOnly}
                         canDelete={canDelete}
                         filterType={filterType}
@@ -1125,4 +1163,4 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     </>
   );
 }
-
+```

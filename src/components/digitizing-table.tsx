@@ -85,6 +85,7 @@ type Layout = {
   dstBackLogo?: string;
   dstBackText?: string;
   namedOrders?: NamedOrder[];
+  importantNotes?: string;
   logoLeftImage?: string | null;
   logoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
   logoLeftImageUploadTime?: string | null;
@@ -575,6 +576,13 @@ const JoPreviewContent = React.memo(({ viewingJoLead, usersData, getContactDispl
                                     </tr>
                                 </tbody>
                             </table>
+
+                            {layout.importantNotes && (
+                                <div className="mt-4 mb-4 flex items-baseline">
+                                    <p className="font-bold shrink-0" style={{ color: 'red' }}>Important Notes:&nbsp;</p>
+                                    <p className="font-bold whitespace-pre-wrap">{layout.importantNotes}</p>
+                                </div>
+                            )}
                 
                             <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
                             <table className="w-full border-collapse border border-black text-xs">
