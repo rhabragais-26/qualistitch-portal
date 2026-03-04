@@ -1,4 +1,3 @@
-
 'use client';
 
 import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -42,6 +41,8 @@ import Link from 'next/link';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { startOfDay, endOfDay, subDays, getYear, getMonth, parse } from 'date-fns';
 import { DateRange } from 'react-day-picker';
+import { z, ZodError } from 'zod';
+import { EditLeadFullDialog } from './edit-lead-full-dialog';
 
 type Order = {
   productType: string;
@@ -107,36 +108,103 @@ type Layout = {
   finalProgrammedBackDesign?: (FileObject | null)[];
 };
 
-type Lead = {
-  id: string;
-  customerName: string;
-  companyName?: string;
-  contactNumber: string;
-  landlineNumber?: string;
-  salesRepresentative: string;
-  orderType: string;
-  priorityType: 'Rush' | 'Regular';
-  submissionDateTime: string;
-  lastModified: string;
-  orders: Order[];
-  joNumber?: number;
-  isJoPrinted?: boolean;
-  joPrintedTimestamp?: string;
-  courier?: string;
-  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
-  shippedTimestamp?: string;
-  isUnderProgramming?: boolean;
-  isPreparedForProduction?: boolean;
-  isSentToProduction?: boolean;
-  isEndorsedToLogistics?: boolean;
-  isRecheckingQuality?: boolean;
-  layouts?: Layout[];
-  lastModifiedBy?: string;
-  isPostingConsentGranted?: boolean;
-  postingConsentTimestamp?: string;
-  isFinalApproval?: boolean;
-  forceNewCustomer?: boolean;
-};
+const leadSchema = z.object({
+  id: z.string(),
+  customerName: z.string(),
+  companyName: z.string().optional(),
+  contactNumber: z.string().optional(),
+  contactNumber2: z.string().optional(),
+  landlineNumber: z.string().optional(),
+  location: z.string().optional(),
+  houseStreet: z.string().optional(),
+  barangay: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  isInternational: z.boolean().optional(),
+  salesRepresentative: z.string(),
+  priorityType: z.string(),
+  orderType: z.string(),
+  courier: z.string().optional(),
+  orders: z.array(z.any()),
+  submissionDateTime: z.string(),
+  lastModified: z.string(),
+  lastModifiedBy: z.string().optional(),
+  grandTotal: z.number().optional(),
+  paidAmount: z.number().optional(),
+  paymentType: z.string().optional(),
+  modeOfPayment: z.string().optional(),
+  balance: z.number().optional(),
+  addOns: z.any().optional(),
+  discounts: z.any().optional(),
+  payments: z.array(z.any()).optional(),
+  productType: z.string().optional(),
+  layouts: z.array(z.any()).optional(),
+  joNumber: z.number().optional(),
+  shipmentStatus: z.string().optional(),
+  shippedTimestamp: z.string().optional(),
+  isJoPrinted: z.boolean().optional(),
+  joPrintedTimestamp: z.string().optional(),
+  isUnderProgramming: z.boolean().optional(),
+  isPreparedForProduction: z.boolean().optional(),
+  isSentToProduction: z.boolean().optional(),
+  isEndorsedToLogistics: z.boolean().optional(),
+  isRecheckingQuality: z.boolean().optional(),
+  isPostingConsentGranted: z.boolean().optional(),
+  postingConsentTimestamp: z.string().optional(),
+  isFinalApproval: z.boolean().optional(),
+  forceNewCustomer: z.boolean().optional(),
+  isSalesAuditRequested: z.boolean().optional(),
+  salesAuditRequestedTimestamp: z.string().optional(),
+  isSalesAuditComplete: z.boolean().optional(),
+  salesAuditCompleteTimestamp: z.string().optional(),
+  isWaybillPrinted: z.boolean().optional(),
+  waybillNumbers: z.array(z.string()).optional(),
+  isQualityApproved: z.boolean().optional(),
+  qualityApprovedTimestamp: z.string().optional(),
+  qualityApprovedBy: z.string().optional(),
+  isPacked: z.boolean().optional(),
+  packedTimestamp: z.string().optional(),
+  adjustedDeliveryDate: z.string().optional(),
+  deliveryDate: z.string().optional(),
+  isCutting: z.boolean().optional(),
+  isEmbroideryDone: z.boolean().optional(),
+  isSewing: z.boolean().optional(),
+  isTrimming: z.boolean().optional(),
+  isDone: z.boolean().optional(),
+  finalApprovalTimestamp: z.string().nullable().optional(),
+  isJoHardcopyReceived: z.boolean().optional(),
+  joHardcopyReceivedTimestamp: z.string().optional(),
+  isDigitizingArchived: z.boolean().optional(),
+  scesFullName: z.string().optional(),
+  recipientName: z.string().optional(),
+  isInitialApproval: z.boolean().optional(),
+  isLogoTesting: z.boolean().optional(),
+  isRevision: z.boolean().optional(),
+  isFinalProgram: z.boolean().optional(),
+  underProgrammingTimestamp: z.string().optional().nullable(),
+  initialApprovalTimestamp: z.string().optional().nullable(),
+  logoTestingTimestamp: z.string().optional().nullable(),
+  revisionTimestamp: z.string().optional().nullable(),
+  finalProgramTimestamp: z.string().optional().nullable(),
+  digitizingArchivedTimestamp: z.string().optional().nullable(),
+  sentToProductionTimestamp: z.string().optional().nullable(),
+  cuttingTimestamp: z.string().optional().nullable(),
+  sewingTimestamp: z.string().optional().nullable(),
+  trimmingTimestamp: z.string().optional().nullable(),
+  doneProductionTimestamp: z.string().optional().nullable(),
+  endorsedToLogisticsTimestamp: z.string().optional().nullable(),
+  endorsedToLogisticsBy: z.string().optional(),
+  deliveredTimestamp: z.string().optional().nullable(),
+  embroideryDoneTimestamp: z.string().optional().nullable(),
+  editedUnitPrices: z.record(z.number()).optional(),
+  editedAddOnPrices: z.record(z.number()).optional(),
+  editedProgrammingFees: z.record(z.object({ logoFee: z.number().optional(), backTextFee: z.number().optional() })).optional(),
+  productionType: z.string().optional(),
+  sewerType: z.string().optional(),
+  publiclyPrintable: z.boolean().optional(),
+  photoshootDate: z.string().optional(),
+});
+type Lead = z.infer<typeof leadSchema>;
 
 type EnrichedLead = Lead & {
   orderNumber: number;
@@ -147,28 +215,6 @@ interface JobOrderTableProps {
   isReadOnly: boolean;
   filterType?: 'ONGOING' | 'COMPLETED';
 }
-
-const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
-    if (images.length === 0) return null;
-
-    return (
-        <Card className="bg-white">
-            <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
-            <CardContent className="flex gap-4 text-xs p-2 flex-wrap">
-                {images.map((img, index) => (
-                    <div key={index} className="flex flex-col items-center text-center w-28">
-                        <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
-                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
-                            <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
-                        </div>
-                        {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
-                        {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-    );
-};
 
 const RecordsTableRow = React.memo(({
     lead,
@@ -195,7 +241,8 @@ const RecordsTableRow = React.memo(({
     isCompleted,
     openReferenceImages,
     toggleReferenceImages,
-    setImageInView
+    setImageInView,
+    handleProcessJobOrder
 }: {
     lead: EnrichedLead;
     openLeadId: string | null;
@@ -222,6 +269,8 @@ const RecordsTableRow = React.memo(({
     openReferenceImages: string | null;
     toggleReferenceImages: (id: string) => void;
     setImageInView: (url: string | null) => void;
+    handleProcessJobOrder: (lead: Lead) => void;
+    handleOpenUploadDialog: (lead: Lead) => void;
 }) => {
     
     const layout = lead.layouts?.[0];
@@ -487,8 +536,8 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
-
-  const canDelete = isAdmin || userProfile?.nickname === editingLead?.salesRepresentative;
+  
+  const canDelete = (lead?: Lead) => isAdmin || userProfile?.nickname === lead?.salesRepresentative;
   
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -566,11 +615,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const handleProcessJobOrder = useCallback((lead: Lead) => {
     router.push(`/job-order/${lead.id}`);
   }, [router]);
-  
-  const formatJoNumber = useCallback((joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    return formatJoNumberUtil(joNumber);
-  }, []);
   
   const getJoStatus = useCallback((lead: Lead) => {
     if (!lead.joNumber || !lead.isJoPrinted) {
@@ -713,17 +757,19 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   
   const filteredLeads = useMemo(() => {
     if (!processedLeads) return [];
-
-    let leadsToFilter;
-    if (filterType === 'COMPLETED') {
-      leadsToFilter = processedLeads.filter(lead => lead.joNumber && lead.shipmentStatus === 'Delivered');
-    } else { // ONGOING
-      leadsToFilter = processedLeads.filter(lead => lead.joNumber && lead.shipmentStatus !== 'Delivered');
-    }
-
-    return leadsToFilter.filter(lead => {
+  
+    return processedLeads.filter(lead => {
+      let matchesFilterType = true;
+      if (filterType === 'COMPLETED') {
+        matchesFilterType = lead.shipmentStatus === 'Delivered';
+      } else if (filterType === 'ONGOING') {
+        matchesFilterType = lead.shipmentStatus !== 'Delivered';
+      }
+  
+      if (!lead.joNumber || !matchesFilterType) return false;
+  
       const lowercasedSearchTerm = searchTerm.toLowerCase();
-      const matchesSearch = searchTerm ?
+      const matchesSearch = searchTerm ? 
         (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
         (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
         (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
@@ -898,7 +944,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   }, [uploadLead, firestore, userProfile, toast, refetchLeads, refLogoLeftImages, refLogoRightImages, refBackLogoImages, refBackDesignImages]);
   
   const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (!canEdit) return;
+    if (isReadOnly) return;
     const file = e.clipboardData.files[0];
     if (file && file.type.startsWith('image/')) {
         handleImageUpload(file, setter, index);
@@ -911,7 +957,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
       <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Label>{label}</Label>
-            {canEdit && (
+            {!isReadOnly && (
               <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={(e) => { e.stopPropagation(); setter(prev => [...prev, null]); }}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
@@ -923,17 +969,17 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                     tabIndex={0}
                     className={cn(
                         "relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center",
-                        canEdit && "cursor-pointer",
+                        !isReadOnly && "cursor-pointer",
                         "focus:outline-none focus:border-solid focus:border-teal-500 select-none"
                     )}
                     onClick={() => image && setImageInView(image)}
-                    onDoubleClick={() => canEdit && !image && document.getElementById(`file-input-${label}-${index}`)?.click()}
-                    onPaste={(e) => canEdit && handleImagePaste(e, setter, index)}
+                    onDoubleClick={() => !isReadOnly && !image && document.getElementById(`file-input-${label}-${index}`)?.click()}
+                    onPaste={(e) => onPaste(e, setter, index)}
                     onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                   >
                       {image ? (<>
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
-                        {canEdit && (
+                        {!isReadOnly && (
                             <Button
                             variant="destructive"
                             size="icon"
@@ -946,10 +992,10 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                             <Trash2 className="h-4 w-4" />
                             </Button>
                         )}
-                      </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{canEdit ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                      <input id={`file-input-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
+                      </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{isReadOnly ? "No image uploaded" : "Double-click to upload or paste image"}</p> </div>)}
+                      <input id={`file-input-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isReadOnly}/>
                   </div>
-                  {canEdit && displayImages.length > 1 && (
+                  {!isReadOnly && displayImages.length > 1 && (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -964,7 +1010,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
       </div>
     );
   };
-
 
   const handleDeleteLead = useCallback(async (leadId: string) => {
     if(!leadId || !firestore) return;
@@ -1086,11 +1131,9 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
             </div>
             <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-2">
-                  <div className='flex items-center gap-2'>
-                      <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
-                      <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
-                      <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
-                  </div>
+                  <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
+                  <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
+                  <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
                   <Select value={csrFilter} onValueChange={setCsrFilter}>
                       <SelectTrigger className="w-[180px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
                       <SelectValue placeholder="Filter by SCES" />
@@ -1183,26 +1226,28 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                           openCustomerDetails={openCustomerDetails}
                           isRepeat={!lead.forceNewCustomer && lead.orderNumber > 0}
                           isReadOnly={isReadOnly}
-                          canDelete={canDelete}
+                          canDelete={!!canDelete}
                           filterType={filterType}
                           getContactDisplay={getContactDisplay}
                           toggleCustomerDetails={toggleCustomerDetails}
                           handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
                           handleDeleteLead={handleDeleteLead}
                           setOpenLeadId={setOpenLeadId}
-                          handlePrintedChange={handlePrintedChange}
+                          handlePrintedChange={()=>{}} // no-op
                           confirmingPrint={confirmingPrint}
                           setConfirmingPrint={setConfirmingPrint}
                           uncheckConsentConfirmation={uncheckConsentConfirmation}
                           setUncheckConsentConfirmation={setUncheckConsentConfirmation}
-                          handleConsentChange={handleConsentChange}
-                          confirmUncheckConsent={confirmUncheckConsent}
-                          getJoStatus={getJoStatus}
-                          getPrintingStatus={getPrintingStatus}
+                          handleConsentChange={()=>{}} // no-op
+                          confirmUncheckConsent={()=>{}} // no-op
+                          getJoStatus={() => null} // no-op
+                          getPrintingStatus={() => ({text: '', variant: 'secondary'})} // no-op
                           isCompleted={isCompleted}
                           openReferenceImages={openReferenceImages}
                           toggleReferenceImages={toggleReferenceImages}
                           setImageInView={setImageInView}
+                          handleProcessJobOrder={handleProcessJobOrder}
+                          handleOpenUploadDialog={handleOpenUploadDialog}
                       />
                     );
                   })}
