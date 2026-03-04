@@ -40,7 +40,7 @@ import { ScrollArea } from './ui/scroll-area';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
-import { startOfDay, endOfDay, subDays } from 'date-fns';
+import { startOfDay, endOfDay, subDays, getYear, getMonth } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
 type Order = {
@@ -262,8 +262,8 @@ const RecordsTableRow = React.memo(({
     return (
         <React.Fragment>
             <TableRow key={lead.id} onMouseEnter={() => setOpenLeadId(lead.id)} onMouseLeave={() => setOpenLeadId(null)} className={cn(isHovered && "bg-gray-100")}>
-                <TableCell className="text-xs align-middle py-2 text-black text-center">
-                    <Collapsible>
+                <TableCell className="text-xs align-middle py-2 text-black text-center whitespace-nowrap">
+                  <Collapsible>
                     <CollapsibleTrigger asChild>
                         <div className="flex items-center justify-center cursor-pointer">
                             <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
@@ -274,54 +274,54 @@ const RecordsTableRow = React.memo(({
                     </CollapsibleTrigger>
                         <div className="text-gray-500 text-center">{creationDate.dayOfWeek}</div>
                     <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
-                    <div className="text-center">
+                      <div className="text-center">
                         <span className='font-bold text-gray-600'>Last Modified:</span>
                         <div>{modifiedDate.dateTime}</div>
                         <div>{modifiedDate.dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
-                    </div>
+                      </div>
                     </CollapsibleContent>
-                </Collapsible>
+                  </Collapsible>
                 </TableCell>
                 <TableCell className="text-xs align-middle text-center py-2 text-black">
-                <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center">
                     <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
-                    {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </Button>
                     <div className='flex flex-col items-center'>
-                    <span className="font-medium">{toTitleCase(lead.customerName)}</span>
-                    {isRepeat ? (
+                      <span className="font-medium">{toTitleCase(lead.customerName)}</span>
+                      {isRepeat ? (
                         <TooltipProvider>
-                        <Tooltip>
+                          <Tooltip>
                             <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1.5 cursor-pointer">
+                              <div className="flex items-center gap-1.5 cursor-pointer">
                                 <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                 <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                {lead.orderNumber}
+                                  {lead.orderNumber}
                                 </span>
-                            </div>
+                              </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                            <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                              <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
                             </TooltipContent>
-                        </Tooltip>
+                          </Tooltip>
                         </TooltipProvider>
-                    ) : (
+                      ) : (
                         <span className="text-xs text-blue-600 font-semibold">New Customer</span>
-                    )}
-                    {openCustomerDetails === lead.id && (
+                      )}
+                      {openCustomerDetails === lead.id && (
                         <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
                             {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                             {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                         </div>
-                    )}
+                      )}
                     </div>
-                </div>
+                  </div>
                 </TableCell>
                 <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
                 <TableCell className="align-middle py-2 text-center">
-                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                  <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                     {lead.priorityType}
-                </Badge>
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
                     {isCompleted ? (
@@ -477,11 +477,39 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
 
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const canEdit = !isReadOnly;
   const isCompleted = filterType === 'COMPLETED';
+
+    const handleQuickFilter = (filter: 'today' | 'yesterday') => {
+        const targetDate = filter === 'today' ? new Date() : subDays(new Date(), 1);
+        const newRange = { from: startOfDay(targetDate), to: endOfDay(targetDate) };
+
+        if (activeQuickFilter === filter) {
+            setActiveQuickFilter(null);
+            setDateRange(undefined);
+        } else {
+            setActiveQuickFilter(filter);
+            setDateRange(newRange);
+            setSelectedYear('all');
+            setSelectedMonth('all');
+        }
+    };
+
+    const handleResetFilters = () => {
+        setSearchTerm('');
+        setCsrFilter('All');
+        setJoNumberSearch('');
+        setSelectedYear(new Date().getFullYear().toString());
+        setSelectedMonth((new Date().getMonth() + 1).toString());
+        setDateRange(undefined);
+        setActiveQuickFilter(null);
+    };
   
   useEffect(() => {
     if (filterType === 'COMPLETED') {
@@ -496,6 +524,22 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     if (!leads) return [];
     return [...new Set(leads.map(lead => lead.salesRepresentative).filter(Boolean))].sort();
   }, [leads]);
+
+  const availableYears = useMemo(() => {
+    if (!leads) return [];
+    const years = new Set(leads.map(lead => new Date(lead.submissionDateTime).getFullYear()));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [leads]);
+
+  const months = useMemo(() => [
+    { value: 'all', label: 'All Months' }, { value: '1', label: 'January' },
+    { value: '2', label: 'February' }, { value: '3', label: 'March' },
+    { value: '4', label: 'April' }, { value: '5', label: 'May' },
+    { value: '6', label: 'June' }, { value: '7', label: 'July' },
+    { value: '8', label: 'August' }, { value: '9', label: 'September' },
+    { value: '10', label: 'October' }, { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+  ], []);
   
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
@@ -619,7 +663,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   
     const customerOrderGroups: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
-    // Group all orders by customer
     leads.forEach(lead => {
       if (!Array.isArray(lead.orders)) {
           return; 
@@ -666,41 +709,49 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   
   const filteredLeads = useMemo(() => {
     if (!processedLeads) return [];
-    
-    let leadsToFilter = processedLeads;
-    if (filterType === 'ONGOING') {
-        leadsToFilter = processedLeads.filter(lead => !lead.joNumber);
-    } else if (filterType === 'COMPLETED') {
-        leadsToFilter = processedLeads.filter(lead => lead.joNumber);
+
+    let leadsToFilter;
+    if (filterType === 'COMPLETED') {
+      leadsToFilter = processedLeads.filter(lead => lead.shipmentStatus === 'Delivered');
+    } else { // ONGOING
+      leadsToFilter = processedLeads.filter(lead => lead.shipmentStatus !== 'Delivered');
     }
 
     return leadsToFilter.filter(lead => {
-        const lowercasedSearchTerm = searchTerm.toLowerCase();
-        const matchesSearch = searchTerm ?
-            (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
-            (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
-            (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
-            (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
-            : true;
-        
-        const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
-        
-        const joString = formatJoNumber(lead.joNumber);
-        const matchesJo = joNumberSearch ? 
-            (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
-            : true;
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      const matchesSearch = searchTerm ?
+        (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
+        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
+        : true;
+      
+      const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
+      
+      const joString = formatJoNumberUtil(lead.joNumber);
+      const matchesJo = joNumberSearch ? 
+        (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
+        : true;
 
-        let dateMatches = true;
-        if (dateRange?.from) {
-            const submissionDate = new Date(lead.submissionDateTime);
-            const from = startOfDay(dateRange.from);
-            const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
-            dateMatches = submissionDate >= from && submissionDate <= to;
-        }
+      let dateMatches = true;
+      if (dateRange?.from) {
+          const submissionDate = new Date(lead.submissionDateTime);
+          const from = startOfDay(dateRange.from);
+          const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+          dateMatches = submissionDate >= from && submissionDate <= to;
+      } else {
+        const year = parseInt(selectedYear, 10);
+        const month = parseInt(selectedMonth, 10);
+        const submissionDate = new Date(lead.submissionDateTime);
+
+        const matchesYear = selectedYear === 'all' || getYear(submissionDate) === year;
+        const matchesMonth = selectedMonth === 'all' || (getMonth(submissionDate) + 1) === month;
+        dateMatches = matchesYear && matchesMonth;
+      }
             
-        return matchesSearch && matchesCsr && matchesJo && dateMatches;
+      return matchesSearch && matchesCsr && matchesJo && dateMatches;
     });
-  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, filterType, dateRange, formatJoNumber]);
+  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, filterType, selectedYear, selectedMonth, dateRange, formatJoNumberUtil]);
 
   
   const displayedLeads = useMemo(() => {
@@ -1055,16 +1106,23 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                     className="bg-gray-100 text-black placeholder:text-gray-500"
                     />
                 </div>
-                <div className="w-full text-right">
-                  {filterType === 'COMPLETED' ? (
-                    <Link href="/job-order" className="text-sm text-primary hover:underline">
-                      View Ongoing Job Orders
-                    </Link>
-                  ) : (
-                    <Link href="/job-order/completed" className="text-sm text-primary hover:underline">
-                      View Completed Job Orders
-                    </Link>
-                  )}
+                 <div className="w-full flex justify-between items-center mt-2">
+                    <div className="flex items-center gap-2">
+                        <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
+                        <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
+                        <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
+                    </div>
+                    <div className="w-full text-right">
+                        {filterType === 'COMPLETED' ? (
+                            <Link href="/job-order" className="text-sm text-primary hover:underline">
+                            View Ongoing Job Orders
+                            </Link>
+                        ) : (
+                            <Link href="/job-order/completed" className="text-sm text-primary hover:underline">
+                            View Completed Job Orders
+                            </Link>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -1133,5 +1191,3 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     </>
   );
 }
-
-    
