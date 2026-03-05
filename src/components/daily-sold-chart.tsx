@@ -5,9 +5,9 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Skeleton } from './ui/skeleton';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, subDays } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
 
 type Order = {
   productType: string;
