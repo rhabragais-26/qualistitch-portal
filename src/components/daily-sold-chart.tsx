@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend, Bar } from 'recharts';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,18 @@ type Lead = {
   isEndorsedToLogistics?: boolean;
   endorsedToLogisticsTimestamp?: string;
   orders: Order[];
+};
+
+type CostOfGoods = {
+    id: string;
+    date: string;
+    itemDescription: string;
+    supplier: string;
+    quantity: number;
+    unitCost: number;
+    totalCost: number;
+    submittedBy: string;
+    timestamp: string;
 };
 
 type InventoryItem = {
@@ -63,11 +75,14 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
+  const cogsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'cost_of_goods')) : null), [firestore]);
+  const { data: cogs, isLoading: areCogsLoading, error: cogsError } = useCollection<CostOfGoods>(cogsQuery, undefined, { listen: false });
+  
   const inventoryQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory')) : null), [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
 
   const { chartData } = useMemo(() => {
-    if (!leads || !inventoryItems || !productTypeFilter) return { chartData: [] };
+    if (!leads || !inventoryItems || !cogs || !productTypeFilter) return { chartData: [] };
 
     // 1. Determine date range
     const endDate = new Date();
@@ -107,13 +122,28 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
         } catch (e) { /* ignore invalid dates */ }
     });
     
+    const replenishmentsByDate: { [dateStr: string]: number } = {};
+    cogs.forEach(cog => {
+      try {
+        const cogDate = new Date(cog.date);
+        const dateStr = format(cogDate, 'yyyy-MM-dd');
+        if (cog.itemDescription === productTypeFilter) {
+          replenishmentsByDate[dateStr] = (replenishmentsByDate[dateStr] || 0) + cog.quantity;
+        }
+      } catch (e) { /* ignore invalid dates */ }
+    });
+
     // 4. Calculate cumulative sales up to the day before the start date.
     let cumulativeSales = 0;
-    const sortedDates = Object.keys(salesByDate).sort();
+    let cumulativeReplenishments = 0;
     
+    const allDates = new Set([...Object.keys(salesByDate), ...Object.keys(replenishmentsByDate)]);
+    const sortedDates = Array.from(allDates).sort();
+
     for (const dateStr of sortedDates) {
       if (new Date(dateStr) < startOfDay(startDate)) {
-        cumulativeSales += salesByDate[dateStr];
+        cumulativeSales += salesByDate[dateStr] || 0;
+        cumulativeReplenishments += replenishmentsByDate[dateStr] || 0;
       }
     }
 
@@ -123,21 +153,24 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     const finalChartData = allDaysInRange.map(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
       const soldToday = salesByDate[dateStr] || 0;
+      const replenishedToday = replenishmentsByDate[dateStr] || 0;
 
       cumulativeSales += soldToday;
+      cumulativeReplenishments += replenishedToday;
       
       return {
         date: format(day, 'MMM dd'),
         sold: soldToday,
-        remaining: totalStockAdded - cumulativeSales,
+        replenished: replenishedToday,
+        remaining: totalStockAdded + cumulativeReplenishments - cumulativeSales,
       };
     });
 
     return { chartData: finalChartData };
-  }, [leads, inventoryItems, timeRange, productTypeFilter, colorFilter]);
+  }, [leads, inventoryItems, cogs, timeRange, productTypeFilter, colorFilter]);
   
-  const isLoading = areLeadsLoading || isInventoryLoading;
-  const error = leadsError || inventoryError;
+  const isLoading = areLeadsLoading || isInventoryLoading || areCogsLoading;
+  const error = leadsError || inventoryError || cogsError;
 
   const chartConfig = {
     sold: {
@@ -165,24 +198,39 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
           <ComposedChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" tick={{ fontSize: 12 }} interval={0} />
-            <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} domain={[0, dataMax => Math.round(dataMax * 1.2)]} />
-            <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} domain={[dataMin => Math.round(dataMin * 0.9), dataMax => Math.round(dataMax * 1.2)]} />
+            <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} domain={[0, dataMax => Math.round(dataMax * 1.5)]} />
+            <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} domain={[dataMin => Math.floor(dataMin * 1.2), dataMax => Math.ceil(dataMax * 1.2)]} />
             <Tooltip
               content={
                 <ChartTooltipContent
-                  formatter={(value, name) => {
+                  formatter={(value, name, item) => {
                       if (typeof value !== 'number') return value;
                       const isRemaining = name === 'Stocks Remaining';
-                      const color = name === 'Quantity Sold' ? COLORS[0] : (value < 0 ? '#ef4444' : COLORS[1]);
+                      const color = name === 'Quantity Sold' ? 'hsl(var(--chart-1))' : (value < 0 ? '#ef4444' : 'hsl(var(--chart-2))');
+                      const replenishment = item.payload.replenished;
+                      
                       return (
-                          <div className="flex w-full items-center justify-between gap-4 text-base">
-                          <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-                              <span style={{color}}>{name}</span>
-                          </div>
-                          <span className={cn("font-mono font-medium", isRemaining && value < 0 && "text-destructive")}>
-                              {value.toLocaleString()}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                              <div className="flex w-full items-center justify-between gap-4 text-base">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: name === 'Quantity Sold' ? 'hsl(var(--chart-1))' : 'hsl(var(--chart-2))' }} />
+                                    <span>{name}</span>
+                                </div>
+                                <span className={cn("font-mono font-medium", isRemaining && value < 0 && "text-destructive")} style={{ color: color }}>
+                                    {value.toLocaleString()}
+                                </span>
+                              </div>
+                              {replenishment > 0 && (
+                                <div className="flex w-full items-center justify-between gap-4 text-base">
+                                  <div className="flex items-center gap-1.5">
+                                      <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                                      <span>Replenishment Count</span>
+                                  </div>
+                                  <span className="font-mono font-medium text-green-600">
+                                      {replenishment.toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
                           </div>
                       )
                   }}
@@ -196,6 +244,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                 <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={COLORS[1]} floodOpacity="0.5" />
               </filter>
             </defs>
+            <Bar yAxisId="left" dataKey="replenished" name="Replenishment Count" barSize={1} fill="transparent" hide={true} />
             <Area 
                 yAxisId="left"
                 type="monotone" 
