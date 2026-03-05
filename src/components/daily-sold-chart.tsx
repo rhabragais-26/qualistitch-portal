@@ -3,7 +3,7 @@
 import React, { useMemo, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -85,7 +85,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     
     startDate = startOfDay(startDate);
 
-    // 2. Assume `inventoryItems.stock` is the total quantity *ever added* for that item.
+    // 2. Calculate total initial stock
     const totalStockAdded = inventoryItems
       .filter(item => 
         item.productType === productTypeFilter &&
@@ -106,7 +106,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
             });
         } catch (e) { /* ignore invalid dates */ }
     });
-
+    
     // 4. Calculate cumulative sales up to the day before the start date.
     let cumulativeSales = 0;
     const sortedDates = Object.keys(salesByDate).sort();
@@ -166,7 +166,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" tick={{ fontSize: 12 }} interval={0} />
             <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} domain={[0, dataMax => Math.round(dataMax * 1.2)]} />
-            <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} domain={[dataMin => Math.round(dataMin * 1.2), dataMax => Math.round(dataMax * 1.2)]} />
+            <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} domain={[dataMin => Math.round(dataMin * 0.9), dataMax => Math.round(dataMax * 1.2)]} />
             <Tooltip
               content={
                 <ChartTooltipContent
@@ -190,6 +190,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                 />
               }
             />
+            <Legend />
             <defs>
               <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                 <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={COLORS[1]} floodOpacity="0.5" />
