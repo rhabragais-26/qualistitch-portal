@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useEffect } from 'react';
@@ -7,7 +6,6 @@ import { collection, query } from 'firebase/firestore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Order = {
   productType: string;
@@ -62,52 +60,49 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
     
     startDate = startOfDay(startDate);
 
-    // 2. Calculate initial stock at the beginning of the period
-    const totalInitialStock = inventoryItems
+    // 2. Assume `inventoryItems.stock` is the total quantity *ever added* for that item.
+    const totalStockAdded = inventoryItems
       .filter(item => item.productType === productTypeFilter)
       .reduce((sum, item) => sum + item.stock, 0);
 
-    const salesBeforePeriod = leads
-      .filter(lead => new Date(lead.submissionDateTime) < startDate)
-      .flatMap(lead => lead.orders)
-      .filter(order => order.productType === productTypeFilter)
-      .reduce((sum, order) => sum + order.quantity, 0);
-      
-    let runningStock = totalInitialStock - salesBeforePeriod;
-    
-    // 3. Process sales within the date range
-    const salesByDay: { [key: string]: number } = {};
-    const relevantLeads = leads.filter(lead => {
-        try {
-            const submissionDate = new Date(lead.submissionDateTime);
-            return submissionDate >= startDate && submissionDate <= endDate;
-        } catch(e) { return false; }
+    // 3. Group all sales by date.
+    const salesByDate: { [dateStr: string]: number } = {};
+    leads.forEach(lead => {
+      try {
+        const submissionDate = new Date(lead.submissionDateTime);
+        const dateStr = format(submissionDate, 'yyyy-MM-dd');
+        lead.orders.forEach(order => {
+          if (order.productType === productTypeFilter) {
+            salesByDate[dateStr] = (salesByDate[dateStr] || 0) + order.quantity;
+          }
+        });
+      } catch (e) { /* ignore invalid dates */ }
     });
 
-    relevantLeads.forEach(lead => {
-        const dateStr = format(new Date(lead.submissionDateTime), 'MMM dd');
-        lead.orders.forEach(order => {
-            if (order.productType === productTypeFilter) {
-                if (!salesByDay[dateStr]) {
-                    salesByDay[dateStr] = 0;
-                }
-                salesByDay[dateStr] += order.quantity;
-            }
-        });
-    });
+    // 4. Calculate cumulative sales up to the day before the start date.
+    let cumulativeSales = 0;
+    const sortedDates = Object.keys(salesByDate).sort();
     
-    // 4. Generate final chart data
-    const allDays = eachDayOfInterval({ start: startDate, end: endDate });
+    for (const dateStr of sortedDates) {
+      if (new Date(dateStr) < startOfDay(startDate)) {
+        cumulativeSales += salesByDate[dateStr];
+      }
+    }
+
+    // 5. Generate chart data for the selected range.
+    const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
     
-    const finalChartData = allDays.map(day => {
-        const dateStr = format(day, 'MMM dd');
-        const sold = salesByDay[dateStr] || 0;
-        runningStock -= sold;
-        return {
-            date: dateStr,
-            sold: sold,
-            remaining: runningStock,
-        };
+    const finalChartData = allDaysInRange.map(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      const soldToday = salesByDate[dateStr] || 0;
+
+      cumulativeSales += soldToday;
+      
+      return {
+        date: format(day, 'MMM dd'),
+        sold: soldToday,
+        remaining: totalStockAdded - cumulativeSales,
+      };
     });
 
     return { chartData: finalChartData };
