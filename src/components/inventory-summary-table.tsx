@@ -42,6 +42,7 @@ type Lead = {
   orders: Order[];
   isSentToProduction?: boolean;
   isEndorsedToLogistics?: boolean;
+  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
 };
 
 type InventoryItem = {
@@ -53,7 +54,8 @@ type InventoryItem = {
 };
 
 type EnrichedInventoryItem = InventoryItem & {
-  sold: number;
+  onProcess: number;
+  dispatched: number;
   remaining: number;
 };
 
@@ -186,24 +188,35 @@ export function InventorySummaryTable() {
 
   const enrichedItems = useMemo(() => {
     if (!inventoryItems || !leads) return [];
-    
-    const soldQuantities = new Map<string, number>();
+
+    const onProcessQuantities = new Map<string, number>();
+    const dispatchedQuantities = new Map<string, number>();
+
     leads.forEach(lead => {
-      if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
-        lead.orders.forEach(order => {
-          const key = `${order.productType}-${order.color}-${order.size}`;
-          soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
-        });
-      }
+        const createKey = (order: Order) => `${order.productType}-${order.color}-${order.size}`;
+
+        if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
+            lead.orders.forEach(order => {
+                const key = createKey(order);
+                dispatchedQuantities.set(key, (dispatchedQuantities.get(key) || 0) + order.quantity);
+            });
+        } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
+            lead.orders.forEach(order => {
+                const key = createKey(order);
+                onProcessQuantities.set(key, (onProcessQuantities.get(key) || 0) + order.quantity);
+            });
+        }
     });
 
     return inventoryItems.map(item => {
         const key = `${item.productType}-${item.color}-${item.size}`;
-        const sold = soldQuantities.get(key) || 0;
+        const onProcess = onProcessQuantities.get(key) || 0;
+        const dispatched = dispatchedQuantities.get(key) || 0;
         return {
             ...item,
-            sold,
-            remaining: item.stock - sold,
+            onProcess,
+            dispatched,
+            remaining: item.stock - onProcess - dispatched,
         };
     });
   }, [inventoryItems, leads]);
@@ -429,8 +442,9 @@ export function InventorySummaryTable() {
                       <TableHead className="text-white font-bold align-middle">Item</TableHead>
                       <TableHead className="text-white font-bold align-middle">Color</TableHead>
                       <TableHead className="text-white font-bold align-middle">Size</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Stocks</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Sold Qty</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">On-Hand</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">On-Process</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Dispatched</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Remaining</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Status</TableHead>
                     </TableRow>
@@ -453,7 +467,8 @@ export function InventorySummaryTable() {
                                     item.stock
                                 )}
                             </TableCell>
-                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.sold}</TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.onProcess}</TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.dispatched}</TableCell>
                             <TableCell className={cn("text-center font-bold text-xs align-middle py-2", item.remaining < 0 && "text-destructive")}>{item.remaining}</TableCell>
                             <TableCell className="text-center align-middle py-2">
                               {getStatusBadge(item.remaining)}
@@ -469,4 +484,3 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
-
