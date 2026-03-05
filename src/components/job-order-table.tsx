@@ -112,101 +112,101 @@ type Layout = {
 };
 
 const leadSchema = z.object({
-  id: z.string(),
-  customerName: z.string(),
-  companyName: z.string().optional(),
-  contactNumber: z.string().optional(),
-  contactNumber2: z.string().optional(),
-  landlineNumber: z.string().optional(),
-  location: z.string().optional(),
-  houseStreet: z.string().optional(),
-  barangay: z.string().optional(),
-  city: z.string().optional(),
-  province: z.string().optional(),
-  isInternational: z.boolean().optional(),
-  salesRepresentative: z.string(),
-  priorityType: z.string(),
-  orderType: z.string(),
-  courier: z.string().optional(),
-  orders: z.array(z.any()),
-  submissionDateTime: z.string(),
-  lastModified: z.string(),
-  lastModifiedBy: z.string().nullable().optional(),
-  grandTotal: z.number().optional(),
-  paidAmount: z.number().optional(),
-  paymentType: z.string().optional(),
-  modeOfPayment: z.string().optional(),
-  balance: z.number().optional(),
-  addOns: z.any().optional(),
-  discounts: z.any().optional(),
-  payments: z.array(z.any()).optional(),
-  productType: z.string().optional(),
-  layouts: z.array(z.any()).optional(),
-  joNumber: z.number().optional(),
-  shipmentStatus: z.string().optional(),
-  shippedTimestamp: z.string().nullable().optional(),
-  isJoPrinted: z.boolean().optional(),
-  joPrintedTimestamp: z.string().nullable().optional(),
-  isUnderProgramming: z.boolean().optional(),
-  isPreparedForProduction: z.boolean().optional(),
-  isSentToProduction: z.boolean().optional(),
-  isEndorsedToLogistics: z.boolean().optional(),
-  isRecheckingQuality: z.boolean().optional(),
-  isPostingConsentGranted: z.boolean().nullable().optional(),
-  postingConsentTimestamp: z.string().nullable().optional(),
-  isFinalApproval: z.boolean().optional(),
-  forceNewCustomer: z.boolean().optional(),
-  isSalesAuditRequested: z.boolean().optional(),
-  salesAuditRequestedTimestamp: z.string().nullable().optional(),
-  isSalesAuditComplete: z.boolean().optional(),
-  salesAuditCompleteTimestamp: z.string().nullable().optional(),
-  isWaybillPrinted: z.boolean().optional(),
-  waybillNumbers: z.array(z.string()).optional(),
-  isQualityApproved: z.boolean().optional(),
-  qualityApprovedTimestamp: z.string().nullable().optional(),
-  qualityApprovedBy: z.string().nullable().optional(),
-  isPacked: z.boolean().optional(),
-  packedTimestamp: z.string().nullable().optional(),
-  adjustedDeliveryDate: z.string().optional().nullable(),
-  deliveryDate: z.string().nullable().optional(),
-  isCutting: z.boolean().optional(),
-  isEmbroideryDone: z.boolean().optional(),
-  isSewing: z.boolean().optional(),
-  isTrimming: z.boolean().optional(),
-  isDone: z.boolean().optional(),
-  finalApprovalTimestamp: z.string().nullable().optional(),
-  isJoHardcopyReceived: z.boolean().optional(),
-  joHardcopyReceivedTimestamp: z.string().nullable().optional(),
-  isDigitizingArchived: z.boolean().optional(),
-  scesFullName: z.string().optional(),
-  recipientName: z.string().optional(),
-  isInitialApproval: z.boolean().optional(),
-  isLogoTesting: z.boolean().optional(),
-  isRevision: z.boolean().optional(),
-  isFinalProgram: z.boolean().optional(),
-  underProgrammingTimestamp: z.string().nullable().optional(),
-  initialApprovalTimestamp: z.string().nullable().optional(),
-  logoTestingTimestamp: z.string().nullable().optional(),
-  revisionTimestamp: z.string().nullable().optional(),
-  finalProgramTimestamp: z.string().nullable().optional(),
-  digitizingArchivedTimestamp: z.string().nullable().optional(),
-  sentToProductionTimestamp: z.string().nullable().optional(),
-  cuttingTimestamp: z.string().nullable().optional(),
-  sewingTimestamp: z.string().nullable().optional(),
-  trimmingTimestamp: z.string().nullable().optional(),
-  doneProductionTimestamp: z.string().nullable().optional(),
-  endorsedToLogisticsTimestamp: z.string().nullable().optional(),
-  endorsedToLogisticsBy: z.string().nullable().optional(),
-  deliveredTimestamp: z.string().nullable().optional(),
-  embroideryDoneTimestamp: z.string().nullable().optional(),
-  editedUnitPrices: z.record(z.number()).optional(),
-  editedAddOnPrices: z.record(z.number()).optional(),
-  editedProgrammingFees: z.record(z.object({ logoFee: z.number().optional(), backTextFee: z.number().optional() })).optional(),
-  productionType: z.string().optional(),
-  sewerType: z.string().optional(),
-  publiclyPrintable: z.boolean().optional(),
-  photoshootDate: z.string().nullable().optional(),
-});
+    id: z.string(),
+    customerName: z.string(),
+    companyName: z.string().optional(),
+    contactNumber: z.string().optional(),
+    contactNumber2: z.string().optional(),
+    landlineNumber: z.string().optional(),
+    location: z.string().optional(),
+    houseStreet: z.string().optional(),
+    barangay: z.string().optional(),
+    city: z.string().optional(),
+    province: z.string().optional(),
+    isInternational: z.boolean().optional(),
+    salesRepresentative: z.string(),
+    priorityType: z.string(),
+    orderType: z.string(),
+    courier: z.string().optional(),
+    orders: z.array(z.any()),
+    submissionDateTime: z.string(),
+    lastModified: z.string(),
+    lastModifiedBy: z.string().nullable().optional(),
+    grandTotal: z.number().optional(),
+    paidAmount: z.number().optional(),
+    paymentType: z.string().optional(),
+    modeOfPayment: z.string().optional(),
+    balance: z.number().optional(),
+    addOns: z.any().optional(),
+    discounts: z.any().optional(),
+    payments: z.array(z.any()).optional(),
+    productType: z.string().optional(),
+    layouts: z.array(z.any()).optional(),
+    joNumber: z.number().optional(),
+    shipmentStatus: z.string().optional(),
+    shippedTimestamp: z.string().nullable().optional(),
+    isJoPrinted: z.boolean().optional(),
+    joPrintedTimestamp: z.string().nullable().optional(),
+    isUnderProgramming: z.boolean().optional(),
+    isPreparedForProduction: z.boolean().optional(),
+    isSentToProduction: z.boolean().optional(),
+    isEndorsedToLogistics: z.boolean().optional(),
+    isRecheckingQuality: z.boolean().optional(),
+    isPostingConsentGranted: z.boolean().nullable().optional(),
+    postingConsentTimestamp: z.string().nullable().optional(),
+    isFinalApproval: z.boolean().optional(),
+    forceNewCustomer: z.boolean().optional(),
+    isSalesAuditRequested: z.boolean().optional(),
+    salesAuditRequestedTimestamp: z.string().nullable().optional(),
+    isSalesAuditComplete: z.boolean().optional(),
+    salesAuditCompleteTimestamp: z.string().nullable().optional(),
+    isWaybillPrinted: z.boolean().optional(),
+    waybillNumbers: z.array(z.string()).optional(),
+    isQualityApproved: z.boolean().optional(),
+    qualityApprovedTimestamp: z.string().nullable().optional(),
+    qualityApprovedBy: z.string().nullable().optional(),
+    isPacked: z.boolean().optional(),
+    packedTimestamp: z.string().nullable().optional(),
+    adjustedDeliveryDate: z.string().optional().nullable(),
+    deliveryDate: z.string().nullable().optional(),
+    isCutting: z.boolean().optional(),
+    isEmbroideryDone: z.boolean().optional(),
+    isSewing: z.boolean().optional(),
+    isTrimming: z.boolean().optional(),
+    isDone: z.boolean().optional(),
+    finalApprovalTimestamp: z.string().nullable().optional(),
+    isJoHardcopyReceived: z.boolean().optional(),
+    joHardcopyReceivedTimestamp: z.string().nullable().optional(),
+    isDigitizingArchived: z.boolean().optional(),
+    scesFullName: z.string().optional(),
+    recipientName: z.string().optional(),
+    isInitialApproval: z.boolean().optional(),
+    isLogoTesting: z.boolean().optional(),
+    isRevision: z.boolean().optional(),
+    isFinalProgram: z.boolean().optional(),
+    underProgrammingTimestamp: z.string().nullable().optional(),
+    initialApprovalTimestamp: z.string().nullable().optional(),
+    logoTestingTimestamp: z.string().nullable().optional(),
+    revisionTimestamp: z.string().nullable().optional(),
+    finalProgramTimestamp: z.string().nullable().optional(),
+    digitizingArchivedTimestamp: z.string().nullable().optional(),
+    sentToProductionTimestamp: z.string().nullable().optional(),
+    cuttingTimestamp: z.string().nullable().optional(),
+    sewingTimestamp: z.string().nullable().optional(),
+    trimmingTimestamp: z.string().nullable().optional(),
+    doneProductionTimestamp: z.string().nullable().optional(),
+    endorsedToLogisticsTimestamp: z.string().nullable().optional(),
+    endorsedToLogisticsBy: z.string().nullable().optional(),
+    deliveredTimestamp: z.string().nullable().optional(),
+    embroideryDoneTimestamp: z.string().nullable().optional(),
+    editedUnitPrices: z.record(z.number()).optional(),
+    editedAddOnPrices: z.record(z.number()).optional(),
+    editedProgrammingFees: z.record(z.object({ logoFee: z.number().optional(), backTextFee: z.number().optional() })).optional(),
+    productionType: z.string().optional(),
+    sewerType: z.string().optional(),
+    publiclyPrintable: z.boolean().optional(),
+    photoshootDate: z.string().nullable().optional(),
+  });
 type Lead = z.infer<typeof leadSchema>;
 
 type EnrichedLead = Lead & {
@@ -218,6 +218,69 @@ interface JobOrderTableProps {
   isReadOnly: boolean;
   filterType?: 'ONGOING' | 'COMPLETED';
 }
+
+const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) {
+    if (!images || images.length === 0) return null;
+
+    return (
+        <Card className="bg-white flex-shrink-0">
+            <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
+            <CardContent className="flex gap-4 text-xs p-2 flex-wrap justify-center">
+                {images.map((img, index) => (
+                    img.src && (
+                        <div key={index} className="flex flex-col items-center text-center w-28">
+                            <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
+                            <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
+                                <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
+                            </div>
+                            {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
+                            {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
+                        </div>
+                    )
+                ))}
+            </CardContent>
+        </Card>
+    );
+});
+ImageDisplayCard.displayName = 'ImageDisplayCard';
+
+const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, setImageInView }: { lead: Lead, setImageInView: (url: string | null) => void }) {
+    const refImages = useMemo(() => {
+        if (!lead.layouts) return [];
+        return (lead.layouts || []).flatMap((layout) => {
+            const images: any[] = [];
+            const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
+                if (Array.isArray(pluralField)) {
+                    pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                } else if (singularField) {
+                    images.push({ src: singularField, label: `${labelPrefix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                }
+            };
+            addImages((layout as any).refLogoLeftImages, layout.refLogoLeftImage, layout.refLogoLeftImageUploadTime, layout.refLogoLeftImageUploadedBy, 'Ref Logo Left');
+            addImages((layout as any).refLogoRightImages, layout.refLogoRightImage, layout.refLogoRightImageUploadTime, layout.refLogoRightImageUploadedBy, 'Ref Logo Right');
+            addImages((layout as any).refBackLogoImages, layout.refBackLogoImage, layout.refBackLogoImageUploadTime, layout.refBackLogoImageUploadedBy, 'Ref Back Logo');
+            addImages((layout as any).refBackDesignImages, layout.refBackDesignImage, layout.refBackDesignImageUploadTime, layout.refBackDesignImageUploadedBy, 'Ref Back Design');
+            return images;
+        })
+    }, [lead.layouts]);
+
+    return (
+        <TableRow>
+            <TableCell colSpan={13}>
+                 <div className="p-2 bg-gray-50 rounded-md my-2">
+                    {refImages.length > 0 ? (
+                        <div className="flex flex-wrap gap-4 p-2 justify-center">
+                            <ImageDisplayCard title="Reference Images" images={refImages} onImageClick={setImageInView} />
+                        </div>
+                    ) : (
+                        <p className="text-center text-muted-foreground p-4">No reference images uploaded.</p>
+                    )}
+                </div>
+            </TableCell>
+        </TableRow>
+    );
+});
+CollapsibleContentRow.displayName = 'CollapsibleContentRow';
 
 const RecordsTableRow = React.memo(({
     lead,
@@ -277,38 +340,22 @@ const RecordsTableRow = React.memo(({
     handleOpenUploadDialog: (lead: Lead) => void;
 }) => {
     
-    const layout = lead.layouts?.[0];
-    
-    const refImages = useMemo(() => {
-        if (!layout) return [];
-        return [
-            ...((layout as any).refLogoLeftImages || []).map((img: any, i: number) => ({ ...img, label: `Logo Left ${i + 1}`, src: img.url })),
-            ...((layout as any).refLogoRightImages || []).map((img: any, i: number) => ({ ...img, label: `Logo Right ${i + 1}`, src: img.url })),
-            ...((layout as any).refBackLogoImages || []).map((img: any, i: number) => ({ ...img, label: `Back Logo ${i + 1}`, src: img.url })),
-            ...((layout as any).refBackDesignImages || []).map((img: any, i: number) => ({ ...img, label: `Back Design ${i + 1}`, src: img.url })),
-        ].filter(Boolean);
-    }, [layout]);
-
-    const refImageCount = (() => {
-        if (!layout) return 0;
-        const countForField = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): number => {
-            if (Array.isArray(pluralField)) {
-                return pluralField.length;
-            }
-            return singularField ? 1 : 0;
-        };
-        return countForField((layout as any).refLogoLeftImages, layout.refLogoLeftImage) +
-               countForField((layout as any).refLogoRightImages, layout.refLogoRightImage) +
-               countForField((layout as any).refBackLogoImages, layout.refBackLogoImage) +
-               countForField((layout as any).refBackDesignImages, layout.refBackDesignImage);
-    })();
-    
     const isJoSaved = !!lead.joNumber;
     const creationDate = formatDateTime(lead.submissionDateTime);
     const modifiedDate = formatDateTime(lead.lastModified);
     const isHovered = openLeadId === lead.id;
     const layoutImageCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
     const printingStatus = getPrintingStatus(lead);
+    const refImageCount = lead.layouts?.flatMap(l => [
+        ...(Array.isArray((l as any).refLogoLeftImages) ? (l as any).refLogoLeftImages : []),
+        l.refLogoLeftImage,
+        ...(Array.isArray((l as any).refLogoRightImages) ? (l as any).refLogoRightImages : []),
+        l.refLogoRightImage,
+        ...(Array.isArray((l as any).refBackLogoImages) ? (l as any).refBackLogoImages : []),
+        l.refBackLogoImage,
+        ...(Array.isArray((l as any).refBackDesignImages) ? (l as any).refBackDesignImages : []),
+        l.refBackDesignImage,
+    ]).filter(Boolean).length || 0;
     
     return (
         <React.Fragment>
@@ -375,31 +422,17 @@ const RecordsTableRow = React.memo(({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
-                    {isCompleted ? (
-                        <div className="relative inline-flex items-center justify-center">
-                            <Button variant="secondary" size="sm" onClick={() => toggleReferenceImages(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
-                                View
-                                {openReferenceImages === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                            </Button>
-                            {refImageCount > 0 && (
-                                <div className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold">
-                                {refImageCount}
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="relative inline-flex items-center justify-center">
-                            <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)} disabled={isReadOnly}>
-                                <Upload className="mr-2 h-4 w-4" />
-                                Upload
-                            </Button>
-                            {refImageCount > 0 && (
-                                <div className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold">
-                                {refImageCount}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    <div className="relative inline-flex items-center justify-center">
+                        <Button variant="secondary" size="sm" onClick={() => toggleReferenceImages(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+                            View
+                            {openReferenceImages === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                        </Button>
+                        {refImageCount > 0 && (
+                            <div className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold">
+                            {refImageCount}
+                            </div>
+                        )}
+                    </div>
                 </TableCell>
                 <TableCell className="font-medium text-xs align-middle py-2 text-black whitespace-nowrap text-center">{formatJoNumberUtil(lead.joNumber)}</TableCell>
                 <TableCell className="text-center align-middle py-2">
@@ -488,11 +521,7 @@ const RecordsTableRow = React.memo(({
                 )}
             </TableRow>
              {openReferenceImages === lead.id && (
-                <TableRow>
-                    <TableCell colSpan={13}>
-                        <p>Reference Images will be displayed here</p>
-                    </TableCell>
-                </TableRow>
+                <CollapsibleContentRow lead={lead} setImageInView={setImageInView} />
             )}
         </React.Fragment>
     );
@@ -522,10 +551,11 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
 
+  const isCompleted = filterType === 'COMPLETED';
   const defaultYear = new Date().getFullYear().toString();
   const defaultMonth = (new Date().getMonth() + 1).toString();
-  const [selectedYear, setSelectedYear] = useState<string>(isReadOnly ? 'all' : defaultYear);
-  const [selectedMonth, setSelectedMonth] = useState<string>(isReadOnly ? 'all' : defaultMonth);
+  const [selectedYear, setSelectedYear] = useState<string>(isCompleted ? 'all' : defaultYear);
+  const [selectedMonth, setSelectedMonth] = useState<string>(isCompleted ? 'all' : defaultMonth);
   const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
@@ -541,15 +571,12 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
   
-  const canDelete = (lead?: Lead) => isAdmin || userProfile?.nickname === lead?.salesRepresentative;
-  const isCompleted = filterType === 'COMPLETED';
-  
   const handleResetFilters = () => {
     setSearchTerm('');
     setCsrFilter('All');
     setJoNumberSearch('');
-    setSelectedYear(isReadOnly ? 'all' : defaultYear);
-    setSelectedMonth(isReadOnly ? 'all' : defaultMonth);
+    setSelectedYear(isCompleted ? 'all' : defaultYear);
+    setSelectedMonth(isCompleted ? 'all' : defaultMonth);
     setDateRange(undefined);
     setActiveQuickFilter(null);
   };
@@ -761,13 +788,15 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   
   const filteredLeads = useMemo(() => {
     if (!processedLeads) return [];
-  
+
     return processedLeads.filter(lead => {
       const overallStatus = getOverallStatus(lead).text;
       let matchesStatus = true;
       if (filterType === 'COMPLETED') {
         matchesStatus = overallStatus === 'COMPLETED';
       } else if (filterType === 'ONGOING') {
+        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
+      } else { // No filterType means we are on the main job order page which shows ONGOING
         matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
       }
 
@@ -992,7 +1021,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                         "focus:outline-none focus:border-solid focus:border-teal-500 select-none"
                     )}
                     onClick={() => image && setImageInView(image)}
-                    onDoubleClick={() => !isReadOnly && !image && document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
+                    onDoubleClick={() => !isReadOnly && !image && document.getElementById(`file-input-${label}-${index}`)?.click()}
                     onPaste={(e) => onPaste(e, setter, index)}
                     onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                   >
@@ -1012,7 +1041,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                             </Button>
                         )}
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{isReadOnly ? "No image uploaded" : "Double-click to upload or paste image"}</p> </div>)}
-                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isReadOnly}/>
+                      <input id={`file-input-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isReadOnly}/>
                   </div>
                   {!isReadOnly && displayImages.length > 1 && (
                       <Button
@@ -1285,3 +1314,4 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     </>
   );
 }
+
