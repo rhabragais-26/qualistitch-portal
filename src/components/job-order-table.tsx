@@ -219,6 +219,16 @@ interface JobOrderTableProps {
   filterType?: 'ONGOING' | 'COMPLETED';
 }
 
+const inventoryItemSchema = z.object({
+  id: z.string(),
+  productType: z.string(),
+  color: z.string(),
+  size: z.string(),
+  stock: z.number(),
+});
+type InventoryItem = z.infer<typeof inventoryItemSchema>;
+
+
 const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) {
     if (!images || images.length === 0) return null;
 
@@ -422,17 +432,29 @@ const RecordsTableRow = React.memo(({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
-                    <div className="relative inline-flex items-center justify-center">
-                        <Button variant="secondary" size="sm" onClick={() => toggleReferenceImages(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
-                            View
-                            {openReferenceImages === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                        </Button>
-                        {refImageCount > 0 && (
-                            <div className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold">
-                            {refImageCount}
-                            </div>
-                        )}
-                    </div>
+                  <div className="relative inline-flex items-center justify-center">
+                    {isCompleted ? (
+                      <Button variant="secondary" size="sm" onClick={() => toggleReferenceImages(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+                        View
+                        {openReferenceImages === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="h-8 px-3 text-white font-bold bg-primary hover:bg-primary/90"
+                        onClick={() => handleOpenUploadDialog(lead)}
+                        disabled={isReadOnly}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload
+                      </Button>
+                    )}
+                    {refImageCount > 0 && (
+                      <div className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold">
+                        {refImageCount}
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="font-medium text-xs align-middle py-2 text-black whitespace-nowrap text-center">{formatJoNumberUtil(lead.joNumber)}</TableCell>
                 <TableCell className="text-center align-middle py-2">
@@ -528,6 +550,7 @@ const RecordsTableRow = React.memo(({
 });
 RecordsTableRow.displayName = 'RecordsTableRow';
 
+
 export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const firestore = useFirestore();
   const { userProfile, isAdmin } = useUser();
@@ -571,6 +594,19 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
   
+  const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
+  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, inventoryItemSchema, { listen: false });
+
+  const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
+        return { text: 'COMPLETED', variant: 'success' };
+    }
+    if (!lead.joNumber) {
+        return { text: 'PENDING', variant: 'secondary' };
+    }
+    return { text: 'ONGOING', variant: 'warning' };
+  }, []);
+
   const handleResetFilters = () => {
     setSearchTerm('');
     setCsrFilter('All');
@@ -636,16 +672,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const handleProcessJobOrder = useCallback((lead: Lead) => {
     router.push(`/job-order/${lead.id}`);
   }, [router]);
-
-  const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
-    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
-        return { text: 'COMPLETED', variant: 'success' };
-    }
-    if (!lead.joNumber) {
-        return { text: 'PENDING', variant: 'secondary' };
-    }
-    return { text: 'ONGOING', variant: 'warning' };
-  }, []);
   
   const getJoStatus = useCallback((lead: Lead) => {
     if (!lead.joNumber || !lead.isJoPrinted) {
@@ -796,8 +822,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         matchesStatus = overallStatus === 'COMPLETED';
       } else if (filterType === 'ONGOING') {
         matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
-      } else { // No filterType means we are on the main job order page which shows ONGOING
-        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
       }
 
       if (!matchesStatus) return false;
@@ -850,7 +874,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         
         return { ...totals, uniqueCustomers: customerNames.size };
     }, [filteredLeads]);
-  
+
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
     return filteredLeads.map(lead => ({
@@ -1246,7 +1270,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle text-center">Order Created</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Date & Time</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Customer Name</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">SCES</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
@@ -1262,7 +1286,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {displayedLeads.map((lead) => {
+                {filteredLeads.map((lead) => {
                   const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
                   
                   return (
@@ -1314,4 +1338,3 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     </>
   );
 }
-
