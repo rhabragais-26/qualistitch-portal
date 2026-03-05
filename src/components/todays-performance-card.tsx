@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -254,33 +255,6 @@ export function TodaysPerformanceCard() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = useState(false);
 
-  const filteredLeads = useMemo(() => {
-    if (!leads) return [];
-
-    let rangeStart: Date;
-    
-    if (activeFilter === 'today') {
-        rangeStart = startOfDay(new Date());
-    } else if (activeFilter === 'yesterday') {
-        rangeStart = startOfDay(subDays(new Date(), 1));
-    } else if (activeFilter === 'custom' && selectedDate) {
-        rangeStart = startOfDay(selectedDate);
-    } else {
-        rangeStart = startOfDay(new Date());
-    }
-    const rangeEnd = endOfDay(rangeStart);
-    
-    const filtered = leads.filter(lead => {
-        try {
-            const submissionDate = new Date(lead.submissionDateTime);
-            return submissionDate >= rangeStart && submissionDate <= rangeEnd;
-        } catch (e) {
-            return false;
-        }
-    });
-    return filtered;
-  }, [leads, activeFilter, selectedDate]);
-  
   const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, ticketData, totalTicketCustomers } = useMemo(() => {
     if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, ticketData: [], totalTicketCustomers: 0 };
 
@@ -584,15 +558,15 @@ export function TodaysPerformanceCard() {
                                               }}
                                           />}
                                       />
-                                      <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2}>
-                                          <LabelList content={renderAmountLabel} dataKey="amount" />
-                                      </Line>
                                       <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
                                           {salesData.map((entry, index) => (
                                               <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
                                           ))}
                                           <LabelList dataKey="quantity" content={renderQuantityLabel} />
                                       </Bar>
+                                      <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2}>
+                                          <LabelList content={renderAmountLabel} dataKey="amount" />
+                                      </Line>
                                   </ComposedChart>
                               </ResponsiveContainer>
                           </ChartContainer>
@@ -720,3 +694,5 @@ export function TodaysPerformanceCard() {
     </Card>
   );
 }
+
+    
