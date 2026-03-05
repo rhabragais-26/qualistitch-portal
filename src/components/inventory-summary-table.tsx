@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -226,7 +225,7 @@ export function InventorySummaryTable() {
             soldQty,
             onProcess,
             dispatched,
-            remaining: item.stock - onProcess - dispatched,
+            remaining: item.stock - onProcess,
         };
     });
   }, [inventoryItems, leads]);
