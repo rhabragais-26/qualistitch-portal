@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -14,7 +13,6 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useUser } from '../provider';
 import { z, ZodError } from 'zod';
-import { getAuth } from 'firebase/auth';
 
 /** Utility type to add an 'id' field to a given type T. */
 type WithId<T> = T & { id: string };
@@ -54,7 +52,7 @@ export function useDoc<T = any>(
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
-  const { isUserLoading, userProfile } = useUser();
+  const { isUserLoading, user } = useUser();
 
   const fetchData = useCallback(async (ref: DocumentReference<DocumentData>) => {
     setIsLoading(true);
@@ -111,9 +109,7 @@ export function useDoc<T = any>(
   
     // ✅ Critical gate: if user is not signed in, DO NOT query Firestore
     // This prevents requests being sent with auth:null
-    const uid = getAuth().currentUser?.uid;
-
-    if (!uid) {
+    if (!user) {
       setIsLoading(false);
       setData(null);
       setError(null);
@@ -167,7 +163,7 @@ export function useDoc<T = any>(
     } else {
       fetchData(memoizedDocRef);
     }
-  }, [memoizedDocRef, isUserLoading, schema, options.listen, fetchData]);
+  }, [memoizedDocRef, isUserLoading, user, schema, options.listen, fetchData]);
 
   return { data, isLoading, error, refetch };
 }
