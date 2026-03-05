@@ -55,9 +55,13 @@ export default function InventoryReportsPage() {
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <Card className="w-full shadow-xl">
           <CardHeader>
+             <CardTitle className="text-center">Inventory Reports</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-8">
              <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>Inventory Reports</CardTitle>
+                  <h3 className="text-lg font-bold">Daily Sold vs. Remaining Stocks</h3>
+                  <p className="text-sm text-muted-foreground">Daily sold quantity and remaining stocks for the selected product.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
@@ -83,12 +87,18 @@ export default function InventoryReportsPage() {
                     </Select>
                 </div>
              </div>
-          </CardHeader>
-          <CardContent className="space-y-8">
             <DailySoldQuantityChart productTypeFilter={productTypeFilter} timeRange={timeRange} />
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-                <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} />
-                <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} />
+                <div>
+                    <h3 className="text-lg font-bold mt-8">Remaining Stocks</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Remaining stock quantity breakdown by color and size.</p>
+                    <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-bold mt-8">For Priority Purchase</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Items with low or negative stock levels (10 or less remaining).</p>
+                    <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} />
+                </div>
             </div>
           </CardContent>
         </Card>

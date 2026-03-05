@@ -1,11 +1,13 @@
+
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Order = {
   productType: string;
@@ -124,8 +126,6 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
 
   return (
     <div className="h-[350px]">
-        <h3 className="text-lg font-bold">Daily Sold vs. Remaining Stocks</h3>
-        <p className="text-sm text-muted-foreground mb-4">Daily sold quantity and remaining stocks for the selected product.</p>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
