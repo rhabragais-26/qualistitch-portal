@@ -566,7 +566,7 @@ export function TodaysPerformanceCard() {
                                           ))}
                                           <LabelList dataKey="quantity" content={renderQuantityLabel} />
                                       </Bar>
-                                      <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2} zIndex={100}>
+                                      <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(181, 73.40%, 45.70%)'} strokeWidth={2} zIndex={100}>
                                           <LabelList content={renderAmountLabel} dataKey="amount" />
                                       </Line>
                                   </ComposedChart>
