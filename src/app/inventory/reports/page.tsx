@@ -96,7 +96,7 @@ export default function InventoryReportsPage() {
             <Separator />
 
             <div className="mt-8">
-              <h3 className="text-lg font-bold">Items Endorsed to Production/Logistics</h3>
+              <h3 className="text-lg font-bold">Items Endorsed to Production/Logistics Daily</h3>
               <EndorsedItemsChart productTypeFilter={productTypeFilter} timeRange={timeRange} />
             </div>
             

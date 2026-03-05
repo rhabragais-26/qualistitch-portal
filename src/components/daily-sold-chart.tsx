@@ -3,7 +3,7 @@
 import React, { useMemo, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -45,7 +45,7 @@ const renderRemainingStockLabel = (props: any) => {
         return null;
     }
 
-    const color = value < 0 ? '#ef4444' : COLORS[1]; // red for negative, orange otherwise
+    const color = value < 0 ? '#ef4444' : COLORS[1];
 
     return (
         <text x={x} y={y} dy={-4} fill={color} fontSize={12} textAnchor="middle">
@@ -88,27 +88,18 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
       .filter(item => item.productType === productTypeFilter)
       .reduce((sum, item) => sum + item.stock, 0);
 
-    // 3. Group all sales by date based on endorsement timestamp.
+    // 3. Group all sales by date based on submission date.
     const salesByDate: { [dateStr: string]: number } = {};
     leads.forEach(lead => {
-      let endorsementTimestamp: string | undefined;
-      if (lead.isSentToProduction && lead.sentToProductionTimestamp) {
-          endorsementTimestamp = lead.sentToProductionTimestamp;
-      } else if (lead.isEndorsedToLogistics && lead.endorsedToLogisticsTimestamp) {
-          endorsementTimestamp = lead.endorsedToLogisticsTimestamp;
-      }
-      
-      if (endorsementTimestamp) {
         try {
-          const endorsementDate = new Date(endorsementTimestamp);
-          const dateStr = format(endorsementDate, 'yyyy-MM-dd');
-          lead.orders.forEach(order => {
-            if (order.productType === productTypeFilter) {
-              salesByDate[dateStr] = (salesByDate[dateStr] || 0) + order.quantity;
-            }
-          });
+            const submissionDate = new Date(lead.submissionDateTime);
+            const dateStr = format(submissionDate, 'yyyy-MM-dd');
+            lead.orders.forEach(order => {
+                if (order.productType === productTypeFilter) {
+                    salesByDate[dateStr] = (salesByDate[dateStr] || 0) + order.quantity;
+                }
+            });
         } catch (e) { /* ignore invalid dates */ }
-      }
     });
 
     // 4. Calculate cumulative sales up to the day before the start date.
@@ -165,65 +156,69 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
   return (
     <div className="h-[350px]">
       <ChartContainer config={chartConfig} className="w-full h-full">
-        <ComposedChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-          <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} />
-          <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} />
-          <Tooltip
-            content={
-              <ChartTooltipContent
-                formatter={(value, name) => {
-                    if (typeof value !== 'number') return value;
-                    const isRemaining = name === 'Stocks Remaining';
-                    return (
-                        <div className="flex w-full items-center justify-between gap-4">
-                        <div className="flex items-center gap-1.5">
-                            <span>{name}</span>
-                        </div>
-                        <span className={cn("font-mono font-medium", isRemaining && value < 0 && "text-destructive")}>
-                            {value.toLocaleString()}
-                        </span>
-                        </div>
-                    )
-                }}
-                cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
-              />
-            }
-          />
-          <Legend />
-          <defs>
-            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={COLORS[1]} floodOpacity="0.5" />
-            </filter>
-          </defs>
-          <Area 
-              yAxisId="left"
-              type="monotone" 
-              dataKey="sold" 
-              name="Quantity Sold"
-              stroke={COLORS[0]}
-              fillOpacity={0.4}
-              fill={COLORS[0]}
-          >
-            <LabelList dataKey="sold" position="top" fill={COLORS[0]} formatter={(value: number) => value > 0 ? value : ''} />
-          </Area>
-          <Line 
-              yAxisId="right"
-              key="remaining"
-              type="monotone" 
-              dataKey="remaining" 
-              name="Stocks Remaining"
-              stroke={COLORS[1]} 
-              strokeWidth={2}
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
-              style={{ filter: 'url(#shadow)' }}
-              zIndex={100}
-          >
-             <LabelList dataKey="remaining" content={renderRemainingStockLabel} />
-          </Line>
-        </ComposedChart>
+        <ResponsiveContainer>
+          <ComposedChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" tick={{ fontSize: 12 }} interval={0} />
+            <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} domain={[0, dataMax => Math.round(dataMax * 1.2)]} />
+            <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} domain={[dataMin => Math.round(dataMin * 1.2), dataMax => Math.round(dataMax * 1.2)]} />
+            <Tooltip
+              content={
+                <ChartTooltipContent
+                  formatter={(value, name) => {
+                      if (typeof value !== 'number') return value;
+                      const isRemaining = name === 'Stocks Remaining';
+                      const color = name === 'Quantity Sold' ? COLORS[0] : (value < 0 ? '#ef4444' : COLORS[1]);
+                      return (
+                          <div className="flex w-full items-center justify-between gap-4 text-base">
+                          <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+                              <span style={{color}}>{name}</span>
+                          </div>
+                          <span className={cn("font-mono font-medium", isRemaining && value < 0 && "text-destructive")}>
+                              {value.toLocaleString()}
+                          </span>
+                          </div>
+                      )
+                  }}
+                  cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
+                />
+              }
+            />
+            <Legend />
+            <defs>
+              <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={COLORS[1]} floodOpacity="0.5" />
+              </filter>
+            </defs>
+            <Area 
+                yAxisId="left"
+                type="monotone" 
+                dataKey="sold" 
+                name="Quantity Sold"
+                stroke={COLORS[0]}
+                fillOpacity={0.4}
+                fill={COLORS[0]}
+            >
+              <LabelList dataKey="sold" position="top" fill={COLORS[0]} formatter={(value: number) => value > 0 ? value : ''} />
+            </Area>
+            <Line 
+                yAxisId="right"
+                key="remaining"
+                type="monotone" 
+                dataKey="remaining" 
+                name="Stocks Remaining"
+                stroke={COLORS[1]} 
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
+                style={{ filter: 'url(#shadow)' }}
+                zIndex={100}
+            >
+               <LabelList dataKey="remaining" content={renderRemainingStockLabel} />
+            </Line>
+          </ComposedChart>
+        </ResponsiveContainer>
       </ChartContainer>
     </div>
   );

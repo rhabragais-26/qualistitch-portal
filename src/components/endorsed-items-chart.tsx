@@ -110,8 +110,8 @@ export function EndorsedItemsChart({ productTypeFilter, timeRange }: EndorsedIte
         <ResponsiveContainer>
           <AreaChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis allowDecimals={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 12 }} interval={0} />
+            <YAxis allowDecimals={false} domain={[0, dataMax => Math.round(dataMax * 1.2)]} />
             <Tooltip
               content={
                 <ChartTooltipContent
