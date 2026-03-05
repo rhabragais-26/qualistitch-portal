@@ -10,16 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -40,30 +32,16 @@ type Lead = {
   }[];
 };
 
-const allProductTypes = [
-  'Executive Jacket 1',
-  'Executive Jacket v2 (with lines)',
-  'Turtle Neck Jacket',
-  'Corporate Jacket',
-  'Reversible v1',
-  'Reversible v2',
-  'Polo Shirt (Smilee) - Cool Pass',
-  'Polo Shirt (Smilee) - Cotton Blend',
-  'Polo Shirt (Lifeline)',
-  'Polo Shirt (Blue Corner)',
-  'Polo Shirt (Softex)',
-];
-
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
 type InventoryReportTableProps = {
     reportType?: 'inventory' | 'priority';
+    productTypeFilter: string;
 }
 
-export function InventoryReportTable({ reportType = 'inventory' }: InventoryReportTableProps) {
+export function InventoryReportTable({ reportType = 'inventory', productTypeFilter }: InventoryReportTableProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
-  const [productTypeFilter, setProductTypeFilter] = React.useState(allProductTypes[0]);
 
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -135,7 +113,6 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
       });
       return { color, ...sizeData };
     }).filter(row => {
-        // Only include rows that have at least one size with a count
         if(reportType === 'priority') {
             return sizes.some(size => row[size] !== null && row[size]! <= 10);
         }
@@ -155,46 +132,17 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
     : 'Remaining stock quantity breakdown by color and size.';
     
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
-      <CardHeader>
-        <div className="flex justify-between items-center">
+    <div>
+        <div className="flex justify-between items-center mb-4">
           <div>
-            <CardTitle className="text-black">{title}</CardTitle>
-            <CardDescription className="text-gray-600">
+            <h3 className="text-lg font-bold text-black">{title}</h3>
+            <p className="text-sm text-gray-600">
               {description}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-4">
-            <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
-              <SelectTrigger className="w-[220px] bg-gray-100 text-black placeholder:text-gray-500">
-                <SelectValue placeholder="Filter by Product Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Products</SelectItem>
-                {allProductTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            </p>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-auto">
-        {isLoading && (
-          <div className="space-y-2 p-4">
-            {[...Array(10)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full bg-gray-200" />
-            ))}
-          </div>
-        )}
-        {error && (
-          <div className="text-red-500 p-4">
-            Error loading inventory report: {error.message}
-          </div>
-        )}
-        {!isLoading && !error && (
-          <div className="border rounded-md h-full">
-            <ScrollArea className="h-full">
+        <div className="border rounded-md">
+            <ScrollArea className="h-[300px]">
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
@@ -205,7 +153,19 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reportData.rows.length === 0 ? (
+                  {isLoading ? (
+                    <TableRow>
+                        <TableCell colSpan={reportData.headers.length + 1}>
+                             <Skeleton className="h-24 w-full bg-gray-200" />
+                        </TableCell>
+                    </TableRow>
+                   ) : error ? (
+                    <TableRow>
+                        <TableCell colSpan={reportData.headers.length + 1} className="text-center text-destructive">
+                            Error loading inventory report: {error.message}
+                        </TableCell>
+                    </TableRow>
+                   ) : reportData.rows.length === 0 ? (
                     <TableRow>
                         <TableCell colSpan={reportData.headers.length + 1} className="text-center text-muted-foreground align-middle">
                             {reportType === 'priority' ? 'No items require priority purchase.' : 'No inventory data for the selected product type.'}
@@ -233,8 +193,6 @@ export function InventoryReportTable({ reportType = 'inventory' }: InventoryRepo
               </Table>
             </ScrollArea>
           </div>
-        )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }

@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
 
-// Type definitions
 type Order = {
   productType: string;
   quantity: number;
@@ -30,31 +27,19 @@ type InventoryItem = {
 
 const COLORS = ['#0088FE', '#FF8042'];
 
-export function DailySoldQuantityChart() {
+type DailySoldQuantityChartProps = {
+  productTypeFilter: string;
+  timeRange: string;
+};
+
+export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySoldQuantityChartProps) {
   const firestore = useFirestore();
-  const [timeRange, setTimeRange] = useState('7d');
-  const [productTypeFilter, setProductTypeFilter] = useState('');
 
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const inventoryQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory')) : null), [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
-
-  const productTypes = useMemo(() => {
-    if (!leads && !inventoryItems) return [];
-    const fromLeads = leads?.flatMap(l => l.orders.map(o => o.productType)) || [];
-    const fromInventory = inventoryItems?.map(i => i.productType) || [];
-    return [...new Set([...fromLeads, ...fromInventory])]
-        .filter(type => type && type !== 'Patches' && type !== 'Client Owned')
-        .sort();
-  }, [leads, inventoryItems]);
-
-  useEffect(() => {
-    if (productTypes.length > 0 && !productTypeFilter) {
-        setProductTypeFilter(productTypes[0]);
-    }
-  }, [productTypes, productTypeFilter]);
 
   const { chartData } = useMemo(() => {
     if (!leads || !inventoryItems || !productTypeFilter) return { chartData: [] };
@@ -130,86 +115,53 @@ export function DailySoldQuantityChart() {
   const error = leadsError || inventoryError;
 
   if (isLoading) {
-    return <Skeleton className="h-[400px] w-full" />;
+    return <Skeleton className="h-[350px] w-full" />;
   }
 
   if (error) {
-    return <Card><CardContent><p className="text-destructive">Error loading chart data.</p></CardContent></Card>;
+    return <div className="h-[350px] flex items-center justify-center"><p className="text-destructive">Error loading chart data.</p></div>;
   }
 
   return (
-    <Card className="w-full shadow-xl">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Daily Sold vs. Remaining Stocks</CardTitle>
-              <CardDescription>Daily sold quantity and remaining stocks for the selected product.</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-                <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
-                    <SelectTrigger className="w-[220px]">
-                        <SelectValue placeholder="Select Product Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {productTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Select value={timeRange} onValueChange={setTimeRange}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="this_week">This Week</SelectItem>
-                        <SelectItem value="7d">Last 7 Days</SelectItem>
-                        <SelectItem value="14d">Last 14 Days</SelectItem>
-                        <SelectItem value="30d">Last 30 Days</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[350px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} />
-              <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} />
-              <Tooltip />
-              <Legend />
-              <Line 
-                  yAxisId="left"
-                  key="sold"
-                  type="monotone" 
-                  dataKey="sold" 
-                  name="Quantity Sold"
-                  stroke={COLORS[0]}
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-              >
-                <LabelList dataKey="sold" position="top" />
-              </Line>
-              <Line 
-                  yAxisId="right"
-                  key="remaining"
-                  type="monotone" 
-                  dataKey="remaining" 
-                  name="Stocks Remaining"
-                  stroke={COLORS[1]} 
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-              >
-                 <LabelList dataKey="remaining" position="top" />
-              </Line>
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="h-[350px]">
+        <h3 className="text-lg font-bold">Daily Sold vs. Remaining Stocks</h3>
+        <p className="text-sm text-muted-foreground mb-4">Daily sold quantity and remaining stocks for the selected product.</p>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+          <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} />
+          <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} />
+          <Tooltip />
+          <Legend />
+          <Line 
+              yAxisId="left"
+              key="sold"
+              type="monotone" 
+              dataKey="sold" 
+              name="Quantity Sold"
+              stroke={COLORS[0]}
+              strokeWidth={2}
+              dot={{ r: 4 }}
+              activeDot={{ r: 6 }}
+          >
+            <LabelList dataKey="sold" position="top" />
+          </Line>
+          <Line 
+              yAxisId="right"
+              key="remaining"
+              type="monotone" 
+              dataKey="remaining" 
+              name="Stocks Remaining"
+              stroke={COLORS[1]} 
+              strokeWidth={2}
+              dot={{ r: 4 }}
+              activeDot={{ r: 6 }}
+          >
+             <LabelList dataKey="remaining" position="top" />
+          </Line>
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
