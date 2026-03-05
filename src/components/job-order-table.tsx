@@ -152,7 +152,7 @@ const leadSchema = z.object({
   isSentToProduction: z.boolean().optional(),
   isEndorsedToLogistics: z.boolean().optional(),
   isRecheckingQuality: z.boolean().optional(),
-  isPostingConsentGranted: z.boolean().optional(),
+  isPostingConsentGranted: z.boolean().nullable().optional(),
   postingConsentTimestamp: z.string().nullable().optional(),
   isFinalApproval: z.boolean().optional(),
   forceNewCustomer: z.boolean().optional(),
@@ -245,7 +245,8 @@ const RecordsTableRow = React.memo(({
     openReferenceImages,
     toggleReferenceImages,
     setImageInView,
-    handleProcessJobOrder
+    handleProcessJobOrder,
+    handleOpenUploadDialog,
 }: {
     lead: EnrichedLead;
     openLeadId: string | null;
@@ -523,10 +524,10 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
 
-  const defaultYear = filterType === 'COMPLETED' ? 'all' : new Date().getFullYear().toString();
-  const defaultMonth = filterType === 'COMPLETED' ? 'all' : (new Date().getMonth() + 1).toString();
-  const [selectedYear, setSelectedYear] = useState<string>(defaultYear);
-  const [selectedMonth, setSelectedMonth] = useState<string>(defaultMonth);
+  const defaultYear = new Date().getFullYear().toString();
+  const defaultMonth = (new Date().getMonth() + 1).toString();
+  const [selectedYear, setSelectedYear] = useState<string>(isReadOnly ? 'all' : defaultYear);
+  const [selectedMonth, setSelectedMonth] = useState<string>(isReadOnly ? 'all' : defaultMonth);
   const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
@@ -548,8 +549,8 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     setSearchTerm('');
     setCsrFilter('All');
     setJoNumberSearch('');
-    setSelectedYear(defaultYear);
-    setSelectedMonth(defaultMonth);
+    setSelectedYear(isReadOnly ? 'all' : defaultYear);
+    setSelectedMonth(isReadOnly ? 'all' : defaultMonth);
     setDateRange(undefined);
     setActiveQuickFilter(null);
   };
@@ -568,7 +569,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         setSelectedMonth('all');
     }
   };
-  
 
   const salesRepresentatives = useMemo(() => {
     if (!leads) return [];
@@ -626,11 +626,21 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     return <span className="text-gray-500">Not yet endorsed</span>;
   }, []);
 
+  const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
+        return { text: 'COMPLETED', variant: 'success' };
+    }
+    if (!lead.joNumber) {
+        return { text: 'PENDING', variant: 'secondary' };
+    }
+    return { text: 'ONGOING', variant: 'warning' };
+  }, []);
+
   const getPrintingStatus = useCallback((lead: Lead): { text: string; variant: "warning" | "secondary" | "success" } => {
     if (lead.isJoPrinted) {
         return { text: "Printed", variant: "success" };
     }
-    const skipsProgramming = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
+    const skipsProgramming = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType ?? '');
     if (skipsProgramming) {
         return { text: "For Printing", variant: "warning" };
     }
@@ -798,7 +808,21 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
       
       return matchesSearch && matchesCsr && matchesJo && dateMatches;
     });
-  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, dateRange, filterType, getOverallStatus]);
+  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, dateRange, filterType]);
+  
+    const { totalAmount, totalQuantity, uniqueCustomers } = useMemo(() => {
+        if (!filteredLeads) return { totalAmount: 0, totalQuantity: 0, uniqueCustomers: 0 };
+        const customerNames = new Set<string>();
+        const totals = filteredLeads.reduce((acc, lead) => {
+            acc.totalAmount += lead.grandTotal || 0;
+            const quantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+            acc.totalQuantity += quantity;
+            customerNames.add(lead.customerName.toLowerCase());
+            return acc;
+        }, { totalAmount: 0, totalQuantity: 0 });
+        
+        return { ...totals, uniqueCustomers: customerNames.size };
+    }, [filteredLeads]);
   
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -940,7 +964,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     }
   }, [uploadLead, firestore, userProfile, toast, refetchLeads, refLogoLeftImages, refLogoRightImages, refBackLogoImages, refBackDesignImages]);
   
-  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+  const onPaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     if (isReadOnly) return;
     const file = e.clipboardData.files[0];
     if (file && file.type.startsWith('image/')) {
@@ -1034,7 +1058,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     return (
       <div className="space-y-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full" />
+          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
         ))}
       </div>
     );
@@ -1045,7 +1069,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   }
 
   return (
-    <>
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
        <AlertDialog open={!!confirmingPrint} onOpenChange={(open) => !open && setConfirmingPrint(null)}>
         <AlertDialogContent>
@@ -1127,7 +1150,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
               </CardDescription>
             </div>
             <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                   <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
                   <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
                   <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
@@ -1175,18 +1198,18 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="bg-gray-100 text-black placeholder:text-gray-500 w-56 h-9"
                   />
-                </div>
-                 <div className="w-full text-right">
-                  {filterType === 'COMPLETED' ? (
-                      <Link href="/job-order" className="text-sm text-primary hover:underline">
-                          View Ongoing Job Orders
-                      </Link>
-                  ) : (
-                      <Link href="/job-order/completed" className="text-sm text-primary hover:underline">
-                          View Completed Job Orders
-                      </Link>
-                  )}
-                </div>
+              </div>
+              <div className="w-full text-right">
+                {filterType === 'COMPLETED' ? (
+                  <Link href="/job-order" className="text-sm text-primary hover:underline">
+                    View Ongoing Job Orders
+                  </Link>
+                ) : (
+                  <Link href="/job-order/completed" className="text-sm text-primary hover:underline">
+                    View Completed Job Orders
+                  </Link>
+                )}
+              </div>
             </div>
         </div>
       </CardHeader>
