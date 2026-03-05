@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { ChartTooltipContent } from '@/components/ui/chart';
+
 
 type Order = {
   productType: string;
@@ -143,7 +146,27 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
           <XAxis dataKey="date" tick={{ fontSize: 12 }} />
           <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} />
           <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} />
-          <Tooltip />
+          <Tooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value, name) => {
+                    if (typeof value !== 'number') return value;
+                    
+                    return (
+                        <div className="flex w-full items-center justify-between gap-4">
+                        <div className="flex items-center gap-1.5">
+                            <span>{name}</span>
+                        </div>
+                        <span className={cn("font-mono font-medium", name === 'Stocks Remaining' && value < 0 && "text-destructive")}>
+                            {value.toLocaleString()}
+                        </span>
+                        </div>
+                    )
+                }}
+                cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
+              />
+            }
+          />
           <Legend />
           <defs>
             <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
