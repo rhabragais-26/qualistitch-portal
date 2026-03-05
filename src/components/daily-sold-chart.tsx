@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
@@ -18,6 +17,10 @@ type Order = {
 
 type Lead = {
   submissionDateTime: string;
+  isSentToProduction?: boolean;
+  sentToProductionTimestamp?: string;
+  isEndorsedToLogistics?: boolean;
+  endorsedToLogisticsTimestamp?: string;
   orders: Order[];
 };
 
@@ -85,18 +88,27 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
       .filter(item => item.productType === productTypeFilter)
       .reduce((sum, item) => sum + item.stock, 0);
 
-    // 3. Group all sales by date.
+    // 3. Group all sales by date based on endorsement timestamp.
     const salesByDate: { [dateStr: string]: number } = {};
     leads.forEach(lead => {
-      try {
-        const submissionDate = new Date(lead.submissionDateTime);
-        const dateStr = format(submissionDate, 'yyyy-MM-dd');
-        lead.orders.forEach(order => {
-          if (order.productType === productTypeFilter) {
-            salesByDate[dateStr] = (salesByDate[dateStr] || 0) + order.quantity;
-          }
-        });
-      } catch (e) { /* ignore invalid dates */ }
+      let endorsementTimestamp: string | undefined;
+      if (lead.isSentToProduction && lead.sentToProductionTimestamp) {
+          endorsementTimestamp = lead.sentToProductionTimestamp;
+      } else if (lead.isEndorsedToLogistics && lead.endorsedToLogisticsTimestamp) {
+          endorsementTimestamp = lead.endorsedToLogisticsTimestamp;
+      }
+      
+      if (endorsementTimestamp) {
+        try {
+          const endorsementDate = new Date(endorsementTimestamp);
+          const dateStr = format(endorsementDate, 'yyyy-MM-dd');
+          lead.orders.forEach(order => {
+            if (order.productType === productTypeFilter) {
+              salesByDate[dateStr] = (salesByDate[dateStr] || 0) + order.quantity;
+            }
+          });
+        } catch (e) { /* ignore invalid dates */ }
+      }
     });
 
     // 4. Calculate cumulative sales up to the day before the start date.
@@ -163,13 +175,13 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
               <ChartTooltipContent
                 formatter={(value, name) => {
                     if (typeof value !== 'number') return value;
-                    
+                    const isRemaining = name === 'Stocks Remaining';
                     return (
                         <div className="flex w-full items-center justify-between gap-4">
                         <div className="flex items-center gap-1.5">
                             <span>{name}</span>
                         </div>
-                        <span className={cn("font-mono font-medium", name === 'Stocks Remaining' && value < 0 && "text-destructive")}>
+                        <span className={cn("font-mono font-medium", isRemaining && value < 0 && "text-destructive")}>
                             {value.toLocaleString()}
                         </span>
                         </div>
@@ -191,7 +203,7 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
               dataKey="sold" 
               name="Quantity Sold"
               stroke={COLORS[0]}
-              fillOpacity={0.3}
+              fillOpacity={0.4}
               fill={COLORS[0]}
           >
             <LabelList dataKey="sold" position="top" fill={COLORS[0]} formatter={(value: number) => value > 0 ? value : ''} />

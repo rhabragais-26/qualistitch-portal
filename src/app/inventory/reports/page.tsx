@@ -1,17 +1,22 @@
-
 'use client';
 
 import { Header } from '@/components/header';
 import { InventoryReportTable } from '@/components/inventory-report-table';
 import { DailySoldQuantityChart } from '@/components/daily-sold-chart';
+import { EndorsedItemsChart } from '@/components/endorsed-items-chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import { Separator } from '@/components/ui/separator';
 
 type Lead = {
   submissionDateTime: string;
+  isSentToProduction?: boolean;
+  sentToProductionTimestamp?: string;
+  isEndorsedToLogistics?: boolean;
+  endorsedToLogisticsTimestamp?: string;
   orders: {
     productType: string;
     quantity: number;
@@ -61,7 +66,6 @@ export default function InventoryReportsPage() {
              <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-lg font-bold">Daily Sold vs. Remaining Stocks</h3>
-                  <p className="text-sm text-muted-foreground">Daily sold quantity and remaining stocks for the selected product.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
@@ -88,15 +92,21 @@ export default function InventoryReportsPage() {
                 </div>
              </div>
             <DailySoldQuantityChart productTypeFilter={productTypeFilter} timeRange={timeRange} />
+            
+            <Separator />
+
+            <div className="mt-8">
+              <h3 className="text-lg font-bold">Items Endorsed to Production/Logistics</h3>
+              <EndorsedItemsChart productTypeFilter={productTypeFilter} timeRange={timeRange} />
+            </div>
+            
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-                <div>
-                    <h3 className="text-lg font-bold mt-8">Remaining Stocks</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Remaining stock quantity breakdown by color and size.</p>
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold mt-4">Remaining Stocks</h3>
                     <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} />
                 </div>
-                <div>
-                    <h3 className="text-lg font-bold mt-8">For Priority Purchase</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Items with low or negative stock levels (10 or less remaining).</p>
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold mt-4">For Priority Purchase</h3>
                     <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} />
                 </div>
             </div>
