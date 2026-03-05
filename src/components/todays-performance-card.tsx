@@ -222,29 +222,6 @@ const PriorityBar = ({ percentage, count, label, color }: { percentage: number, 
     )
 }
 
-const renderPolarAngleAxisTick = ({ payload, x, y, cx, cy, ...rest }: any) => {
-    const [label, range] = payload.value.split(' (');
-    const rangeText = range ? `(${range}` : '';
-  
-    return (
-      <g
-        transform={`translate(${x},${y})`}
-      >
-        <text
-          {...rest}
-          y={0}
-          dy={0}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize={12}
-        >
-          <tspan x={0} dy="0em" fontWeight="bold">{label}</tspan>
-          {rangeText && <tspan x={0} dy="1.2em">{rangeText}</tspan>}
-        </text>
-      </g>
-    );
-};
-
 export function TodaysPerformanceCard() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -253,6 +230,10 @@ export function TodaysPerformanceCard() {
   const [activeFilter, setActiveFilter] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
@@ -280,10 +261,6 @@ export function TodaysPerformanceCard() {
     });
   }, [leads, activeFilter, selectedDate]);
   
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   const { hourlySalesData, historicalDataKeys, totalCustomers, totalItemsSold, ticketData, totalTicketCustomers } = useMemo(() => {
     if (!leads) return { hourlySalesData: [], historicalDataKeys: [], totalCustomers: 0, totalItemsSold: 0, ticketData: [], totalTicketCustomers: 0 };
 
@@ -300,7 +277,7 @@ export function TodaysPerformanceCard() {
     }
     const rangeEnd = endOfDay(rangeStart);
     
-    const filteredLeads = leads.filter(lead => {
+    const currentFilteredLeads = leads.filter(lead => {
         try {
             const submissionDate = new Date(lead.submissionDateTime);
             return submissionDate >= rangeStart && submissionDate <= rangeEnd;
@@ -315,7 +292,7 @@ export function TodaysPerformanceCard() {
     const totalCust = new Set<string>();
     let totalQty = 0;
     
-    filteredLeads.forEach(lead => {
+    currentFilteredLeads.forEach(lead => {
         const quantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
         totalQty += quantity;
         if(lead.orderType !== 'Item Sample') {
@@ -339,7 +316,7 @@ export function TodaysPerformanceCard() {
         return sum;
     }, new Set<string>()).size;
 
-    const salesByHour = filteredLeads.reduce((acc, lead) => {
+    const salesByHour = currentFilteredLeads.reduce((acc, lead) => {
       const hour = new Date(lead.submissionDateTime).getHours();
       if (!acc[hour]) {
         acc[hour] = { customers: new Set(), quantity: 0, amount: 0 };
@@ -519,8 +496,8 @@ export function TodaysPerformanceCard() {
                          activeFilter === 'custom' && 'font-bold border-primary'
                     )}
                 />
-                <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => { setActiveFilter('yesterday'); setSelectedDate(undefined); }}>Yesterday</Button>
-                <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => { setActiveFilter('today'); setSelectedDate(undefined); }}>Today</Button>
+                <Button variant={activeFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => setActiveFilter('yesterday')}>Yesterday</Button>
+                <Button variant={activeFilter === 'today' ? 'default' : 'outline'} onClick={() => setActiveFilter('today')}>Today</Button>
             </div>
         </div>
       </CardHeader>
@@ -583,15 +560,15 @@ export function TodaysPerformanceCard() {
                                               }}
                                           />}
                                       />
-                                      <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2} z={10}>
-                                          <LabelList content={renderAmountLabel} dataKey="amount" />
-                                      </Line>
                                       <Bar yAxisId="right" dataKey="quantity" name="Items Sold" radius={[4, 4, 0, 0]}>
                                           {salesData.map((entry, index) => (
                                               <Cell key={`cell-amount-${index}`} fill={COLORS[index % COLORS.length]} />
                                           ))}
                                           <LabelList dataKey="quantity" content={renderQuantityLabel} />
                                       </Bar>
+                                      <Line yAxisId="left" type="monotone" dataKey="amount" name="Sales Amount" stroke={'hsl(160, 60%, 45%)'} strokeWidth={2} zIndex={100}>
+                                          <LabelList content={renderAmountLabel} dataKey="amount" />
+                                      </Line>
                                   </ComposedChart>
                               </ResponsiveContainer>
                           </ChartContainer>
