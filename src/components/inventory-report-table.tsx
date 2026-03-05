@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -132,7 +133,7 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     : 'Remaining stock quantity breakdown by color and size.';
     
   return (
-    <div>
+    <div className="mt-8">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-lg font-bold text-black">{title}</h3>
@@ -142,7 +143,7 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
           </div>
         </div>
         <div className="border rounded-md">
-            <ScrollArea className="h-[300px]">
+            <ScrollArea>
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>

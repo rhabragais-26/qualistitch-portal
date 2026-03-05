@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Header } from '@/components/header';
@@ -57,7 +58,6 @@ export default function InventoryReportsPage() {
              <div className="flex justify-between items-center">
                 <div>
                   <CardTitle>Inventory Reports</CardTitle>
-                  <CardDescription>Daily sold quantity, remaining stocks and items for priority purchase.</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
