@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Skeleton } from './ui/skeleton';
@@ -142,7 +142,7 @@ export function DailySoldQuantityChart() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Daily Sales vs. Stock</CardTitle>
+              <CardTitle>Daily Sold vs. Remaining Stocks</CardTitle>
               <CardDescription>Daily sold quantity and remaining stocks for the selected product.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -190,7 +190,9 @@ export function DailySoldQuantityChart() {
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
-              />
+              >
+                <LabelList dataKey="sold" position="top" />
+              </Line>
               <Line 
                   yAxisId="right"
                   key="remaining"
@@ -201,7 +203,9 @@ export function DailySoldQuantityChart() {
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
-              />
+              >
+                 <LabelList dataKey="remaining" position="top" />
+              </Line>
             </LineChart>
           </ResponsiveContainer>
         </div>
