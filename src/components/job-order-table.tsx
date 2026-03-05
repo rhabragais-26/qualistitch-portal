@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -489,9 +490,7 @@ const RecordsTableRow = React.memo(({
              {openReferenceImages === lead.id && (
                 <TableRow>
                     <TableCell colSpan={13}>
-                        <div className="p-4 bg-gray-50 rounded-md my-2">
-                           <ImageDisplayCard title="Reference Images" images={refImages} onImageClick={setImageInView} />
-                        </div>
+                        <p>Reference Images will be displayed here</p>
                     </TableCell>
                 </TableRow>
             )}
@@ -523,12 +522,10 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
 
-  const isCompletedPage = filterType === 'COMPLETED';
-
   const defaultYear = new Date().getFullYear().toString();
   const defaultMonth = (new Date().getMonth() + 1).toString();
-  const [selectedYear, setSelectedYear] = useState<string>(isCompletedPage ? 'all' : defaultYear);
-  const [selectedMonth, setSelectedMonth] = useState<string>(isCompletedPage ? 'all' : defaultMonth);
+  const [selectedYear, setSelectedYear] = useState<string>(isReadOnly ? 'all' : defaultYear);
+  const [selectedMonth, setSelectedMonth] = useState<string>(isReadOnly ? 'all' : defaultMonth);
   const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
@@ -536,8 +533,8 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
   
-  const handleOpenEditLeadDialog = useCallback((lead: Lead) => {
-    setEditingLead(lead as Lead & EnrichedLead);
+  const handleOpenEditLeadDialog = useCallback((lead: Lead & EnrichedLead) => {
+    setEditingLead(lead);
     setIsEditDialogOpen(true);
   }, []);
 
@@ -545,6 +542,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const { data: leads, isLoading, error, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
   
   const canDelete = (lead?: Lead) => isAdmin || userProfile?.nickname === lead?.salesRepresentative;
+  const isCompleted = filterType === 'COMPLETED';
   
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -773,14 +771,14 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
         matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
       }
 
-      if (!lead.joNumber || !matchesStatus) return false;
+      if (!matchesStatus) return false;
   
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ? 
         (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
         (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
-        (lead.contactNumber && lead.contactNumber.replaceAll('-', '').includes(searchTerm.replaceAll('-', ''))) ||
-        (lead.landlineNumber && lead.landlineNumber.replaceAll('-', '').includes(searchTerm.replaceAll('-', ''))))
+        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
