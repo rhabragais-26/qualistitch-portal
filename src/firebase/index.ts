@@ -8,6 +8,8 @@ import { Firestore, getFirestore } from 'firebase/firestore';
 // Global cache for Firebase services
 let firebaseServices: { firebaseApp: FirebaseApp; auth: Auth; firestore: Firestore; } | null = null;
 
+const CLIENT_APP_NAME = 'client-app';
+
 /**
  * Initializes and/or retrieves the singleton instances of Firebase services.
  * This function ensures that Firebase is initialized only once, even if called
@@ -20,9 +22,9 @@ export function initializeFirebase() {
     return firebaseServices;
   }
 
-  // Check if a Firebase app has already been initialized.
-  const isInitialized = getApps().length > 0;
-  const app = isInitialized ? getApp() : initializeApp(firebaseConfig);
+  // Check if the client app has already been initialized.
+  const isInitialized = getApps().some(app => app.name === CLIENT_APP_NAME);
+  const app = isInitialized ? getApp(CLIENT_APP_NAME) : initializeApp(firebaseConfig, CLIENT_APP_NAME);
   
   // Get the Auth and Firestore instances.
   const auth = getAuth(app);
