@@ -343,7 +343,7 @@ const RecordsTableRow = React.memo(({
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="flex items-center gap-1.5 cursor-pointer mt-1">
+                              <div className="flex items-center gap-1.5 cursor-pointer">
                                 <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                 <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                   {lead.orderNumber}
@@ -1263,4 +1263,3 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     </>
   );
 }
-```
