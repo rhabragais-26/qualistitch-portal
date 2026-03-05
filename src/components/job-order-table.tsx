@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -524,10 +523,12 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
 
+  const isCompletedPage = filterType === 'COMPLETED';
+
   const defaultYear = new Date().getFullYear().toString();
   const defaultMonth = (new Date().getMonth() + 1).toString();
-  const [selectedYear, setSelectedYear] = useState<string>(isReadOnly ? 'all' : defaultYear);
-  const [selectedMonth, setSelectedMonth] = useState<string>(isReadOnly ? 'all' : defaultMonth);
+  const [selectedYear, setSelectedYear] = useState<string>(isCompletedPage ? 'all' : defaultYear);
+  const [selectedMonth, setSelectedMonth] = useState<string>(isCompletedPage ? 'all' : defaultMonth);
   const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
@@ -600,18 +601,26 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   }, []);
 
   const getContactDisplay = useCallback((lead: Lead) => {
-    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
-    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replaceAll('-', '') : null;
+    const mobile2 = lead.contactNumber2 && lead.contactNumber2 !== '-' ? lead.contactNumber2.replaceAll('-', '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replaceAll('-', '') : null;
 
-    if (mobile && landline) {
-      return `${mobile} / ${landline}`;
-    }
-    return mobile || landline || null;
+    return [mobile, mobile2, landline].filter(Boolean).join(' / ');
   }, []);
 
   const handleProcessJobOrder = useCallback((lead: Lead) => {
     router.push(`/job-order/${lead.id}`);
   }, [router]);
+
+  const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
+        return { text: 'COMPLETED', variant: 'success' };
+    }
+    if (!lead.joNumber) {
+        return { text: 'PENDING', variant: 'secondary' };
+    }
+    return { text: 'ONGOING', variant: 'warning' };
+  }, []);
   
   const getJoStatus = useCallback((lead: Lead) => {
     if (!lead.joNumber || !lead.isJoPrinted) {
@@ -624,16 +633,6 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     if (lead.isPreparedForProduction) return "Already on Inventory";
     if (lead.joNumber) return "Already on Programming Dept.";
     return <span className="text-gray-500">Not yet endorsed</span>;
-  }, []);
-
-  const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
-    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
-        return { text: 'COMPLETED', variant: 'success' };
-    }
-    if (!lead.joNumber) {
-        return { text: 'PENDING', variant: 'secondary' };
-    }
-    return { text: 'ONGOING', variant: 'warning' };
   }, []);
 
   const getPrintingStatus = useCallback((lead: Lead): { text: string; variant: "warning" | "secondary" | "success" } => {
@@ -766,21 +765,22 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     if (!processedLeads) return [];
   
     return processedLeads.filter(lead => {
-      let matchesFilterType = true;
+      const overallStatus = getOverallStatus(lead).text;
+      let matchesStatus = true;
       if (filterType === 'COMPLETED') {
-        matchesFilterType = lead.shipmentStatus === 'Delivered';
+        matchesStatus = overallStatus === 'COMPLETED';
       } else if (filterType === 'ONGOING') {
-        matchesFilterType = lead.shipmentStatus !== 'Delivered';
+        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
       }
-  
-      if (!lead.joNumber || !matchesFilterType) return false;
+
+      if (!lead.joNumber || !matchesStatus) return false;
   
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ? 
         (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
         (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
-        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
-        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
+        (lead.contactNumber && lead.contactNumber.replaceAll('-', '').includes(searchTerm.replaceAll('-', ''))) ||
+        (lead.landlineNumber && lead.landlineNumber.replaceAll('-', '').includes(searchTerm.replaceAll('-', ''))))
         : true;
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
@@ -808,7 +808,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
       
       return matchesSearch && matchesCsr && matchesJo && dateMatches;
     });
-  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, dateRange, filterType]);
+  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, dateRange, filterType, getOverallStatus]);
   
     const { totalAmount, totalQuantity, uniqueCustomers } = useMemo(() => {
         if (!filteredLeads) return { totalAmount: 0, totalQuantity: 0, uniqueCustomers: 0 };
@@ -994,7 +994,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                         "focus:outline-none focus:border-solid focus:border-teal-500 select-none"
                     )}
                     onClick={() => image && setImageInView(image)}
-                    onDoubleClick={() => !isReadOnly && !image && document.getElementById(`file-input-${label}-${index}`)?.click()}
+                    onDoubleClick={() => !isReadOnly && !image && document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
                     onPaste={(e) => onPaste(e, setter, index)}
                     onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                   >
@@ -1014,7 +1014,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
                             </Button>
                         )}
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{isReadOnly ? "No image uploaded" : "Double-click to upload or paste image"}</p> </div>)}
-                      <input id={`file-input-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isReadOnly}/>
+                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isReadOnly}/>
                   </div>
                   {!isReadOnly && displayImages.length > 1 && (
                       <Button
@@ -1058,7 +1058,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     return (
       <div className="space-y-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+          <Skeleton key={i} className="h-16 w-full" />
         ))}
       </div>
     );
@@ -1069,7 +1069,8 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   }
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+    <>
+      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
        <AlertDialog open={!!confirmingPrint} onOpenChange={(open) => !open && setConfirmingPrint(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
