@@ -90,7 +90,7 @@ export default function InventoryReportsPage() {
           <CardContent className="space-y-8">
              <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-bold">Daily Sold vs. Remaining Stocks</h3>
+                  <h3 className="text-lg font-bold text-teal-600">Daily Sold vs. Remaining Stocks</h3>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
@@ -133,8 +133,8 @@ export default function InventoryReportsPage() {
             <Separator />
 
             <div className="mt-8">
-              <h3 className="text-lg font-bold">
-                <span className="text-teal-600">Items Endorsed to Production/Logistics Daily</span>
+              <h3 className="text-lg font-bold text-teal-600">
+                Items Endorsed to Production/Logistics Daily
               </h3>
               <div className="mt-2" />
               <EndorsedItemsChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} timeRange={timeRange} />
