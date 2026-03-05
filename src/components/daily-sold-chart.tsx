@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useEffect, useState } from 'react';
@@ -7,7 +8,7 @@ import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 
 type Order = {
@@ -130,6 +131,17 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
   const isLoading = areLeadsLoading || isInventoryLoading;
   const error = leadsError || inventoryError;
 
+  const chartConfig = {
+    sold: {
+        label: "Quantity Sold",
+        color: COLORS[0],
+    },
+    remaining: {
+        label: "Stocks Remaining",
+        color: COLORS[1],
+    },
+  };
+
   if (isLoading) {
     return <Skeleton className="h-[350px] w-full" />;
   }
@@ -140,7 +152,7 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
 
   return (
     <div className="h-[350px]">
-      <ResponsiveContainer width="100%" height="100%">
+      <ChartContainer config={chartConfig} className="w-full h-full">
         <ComposedChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" tick={{ fontSize: 12 }} />
@@ -200,7 +212,7 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
              <LabelList dataKey="remaining" content={renderRemainingStockLabel} />
           </Line>
         </ComposedChart>
-      </ResponsiveContainer>
+      </ChartContainer>
     </div>
   );
 }
