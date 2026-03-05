@@ -1,7 +1,6 @@
 
 import { Header } from '@/components/header';
 import { InventoryReportTable } from '@/components/inventory-report-table';
-import { OperationalCasesSummary } from '@/components/operational-cases-summary';
 
 export default function InventoryReportsPage() {
   return (
@@ -12,7 +11,6 @@ export default function InventoryReportsPage() {
                 <InventoryReportTable reportType="inventory" />
                 <InventoryReportTable reportType="priority" />
             </div>
-            <OperationalCasesSummary />
         </div>
       </main>
     </Header>
