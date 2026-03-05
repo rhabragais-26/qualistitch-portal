@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -127,73 +126,58 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
   const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
   const error = inventoryError || leadsError;
 
-  const title = reportType === 'priority' ? 'For Priority Purchase' : 'Remaining Stocks';
-  const description = reportType === 'priority' 
-    ? 'Items with low or negative stock levels (10 or less remaining).'
-    : 'Remaining stock quantity breakdown by color and size.';
-    
   return (
-    <div className="mt-8">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h3 className="text-lg font-bold text-black">{title}</h3>
-            <p className="text-sm text-gray-600">
-              {description}
-            </p>
-          </div>
-        </div>
-        <div className="border rounded-md">
-            <ScrollArea>
-              <Table>
-                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
-                  <TableRow>
-                    <TableHead className="text-white font-bold align-middle w-auto">Color</TableHead>
-                    {reportData.headers.map(size => (
-                      <TableHead key={size} className="text-white font-bold align-middle text-center">{size}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                        <TableCell colSpan={reportData.headers.length + 1}>
-                             <Skeleton className="h-24 w-full bg-gray-200" />
-                        </TableCell>
-                    </TableRow>
-                   ) : error ? (
-                    <TableRow>
-                        <TableCell colSpan={reportData.headers.length + 1} className="text-center text-destructive">
-                            Error loading inventory report: {error.message}
-                        </TableCell>
-                    </TableRow>
-                   ) : reportData.rows.length === 0 ? (
-                    <TableRow>
-                        <TableCell colSpan={reportData.headers.length + 1} className="text-center text-muted-foreground align-middle">
-                            {reportType === 'priority' ? 'No items require priority purchase.' : 'No inventory data for the selected product type.'}
-                        </TableCell>
-                    </TableRow>
-                  ) : (
-                    reportData.rows.map((row) => (
-                      <TableRow key={row.color}>
-                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{row.color}</TableCell>
-                        {reportData.headers.map(size => {
-                          const stockCount = (row as any)[size];
-                          let cellClass = "text-black";
-                          if (stockCount < 0) cellClass = 'text-destructive font-bold';
-                          else if (stockCount >= 0 && stockCount <= 10) cellClass = 'text-orange-500 font-bold';
+    <div className="border rounded-md">
+        <ScrollArea>
+          <Table>
+            <TableHeader className="bg-neutral-800 sticky top-0 z-10">
+              <TableRow>
+                <TableHead className="text-white font-bold align-middle w-auto">Color</TableHead>
+                {reportData.headers.map(size => (
+                  <TableHead key={size} className="text-white font-bold align-middle text-center">{size}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                    <TableCell colSpan={reportData.headers.length + 1}>
+                         <Skeleton className="h-24 w-full bg-gray-200" />
+                    </TableCell>
+                </TableRow>
+               ) : error ? (
+                <TableRow>
+                    <TableCell colSpan={reportData.headers.length + 1} className="text-center text-destructive">
+                        Error loading inventory report: {error.message}
+                    </TableCell>
+                </TableRow>
+               ) : reportData.rows.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={reportData.headers.length + 1} className="text-center text-muted-foreground align-middle">
+                        {reportType === 'priority' ? 'No items require priority purchase.' : 'No inventory data for the selected product type.'}
+                    </TableCell>
+                </TableRow>
+              ) : (
+                reportData.rows.map((row) => (
+                  <TableRow key={row.color}>
+                    <TableCell className="font-medium text-xs align-middle py-2 text-black">{row.color}</TableCell>
+                    {reportData.headers.map(size => {
+                      const stockCount = (row as any)[size];
+                      let cellClass = "text-black";
+                      if (stockCount < 0) cellClass = 'text-destructive font-bold';
+                      else if (stockCount >= 0 && stockCount <= 10) cellClass = 'text-orange-500 font-bold';
 
-                          return (
-                          <TableCell key={size} className={cn("text-center font-medium text-xs align-middle py-2", cellClass)}>
-                            {stockCount !== null ? stockCount : '-'}
-                          </TableCell>
-                        )})}
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-          </div>
-    </div>
+                      return (
+                      <TableCell key={size} className={cn("text-center font-medium text-xs align-middle py-2", cellClass)}>
+                        {stockCount !== null ? stockCount : '-'}
+                      </TableCell>
+                    )})}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+      </div>
   );
 }
