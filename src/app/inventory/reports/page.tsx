@@ -133,16 +133,17 @@ export default function InventoryReportsPage() {
 
             <div className="mt-8">
               <h3 className="text-lg font-bold">Items Endorsed to Production/Logistics Daily</h3>
+              <div className="mt-2" />
               <EndorsedItemsChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} timeRange={timeRange} />
             </div>
             
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold mt-4">Remaining Stocks</h3>
+                    <h3 className="text-lg font-bold mt-4">Remaining Stocks ({productTypeFilter} - {colorFilter})</h3>
                     <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} />
                 </div>
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold mt-4">For Priority Purchase</h3>
+                    <h3 className="text-lg font-bold mt-4">For Priority Purchase ({productTypeFilter} - {colorFilter})</h3>
                     <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} />
                 </div>
             </div>
