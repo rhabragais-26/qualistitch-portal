@@ -441,7 +441,7 @@ const RecordsTableRow = React.memo(({
                     ) : (
                       <Button
                         size="sm"
-                        className="h-8 px-3 text-white font-bold bg-primary hover:bg-primary/90"
+                        className="h-8 px-3 text-black font-bold bg-gray-300 hover:bg-gray-400"
                         onClick={() => handleOpenUploadDialog(lead)}
                         disabled={isReadOnly}
                       >

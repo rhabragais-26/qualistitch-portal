@@ -67,6 +67,7 @@ type Lead = {
   submissionDateTime: string;
   productionType?: ProductionType;
   layouts?: Layout[];
+  isEmbroideryDone?: boolean;
 };
 
 type EnrichedLead = Lead & {
@@ -406,20 +407,23 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
     }, [leads]);
     
     const filteredLeads = useMemo(() => {
-        if (!enrichedLeads) return [];
-        return enrichedLeads.filter(lead => {
-            const lowercasedSearchTerm = searchTerm.toLowerCase();
-            const matchesSearch = searchTerm ?
-                (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-                (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)))
-                : true;
-            
-            const joString = formatJoNumber(lead.joNumber);
-            const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
+    if (!enrichedLeads) return [];
+    return enrichedLeads.filter(lead => {
+      if (lead.isEmbroideryDone) {
+        return false;
+      }
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      const matchesSearch = searchTerm ?
+        (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)))
+        : true;
+      
+      const joString = formatJoNumber(lead.joNumber);
+      const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
 
-            return matchesSearch && matchesJo;
-        });
-    }, [enrichedLeads, searchTerm, joNumberSearch]);
+      return matchesSearch && matchesJo;
+    });
+  }, [enrichedLeads, searchTerm, joNumberSearch, formatJoNumber]);
     
     const designCheckboxes: { label: string, key: DesignType }[] = [
         { label: 'Left Logo', key: 'leftLogo' },
