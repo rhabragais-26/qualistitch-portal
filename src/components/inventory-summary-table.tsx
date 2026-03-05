@@ -54,6 +54,7 @@ type InventoryItem = {
 };
 
 type EnrichedInventoryItem = InventoryItem & {
+  soldQty: number;
   onProcess: number;
   dispatched: number;
   remaining: number;
@@ -189,11 +190,17 @@ export function InventorySummaryTable() {
   const enrichedItems = useMemo(() => {
     if (!inventoryItems || !leads) return [];
 
+    const soldQuantities = new Map<string, number>();
     const onProcessQuantities = new Map<string, number>();
     const dispatchedQuantities = new Map<string, number>();
 
     leads.forEach(lead => {
         const createKey = (order: Order) => `${order.productType}-${order.color}-${order.size}`;
+
+        lead.orders.forEach(order => {
+            const key = createKey(order);
+            soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
+        });
 
         if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
             lead.orders.forEach(order => {
@@ -212,8 +219,11 @@ export function InventorySummaryTable() {
         const key = `${item.productType}-${item.color}-${item.size}`;
         const onProcess = onProcessQuantities.get(key) || 0;
         const dispatched = dispatchedQuantities.get(key) || 0;
+        const soldQty = soldQuantities.get(key) || 0;
+
         return {
             ...item,
+            soldQty,
             onProcess,
             dispatched,
             remaining: item.stock - onProcess - dispatched,
@@ -443,9 +453,10 @@ export function InventorySummaryTable() {
                       <TableHead className="text-white font-bold align-middle">Color</TableHead>
                       <TableHead className="text-white font-bold align-middle">Size</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">On-Hand</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Sold QTY</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">On-Process</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Dispatched</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Remaining</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Remaining Stocks</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -467,6 +478,7 @@ export function InventorySummaryTable() {
                                     item.stock
                                 )}
                             </TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.soldQty}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.onProcess}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.dispatched}</TableCell>
                             <TableCell className={cn("text-center font-bold text-xs align-middle py-2", item.remaining < 0 && "text-destructive")}>{item.remaining}</TableCell>
