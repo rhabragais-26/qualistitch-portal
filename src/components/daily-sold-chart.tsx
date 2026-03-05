@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
 
@@ -31,6 +31,22 @@ type DailySoldQuantityChartProps = {
   productTypeFilter: string;
   timeRange: string;
 };
+
+const renderRemainingStockLabel = (props: any) => {
+    const { x, y, value } = props;
+    if (value === null || typeof x !== 'number' || typeof y !== 'number') {
+        return null;
+    }
+
+    const color = value < 0 ? '#ef4444' : COLORS[1]; // red for negative, orange otherwise
+
+    return (
+        <text x={x} y={y} dy={-4} fill={color} fontSize={12} textAnchor="middle">
+            {value}
+        </text>
+    );
+};
+
 
 export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySoldQuantityChartProps) {
   const firestore = useFirestore();
@@ -122,26 +138,29 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
   return (
     <div className="h-[350px]">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData}>
+        <ComposedChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" tick={{ fontSize: 12 }} />
           <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} />
           <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} />
           <Tooltip />
           <Legend />
-          <Line 
+          <defs>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={COLORS[1]} floodOpacity="0.5" />
+            </filter>
+          </defs>
+          <Area 
               yAxisId="left"
-              key="sold"
               type="monotone" 
               dataKey="sold" 
               name="Quantity Sold"
               stroke={COLORS[0]}
-              strokeWidth={2}
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
+              fillOpacity={0.3}
+              fill={COLORS[0]}
           >
-            <LabelList dataKey="sold" position="top" />
-          </Line>
+            <LabelList dataKey="sold" position="top" fill={COLORS[0]} formatter={(value: number) => value > 0 ? value : ''} />
+          </Area>
           <Line 
               yAxisId="right"
               key="remaining"
@@ -152,10 +171,12 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}
+              style={{ filter: 'url(#shadow)' }}
+              zIndex={100}
           >
-             <LabelList dataKey="remaining" position="top" />
+             <LabelList dataKey="remaining" content={renderRemainingStockLabel} />
           </Line>
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );
