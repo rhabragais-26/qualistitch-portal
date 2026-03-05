@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useMemo, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend } from 'recharts';
+import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -14,6 +13,7 @@ import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 type Order = {
   productType: string;
   quantity: number;
+  color: string;
 };
 
 type Lead = {
@@ -37,6 +37,7 @@ const COLORS = ['#0088FE', '#FF8042'];
 
 type DailySoldQuantityChartProps = {
   productTypeFilter: string;
+  colorFilter: string;
   timeRange: string;
 };
 
@@ -56,7 +57,7 @@ const renderRemainingStockLabel = (props: any) => {
 };
 
 
-export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySoldQuantityChartProps) {
+export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRange }: DailySoldQuantityChartProps) {
   const firestore = useFirestore();
 
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
@@ -86,7 +87,10 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
 
     // 2. Assume `inventoryItems.stock` is the total quantity *ever added* for that item.
     const totalStockAdded = inventoryItems
-      .filter(item => item.productType === productTypeFilter)
+      .filter(item => 
+        item.productType === productTypeFilter &&
+        (colorFilter === 'All Colors' || item.color === colorFilter)
+      )
       .reduce((sum, item) => sum + item.stock, 0);
 
     // 3. Group all sales by date based on submission date.
@@ -96,7 +100,7 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
             const submissionDate = new Date(lead.submissionDateTime);
             const dateStr = format(submissionDate, 'yyyy-MM-dd');
             lead.orders.forEach(order => {
-                if (order.productType === productTypeFilter) {
+                if (order.productType === productTypeFilter && (colorFilter === 'All Colors' || order.color === colorFilter)) {
                     salesByDate[dateStr] = (salesByDate[dateStr] || 0) + order.quantity;
                 }
             });
@@ -130,7 +134,7 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
     });
 
     return { chartData: finalChartData };
-  }, [leads, inventoryItems, timeRange, productTypeFilter]);
+  }, [leads, inventoryItems, timeRange, productTypeFilter, colorFilter]);
   
   const isLoading = areLeadsLoading || isInventoryLoading;
   const error = leadsError || inventoryError;
@@ -186,7 +190,6 @@ export function DailySoldQuantityChart({ productTypeFilter, timeRange }: DailySo
                 />
               }
             />
-            <Legend />
             <defs>
               <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                 <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={COLORS[1]} floodOpacity="0.5" />

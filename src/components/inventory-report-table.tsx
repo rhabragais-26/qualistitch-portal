@@ -37,9 +37,10 @@ const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL']
 type InventoryReportTableProps = {
     reportType?: 'inventory' | 'priority';
     productTypeFilter: string;
+    colorFilter: string;
 }
 
-export function InventoryReportTable({ reportType = 'inventory', productTypeFilter }: InventoryReportTableProps) {
+export function InventoryReportTable({ reportType = 'inventory', productTypeFilter, colorFilter }: InventoryReportTableProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
 
@@ -92,6 +93,9 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     if (productTypeFilter && productTypeFilter !== 'All') {
         filteredItems = filteredItems.filter(item => item.productType === productTypeFilter);
     }
+    if (colorFilter && colorFilter !== 'All Colors') {
+        filteredItems = filteredItems.filter(item => item.color === colorFilter);
+    }
     
     if (filteredItems.length === 0) return { headers: [], rows: [] };
 
@@ -121,7 +125,7 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     
     return { headers: sizes, rows };
 
-  }, [inventoryItems, leads, productTypeFilter, reportType]);
+  }, [inventoryItems, leads, productTypeFilter, colorFilter, reportType]);
 
   const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
   const error = inventoryError || leadsError;

@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 type Order = {
   productType: string;
   quantity: number;
+  color: string;
 };
 
 type Lead = {
@@ -23,6 +24,7 @@ type Lead = {
 
 type EndorsedItemsChartProps = {
   productTypeFilter: string;
+  colorFilter: string;
   timeRange: string;
 };
 
@@ -33,7 +35,7 @@ const chartConfig = {
   },
 };
 
-export function EndorsedItemsChart({ productTypeFilter, timeRange }: EndorsedItemsChartProps) {
+export function EndorsedItemsChart({ productTypeFilter, colorFilter, timeRange }: EndorsedItemsChartProps) {
   const firestore = useFirestore();
 
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
@@ -73,7 +75,7 @@ export function EndorsedItemsChart({ productTypeFilter, timeRange }: EndorsedIte
           if (endorsementDate >= startDate && endorsementDate <= endDate) {
             const dateStr = format(endorsementDate, 'yyyy-MM-dd');
             lead.orders.forEach(order => {
-              if (order.productType === productTypeFilter) {
+              if (order.productType === productTypeFilter && (colorFilter === 'All Colors' || order.color === colorFilter)) {
                 endorsedByDate[dateStr] = (endorsedByDate[dateStr] || 0) + order.quantity;
               }
             });
@@ -94,7 +96,7 @@ export function EndorsedItemsChart({ productTypeFilter, timeRange }: EndorsedIte
         endorsed: endorsedToday,
       };
     });
-  }, [leads, timeRange, productTypeFilter]);
+  }, [leads, timeRange, productTypeFilter, colorFilter]);
   
   if (isLoading) {
     return <Skeleton className="h-[250px] w-full" />;

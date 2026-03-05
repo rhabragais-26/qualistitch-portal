@@ -19,6 +19,7 @@ type Lead = {
   endorsedToLogisticsTimestamp?: string;
   orders: {
     productType: string;
+    color: string;
     quantity: number;
   }[];
 };
@@ -32,6 +33,7 @@ type InventoryItem = {
 
 export default function InventoryReportsPage() {
   const [productTypeFilter, setProductTypeFilter] = useState('');
+  const [colorFilter, setColorFilter] = useState('All Colors');
   const [timeRange, setTimeRange] = useState('30d');
 
   const firestore = useFirestore();
@@ -49,11 +51,33 @@ export default function InventoryReportsPage() {
         .sort();
   }, [leads, inventoryItems]);
   
+  const availableColors = useMemo(() => {
+    if (!productTypeFilter || (!leads && !inventoryItems)) return [];
+    const colorsFromLeads =
+      leads
+        ?.flatMap((l) => l.orders)
+        .filter((o) => o.productType === productTypeFilter)
+        .map((o) => o.color) || [];
+    const colorsFromInventory =
+      inventoryItems
+        ?.filter((i) => i.productType === productTypeFilter)
+        .map((i) => i.color) || [];
+
+    return [
+      'All Colors',
+      ...[...new Set([...colorsFromLeads, ...colorsFromInventory])].sort(),
+    ];
+  }, [leads, inventoryItems, productTypeFilter]);
+
   useEffect(() => {
     if (productTypes.length > 0 && !productTypeFilter) {
         setProductTypeFilter(productTypes[0]);
     }
   }, [productTypes, productTypeFilter]);
+
+  useEffect(() => {
+    setColorFilter('All Colors');
+  }, [productTypeFilter]);
 
   return (
     <Header>
@@ -78,6 +102,18 @@ export default function InventoryReportsPage() {
                             ))}
                         </SelectContent>
                     </Select>
+                    <Select value={colorFilter} onValueChange={setColorFilter} disabled={!productTypeFilter}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableColors.map((color) => (
+                                <SelectItem key={color} value={color}>
+                                {color}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <Select value={timeRange} onValueChange={setTimeRange}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue />
@@ -91,23 +127,23 @@ export default function InventoryReportsPage() {
                     </Select>
                 </div>
              </div>
-            <DailySoldQuantityChart productTypeFilter={productTypeFilter} timeRange={timeRange} />
+            <DailySoldQuantityChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} timeRange={timeRange} />
             
             <Separator />
 
             <div className="mt-8">
               <h3 className="text-lg font-bold">Items Endorsed to Production/Logistics Daily</h3>
-              <EndorsedItemsChart productTypeFilter={productTypeFilter} timeRange={timeRange} />
+              <EndorsedItemsChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} timeRange={timeRange} />
             </div>
             
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold mt-4">Remaining Stocks</h3>
-                    <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} />
+                    <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} />
                 </div>
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold mt-4">For Priority Purchase</h3>
-                    <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} />
+                    <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} />
                 </div>
             </div>
           </CardContent>
