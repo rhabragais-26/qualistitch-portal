@@ -45,7 +45,7 @@ type InventoryItem = {
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
 export default function InventoryReportsPage() {
-  const [productTypeFilter, setProductTypeFilter] = useState('');
+  const [productTypeFilter, setProductTypeFilter] = useState('Corporate Jacket');
   const [colorFilter, setColorFilter] = useState('All Colors');
   const [sizeFilter, setSizeFilter] = useState('All Sizes');
   const [timeRange, setTimeRange] = useState('30d');
@@ -202,7 +202,6 @@ export default function InventoryReportsPage() {
     if (!onHandReportData.rows || onHandReportData.rows.length === 0) {
       return { totalPositiveStock: 0, totalNegativeStock: 0 };
     }
-
     let positiveSum = 0;
     let negativeSum = 0;
 
@@ -218,7 +217,7 @@ export default function InventoryReportsPage() {
         }
       });
     });
-
+    
     return { totalPositiveStock: positiveSum, totalNegativeStock: negativeSum };
   }, [onHandReportData]);
 
@@ -228,7 +227,7 @@ export default function InventoryReportsPage() {
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <Card className="w-full shadow-xl">
           <CardHeader>
-             <CardTitle className="text-center text-3xl font-bold">Inventory Reports</CardTitle>
+             <CardTitle className="text-center text-3xl font-bold mb-2">Inventory Reports</CardTitle>
           </CardHeader>
           <CardContent className="space-y-8">
              <div className="flex justify-between items-center">
@@ -236,7 +235,6 @@ export default function InventoryReportsPage() {
                   <h3 className="text-lg font-bold text-teal-600">Daily Sold vs. Remaining Stocks</h3>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset Filters</Button>
                     <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
                         <SelectTrigger className="w-[220px]">
                             <SelectValue placeholder="Select Product Type" />
@@ -282,6 +280,7 @@ export default function InventoryReportsPage() {
                             <SelectItem value="30d">Last 30 Days</SelectItem>
                         </SelectContent>
                     </Select>
+                    <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset Filters</Button>
                 </div>
              </div>
             <DailySoldQuantityChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} />
@@ -312,10 +311,10 @@ export default function InventoryReportsPage() {
             </div>
             <div className="mt-4">
               <Card className="w-full shadow-lg bg-gray-50">
-                  <CardHeader className="p-2">
+                  <CardHeader className="py-2">
                       <CardTitle className="text-lg text-center">Overall Inventory Summary</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-4 flex justify-around items-center text-center">
+                  <CardContent className="p-2 flex justify-around items-center text-center">
                       <div>
                           <p className="text-sm text-muted-foreground">Total Stocks (On-Hand)</p>
                           <p className="text-2xl font-bold text-green-600">{totalPositiveStock.toLocaleString()}</p>
