@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Header } from '@/components/header';
@@ -11,6 +10,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
+import { formatCurrency } from '@/lib/utils';
+
+type LeadOrder = {
+  productType: string;
+  color: string;
+  size: string;
+  quantity: number;
+};
 
 type Lead = {
   submissionDateTime: string;
@@ -21,6 +28,7 @@ type Lead = {
   orders: {
     productType: string;
     color: string;
+    size: string;
     quantity: number;
   }[];
 };
@@ -31,6 +39,8 @@ type InventoryItem = {
     size: string;
     stock: number;
 };
+
+const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
 export default function InventoryReportsPage() {
   const [productTypeFilter, setProductTypeFilter] = useState('');
@@ -79,6 +89,103 @@ export default function InventoryReportsPage() {
   useEffect(() => {
     setColorFilter('All Colors');
   }, [productTypeFilter]);
+
+  const onHandReportData = useMemo(() => {
+    if (!inventoryItems || !leads) return { headers: [], rows: [] };
+    
+    const soldQuantities = new Map<string, number>();
+    const onProcessQuantities = new Map<string, number>();
+    const dispatchedQuantities = new Map<string, number>();
+    
+    leads.forEach(lead => {
+        const createKey = (order: { productType: string, color: string, size: string }) => `${order.productType}-${order.color}-${order.size}`;
+        
+        lead.orders.forEach(order => {
+            const key = createKey(order);
+            soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
+        });
+
+        if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
+            lead.orders.forEach(order => {
+                const key = createKey(order);
+                dispatchedQuantities.set(key, (dispatchedQuantities.get(key) || 0) + order.quantity);
+            });
+        } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
+            lead.orders.forEach(order => {
+                const key = createKey(order);
+                onProcessQuantities.set(key, (onProcessQuantities.get(key) || 0) + order.quantity);
+            });
+        }
+    });
+    
+    const processedItems = inventoryItems.map(item => {
+        const key = `${item.productType}-${item.color}-${item.size}`;
+        const sold = soldQuantities.get(key) || 0;
+        const onProcess = onProcessQuantities.get(key) || 0;
+        const dispatched = dispatchedQuantities.get(key) || 0;
+        const onHand = item.stock;
+
+        const count = (onHand + onProcess + dispatched) - sold;
+        return { ...item, count };
+      });
+    
+    let filteredItems = processedItems;
+    if (productTypeFilter && productTypeFilter !== 'All') {
+        filteredItems = filteredItems.filter(item => item.productType === productTypeFilter);
+    }
+    if (colorFilter && colorFilter !== 'All Colors') {
+        filteredItems = filteredItems.filter(item => item.color === colorFilter);
+    }
+    
+    if (filteredItems.length === 0) return { headers: [], rows: [] };
+
+    const colors = [...new Set(filteredItems.map(item => item.color))].sort();
+    const sizes = [...new Set(filteredItems.map(item => item.size))].sort((a, b) => {
+        const indexA = sizeOrder.indexOf(a);
+        const indexB = sizeOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+    });
+
+    const rows = colors.map(color => {
+      const sizeData: { [size: string]: number | null } = {};
+      sizes.forEach(size => {
+        const item = filteredItems.find(i => i.color === color && i.size === size);
+        sizeData[size] = item ? item.count : null;
+      });
+      return { color, ...sizeData };
+    });
+
+    return { headers: sizes, rows };
+
+  }, [inventoryItems, leads, productTypeFilter, colorFilter]);
+
+  const { totalPositiveStock, totalNegativeStock } = useMemo(() => {
+    if (!onHandReportData.rows || onHandReportData.rows.length === 0) {
+      return { totalPositiveStock: 0, totalNegativeStock: 0 };
+    }
+
+    let positiveSum = 0;
+    let negativeSum = 0;
+
+    onHandReportData.rows.forEach(row => {
+      onHandReportData.headers.forEach(header => {
+        const stock = (row as any)[header];
+        if (typeof stock === 'number') {
+          if (stock > 0) {
+            positiveSum += stock;
+          } else if (stock < 0) {
+            negativeSum += stock;
+          }
+        }
+      });
+    });
+
+    return { totalPositiveStock: positiveSum, totalNegativeStock: negativeSum };
+  }, [onHandReportData]);
+
 
   return (
     <Header>
@@ -153,6 +260,24 @@ export default function InventoryReportsPage() {
                     </h3>
                     <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} />
                 </div>
+            </div>
+            <div className="mt-8">
+              <Card className="w-full shadow-lg bg-gray-50">
+                  <CardHeader>
+                      <CardTitle className="text-lg text-center">Overall Inventory Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex justify-around items-center text-center">
+                      <div>
+                          <p className="text-sm text-muted-foreground">Total Stocks (On-Hand)</p>
+                          <p className="text-2xl font-bold text-green-600">{totalPositiveStock.toLocaleString()}</p>
+                      </div>
+                      <Separator orientation="vertical" className="h-16" />
+                      <div>
+                          <p className="text-sm text-muted-foreground">Total Deficit</p>
+                          <p className="text-2xl font-bold text-destructive">{Math.abs(totalNegativeStock).toLocaleString()}</p>
+                      </div>
+                  </CardContent>
+              </Card>
             </div>
           </CardContent>
         </Card>
