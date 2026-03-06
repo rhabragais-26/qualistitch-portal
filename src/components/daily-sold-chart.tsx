@@ -118,8 +118,6 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
 
     // 3. Create daily maps for events
     const dailySales: Record<string, number> = {};
-    const dailyOnProcessStarts: Record<string, number> = {};
-    const dailyDispatches: Record<string, number> = {};
     const dailyReplenishments: Record<string, number> = {};
 
     relevantLeads.forEach(lead => {
@@ -128,19 +126,6 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                 try {
                     const submissionDateStr = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
                     dailySales[submissionDateStr] = (dailySales[submissionDateStr] || 0) + order.quantity;
-
-                    const productionTimestamp = lead.isSentToProduction ? lead.sentToProductionTimestamp : lead.endorsedToLogisticsTimestamp;
-                    if (productionTimestamp) {
-                        const onProcessDateStr = format(new Date(productionTimestamp), 'yyyy-MM-dd');
-                        dailyOnProcessStarts[onProcessDateStr] = (dailyOnProcessStarts[onProcessDateStr] || 0) + order.quantity;
-                    }
-                    
-                    const dispatchTimestamp = lead.shipmentStatus === 'Shipped' ? lead.shippedTimestamp : lead.deliveredTimestamp;
-                    if (dispatchTimestamp) {
-                        const dispatchDateStr = format(new Date(dispatchTimestamp), 'yyyy-MM-dd');
-                        dailyDispatches[dispatchDateStr] = (dailyDispatches[dispatchDateStr] || 0) + order.quantity;
-                    }
-
                 } catch (e) {}
             }
         });
@@ -153,27 +138,21 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
       } catch(e) {}
     });
 
-
     // 4. Calculate total historical values to find the starting stock
     const currentOnHand = relevantItems.reduce((sum, item) => sum + item.stock, 0);
     const totalSoldEver = Object.values(dailySales).reduce((sum, qty) => sum + qty, 0);
     const totalReplenishmentsEver = Object.values(dailyReplenishments).reduce((sum, qty) => sum + qty, 0);
     const initialStockEver = currentOnHand + totalSoldEver - totalReplenishmentsEver;
 
-
     // 5. Calculate cumulative values up to the day before the chart starts
     let cumulativeSold = 0;
-    let cumulativeOnProcessStarts = 0;
-    let cumulativeDispatches = 0;
     let cumulativeReplenishments = 0;
 
-    const allEventDates = new Set([...Object.keys(dailySales), ...Object.keys(dailyOnProcessStarts), ...Object.keys(dailyDispatches), ...Object.keys(dailyReplenishments)]);
+    const allEventDates = new Set([...Object.keys(dailySales), ...Object.keys(dailyReplenishments)]);
     
     Array.from(allEventDates).sort().forEach(dateStr => {
         if (new Date(dateStr) < startDate) {
             cumulativeSold += dailySales[dateStr] || 0;
-            cumulativeOnProcessStarts += dailyOnProcessStarts[dateStr] || 0;
-            cumulativeDispatches += dailyDispatches[dateStr] || 0;
             cumulativeReplenishments += dailyReplenishments[dateStr] || 0;
         }
     });
@@ -186,16 +165,9 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
       
       const soldToday = dailySales[dateStr] || 0;
       cumulativeSold += soldToday;
-      cumulativeOnProcessStarts += dailyOnProcessStarts[dateStr] || 0;
-      cumulativeDispatches += dailyDispatches[dateStr] || 0;
       cumulativeReplenishments += dailyReplenishments[dateStr] || 0;
 
-      const onHand_at_D = initialStockEver + cumulativeReplenishments - cumulativeSold;
-      const onProcess_at_D = cumulativeOnProcessStarts - cumulativeDispatches;
-      const dispatched_at_D = cumulativeDispatches;
-      const sold_at_D = cumulativeSold;
-      
-      const remainingStock = onHand_at_D + onProcess_at_D + dispatched_at_D - sold_at_D;
+      const remainingStock = initialStockEver + cumulativeReplenishments - cumulativeSold;
 
       return {
         date: format(day, 'MMM dd'),
@@ -214,12 +186,13 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     const maxVal = Math.max(...remainingValues);
   
     // Add padding to the domain
-    const padding = Math.max(Math.abs(maxVal - minVal) * 0.1, 10);
+    const padding = Math.max(Math.abs(maxVal - minVal) * 0.1, 50);
     const yMin = Math.floor(minVal - padding);
     const yMax = Math.ceil(maxVal + padding);
     
     return [yMin, yMax];
   }, [chartData]);
+
 
   const isLoading = areLeadsLoading || isInventoryLoading || areCogsLoading;
   const error = leadsError || inventoryError || cogsError;
