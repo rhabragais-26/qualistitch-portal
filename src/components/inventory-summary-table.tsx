@@ -59,9 +59,21 @@ type EnrichedInventoryItem = InventoryItem & {
 };
 
 const jacketColors = [
-  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
-  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
   'Army Green',
+  'Black',
+  'Black/Gray',
+  'Black/Khaki',
+  'Black/Navy Blue',
+  'Brown',
+  'Dark Gray',
+  'Dark Khaki',
+  'Khaki',
+  'Light Gray',
+  'Light Khaki',
+  'Maroon/Gray',
+  'Navy Blue',
+  'Navy Blue/Gray',
+  'Olive Green',
 ];
 
 const poloShirtColors = [
@@ -260,7 +272,7 @@ export function InventorySummaryTable() {
             soldQty,
             onProcess,
             dispatched,
-            remaining: (item.stock + onProcess + dispatched) - soldQty,
+            remaining: item.stock - onProcess,
         };
     });
   }, [inventoryItems, leads]);
@@ -548,4 +560,3 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
-
