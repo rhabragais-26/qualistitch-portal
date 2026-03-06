@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -190,6 +191,19 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
   if (error) {
     return <div className="h-[350px] flex items-center justify-center"><p className="text-destructive">Error loading chart data.</p></div>;
   }
+  
+  const yDomainRight = useMemo(() => {
+    if (!chartData || chartData.length === 0) return [0, 100];
+    const remainingValues = chartData.map(d => d.remaining);
+    const minVal = Math.min(...remainingValues);
+    const maxVal = Math.max(...remainingValues);
+
+    const yMin = minVal < 0 ? Math.floor(minVal - Math.abs(minVal * 0.2)) : 0;
+    const yMax = Math.ceil(maxVal * 1.1);
+    
+    return [yMin, yMax];
+  }, [chartData]);
+
 
   return (
     <div className="h-[350px]">
@@ -199,7 +213,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" tick={{ fontSize: 12 }} interval={0} />
             <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} domain={[0, dataMax => Math.round(dataMax * 1.5)]} />
-            <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} domain={[dataMin => Math.floor(dataMin * 1.2), dataMax => Math.ceil(dataMax * 1.2)]} />
+            <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} domain={yDomainRight} />
             <Tooltip
               content={
                 <ChartTooltipContent
