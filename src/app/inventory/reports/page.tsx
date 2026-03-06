@@ -25,6 +25,7 @@ type Lead = {
   sentToProductionTimestamp?: string;
   isEndorsedToLogistics?: boolean;
   endorsedToLogisticsTimestamp?: string;
+  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   orders: {
     productType: string;
     color: string;
@@ -98,7 +99,7 @@ export default function InventoryReportsPage() {
     const dispatchedQuantities = new Map<string, number>();
     
     leads.forEach(lead => {
-        const createKey = (order: { productType: string, color: string, size: string }) => `${'\'\'\''}${order.productType}-${order.color}-${order.size}${'\'\'\''}`;
+        const createKey = (order: { productType: string, color: string, size: string }) => `${order.productType}-${order.color}-${order.size}`;
         
         lead.orders.forEach(order => {
             const key = createKey(order);
@@ -119,7 +120,7 @@ export default function InventoryReportsPage() {
     });
     
     const processedItems = inventoryItems.map(item => {
-        const key = `${'\'\''}${item.productType}-${item.color}-${item.size}${'\'\'\''}`;
+        const key = `${item.productType}-${item.color}-${item.size}`;
         const sold = soldQuantities.get(key) || 0;
         const onProcess = onProcessQuantities.get(key) || 0;
         const dispatched = dispatchedQuantities.get(key) || 0;
