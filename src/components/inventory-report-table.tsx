@@ -45,9 +45,10 @@ type InventoryReportTableProps = {
     reportType?: 'inventory' | 'priority';
     productTypeFilter: string;
     colorFilter: string;
+    sizeFilter: string;
 }
 
-export function InventoryReportTable({ reportType = 'inventory', productTypeFilter, colorFilter }: InventoryReportTableProps) {
+export function InventoryReportTable({ reportType = 'inventory', productTypeFilter, colorFilter, sizeFilter }: InventoryReportTableProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
 
@@ -128,11 +129,14 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     if (colorFilter && colorFilter !== 'All Colors') {
         filteredItems = filteredItems.filter(item => item.color === colorFilter);
     }
+    if (sizeFilter && sizeFilter !== 'All Sizes') {
+        filteredItems = filteredItems.filter(item => item.size === sizeFilter);
+    }
     
     if (filteredItems.length === 0) return { headers: [], rows: [] };
 
     const colors = [...new Set(filteredItems.map(item => item.color))].sort();
-    const sizes = [...new Set(filteredItems.map(item => item.size))].sort((a, b) => {
+    const sizes = sizeFilter !== 'All Sizes' ? [sizeFilter] : [...new Set(filteredItems.map(item => item.size))].sort((a, b) => {
         const indexA = sizeOrder.indexOf(a);
         const indexB = sizeOrder.indexOf(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
@@ -157,7 +161,7 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     
     return { headers: sizes, rows };
 
-  }, [inventoryItems, leads, productTypeFilter, colorFilter, reportType]);
+  }, [inventoryItems, leads, productTypeFilter, colorFilter, sizeFilter, reportType]);
   
 
   const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;

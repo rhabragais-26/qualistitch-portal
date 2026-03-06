@@ -46,6 +46,7 @@ const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL']
 export default function InventoryReportsPage() {
   const [productTypeFilter, setProductTypeFilter] = useState('');
   const [colorFilter, setColorFilter] = useState('All Colors');
+  const [sizeFilter, setSizeFilter] = useState('All Sizes');
   const [timeRange, setTimeRange] = useState('30d');
 
   const firestore = useFirestore();
@@ -81,6 +82,28 @@ export default function InventoryReportsPage() {
     ];
   }, [leads, inventoryItems, productTypeFilter]);
 
+  const availableSizes = useMemo(() => {
+    if (!productTypeFilter || !inventoryItems) return ['All Sizes'];
+    const sizesFromInventory =
+      inventoryItems
+        ?.filter((i) => i.productType === productTypeFilter)
+        .map((i) => i.size) || [];
+
+    const uniqueSizes = [...new Set(sizesFromInventory)].sort((a, b) => {
+        const indexA = sizeOrder.indexOf(a);
+        const indexB = sizeOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+    });
+
+    return [
+      'All Sizes',
+      ...uniqueSizes,
+    ];
+  }, [inventoryItems, productTypeFilter]);
+
   useEffect(() => {
     if (productTypes.length > 0 && !productTypeFilter) {
         setProductTypeFilter(productTypes[0]);
@@ -89,6 +112,7 @@ export default function InventoryReportsPage() {
 
   useEffect(() => {
     setColorFilter('All Colors');
+    setSizeFilter('All Sizes');
   }, [productTypeFilter]);
 
   const onHandReportData = useMemo(() => {
@@ -137,11 +161,14 @@ export default function InventoryReportsPage() {
     if (colorFilter && colorFilter !== 'All Colors') {
         filteredItems = filteredItems.filter(item => item.color === colorFilter);
     }
+    if (sizeFilter && sizeFilter !== 'All Sizes') {
+        filteredItems = filteredItems.filter(item => item.size === sizeFilter);
+    }
     
     if (filteredItems.length === 0) return { headers: [], rows: [] };
 
     const colors = [...new Set(filteredItems.map(item => item.color))].sort();
-    const sizes = [...new Set(filteredItems.map(item => item.size))].sort((a, b) => {
+    const sizes = sizeFilter !== 'All Sizes' ? [sizeFilter] : [...new Set(filteredItems.map(item => item.size))].sort((a, b) => {
         const indexA = sizeOrder.indexOf(a);
         const indexB = sizeOrder.indexOf(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
@@ -161,7 +188,7 @@ export default function InventoryReportsPage() {
 
     return { headers: sizes, rows };
 
-  }, [inventoryItems, leads, productTypeFilter, colorFilter]);
+  }, [inventoryItems, leads, productTypeFilter, colorFilter, sizeFilter]);
 
   const { totalPositiveStock, totalNegativeStock } = useMemo(() => {
     if (!onHandReportData.rows || onHandReportData.rows.length === 0) {
@@ -223,6 +250,18 @@ export default function InventoryReportsPage() {
                             ))}
                         </SelectContent>
                     </Select>
+                     <Select value={sizeFilter} onValueChange={setSizeFilter} disabled={!productTypeFilter}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableSizes.map((size) => (
+                                <SelectItem key={size} value={size}>
+                                {size}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <Select value={timeRange} onValueChange={setTimeRange}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue />
@@ -236,7 +275,7 @@ export default function InventoryReportsPage() {
                     </Select>
                 </div>
              </div>
-            <DailySoldQuantityChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} timeRange={timeRange} />
+            <DailySoldQuantityChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} />
             
             <Separator />
 
@@ -245,21 +284,21 @@ export default function InventoryReportsPage() {
                 Items Endorsed to Production/Logistics Daily
               </h3>
               <div className="mt-2" />
-              <EndorsedItemsChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} timeRange={timeRange} />
+              <EndorsedItemsChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} />
             </div>
             
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold mt-4">
-                        <span className="text-teal-600">On-Hand Stocks</span> ({productTypeFilter} - {colorFilter})
+                        <span className="text-teal-600">On-Hand Stocks</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
                     </h3>
-                    <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} />
+                    <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} />
                 </div>
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold mt-4">
-                        <span className="text-teal-600">For Priority Purchase</span> ({productTypeFilter} - {colorFilter})
+                        <span className="text-teal-600">For Priority Purchase</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
                     </h3>
-                    <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} />
+                    <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} />
                 </div>
             </div>
             <div className="mt-4">

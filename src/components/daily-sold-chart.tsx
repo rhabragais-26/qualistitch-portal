@@ -14,6 +14,7 @@ type Order = {
   productType: string;
   quantity: number;
   color: string;
+  size: string;
 };
 
 type Lead = {
@@ -50,6 +51,7 @@ const COLORS = ['#0088FE', '#FF8042'];
 type DailySoldQuantityChartProps = {
   productTypeFilter: string;
   colorFilter: string;
+  sizeFilter: string;
   timeRange: string;
 };
 
@@ -69,7 +71,7 @@ const renderRemainingStockLabel = (props: any) => {
 };
 
 
-export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRange }: DailySoldQuantityChartProps) {
+export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFilter, timeRange }: DailySoldQuantityChartProps) {
   const firestore = useFirestore();
 
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
@@ -101,24 +103,27 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     // 2. Filter relevant data once
     const relevantItems = inventoryItems.filter(item => 
       item.productType === productTypeFilter &&
-      (colorFilter === 'All Colors' || item.color === colorFilter)
+      (colorFilter === 'All Colors' || item.color === colorFilter) &&
+      (sizeFilter === 'All Sizes' || item.size === sizeFilter)
     );
     const relevantLeads = leads.filter(lead => 
         lead.orders.some(order => 
             order.productType === productTypeFilter && 
-            (colorFilter === 'All Colors' || order.color === colorFilter)
+            (colorFilter === 'All Colors' || order.color === colorFilter) &&
+            (sizeFilter === 'All Sizes' || order.size === sizeFilter)
         )
     );
     const relevantReplenishments = (replenishments || []).filter(repl => 
         repl.productType === productTypeFilter && 
-        (colorFilter === 'All Colors' || repl.color === colorFilter)
+        (colorFilter === 'All Colors' || repl.color === colorFilter) &&
+        (sizeFilter === 'All Sizes' || repl.size === sizeFilter)
     );
 
     // 3. Create daily maps for sales and replenishments
     const dailySales: Record<string, number> = {};
     relevantLeads.forEach(lead => {
         lead.orders.forEach(order => {
-            if (order.productType === productTypeFilter && (colorFilter === 'All Colors' || order.color === colorFilter)) {
+            if (order.productType === productTypeFilter && (colorFilter === 'All Colors' || order.color === colorFilter) && (sizeFilter === 'All Sizes' || order.size === sizeFilter)) {
                 try {
                     const submissionDateStr = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
                     dailySales[submissionDateStr] = (dailySales[submissionDateStr] || 0) + order.quantity;
@@ -137,9 +142,9 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
 
     // 4. Calculate today's "Remaining Stock" to use as an anchor
     const onHandToday = relevantItems.reduce((sum, item) => sum + item.stock, 0);
-    const soldEver = relevantLeads.reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
-    const onProcessToday = relevantLeads.filter(l => (l.isSentToProduction || l.isEndorsedToLogistics) && l.shipmentStatus !== 'Shipped' && l.shipmentStatus !== 'Delivered').reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
-    const dispatchedToday = relevantLeads.filter(l => l.shipmentStatus === 'Shipped' || l.shipmentStatus === 'Delivered').reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+    const soldEver = relevantLeads.reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter) && (sizeFilter === 'All Sizes' || o.size === sizeFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+    const onProcessToday = relevantLeads.filter(l => (l.isSentToProduction || l.isEndorsedToLogistics) && l.shipmentStatus !== 'Shipped' && l.shipmentStatus !== 'Delivered').reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter) && (sizeFilter === 'All Sizes' || o.size === sizeFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+    const dispatchedToday = relevantLeads.filter(l => l.shipmentStatus === 'Shipped' || l.shipmentStatus === 'Delivered').reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter) && (sizeFilter === 'All Sizes' || o.size === sizeFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
     const remainingToday = (onHandToday + onProcessToday + dispatchedToday) - soldEver;
 
     // 5. Work backwards to calculate historical remaining stock
@@ -176,7 +181,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     
     return dataForChart;
 
-  }, [leads, inventoryItems, replenishments, timeRange, productTypeFilter, colorFilter]);
+  }, [leads, inventoryItems, replenishments, timeRange, productTypeFilter, colorFilter, sizeFilter]);
 
   const yDomainRight = useMemo(() => {
     const remainingValues = chartData.map(d => d.remaining).filter(v => v !== null) as number[];
@@ -232,14 +237,24 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                   formatter={(value, name, item) => {
                       if (typeof value !== 'number') return value;
                       const isRemaining = name === 'Remaining Stocks';
-                      const color = name === 'Quantity Sold' ? 'hsl(var(--chart-1))' : (value < 0 ? '#ef4444' : 'hsl(var(--chart-2))');
+                      
+                      let color, dotColor;
+                      if (name === 'Quantity Sold') {
+                          color = dotColor = COLORS[0];
+                      } else if (name === 'Remaining Stocks') {
+                          color = value < 0 ? '#ef4444' : COLORS[1];
+                          dotColor = COLORS[1];
+                      } else { // Replenishment
+                          color = dotColor = '#22c55e';
+                      }
+
                       const replenishment = item.payload.replenished;
                       
                       return (
                           <div className="flex flex-col gap-1">
                               <div className="flex w-full items-center justify-between gap-4 text-base">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: name === 'Quantity Sold' ? 'hsl(var(--chart-1))' : (name === 'Replenishment Count' ? '#22c55e' : 'hsl(var(--chart-2))') }} />
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
                                     <span>{name}</span>
                                 </div>
                                 <span className={cn("font-mono font-medium", isRemaining && value < 0 && "text-destructive")} style={{ color: color }}>
