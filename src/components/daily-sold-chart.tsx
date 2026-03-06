@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -81,19 +80,6 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
   
   const inventoryQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory')) : null), [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
-
-  const yDomainRight = useMemo(() => {
-    const remainingValues = chartData.map(d => d.remaining).filter(v => v !== null) as number[];
-    if (remainingValues.length === 0) return [0, 100];
-    const minVal = Math.min(...remainingValues);
-    const maxVal = Math.max(...remainingValues);
-  
-    const padding = Math.max(Math.abs(maxVal - minVal) * 0.1, 50);
-    const yMin = Math.floor(minVal - padding);
-    const yMax = Math.ceil(maxVal + padding);
-    
-    return [yMin, yMax];
-  }, [chartData]);
   
   const chartData = useMemo(() => {
     if (!leads || !inventoryItems || !productTypeFilter || !replenishments) return [];
@@ -192,6 +178,19 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
 
   }, [leads, inventoryItems, replenishments, timeRange, productTypeFilter, colorFilter]);
 
+  const yDomainRight = useMemo(() => {
+    const remainingValues = chartData.map(d => d.remaining).filter(v => v !== null) as number[];
+    if (remainingValues.length === 0) return [0, 100];
+    const minVal = Math.min(...remainingValues);
+    const maxVal = Math.max(...remainingValues);
+  
+    const padding = Math.max(Math.abs(maxVal - minVal) * 0.1, 50);
+    const yMin = Math.floor(minVal - padding);
+    const yMax = Math.ceil(maxVal + padding);
+    
+    return [yMin, yMax];
+  }, [chartData]);
+  
   const isLoading = areLeadsLoading || isInventoryLoading || areReplenishmentsLoading;
   const error = leadsError || inventoryError || replenishmentsError;
 
