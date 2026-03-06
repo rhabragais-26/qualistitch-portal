@@ -56,24 +56,25 @@ type EnrichedInventoryItem = InventoryItem & {
   onProcess: number;
   dispatched: number;
   remaining: number;
+  sellThroughRate: number;
 };
 
 const jacketColors = [
-  'Army Green',
-  'Black',
-  'Black/Gray',
-  'Black/Khaki',
-  'Black/Navy Blue',
-  'Brown',
-  'Dark Gray',
-  'Dark Khaki',
-  'Khaki',
-  'Light Gray',
-  'Light Khaki',
-  'Maroon/Gray',
-  'Navy Blue',
-  'Navy Blue/Gray',
-  'Olive Green',
+    'Army Green',
+    'Black',
+    'Black/Gray',
+    'Black/Khaki',
+    'Black/Navy Blue',
+    'Brown',
+    'Dark Gray',
+    'Dark Khaki',
+    'Khaki',
+    'Light Gray',
+    'Light Khaki',
+    'Maroon/Gray',
+    'Navy Blue',
+    'Navy Blue/Gray',
+    'Olive Green',
 ];
 
 const poloShirtColors = [
@@ -108,7 +109,7 @@ export function InventorySummaryTable() {
   }, [firestore, user]);
 
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError, refetch } = useCollection<InventoryItem>(inventoryQuery);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const handleStockChange = (itemId: string, value: string) => {
     const newStock = parseInt(value, 10);
@@ -274,13 +275,17 @@ export function InventorySummaryTable() {
         const onProcess = onProcessQuantities.get(key) || 0;
         const dispatched = dispatchedQuantities.get(key) || 0;
         const soldQty = soldQuantities.get(key) || 0;
+        const onHand = item.stock;
+
+        const sellThroughRate = (onHand + soldQty) > 0 ? (soldQty / (onHand + soldQty)) * 100 : 0;
 
         return {
             ...item,
             soldQty,
             onProcess,
             dispatched,
-            remaining: item.stock - onProcess,
+            remaining: onHand - onProcess,
+            sellThroughRate,
         };
     });
   }, [inventoryItems, leads]);
@@ -508,6 +513,7 @@ export function InventorySummaryTable() {
                       <TableHead className="text-white font-bold align-middle">Size</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">On-Hand</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Sold QTY</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Sell-Through Rate</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">On-Process</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Dispatched</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Remaining Stocks</TableHead>
@@ -551,6 +557,14 @@ export function InventorySummaryTable() {
                                 )}
                             </TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.soldQty}</TableCell>
+                            <TableCell className={cn(
+                                "text-center font-bold text-xs align-middle py-2",
+                                item.sellThroughRate >= 70 ? "text-green-600" :
+                                item.sellThroughRate >= 40 ? "text-yellow-600" :
+                                "text-red-600"
+                            )}>
+                                {item.sellThroughRate.toFixed(1)}%
+                            </TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.onProcess}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.dispatched}</TableCell>
                             <TableCell className={cn("text-center font-bold text-xs align-middle py-2", item.remaining < 0 && "text-destructive")}>{item.remaining}</TableCell>
@@ -568,5 +582,3 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
-
-    
