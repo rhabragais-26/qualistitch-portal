@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -9,6 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import { Skeleton } from './ui/skeleton';
 import React from 'react';
@@ -23,10 +25,11 @@ type Order = {
 };
 
 type Lead = {
-  orders: Order[];
+  submissionDateTime: string;
   isSentToProduction?: boolean;
   isEndorsedToLogistics?: boolean;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  orders: Order[];
 };
 
 type InventoryItem = {
@@ -156,6 +159,30 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     return { headers: sizes, rows };
 
   }, [inventoryItems, leads, productTypeFilter, colorFilter, reportType]);
+  
+  const { totalPositiveStock, totalNegativeStock } = React.useMemo(() => {
+    if (!reportData.rows || reportData.rows.length === 0) {
+      return { totalPositiveStock: 0, totalNegativeStock: 0 };
+    }
+
+    let positiveSum = 0;
+    let negativeSum = 0;
+
+    reportData.rows.forEach(row => {
+      reportData.headers.forEach(header => {
+        const stock = (row as any)[header];
+        if (typeof stock === 'number') {
+          if (stock > 0) {
+            positiveSum += stock;
+          } else if (stock < 0) {
+            negativeSum += stock;
+          }
+        }
+      });
+    });
+
+    return { totalPositiveStock: positiveSum, totalNegativeStock: negativeSum };
+  }, [reportData]);
 
   const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
   const error = inventoryError || leadsError;
@@ -210,6 +237,18 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
                 ))
               )}
             </TableBody>
+             {reportData.rows.length > 0 && (
+              <TableFooter>
+                <TableRow className="bg-gray-100 hover:bg-gray-100">
+                  <TableCell colSpan={reportData.headers.length} className="text-right font-bold text-xs py-2 px-3 text-black">Total Stocks (On-Hand)</TableCell>
+                  <TableCell className="text-center font-bold text-green-600 text-sm py-2 px-3">{totalPositiveStock.toLocaleString()}</TableCell>
+                </TableRow>
+                <TableRow className="bg-gray-100 hover:bg-gray-100">
+                  <TableCell colSpan={reportData.headers.length} className="text-right font-bold text-xs py-2 px-3 text-black">Total Deficit</TableCell>
+                  <TableCell className="text-center font-bold text-destructive text-sm py-2 px-3">{Math.abs(totalNegativeStock).toLocaleString()}</TableCell>
+                </TableRow>
+              </TableFooter>
+            )}
           </Table>
         </ScrollArea>
       </div>
