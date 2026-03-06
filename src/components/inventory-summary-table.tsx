@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -278,13 +279,15 @@ export function InventorySummaryTable() {
         const onHand = item.stock;
 
         const sellThroughRate = (onHand + soldQty) > 0 ? (soldQty / (onHand + soldQty)) * 100 : 0;
+        
+        const remaining = (onHand + onProcess + dispatched) - soldQty;
 
         return {
             ...item,
             soldQty,
             onProcess,
             dispatched,
-            remaining: onHand - onProcess,
+            remaining: remaining,
             sellThroughRate,
         };
     });

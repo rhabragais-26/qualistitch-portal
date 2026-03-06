@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -6,7 +7,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend, Bar } from 'recharts';
 import { Skeleton } from './ui/skeleton';
-import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay } from 'date-fns';
+import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
@@ -20,9 +21,7 @@ type Order = {
 type Lead = {
   submissionDateTime: string;
   isSentToProduction?: boolean;
-  sentToProductionTimestamp?: string;
   isEndorsedToLogistics?: boolean;
-  endorsedToLogisticsTimestamp?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
   deliveredTimestamp?: string;
@@ -86,23 +85,21 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
   
   const chartData = useMemo(() => {
-    if (!leads || !inventoryItems || !cogs || !productTypeFilter) return [];
+    if (!leads || !inventoryItems || !productTypeFilter) return [];
 
-    // 1. Determine date range
-    const endDate = new Date();
+    // 1. Define date range
+    const endDate = endOfDay(new Date());
     let startDate: Date;
 
     if (timeRange === '7d') {
-      startDate = subDays(endDate, 6);
+      startDate = startOfDay(subDays(endDate, 6));
     } else if (timeRange === '14d') {
-      startDate = subDays(endDate, 13);
+      startDate = startOfDay(subDays(endDate, 13));
     } else if (timeRange === '30d') {
-      startDate = subDays(endDate, 29);
+      startDate = startOfDay(subDays(endDate, 29));
     } else { // 'this_week'
-      startDate = startOfWeek(endDate, { weekStartsOn: 1 });
+      startDate = startOfDay(startOfWeek(endDate, { weekStartsOn: 1 }));
     }
-    
-    startDate = startOfDay(startDate);
 
     // 2. Filter relevant data once
     const relevantItems = inventoryItems.filter(item => 
@@ -115,9 +112,9 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
             (colorFilter === 'All Colors' || order.color === colorFilter)
         )
     );
-    const relevantCogs = cogs.filter(cog => cog.itemDescription === productTypeFilter);
+    const relevantCogs = (cogs || []).filter(cog => cog.itemDescription === productTypeFilter && (colorFilter === 'All Colors' || cog.itemDescription.includes(colorFilter)));
 
-    // 3. Create daily maps for events
+    // 3. Create daily maps for sales and replenishments
     const dailySales: Record<string, number> = {};
     relevantLeads.forEach(lead => {
         lead.orders.forEach(order => {
@@ -129,7 +126,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
             }
         });
     });
-    
+
     const dailyReplenishments: Record<string, number> = {};
     relevantCogs.forEach(cog => {
       try {
@@ -138,55 +135,60 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
       } catch(e) {}
     });
 
-    // 4. Calculate total historical values to find the starting stock
-    const currentOnHand = relevantItems.reduce((sum, item) => sum + item.stock, 0);
-    const totalSoldEver = Object.values(dailySales).reduce((sum, qty) => sum + qty, 0);
-    const totalReplenishmentsEver = Object.values(dailyReplenishments).reduce((sum, qty) => sum + qty, 0);
-    const initialStockEver = currentOnHand + totalSoldEver - totalReplenishmentsEver;
+    // 4. Calculate today's "Remaining Stock" to use as an anchor
+    const onHandToday = relevantItems.reduce((sum, item) => sum + item.stock, 0);
+    const soldEver = relevantLeads.reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+    const onProcessToday = relevantLeads.filter(l => (l.isSentToProduction || l.isEndorsedToLogistics) && l.shipmentStatus !== 'Shipped' && l.shipmentStatus !== 'Delivered').reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+    const dispatchedToday = relevantLeads.filter(l => l.shipmentStatus === 'Shipped' || l.shipmentStatus === 'Delivered').reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+    const remainingToday = (onHandToday + onProcessToday + dispatchedToday) - soldEver;
 
-    // 5. Calculate cumulative values up to the day before the chart starts
-    let cumulativeSoldBeforeStart = 0;
-    let cumulativeReplenishmentsBeforeStart = 0;
+    // 5. Work backwards to calculate historical remaining stock
+    const historicalRemaining: Record<string, number> = {};
+    let runningRemaining = remainingToday;
+    const todayStr = format(endDate, 'yyyy-MM-dd');
+    historicalRemaining[todayStr] = runningRemaining;
 
-    const allEventDates = new Set([...Object.keys(dailySales), ...Object.keys(dailyReplenishments)]);
-    
-    Array.from(allEventDates).sort().forEach(dateStr => {
-        if (new Date(dateStr) < startDate) {
-            cumulativeSoldBeforeStart += dailySales[dateStr] || 0;
-            cumulativeReplenishmentsBeforeStart += dailyReplenishments[dateStr] || 0;
-        }
-    });
-    
-    let runningStock = initialStockEver + cumulativeReplenishmentsBeforeStart - cumulativeSoldBeforeStart;
-
-    // 6. Generate chart data for the selected range.
     const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
-    
-    const dataForChart = [];
 
-    for (const day of allDaysInRange) {
-        const dateStr = format(day, 'yyyy-MM-dd');
-        const soldToday = dailySales[dateStr] || 0;
-        const replenishedToday = dailyReplenishments[dateStr] || 0;
-        
-        // This is a simplified calculation of physical on-hand stock
-        runningStock = runningStock + replenishedToday - soldToday;
-        
-        dataForChart.push({
-            date: format(day, 'MMM dd'),
-            sold: soldToday,
-            replenished: replenishedToday,
-            remaining: runningStock,
-        });
+    for (let i = allDaysInRange.length - 2; i >= 0; i--) {
+      const currentDay = allDaysInRange[i+1];
+      const currentDayStr = format(currentDay, 'yyyy-MM-dd');
+      
+      const soldOnCurrentDay = dailySales[currentDayStr] || 0;
+      const replenishedOnCurrentDay = dailyReplenishments[currentDayStr] || 0;
+
+      const leadsShippedOrDeliveredOnCurrentDay = relevantLeads.filter(l => (l.shippedTimestamp && format(new Date(l.shippedTimestamp), 'yyyy-MM-dd') === currentDayStr) || (l.deliveredTimestamp && format(new Date(l.deliveredTimestamp), 'yyyy-MM-dd') === currentDayStr));
+      const dispatchedOnCurrentDay = leadsShippedOrDeliveredOnCurrentDay.reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+      
+      const leadsPutOnProcessOnCurrentDay = relevantLeads.filter(l => (l.sentToProductionTimestamp && format(new Date(l.sentToProductionTimestamp), 'yyyy-MM-dd') === currentDayStr) || (l.endorsedToLogisticsTimestamp && format(new Date(l.endorsedToLogisticsTimestamp), 'yyyy-MM-dd') === currentDayStr));
+      const onProcessOnCurrentDay = leadsPutOnProcessOnCurrentDay.reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+      
+      // To get yesterday's stock, we reverse today's operations from today's final stock
+      runningRemaining = runningRemaining + soldOnCurrentDay - replenishedOnCurrentDay - onProcessOnCurrentDay - dispatchedOnCurrentDay;
+      
+      const previousDayStr = format(allDaysInRange[i], 'yyyy-MM-dd');
+      historicalRemaining[previousDayStr] = runningRemaining;
     }
 
+    // 6. Generate final chart data
+    const dataForChart = allDaysInRange.map(day => {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        return {
+            date: format(day, 'MMM dd'),
+            sold: dailySales[dateStr] || 0,
+            replenished: dailyReplenishments[dateStr] || 0,
+            remaining: historicalRemaining[dateStr] ?? null,
+        };
+    });
+    
     return dataForChart;
 
   }, [leads, inventoryItems, cogs, timeRange, productTypeFilter, colorFilter]);
 
   const yDomainRight = useMemo(() => {
     if (!chartData || chartData.length === 0) return [0, 100];
-    const remainingValues = chartData.map(d => d.remaining);
+    const remainingValues = chartData.map(d => d.remaining).filter(v => v !== null) as number[];
+    if (remainingValues.length === 0) return [0, 100];
     const minVal = Math.min(...remainingValues);
     const maxVal = Math.max(...remainingValues);
   
