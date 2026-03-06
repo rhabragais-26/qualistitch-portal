@@ -207,12 +207,20 @@ export function InventorySummaryTable() {
   };
 
   const availableColors = React.useMemo(() => {
-    if (productTypeFilter === 'All') {
-      return ['All', ...[...new Set([...jacketColors, ...poloShirtColors])].sort()];
+    if (!inventoryItems) {
+      return ['All'];
     }
-    const isPolo = productTypeFilter.includes('Polo Shirt');
-    return ['All', ...(isPolo ? poloShirtColors : jacketColors)];
-  }, [productTypeFilter]);
+
+    let itemsToConsider = inventoryItems;
+    if (productTypeFilter !== 'All') {
+      itemsToConsider = inventoryItems.filter(
+        (item) => item.productType === productTypeFilter
+      );
+    }
+
+    const uniqueColors = [...new Set(itemsToConsider.map((item) => item.color))].sort();
+    return ['All', ...uniqueColors];
+  }, [inventoryItems, productTypeFilter]);
   
   const availableSizes = useMemo(() => {
       if (!inventoryItems) return ['All'];
@@ -560,3 +568,5 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
+
+    
