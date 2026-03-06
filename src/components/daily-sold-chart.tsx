@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -30,16 +29,13 @@ type Lead = {
   orders: Order[];
 };
 
-type CostOfGoods = {
-    id: string;
-    date: string;
-    itemDescription: string;
-    supplier: string;
-    quantity: number;
-    unitCost: number;
-    totalCost: number;
-    submittedBy: string;
-    timestamp: string;
+type InventoryReplenishment = {
+  id: string;
+  date: string;
+  productType: string;
+  color: string;
+  size: string;
+  quantity: number;
 };
 
 type InventoryItem = {
@@ -80,14 +76,27 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
-  const cogsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'cost_of_goods')) : null), [firestore]);
-  const { data: cogs, isLoading: areCogsLoading, error: cogsError } = useCollection<CostOfGoods>(cogsQuery, undefined, { listen: false });
+  const replenishmentsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory_replenishments')) : null), [firestore]);
+  const { data: replenishments, isLoading: areReplenishmentsLoading, error: replenishmentsError } = useCollection<InventoryReplenishment>(replenishmentsQuery, undefined, { listen: false });
   
   const inventoryQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory')) : null), [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
+
+  const yDomainRight = useMemo(() => {
+    const remainingValues = chartData.map(d => d.remaining).filter(v => v !== null) as number[];
+    if (remainingValues.length === 0) return [0, 100];
+    const minVal = Math.min(...remainingValues);
+    const maxVal = Math.max(...remainingValues);
+  
+    const padding = Math.max(Math.abs(maxVal - minVal) * 0.1, 50);
+    const yMin = Math.floor(minVal - padding);
+    const yMax = Math.ceil(maxVal + padding);
+    
+    return [yMin, yMax];
+  }, [chartData]);
   
   const chartData = useMemo(() => {
-    if (!leads || !inventoryItems || !productTypeFilter) return [];
+    if (!leads || !inventoryItems || !productTypeFilter || !replenishments) return [];
 
     // 1. Define date range
     const endDate = endOfDay(new Date());
@@ -114,7 +123,10 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
             (colorFilter === 'All Colors' || order.color === colorFilter)
         )
     );
-    const relevantCogs = (cogs || []).filter(cog => cog.itemDescription === productTypeFilter && (colorFilter === 'All Colors' || cog.itemDescription.includes(colorFilter)));
+    const relevantReplenishments = (replenishments || []).filter(repl => 
+        repl.productType === productTypeFilter && 
+        (colorFilter === 'All Colors' || repl.color === colorFilter)
+    );
 
     // 3. Create daily maps for sales and replenishments
     const dailySales: Record<string, number> = {};
@@ -130,10 +142,10 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     });
 
     const dailyReplenishments: Record<string, number> = {};
-    relevantCogs.forEach(cog => {
+    relevantReplenishments.forEach(repl => {
       try {
-        const dateStr = format(new Date(cog.date), 'yyyy-MM-dd');
-        dailyReplenishments[dateStr] = (dailyReplenishments[dateStr] || 0) + cog.quantity;
+        const dateStr = format(new Date(repl.date), 'yyyy-MM-dd');
+        dailyReplenishments[dateStr] = (dailyReplenishments[dateStr] || 0) + repl.quantity;
       } catch(e) {}
     });
 
@@ -178,24 +190,10 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     
     return dataForChart;
 
-  }, [leads, inventoryItems, cogs, timeRange, productTypeFilter, colorFilter]);
+  }, [leads, inventoryItems, replenishments, timeRange, productTypeFilter, colorFilter]);
 
-  const yDomainRight = useMemo(() => {
-    if (!chartData || chartData.length === 0) return [0, 100];
-    const remainingValues = chartData.map(d => d.remaining).filter(v => v !== null) as number[];
-    if (remainingValues.length === 0) return [0, 100];
-    const minVal = Math.min(...remainingValues);
-    const maxVal = Math.max(...remainingValues);
-  
-    const padding = Math.max(Math.abs(maxVal - minVal) * 0.1, 50);
-    const yMin = Math.floor(minVal - padding);
-    const yMax = Math.ceil(maxVal + padding);
-    
-    return [yMin, yMax];
-  }, [chartData]);
-  
-  const isLoading = areLeadsLoading || isInventoryLoading || areCogsLoading;
-  const error = leadsError || inventoryError || cogsError;
+  const isLoading = areLeadsLoading || isInventoryLoading || areReplenishmentsLoading;
+  const error = leadsError || inventoryError || replenishmentsError;
 
   const chartConfig = {
     sold: {

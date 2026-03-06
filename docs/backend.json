@@ -2,6 +2,22 @@
 
 {
   "entities": {
+    "InventoryReplenishment": {
+        "title": "InventoryReplenishment",
+        "type": "object",
+        "description": "Represents a record of stock being added to the inventory.",
+        "properties": {
+          "id": { "type": "string" },
+          "date": { "type": "string", "format": "date-time" },
+          "productType": { "type": "string" },
+          "color": { "type": "string" },
+          "size": { "type": "string" },
+          "quantity": { "type": "number" },
+          "submittedBy": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "date", "productType", "color", "size", "quantity", "submittedBy", "timestamp"]
+    },
     "FinanceCategory": {
         "title": "FinanceCategory",
         "type": "object",
@@ -1070,6 +1086,16 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/inventory_replenishments/{replenishmentId}",
+        "definition": {
+          "entityName": "InventoryReplenishment",
+          "schema": {
+            "$ref": "#/backend/entities/InventoryReplenishment"
+          },
+          "description": "Stores historical records of inventory replenishments."
+        }
+      },
       {
         "path": "/financeCategories/{categoryId}",
         "definition": {

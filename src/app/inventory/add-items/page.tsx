@@ -6,10 +6,11 @@ import { AddItemForm } from '@/components/add-item-form';
 import { StagedItemsList } from '@/components/staged-items-list';
 import { useState } from 'react';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, doc, runTransaction } from 'firebase/firestore';
+import { collection, doc, runTransaction, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { usePathname } from 'next/navigation';
 import { hasEditPermission } from '@/lib/permissions';
+import { v4 as uuidv4 } from 'uuid';
 
 export type StagedItem = {
   id: string; // A temporary client-side ID
@@ -46,7 +47,7 @@ export default function AddItemsPage() {
   };
   
   const handleSaveAll = async () => {
-    if (!firestore || stagedItems.length === 0) {
+    if (!firestore || !userProfile || stagedItems.length === 0) {
       toast({
         variant: 'destructive',
         title: 'No items to save',
@@ -54,6 +55,24 @@ export default function AddItemsPage() {
       });
       return;
     }
+
+    const replenishmentBatch = writeBatch(firestore);
+    const now = new Date().toISOString();
+
+    stagedItems.forEach(item => {
+        const replenishmentId = uuidv4();
+        const replenishmentRef = doc(firestore, 'inventory_replenishments', replenishmentId);
+        replenishmentBatch.set(replenishmentRef, {
+            id: replenishmentId,
+            date: now,
+            productType: item.productType,
+            color: item.color,
+            size: item.size,
+            quantity: item.stock,
+            submittedBy: userProfile.nickname,
+            timestamp: now,
+        });
+    });
     
     // Group items by their unique Firestore document ID
     const itemsByDocId = stagedItems.reduce((acc, item) => {
@@ -76,7 +95,6 @@ export default function AddItemsPage() {
           const itemDoc = await transaction.get(itemDocRef);
           
           if (!itemDoc.exists()) {
-            // If doc doesn't exist, create it with the total staged stock.
             transaction.set(itemDocRef, {
               id: itemId,
               productType: itemData.productType,
@@ -85,24 +103,24 @@ export default function AddItemsPage() {
               stock: itemData.stock,
             });
           } else {
-            // If doc exists, increment stock.
             const currentStock = itemDoc.data().stock || 0;
             const newStock = currentStock + itemData.stock;
             transaction.update(itemDocRef, { stock: newStock });
           }
         });
-        successCount += 1; // Count each unique item type as one successful save operation
+        successCount += 1;
       } catch (e) {
         console.error(`Transaction failed for ${itemId}: `, e);
-        throw e; // Re-throw to be caught by Promise.all's catch block
+        throw e;
       }
     });
 
     try {
+      await replenishmentBatch.commit();
       await Promise.all(transactionPromises);
       toast({
         title: 'Success!',
-        description: `${stagedItems.length} item(s) across ${successCount} unique product variant(s) have been saved.`,
+        description: `${stagedItems.length} item(s) across ${successCount} unique product variant(s) have been saved. Replenishment has been recorded.`,
       });
       setStagedItems([]);
     } catch (e: any) {
