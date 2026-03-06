@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -60,17 +61,9 @@ type EnrichedInventoryItem = InventoryItem & {
 };
 
 const productTypes = [
-  'Executive Jacket 1',
-  'Executive Jacket v2 (with lines)',
-  'Turtle Neck Jacket',
-  'Corporate Jacket',
-  'Reversible v1',
-  'Reversible v2',
-  'Polo Shirt (Smilee) - Cool Pass',
-  'Polo Shirt (Smilee) - Cotton Blend',
-  'Polo Shirt (Lifeline)',
-  'Polo Shirt (Blue Corner)',
-  'Polo Shirt (Softex)',
+  'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
+  'Corporate Jacket', 'Reversible v1', 'Reversible v2', 'Polo Shirt (Coolpass)',
+  'Polo Shirt (Cotton Blend)', 'Patches', 'Client Owned',
 ];
 
 const jacketColors = [
@@ -225,7 +218,7 @@ export function InventorySummaryTable() {
             soldQty,
             onProcess,
             dispatched,
-            remaining: item.stock - onProcess,
+            remaining: (item.stock + onProcess + dispatched) - soldQty,
         };
     });
   }, [inventoryItems, leads]);
