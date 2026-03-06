@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -83,7 +84,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
   
   const inventoryQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory')) : null), [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
-
+  
   const chartData = useMemo(() => {
     if (!leads || !inventoryItems || !cogs || !productTypeFilter) return [];
 
@@ -118,8 +119,6 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
 
     // 3. Create daily maps for events
     const dailySales: Record<string, number> = {};
-    const dailyReplenishments: Record<string, number> = {};
-
     relevantLeads.forEach(lead => {
         lead.orders.forEach(order => {
             if (order.productType === productTypeFilter && (colorFilter === 'All Colors' || order.color === colorFilter)) {
@@ -131,6 +130,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
         });
     });
     
+    const dailyReplenishments: Record<string, number> = {};
     relevantCogs.forEach(cog => {
       try {
         const dateStr = format(new Date(cog.date), 'yyyy-MM-dd');
@@ -145,55 +145,58 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     const initialStockEver = currentOnHand + totalSoldEver - totalReplenishmentsEver;
 
     // 5. Calculate cumulative values up to the day before the chart starts
-    let cumulativeSold = 0;
-    let cumulativeReplenishments = 0;
+    let cumulativeSoldBeforeStart = 0;
+    let cumulativeReplenishmentsBeforeStart = 0;
 
     const allEventDates = new Set([...Object.keys(dailySales), ...Object.keys(dailyReplenishments)]);
     
     Array.from(allEventDates).sort().forEach(dateStr => {
         if (new Date(dateStr) < startDate) {
-            cumulativeSold += dailySales[dateStr] || 0;
-            cumulativeReplenishments += dailyReplenishments[dateStr] || 0;
+            cumulativeSoldBeforeStart += dailySales[dateStr] || 0;
+            cumulativeReplenishmentsBeforeStart += dailyReplenishments[dateStr] || 0;
         }
     });
+    
+    let runningStock = initialStockEver + cumulativeReplenishmentsBeforeStart - cumulativeSoldBeforeStart;
 
     // 6. Generate chart data for the selected range.
     const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
     
-    return allDaysInRange.map(day => {
-      const dateStr = format(day, 'yyyy-MM-dd');
-      
-      const soldToday = dailySales[dateStr] || 0;
-      cumulativeSold += soldToday;
-      cumulativeReplenishments += dailyReplenishments[dateStr] || 0;
+    const dataForChart = [];
 
-      const remainingStock = initialStockEver + cumulativeReplenishments - cumulativeSold;
+    for (const day of allDaysInRange) {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        const soldToday = dailySales[dateStr] || 0;
+        const replenishedToday = dailyReplenishments[dateStr] || 0;
+        
+        // This is a simplified calculation of physical on-hand stock
+        runningStock = runningStock + replenishedToday - soldToday;
+        
+        dataForChart.push({
+            date: format(day, 'MMM dd'),
+            sold: soldToday,
+            replenished: replenishedToday,
+            remaining: runningStock,
+        });
+    }
 
-      return {
-        date: format(day, 'MMM dd'),
-        sold: soldToday,
-        replenished: dailyReplenishments[dateStr] || 0,
-        remaining: remainingStock,
-      };
-    });
+    return dataForChart;
 
   }, [leads, inventoryItems, cogs, timeRange, productTypeFilter, colorFilter]);
-  
+
   const yDomainRight = useMemo(() => {
     if (!chartData || chartData.length === 0) return [0, 100];
     const remainingValues = chartData.map(d => d.remaining);
     const minVal = Math.min(...remainingValues);
     const maxVal = Math.max(...remainingValues);
   
-    // Add padding to the domain
     const padding = Math.max(Math.abs(maxVal - minVal) * 0.1, 50);
     const yMin = Math.floor(minVal - padding);
     const yMax = Math.ceil(maxVal + padding);
     
     return [yMin, yMax];
   }, [chartData]);
-
-
+  
   const isLoading = areLeadsLoading || isInventoryLoading || areCogsLoading;
   const error = leadsError || inventoryError || cogsError;
 
@@ -203,7 +206,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
         color: COLORS[0],
     },
     remaining: {
-        label: "On-Hand Stocks",
+        label: "Remaining Stocks",
         color: COLORS[1],
     },
   };
@@ -230,7 +233,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                 <ChartTooltipContent
                   formatter={(value, name, item) => {
                       if (typeof value !== 'number') return value;
-                      const isRemaining = name === 'On-Hand Stocks';
+                      const isRemaining = name === 'Remaining Stocks';
                       const color = name === 'Quantity Sold' ? 'hsl(var(--chart-1))' : (value < 0 ? '#ef4444' : 'hsl(var(--chart-2))');
                       const replenishment = item.payload.replenished;
                       
@@ -286,7 +289,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                 key="remaining"
                 type="monotone" 
                 dataKey="remaining" 
-                name="On-Hand Stocks"
+                name="Remaining Stocks"
                 stroke={COLORS[1]} 
                 strokeWidth={2}
                 dot={{ r: 4 }}
