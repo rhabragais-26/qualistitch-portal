@@ -15,21 +15,26 @@ import React from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 
+type Order = {
+  productType: string;
+  color: string;
+  size: string;
+  quantity: number;
+};
+
+type Lead = {
+  orders: Order[];
+  isSentToProduction?: boolean;
+  isEndorsedToLogistics?: boolean;
+  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+};
+
 type InventoryItem = {
   id: string;
   productType: string;
   color: string;
   size: string;
   stock: number;
-};
-
-type Lead = {
-  orders: {
-    productType: string;
-    color: string;
-    size: string;
-    quantity: number;
-  }[];
 };
 
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
@@ -58,17 +63,32 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const reportData = React.useMemo(() => {
-    if (!inventoryItems) return { headers: [], rows: [] };
+    if (!inventoryItems || !leads) return { headers: [], rows: [] };
     
     let processedItems: {productType: string, color: string, size: string, count: number}[];
     
     const soldQuantities = new Map<string, number>();
+    const onProcessQuantities = new Map<string, number>();
+    const dispatchedQuantities = new Map<string, number>();
+    
     if (leads) {
         leads.forEach(lead => {
-            if (lead.orders) {
+            const createKey = (order: { productType: string, color: string, size: string }) => `${order.productType}-${order.color}-${order.size}`;
+            
+            lead.orders.forEach(order => {
+                const key = createKey(order);
+                soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
+            });
+
+            if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
                 lead.orders.forEach(order => {
-                    const key = `${order.productType}-${order.color}-${order.size}`;
-                    soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
+                    const key = createKey(order);
+                    dispatchedQuantities.set(key, (dispatchedQuantities.get(key) || 0) + order.quantity);
+                });
+            } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
+                lead.orders.forEach(order => {
+                    const key = createKey(order);
+                    onProcessQuantities.set(key, (onProcessQuantities.get(key) || 0) + order.quantity);
                 });
             }
         });
@@ -78,17 +98,27 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
       processedItems = inventoryItems.map(item => {
         const key = `${item.productType}-${item.color}-${item.size}`;
         const sold = soldQuantities.get(key) || 0;
-        return { ...item, count: item.stock - sold };
+        const onProcess = onProcessQuantities.get(key) || 0;
+        const dispatched = dispatchedQuantities.get(key) || 0;
+        const onHand = item.stock;
+        
+        const count = (onHand + onProcess + dispatched) - sold;
+        return { ...item, count };
       }).filter(item => item.count <= 10);
 
     } else { // 'inventory' reportType
       processedItems = inventoryItems.map(item => {
         const key = `${item.productType}-${item.color}-${item.size}`;
         const sold = soldQuantities.get(key) || 0;
-        return {...item, count: item.stock - sold};
+        const onProcess = onProcessQuantities.get(key) || 0;
+        const dispatched = dispatchedQuantities.get(key) || 0;
+        const onHand = item.stock;
+
+        const count = (onHand + onProcess + dispatched) - sold;
+        return { ...item, count };
       });
     }
-
+    
     let filteredItems = processedItems;
     if (productTypeFilter && productTypeFilter !== 'All') {
         filteredItems = filteredItems.filter(item => item.productType === productTypeFilter);

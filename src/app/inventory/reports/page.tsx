@@ -90,7 +90,7 @@ export default function InventoryReportsPage() {
           <CardContent className="space-y-8">
              <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-bold text-teal-600">Daily Sold vs. Remaining Stocks</h3>
+                  <h3 className="text-lg font-bold text-teal-600">Daily Sold vs. On-Hand Stocks</h3>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
