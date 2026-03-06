@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, runTransaction, getDoc, writeBatch } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -19,15 +19,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
-import { Switch } from './ui/switch';
-import { Label } from './ui/label';
 import { Button } from './ui/button';
-import { Boxes, Shirt, PackageX, MinusCircle, Download, Edit, Save, X } from 'lucide-react';
+import { Boxes, Shirt, PackageX, MinusCircle, Edit, Save, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -60,12 +58,6 @@ type EnrichedInventoryItem = InventoryItem & {
   remaining: number;
 };
 
-const productTypes = [
-  'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
-  'Corporate Jacket', 'Reversible v1', 'Reversible v2', 'Polo Shirt (Coolpass)',
-  'Polo Shirt (Cotton Blend)', 'Patches', 'Client Owned',
-];
-
 const jacketColors = [
   'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
   'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
@@ -91,6 +83,7 @@ export function InventorySummaryTable() {
   const [sizeFilter, setSizeFilter] = useState('All');
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedStocks, setEditedStocks] = useState<Record<string, number>>({});
+  const [editedColors, setEditedColors] = useState<Record<string, string>>({});
 
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -102,8 +95,8 @@ export function InventorySummaryTable() {
     return query(collection(firestore, 'leads'));
   }, [firestore, user]);
 
-  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError, refetch } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError, refetch } = useCollection<InventoryItem>(inventoryQuery);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
 
   const handleStockChange = (itemId: string, value: string) => {
     const newStock = parseInt(value, 10);
@@ -115,41 +108,90 @@ export function InventorySummaryTable() {
     }
   };
 
+  const handleColorChange = (itemId: string, value: string) => {
+    setEditedColors(prev => ({
+        ...prev,
+        [itemId]: value,
+    }));
+  };
+
   const handleSave = async () => {
-    if (!firestore || Object.keys(editedStocks).length === 0) {
-      setIsEditMode(false);
-      setEditedStocks({});
-      return;
+    if (!firestore) return;
+    setIsEditMode(false);
+
+    const uniqueItemIds = [...new Set([...Object.keys(editedStocks), ...Object.keys(editedColors)])];
+    if (uniqueItemIds.length === 0) return;
+
+    let successCount = 0;
+    let errorCount = 0;
+    const batch = writeBatch(firestore);
+
+    for (const itemId of uniqueItemIds) {
+      const originalItem = inventoryItems?.find(i => i.id === itemId);
+      if (!originalItem) continue;
+
+      const newStock = editedStocks[itemId] ?? originalItem.stock;
+      const newColor = editedColors[itemId] ?? originalItem.color;
+
+      // If only stock is changed, just update
+      if (newColor === originalItem.color) {
+        batch.update(doc(firestore, 'inventory', itemId), { stock: newStock });
+        successCount++;
+        continue;
+      }
+
+      // Color has changed: Delete old and create/update new
+      const oldDocRef = doc(firestore, 'inventory', itemId);
+      const newItemId = `${originalItem.productType}-${newColor}-${originalItem.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
+      const newDocRef = doc(firestore, 'inventory', newItemId);
+
+      try {
+        await runTransaction(firestore, async (transaction) => {
+          const newDocSnap = await transaction.get(newDocRef);
+          
+          if (newDocSnap.exists()) {
+            const existingStock = newDocSnap.data().stock || 0;
+            transaction.update(newDocRef, { stock: existingStock + newStock });
+          } else {
+            transaction.set(newDocRef, {
+              id: newItemId,
+              productType: originalItem.productType,
+              color: newColor,
+              size: originalItem.size,
+              stock: newStock,
+            });
+          }
+          transaction.delete(oldDocRef);
+        });
+        successCount++;
+      } catch (e) {
+        errorCount++;
+        console.error(`Error moving item ${itemId} to ${newItemId}:`, e);
+      }
     }
-
-    const updatePromises = Object.entries(editedStocks).map(([itemId, newStock]) => {
-      const itemRef = doc(firestore, 'inventory', itemId);
-      return updateDoc(itemRef, { stock: newStock });
-    });
-
+    
     try {
-      await Promise.all(updatePromises);
-      toast({
-        title: "Inventory Updated",
-        description: "Stock levels have been saved successfully.",
-      });
-      refetch();
+        await batch.commit();
+        if (errorCount > 0) {
+            toast({ variant: "destructive", title: "Partial Failure", description: `${errorCount} item(s) could not be updated.` });
+        }
+        if (successCount > 0) {
+            toast({ title: "Inventory Updated", description: `${successCount} item(s) have been saved successfully.` });
+        }
+        refetch();
     } catch (error: any) {
-      console.error("Error updating stock:", error);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: error.message || "Could not update stock levels.",
-      });
+        console.error("Error committing batch:", error);
+        toast({ variant: "destructive", title: "Save Failed", description: error.message || "Could not save all changes." });
     } finally {
-      setIsEditMode(false);
-      setEditedStocks({});
+        setEditedStocks({});
+        setEditedColors({});
     }
   };
 
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditedStocks({});
+    setEditedColors({});
   };
 
   const availableColors = React.useMemo(() => {
@@ -456,7 +498,25 @@ export function InventorySummaryTable() {
                     {filteredItems.map((item) => (
                         <TableRow key={item.id}>
                             <TableCell className="font-medium text-xs align-middle py-2 text-black">{item.productType}</TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{item.color}</TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black">
+                                {isEditMode ? (
+                                    <Select
+                                        value={editedColors[item.id] ?? item.color}
+                                        onValueChange={(value) => handleColorChange(item.id, value)}
+                                    >
+                                        <SelectTrigger className="w-[150px] h-8 text-xs">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {(item.productType.includes('Polo Shirt') ? poloShirtColors : jacketColors).map(c => (
+                                                <SelectItem key={c} value={c}>{c}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    item.color
+                                )}
+                            </TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{item.size}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">
                                 {isEditMode ? (
@@ -488,3 +548,4 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
+
