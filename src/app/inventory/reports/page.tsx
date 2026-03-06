@@ -228,7 +228,7 @@ export default function InventoryReportsPage() {
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <Card className="w-full shadow-xl">
           <CardHeader>
-             <CardTitle className="text-center text-3xl font-bold mb-4">Inventory Reports</CardTitle>
+             <CardTitle className="text-center text-3xl font-bold mb-2">Inventory Reports</CardTitle>
           </CardHeader>
           <CardContent className="space-y-8">
              <div className="flex justify-between items-center">
@@ -287,14 +287,6 @@ export default function InventoryReportsPage() {
             <DailySoldQuantityChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} />
             
             <Separator />
-
-            <div className="mt-8">
-              <h3 className="text-lg font-bold text-teal-600">
-                Items Endorsed to Production/Logistics Daily
-              </h3>
-              <div className="mt-2" />
-              <EndorsedItemsChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} />
-            </div>
             
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
@@ -327,6 +319,14 @@ export default function InventoryReportsPage() {
                       </div>
                   </CardContent>
               </Card>
+            </div>
+
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-teal-600">
+                Items Endorsed to Production/Logistics Daily
+              </h3>
+              <div className="mt-2" />
+              <EndorsedItemsChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} />
             </div>
           </CardContent>
         </Card>
