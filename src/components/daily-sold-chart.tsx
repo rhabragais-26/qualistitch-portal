@@ -170,28 +170,6 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     return { chartData: finalChartData };
   }, [leads, inventoryItems, cogs, timeRange, productTypeFilter, colorFilter]);
   
-  const isLoading = areLeadsLoading || isInventoryLoading || areCogsLoading;
-  const error = leadsError || inventoryError || cogsError;
-
-  const chartConfig = {
-    sold: {
-        label: "Quantity Sold",
-        color: COLORS[0],
-    },
-    remaining: {
-        label: "Stocks Remaining",
-        color: COLORS[1],
-    },
-  };
-
-  if (isLoading) {
-    return <Skeleton className="h-[350px] w-full" />;
-  }
-
-  if (error) {
-    return <div className="h-[350px] flex items-center justify-center"><p className="text-destructive">Error loading chart data.</p></div>;
-  }
-  
   const yDomainRight = useMemo(() => {
     if (!chartData || chartData.length === 0) return [0, 100];
     const remainingValues = chartData.map(d => d.remaining);
@@ -204,6 +182,27 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     return [yMin, yMax];
   }, [chartData]);
 
+  const isLoading = areLeadsLoading || isInventoryLoading || areCogsLoading;
+  const error = leadsError || inventoryError || cogsError;
+
+  const chartConfig = {
+    sold: {
+        label: "Quantity Sold",
+        color: COLORS[0],
+    },
+    remaining: {
+        label: "On-Hand Stocks",
+        color: COLORS[1],
+    },
+  };
+
+  if (isLoading) {
+    return <Skeleton className="h-[350px] w-full" />;
+  }
+
+  if (error) {
+    return <div className="h-[350px] flex items-center justify-center"><p className="text-destructive">Error loading chart data.</p></div>;
+  }
 
   return (
     <div className="h-[350px]">
@@ -219,7 +218,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                 <ChartTooltipContent
                   formatter={(value, name, item) => {
                       if (typeof value !== 'number') return value;
-                      const isRemaining = name === 'Stocks Remaining';
+                      const isRemaining = name === 'On-Hand Stocks';
                       const color = name === 'Quantity Sold' ? 'hsl(var(--chart-1))' : (value < 0 ? '#ef4444' : 'hsl(var(--chart-2))');
                       const replenishment = item.payload.replenished;
                       
@@ -275,7 +274,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                 key="remaining"
                 type="monotone" 
                 dataKey="remaining" 
-                name="Stocks Remaining"
+                name="On-Hand Stocks"
                 stroke={COLORS[1]} 
                 strokeWidth={2}
                 dot={{ r: 4 }}
