@@ -21,7 +21,9 @@ type Order = {
 type Lead = {
   submissionDateTime: string;
   isSentToProduction?: boolean;
+  sentToProductionTimestamp?: string;
   isEndorsedToLogistics?: boolean;
+  endorsedToLogisticsTimestamp?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
   deliveredTimestamp?: string;
@@ -156,15 +158,8 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
       
       const soldOnCurrentDay = dailySales[currentDayStr] || 0;
       const replenishedOnCurrentDay = dailyReplenishments[currentDayStr] || 0;
-
-      const leadsShippedOrDeliveredOnCurrentDay = relevantLeads.filter(l => (l.shippedTimestamp && format(new Date(l.shippedTimestamp), 'yyyy-MM-dd') === currentDayStr) || (l.deliveredTimestamp && format(new Date(l.deliveredTimestamp), 'yyyy-MM-dd') === currentDayStr));
-      const dispatchedOnCurrentDay = leadsShippedOrDeliveredOnCurrentDay.reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
       
-      const leadsPutOnProcessOnCurrentDay = relevantLeads.filter(l => (l.sentToProductionTimestamp && format(new Date(l.sentToProductionTimestamp), 'yyyy-MM-dd') === currentDayStr) || (l.endorsedToLogisticsTimestamp && format(new Date(l.endorsedToLogisticsTimestamp), 'yyyy-MM-dd') === currentDayStr));
-      const onProcessOnCurrentDay = leadsPutOnProcessOnCurrentDay.reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
-      
-      // To get yesterday's stock, we reverse today's operations from today's final stock
-      runningRemaining = runningRemaining + soldOnCurrentDay - replenishedOnCurrentDay - onProcessOnCurrentDay - dispatchedOnCurrentDay;
+      runningRemaining = runningRemaining + soldOnCurrentDay - replenishedOnCurrentDay;
       
       const previousDayStr = format(allDaysInRange[i], 'yyyy-MM-dd');
       historicalRemaining[previousDayStr] = runningRemaining;
@@ -211,6 +206,10 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
         label: "Remaining Stocks",
         color: COLORS[1],
     },
+    replenished: {
+        label: "Replenishment Count",
+        color: "#22c55e",
+    }
   };
 
   if (isLoading) {
@@ -243,14 +242,14 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                           <div className="flex flex-col gap-1">
                               <div className="flex w-full items-center justify-between gap-4 text-base">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: name === 'Quantity Sold' ? 'hsl(var(--chart-1))' : 'hsl(var(--chart-2))' }} />
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: name === 'Quantity Sold' ? 'hsl(var(--chart-1))' : (name === 'Replenishment Count' ? '#22c55e' : 'hsl(var(--chart-2))') }} />
                                     <span>{name}</span>
                                 </div>
                                 <span className={cn("font-mono font-medium", isRemaining && value < 0 && "text-destructive")} style={{ color: color }}>
                                     {value.toLocaleString()}
                                 </span>
                               </div>
-                              {replenishment > 0 && (
+                              {replenishment > 0 && name !== 'Replenishment Count' && (
                                 <div className="flex w-full items-center justify-between gap-4 text-base">
                                   <div className="flex items-center gap-1.5">
                                       <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
@@ -274,7 +273,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
                 <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={COLORS[1]} floodOpacity="0.5" />
               </filter>
             </defs>
-            <Bar yAxisId="left" dataKey="replenished" name="Replenishment Count" barSize={1} fill="transparent" hide={true} />
+            <Bar yAxisId="left" dataKey="replenished" name="Replenishment Count" barSize={10} radius={[4, 4, 0, 0]} fill="#22c55e" />
             <Area 
                 yAxisId="left"
                 type="monotone" 
