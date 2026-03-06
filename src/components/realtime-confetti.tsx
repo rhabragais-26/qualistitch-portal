@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -152,13 +153,15 @@ function ConfettiContent() {
   return (
     <>
       <LocalConfetti />
-      <CongratulationsPopup 
-        isClosing={visibility === 'closing'} 
-        onClose={closePopup}
-        nickname={appState?.congratsNickname}
-        message={appState?.congratsMessage}
-        photoURL={appState?.congratsPhotoURL}
-      />
+      {appState?.congratsMessage && (
+        <CongratulationsPopup 
+          isClosing={visibility === 'closing'} 
+          onClose={closePopup}
+          nickname={appState?.congratsNickname}
+          message={appState?.congratsMessage}
+          photoURL={appState?.congratsPhotoURL}
+        />
+      )}
     </>
   );
 }
