@@ -98,7 +98,7 @@ export default function InventoryReportsPage() {
     const dispatchedQuantities = new Map<string, number>();
     
     leads.forEach(lead => {
-        const createKey = (order: { productType: string, color: string, size: string }) => `${order.productType}-${order.color}-${order.size}`;
+        const createKey = (order: { productType: string, color: string, size: string }) => `${'\'\'\''}${order.productType}-${order.color}-${order.size}${'\'\'\''}`;
         
         lead.orders.forEach(order => {
             const key = createKey(order);
@@ -119,7 +119,7 @@ export default function InventoryReportsPage() {
     });
     
     const processedItems = inventoryItems.map(item => {
-        const key = `${item.productType}-${item.color}-${item.size}`;
+        const key = `${'\'\''}${item.productType}-${item.color}-${item.size}${'\'\'\''}`;
         const sold = soldQuantities.get(key) || 0;
         const onProcess = onProcessQuantities.get(key) || 0;
         const dispatched = dispatchedQuantities.get(key) || 0;
@@ -261,17 +261,17 @@ export default function InventoryReportsPage() {
                     <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} />
                 </div>
             </div>
-            <div className="mt-8">
+            <div className="mt-4">
               <Card className="w-full shadow-lg bg-gray-50">
-                  <CardHeader>
+                  <CardHeader className="p-2">
                       <CardTitle className="text-lg text-center">Overall Inventory Summary</CardTitle>
                   </CardHeader>
-                  <CardContent className="flex justify-around items-center text-center">
+                  <CardContent className="p-4 flex justify-around items-center text-center">
                       <div>
                           <p className="text-sm text-muted-foreground">Total Stocks (On-Hand)</p>
                           <p className="text-2xl font-bold text-green-600">{totalPositiveStock.toLocaleString()}</p>
                       </div>
-                      <Separator orientation="vertical" className="h-16" />
+                      <Separator orientation="vertical" className="h-12" />
                       <div>
                           <p className="text-sm text-muted-foreground">Total Deficit</p>
                           <p className="text-2xl font-bold text-destructive">{Math.abs(totalNegativeStock).toLocaleString()}</p>
