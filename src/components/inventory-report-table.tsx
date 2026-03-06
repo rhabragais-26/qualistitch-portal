@@ -46,9 +46,10 @@ type InventoryReportTableProps = {
     productTypeFilter: string;
     colorFilter: string;
     sizeFilter: string;
+    sellThroughRateFilter?: string;
 }
 
-export function InventoryReportTable({ reportType = 'inventory', productTypeFilter, colorFilter, sizeFilter }: InventoryReportTableProps) {
+export function InventoryReportTable({ reportType = 'inventory', productTypeFilter, colorFilter, sizeFilter, sellThroughRateFilter }: InventoryReportTableProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
 
@@ -67,8 +68,6 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
 
   const reportData = React.useMemo(() => {
     if (!inventoryItems || !leads) return { headers: [], rows: [] };
-    
-    let processedItems: {productType: string, color: string, size: string, count: number}[];
     
     const soldQuantities = new Map<string, number>();
     const onProcessQuantities = new Map<string, number>();
@@ -97,29 +96,37 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
         });
     }
 
-    if (reportType === 'priority') {
-      processedItems = inventoryItems.map(item => {
+    const enrichedItems = inventoryItems.map(item => {
         const key = `${item.productType}-${item.color}-${item.size}`;
         const sold = soldQuantities.get(key) || 0;
         const onProcess = onProcessQuantities.get(key) || 0;
         const dispatched = dispatchedQuantities.get(key) || 0;
         const onHand = item.stock;
+
+        const count = (onHand + onProcess + dispatched) - sold;
         
-        const count = (onHand + onProcess + dispatched) - sold;
-        return { ...item, count };
-      }).filter(item => item.count <= 10);
+        const totalStockEver = onHand + sold;
+        const sellThroughRate = totalStockEver > 0 ? (sold / totalStockEver) * 100 : 0;
 
-    } else { // 'inventory' reportType
-      processedItems = inventoryItems.map(item => {
-        const key = `${item.productType}-${item.color}-${item.size}`;
-        const sold = soldQuantities.get(key) || 0;
-        const onProcess = onProcessQuantities.get(key) || 0;
-        const dispatched = dispatchedQuantities.get(key) || 0;
-        const onHand = item.stock;
+        return { ...item, count, sellThroughRate };
+    });
 
-        const count = (onHand + onProcess + dispatched) - sold;
-        return { ...item, count };
-      });
+    let processedItems = enrichedItems;
+    
+    if (reportType === 'priority') {
+      processedItems = processedItems.filter(item => item.count <= 10);
+    }
+    
+    if (reportType === 'priority' && sellThroughRateFilter && sellThroughRateFilter !== 'All') {
+        processedItems = processedItems.filter(item => {
+            const rate = item.sellThroughRate;
+            switch(sellThroughRateFilter) {
+                case '80-100': return rate >= 80;
+                case '50-79': return rate >= 50 && rate < 80;
+                case 'below-50': return rate < 50;
+                default: return true;
+            }
+        });
     }
     
     let filteredItems = processedItems;
@@ -161,7 +168,7 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     
     return { headers: sizes, rows };
 
-  }, [inventoryItems, leads, productTypeFilter, colorFilter, sizeFilter, reportType]);
+  }, [inventoryItems, leads, productTypeFilter, colorFilter, sizeFilter, reportType, sellThroughRateFilter]);
   
 
   const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
