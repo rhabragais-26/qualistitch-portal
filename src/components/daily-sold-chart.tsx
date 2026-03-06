@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -23,6 +22,9 @@ type Lead = {
   sentToProductionTimestamp?: string;
   isEndorsedToLogistics?: boolean;
   endorsedToLogisticsTimestamp?: string;
+  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  shippedTimestamp?: string;
+  deliveredTimestamp?: string;
   orders: Order[];
 };
 
@@ -82,8 +84,8 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
   const inventoryQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory')) : null), [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
 
-  const { chartData } = useMemo(() => {
-    if (!leads || !inventoryItems || !cogs || !productTypeFilter) return { chartData: [] };
+  const chartData = useMemo(() => {
+    if (!leads || !inventoryItems || !cogs || !productTypeFilter) return [];
 
     // 1. Determine date range
     const endDate = new Date();
@@ -101,73 +103,108 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     
     startDate = startOfDay(startDate);
 
-    // 2. Calculate total initial stock
-    const totalStockAdded = inventoryItems
-      .filter(item => 
-        item.productType === productTypeFilter &&
-        (colorFilter === 'All Colors' || item.color === colorFilter)
-      )
-      .reduce((sum, item) => sum + item.stock, 0);
+    // 2. Filter relevant data once
+    const relevantItems = inventoryItems.filter(item => 
+      item.productType === productTypeFilter &&
+      (colorFilter === 'All Colors' || item.color === colorFilter)
+    );
+    const relevantLeads = leads.filter(lead => 
+        lead.orders.some(order => 
+            order.productType === productTypeFilter && 
+            (colorFilter === 'All Colors' || order.color === colorFilter)
+        )
+    );
+    const relevantCogs = cogs.filter(cog => cog.itemDescription === productTypeFilter);
 
-    // 3. Group all sales by date based on submission date.
-    const salesByDate: { [dateStr: string]: number } = {};
-    leads.forEach(lead => {
-        try {
-            const submissionDate = new Date(lead.submissionDateTime);
-            const dateStr = format(submissionDate, 'yyyy-MM-dd');
-            lead.orders.forEach(order => {
-                if (order.productType === productTypeFilter && (colorFilter === 'All Colors' || order.color === colorFilter)) {
-                    salesByDate[dateStr] = (salesByDate[dateStr] || 0) + order.quantity;
-                }
-            });
-        } catch (e) { /* ignore invalid dates */ }
+    // 3. Create daily maps for events
+    const dailySales: Record<string, number> = {};
+    const dailyOnProcessStarts: Record<string, number> = {};
+    const dailyDispatches: Record<string, number> = {};
+    const dailyReplenishments: Record<string, number> = {};
+
+    relevantLeads.forEach(lead => {
+        lead.orders.forEach(order => {
+            if (order.productType === productTypeFilter && (colorFilter === 'All Colors' || order.color === colorFilter)) {
+                try {
+                    const submissionDateStr = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
+                    dailySales[submissionDateStr] = (dailySales[submissionDateStr] || 0) + order.quantity;
+
+                    const productionTimestamp = lead.isSentToProduction ? lead.sentToProductionTimestamp : lead.endorsedToLogisticsTimestamp;
+                    if (productionTimestamp) {
+                        const onProcessDateStr = format(new Date(productionTimestamp), 'yyyy-MM-dd');
+                        dailyOnProcessStarts[onProcessDateStr] = (dailyOnProcessStarts[onProcessDateStr] || 0) + order.quantity;
+                    }
+                    
+                    const dispatchTimestamp = lead.shipmentStatus === 'Shipped' ? lead.shippedTimestamp : lead.deliveredTimestamp;
+                    if (dispatchTimestamp) {
+                        const dispatchDateStr = format(new Date(dispatchTimestamp), 'yyyy-MM-dd');
+                        dailyDispatches[dispatchDateStr] = (dailyDispatches[dispatchDateStr] || 0) + order.quantity;
+                    }
+
+                } catch (e) {}
+            }
+        });
     });
     
-    const replenishmentsByDate: { [dateStr: string]: number } = {};
-    cogs.forEach(cog => {
+    relevantCogs.forEach(cog => {
       try {
-        const cogDate = new Date(cog.date);
-        const dateStr = format(cogDate, 'yyyy-MM-dd');
-        if (cog.itemDescription === productTypeFilter) {
-          replenishmentsByDate[dateStr] = (replenishmentsByDate[dateStr] || 0) + cog.quantity;
-        }
-      } catch (e) { /* ignore invalid dates */ }
+        const dateStr = format(new Date(cog.date), 'yyyy-MM-dd');
+        dailyReplenishments[dateStr] = (dailyReplenishments[dateStr] || 0) + cog.quantity;
+      } catch(e) {}
     });
 
-    // 4. Calculate cumulative sales up to the day before the start date.
-    let cumulativeSales = 0;
+
+    // 4. Calculate total historical values to find the starting stock
+    const currentOnHand = relevantItems.reduce((sum, item) => sum + item.stock, 0);
+    const totalSoldEver = Object.values(dailySales).reduce((sum, qty) => sum + qty, 0);
+    const totalReplenishmentsEver = Object.values(dailyReplenishments).reduce((sum, qty) => sum + qty, 0);
+    const initialStockEver = currentOnHand + totalSoldEver - totalReplenishmentsEver;
+
+
+    // 5. Calculate cumulative values up to the day before the chart starts
+    let cumulativeSold = 0;
+    let cumulativeOnProcessStarts = 0;
+    let cumulativeDispatches = 0;
     let cumulativeReplenishments = 0;
+
+    const allEventDates = new Set([...Object.keys(dailySales), ...Object.keys(dailyOnProcessStarts), ...Object.keys(dailyDispatches), ...Object.keys(dailyReplenishments)]);
     
-    const allDates = new Set([...Object.keys(salesByDate), ...Object.keys(replenishmentsByDate)]);
-    const sortedDates = Array.from(allDates).sort();
+    Array.from(allEventDates).sort().forEach(dateStr => {
+        if (new Date(dateStr) < startDate) {
+            cumulativeSold += dailySales[dateStr] || 0;
+            cumulativeOnProcessStarts += dailyOnProcessStarts[dateStr] || 0;
+            cumulativeDispatches += dailyDispatches[dateStr] || 0;
+            cumulativeReplenishments += dailyReplenishments[dateStr] || 0;
+        }
+    });
 
-    for (const dateStr of sortedDates) {
-      if (new Date(dateStr) < startOfDay(startDate)) {
-        cumulativeSales += salesByDate[dateStr] || 0;
-        cumulativeReplenishments += replenishmentsByDate[dateStr] || 0;
-      }
-    }
-
-    // 5. Generate chart data for the selected range.
+    // 6. Generate chart data for the selected range.
     const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
     
-    const finalChartData = allDaysInRange.map(day => {
+    return allDaysInRange.map(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
-      const soldToday = salesByDate[dateStr] || 0;
-      const replenishedToday = replenishmentsByDate[dateStr] || 0;
-
-      cumulativeSales += soldToday;
-      cumulativeReplenishments += replenishedToday;
       
+      const soldToday = dailySales[dateStr] || 0;
+      cumulativeSold += soldToday;
+      cumulativeOnProcessStarts += dailyOnProcessStarts[dateStr] || 0;
+      cumulativeDispatches += dailyDispatches[dateStr] || 0;
+      cumulativeReplenishments += dailyReplenishments[dateStr] || 0;
+
+      const onHand_at_D = initialStockEver + cumulativeReplenishments - cumulativeSold;
+      const onProcess_at_D = cumulativeOnProcessStarts - cumulativeDispatches;
+      const dispatched_at_D = cumulativeDispatches;
+      const sold_at_D = cumulativeSold;
+      
+      const remainingStock = onHand_at_D + onProcess_at_D + dispatched_at_D - sold_at_D;
+
       return {
         date: format(day, 'MMM dd'),
         sold: soldToday,
-        replenished: replenishedToday,
-        remaining: totalStockAdded + cumulativeReplenishments - cumulativeSales,
+        replenished: dailyReplenishments[dateStr] || 0,
+        remaining: remainingStock,
       };
     });
 
-    return { chartData: finalChartData };
   }, [leads, inventoryItems, cogs, timeRange, productTypeFilter, colorFilter]);
   
   const yDomainRight = useMemo(() => {
@@ -175,9 +212,11 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, timeRan
     const remainingValues = chartData.map(d => d.remaining);
     const minVal = Math.min(...remainingValues);
     const maxVal = Math.max(...remainingValues);
-
-    const yMin = minVal < 0 ? Math.floor(minVal - Math.abs(minVal * 0.2)) : 0;
-    const yMax = Math.ceil(maxVal * 1.1);
+  
+    // Add padding to the domain
+    const padding = Math.max(Math.abs(maxVal - minVal) * 0.1, 10);
+    const yMin = Math.floor(minVal - padding);
+    const yMax = Math.ceil(maxVal + padding);
     
     return [yMin, yMax];
   }, [chartData]);

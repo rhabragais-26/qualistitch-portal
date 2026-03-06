@@ -85,12 +85,12 @@ export default function InventoryReportsPage() {
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <Card className="w-full shadow-xl">
           <CardHeader>
-             <CardTitle className="text-center text-2xl">Inventory Reports</CardTitle>
+             <CardTitle className="text-center text-3xl">Inventory Reports</CardTitle>
           </CardHeader>
           <CardContent className="space-y-8">
              <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-bold text-teal-600">Daily Sold vs. Remaining Stocks</h3>
+                  <h3 className="text-lg font-bold text-teal-600">Daily Sold vs. On-Hand Stocks</h3>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
@@ -143,7 +143,7 @@ export default function InventoryReportsPage() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold mt-4">
-                        <span className="text-teal-600">Remaining Stocks</span> ({productTypeFilter} - {colorFilter})
+                        <span className="text-teal-600">On-Hand Stocks</span> ({productTypeFilter} - {colorFilter})
                     </h3>
                     <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} />
                 </div>
