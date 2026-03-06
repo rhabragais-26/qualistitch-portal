@@ -11,6 +11,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 type LeadOrder = {
   productType: string;
@@ -114,6 +115,13 @@ export default function InventoryReportsPage() {
     setColorFilter('All Colors');
     setSizeFilter('All Sizes');
   }, [productTypeFilter]);
+
+  const handleResetFilters = () => {
+    setProductTypeFilter('Corporate Jacket');
+    setColorFilter('All Colors');
+    setSizeFilter('All Sizes');
+    setTimeRange('30d');
+  };
 
   const onHandReportData = useMemo(() => {
     if (!inventoryItems || !leads) return { headers: [], rows: [] };
@@ -228,6 +236,7 @@ export default function InventoryReportsPage() {
                   <h3 className="text-lg font-bold text-teal-600">Daily Sold vs. Remaining Stocks</h3>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset Filters</Button>
                     <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
                         <SelectTrigger className="w-[220px]">
                             <SelectValue placeholder="Select Product Type" />
