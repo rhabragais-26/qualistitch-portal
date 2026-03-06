@@ -287,21 +287,7 @@ export default function InventoryReportsPage() {
             <DailySoldQuantityChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} />
             
             <Separator />
-            
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold mt-4">
-                        <span className="text-teal-600">Remaining Stocks</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
-                    </h3>
-                    <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} />
-                </div>
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold mt-4">
-                        <span className="text-teal-600">For Priority Purchase</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
-                    </h3>
-                    <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} />
-                </div>
-            </div>
+
             <div className="mt-4">
               <Card className="w-full shadow-lg bg-gray-50">
                   <CardHeader className="py-2">
@@ -319,6 +305,21 @@ export default function InventoryReportsPage() {
                       </div>
                   </CardContent>
               </Card>
+            </div>
+            
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold mt-4">
+                        <span className="text-teal-600">Remaining Stocks</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
+                    </h3>
+                    <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} />
+                </div>
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold mt-4">
+                        <span className="text-teal-600">For Priority Purchase</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
+                    </h3>
+                    <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} />
+                </div>
             </div>
 
             <div className="mt-8">
