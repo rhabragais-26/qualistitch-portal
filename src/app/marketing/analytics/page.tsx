@@ -86,6 +86,10 @@ const renderAmountLabel = (props: any) => {
     );
 };
 
+const sanitizeKey = (key: string) => {
+  return key.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+}
+
 export default function AnalyticsPage() {
   const firestore = useFirestore();
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
@@ -140,9 +144,20 @@ export default function AnalyticsPage() {
       date,
       adsSpent: data.adsSpent,
       cpm: data.metaInquiries > 0 ? data.adsSpent / data.metaInquiries : 0,
-    })).sort((a,b) => new Date(a.date).getDate() - new Date(b.date).getDate());
+    })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   }, [adSpendData, selectedYear, selectedMonth]);
+
+  const adAccountNameMap = useMemo(() => {
+    if (!adSpendData) return new Map();
+    const map = new Map<string, string>();
+    adSpendData.forEach(d => {
+      if (!map.has(d.adAccount)) {
+        map.set(d.adAccount, sanitizeKey(d.adAccount));
+      }
+    });
+    return map;
+  }, [adSpendData]);
 
   const adSpendByAccountData = useMemo(() => {
     if (!adSpendData) return [];
@@ -159,33 +174,31 @@ export default function AnalyticsPage() {
             if (!dataByDate[day]) {
                 dataByDate[day] = {};
             }
-            if (!dataByDate[day][item.adAccount]) {
-                dataByDate[day][item.adAccount] = 0;
+            const sanitizedAccount = sanitizeKey(item.adAccount);
+            if (!dataByDate[day][sanitizedAccount]) {
+                dataByDate[day][sanitizedAccount] = 0;
             }
-            dataByDate[day][item.adAccount] += item.adsSpent;
+            dataByDate[day][sanitizedAccount] += item.adsSpent;
         }
     });
 
     return Object.entries(dataByDate)
         .map(([date, accounts]) => ({ date, ...accounts }))
-        .sort((a,b) => new Date(a.date).getDate() - new Date(b.date).getDate());
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [adSpendData, selectedYear, selectedMonth]);
-
-  const adAccountNames = useMemo(() => {
-    if (!adSpendData) return [];
-    return Array.from(new Set(adSpendData.map(d => d.adAccount))).sort();
-  }, [adSpendData]);
   
   const adAccountChartConfig = useMemo(() => {
     const config: ChartConfig = {};
-    adAccountNames.forEach((account, index) => {
-        config[account] = {
-            label: account,
+    let index = 0;
+    adAccountNameMap.forEach((sanitizedName, originalName) => {
+        config[sanitizedName] = {
+            label: originalName,
             color: COLORS[index % COLORS.length]
         };
+        index++;
     });
     return config;
-  }, [adAccountNames]);
+  }, [adAccountNameMap]);
 
   if (isLoading) {
     return (
@@ -269,12 +282,13 @@ export default function AnalyticsPage() {
                         <YAxis tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} />
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
-                        {adAccountNames.map((account) => (
+                        {Array.from(adAccountNameMap.values()).map((sanitizedName) => (
                             <Line
-                                key={account}
+                                key={sanitizedName}
                                 type="monotone"
-                                dataKey={account}
-                                stroke={`var(--color-${account})`}
+                                dataKey={sanitizedName}
+                                name={sanitizedName}
+                                stroke={`var(--color-${sanitizedName})`}
                                 strokeWidth={2}
                             />
                         ))}
