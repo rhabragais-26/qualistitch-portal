@@ -1,7 +1,8 @@
+
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, updateDoc, doc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Header } from '@/components/header';
@@ -13,6 +14,16 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { toTitleCase } from '@/lib/utils';
 
 type Lead = {
   id: string;
@@ -21,20 +32,162 @@ type Lead = {
   deliveryDate: string | null;
   submissionDateTime: string;
   city?: string;
+  province?: string;
+  houseStreet?: string;
+  barangay?: string;
+  location?: string;
+  isInternational?: boolean;
   salesRepresentative: string;
 };
+
+const addressSchema = z.object({
+  isInternational: z.boolean(),
+  houseStreet: z.string().optional(),
+  barangay: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  internationalAddress: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.isInternational) {
+      if (!data.internationalAddress || data.internationalAddress.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['internationalAddress'],
+          message: 'International address is required.',
+        });
+      }
+    } else {
+      if (!data.houseStreet || data.houseStreet.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['houseStreet'],
+          message: 'House/Street is required for PH addresses.',
+        });
+      }
+    }
+  });
+
+type AddressFormValues = z.infer<typeof addressSchema>;
+
+const AddressEditDialog = ({ lead, isOpen, onClose }: { lead: Lead; isOpen: boolean; onClose: () => void; }) => {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
+
+    const formMethods = useForm<AddressFormValues>({
+        resolver: zodResolver(addressSchema),
+        defaultValues: {
+            isInternational: lead.isInternational || false,
+            houseStreet: lead.houseStreet || '',
+            barangay: lead.barangay || '',
+            city: lead.city || '',
+            province: lead.province || '',
+            internationalAddress: lead.isInternational ? lead.location : '',
+        }
+    });
+
+    const { handleSubmit, watch, control } = formMethods;
+    const isInternational = watch('isInternational');
+    
+    const onSubmit = async (data: AddressFormValues) => {
+        setIsSaving(true);
+        try {
+            const location = data.isInternational 
+                ? data.internationalAddress 
+                : [
+                    [data.houseStreet, data.barangay].filter(Boolean).map(toTitleCase).join(' '), 
+                    [data.city, data.province].filter(Boolean).map(toTitleCase).join(' ')
+                  ].filter(Boolean).join(', ');
+            
+            const updateData = {
+                ...data,
+                location: location || '',
+            };
+
+            const leadDocRef = doc(firestore, 'leads', lead.id);
+            await updateDoc(leadDocRef, updateData);
+
+            toast({ title: 'Address Updated', description: `Address for ${lead.customerName} has been saved.` });
+            onClose();
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit Address for {lead.customerName}</DialogTitle>
+                    <DialogDescription>J.O. No: {formatJoNumber(lead.joNumber)}</DialogDescription>
+                </DialogHeader>
+                <FormProvider {...formMethods}>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        {isInternational ? (
+                             <FormField
+                                control={control}
+                                name="internationalAddress"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>International Address</FormLabel>
+                                        <FormControl>
+                                            <Textarea placeholder="Enter full international address" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        ) : (
+                             <div className="space-y-4">
+                                <FormField control={control} name="houseStreet" render={({ field }) => (
+                                    <FormItem><FormLabel>House No., Street, Village, Landmark & Others</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <div className="grid grid-cols-2 gap-4">
+                                <FormField control={control} name="barangay" render={({ field }) => (
+                                    <FormItem><FormLabel>Barangay</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={control} name="city" render={({ field }) => (
+                                    <FormItem><FormLabel>City / Municipality</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                </div>
+                                <FormField control={control} name="province" render={({ field }) => (
+                                    <FormItem><FormLabel>Province</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                             </div>
+                        )}
+                        <FormField
+                            control={control}
+                            name="isInternational"
+                            render={({ field }) => (
+                                <FormItem className="flex items-center gap-2 pt-4">
+                                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                                    <FormLabel className="!mt-0">Is this order for delivery outside the Philippines?</FormLabel>
+                                </FormItem>
+                            )}
+                        />
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                            <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Address'}</Button>
+                        </DialogFooter>
+                    </form>
+                </FormProvider>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export default function DataIssuesPage() {
   const firestore = useFirestore();
   const [joFilter, setJoFilter] = useState('All');
-  
-  // Query for all leads.
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+
   const allLeadsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'leads'));
   }, [firestore]);
 
-  // This hook will now fetch all leads.
   const { data: leads, isLoading, error } = useCollection<Lead>(allLeadsQuery);
 
   const leadsToDisplay = useMemo(() => {
@@ -57,6 +210,7 @@ export default function DataIssuesPage() {
   }, [leads, joFilter]);
 
   return (
+    <>
     <Header>
       <main className="p-4 sm:p-6 lg:p-8">
         <Card>
@@ -87,21 +241,22 @@ export default function DataIssuesPage() {
                     <TableHead>J.O. Number</TableHead>
                     <TableHead>Customer Name</TableHead>
                     <TableHead>City/Municipality</TableHead>
+                    <TableHead>Province</TableHead>
                     <TableHead>SCES</TableHead>
                     <TableHead>Delivery Date Value</TableHead>
-                    <TableHead>Action</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={7}>
+                      <TableCell colSpan={8}>
                         <Skeleton className="h-24 w-full" />
                       </TableCell>
                     </TableRow>
                   ) : error ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-destructive">
+                      <TableCell colSpan={8} className="text-center text-destructive">
                         Error loading data: {error.message}. You may need to create a Firestore index for this query. Check the browser console for a link.
                       </TableCell>
                     </TableRow>
@@ -114,22 +269,28 @@ export default function DataIssuesPage() {
                         </TableCell>
                         <TableCell>{lead.customerName}</TableCell>
                         <TableCell>{lead.city || 'N/A'}</TableCell>
+                        <TableCell>{lead.province || 'N/A'}</TableCell>
                         <TableCell>{lead.salesRepresentative}</TableCell>
                         <TableCell className={cn('font-mono', !lead.deliveryDate && 'text-red-500 font-bold')}>
                           {lead.deliveryDate === null ? 'null' : lead.deliveryDate === '' ? '"" (empty string)' : lead.deliveryDate ? format(new Date(lead.deliveryDate), 'MMM-dd-yy') : 'undefined'}
                         </TableCell>
                         <TableCell>
-                          <Button asChild variant="outline" size="sm">
-                            <Link href={`/job-order/${lead.id}`}>
-                              Edit J.O.
-                            </Link>
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/job-order/${lead.id}`}>
+                                Edit J.O.
+                                </Link>
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setEditingLead(lead)}>
+                                Edit Address
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground">
                         No orders found.
                       </TableCell>
                     </TableRow>
@@ -141,5 +302,15 @@ export default function DataIssuesPage() {
         </Card>
       </main>
     </Header>
+    {editingLead && (
+        <AddressEditDialog
+            lead={editingLead}
+            isOpen={!!editingLead}
+            onClose={() => setEditingLead(null)}
+        />
+    )}
+    </>
   );
 }
+
+    
