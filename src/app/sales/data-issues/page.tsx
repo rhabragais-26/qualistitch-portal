@@ -99,7 +99,12 @@ const AddressEditDialog = ({ lead, isOpen, onSave, onCancel }: { lead: Lead; isO
                   ].filter(Boolean).join(', ');
             
             const updateData = {
-                ...data,
+                isInternational: data.isInternational,
+                houseStreet: data.isInternational ? '' : toTitleCase(data.houseStreet || ''),
+                barangay: data.isInternational ? '' : toTitleCase(data.barangay || ''),
+                city: data.isInternational ? '' : toTitleCase(data.city || ''),
+                province: data.isInternational ? '' : toTitleCase(data.province || ''),
+                internationalAddress: data.isInternational ? data.internationalAddress : '',
                 location: location || '',
             };
 
@@ -281,10 +286,10 @@ export default function DataIssuesPage() {
                       <TableRow key={lead.id}>
                         <TableCell>{format(new Date(lead.submissionDateTime), 'MMM-dd-yy')}</TableCell>
                         <TableCell className={cn(!lead.joNumber && 'text-red-500 font-bold')}>
-                          {formatJoNumber(lead.joNumber)}
+                          {lead.joNumber ? formatJoNumber(lead.joNumber) : 'N/A'}
                         </TableCell>
                         <TableCell>{lead.customerName}</TableCell>
-                        <TableCell>{lead.city || 'N/A'}</TableCell>
+                        <TableCell className={cn(!lead.city && 'text-red-500 font-bold')}>{lead.city || 'N/A'}</TableCell>
                         <TableCell>{lead.province || 'N/A'}</TableCell>
                         <TableCell>{lead.salesRepresentative}</TableCell>
                         <TableCell className={cn('font-mono', !lead.deliveryDate && 'text-red-500 font-bold')}>
@@ -332,3 +337,4 @@ export default function DataIssuesPage() {
     </>
   );
 }
+    
