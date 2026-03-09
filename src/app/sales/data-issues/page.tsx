@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -27,7 +26,7 @@ export default function DataIssuesPage() {
 
   const leadsWithNullDeliveryDate = useMemo(() => {
     if (!leads) return [];
-    return leads.filter(lead => lead.deliveryDate === null && lead.joNumber);
+    return leads.filter(lead => !lead.deliveryDate && lead.joNumber);
   }, [leads]);
 
   return (
@@ -69,7 +68,7 @@ export default function DataIssuesPage() {
                         <TableCell>{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell>{lead.customerName}</TableCell>
                         <TableCell>{new Date(lead.submissionDateTime).toLocaleDateString()}</TableCell>
-                        <TableCell className="font-mono text-red-500">null</TableCell>
+                        <TableCell className="font-mono text-red-500">{String(lead.deliveryDate)}</TableCell>
                         <TableCell>
                           <Button asChild variant="outline" size="sm">
                             <Link href={`/job-order/${lead.id}`}>
