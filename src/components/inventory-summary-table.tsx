@@ -287,7 +287,9 @@ export function InventorySummaryTable() {
                 'pink': 'PNK',
                 'purple': 'PRPL',
                 'sky blue': 'SKB',
-                'slate blue': 'SLB'
+                'slate blue': 'SLB',
+                'oatmeal': 'OAT',
+                'orange': 'ORNG'
             };
 
             if (specialColorMappings[lowerCaseColor]) {
