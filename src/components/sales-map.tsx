@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
@@ -348,18 +349,49 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
   }, []);
 
   const { markerData, legendItems, minSales, maxSales } = useMemo(() => {
-    // Range for sales amount (for color)
-    const salesValues = salesByCityData.map((d) => d.amount);
-    const maxAmount = Math.max(...salesValues, 0);
-    const minAmount = Math.min(...salesValues, 0);
-    const salesRange = maxAmount - minAmount;
+    const salesValues = salesByCityData.map((d) => d.amount).filter(amount => amount > 0);
+    if (salesValues.length === 0) {
+      return { markerData: [], legendItems: [], minSales: 0, maxSales: 0 };
+    }
 
+    const sortedSales = [...salesValues].sort((a, b) => a - b);
+    
     const getColor = (amount: number) => {
-      const pct = salesRange > 0 ? (amount - minAmount) / salesRange : 0;
-      if (pct > 0.75) return '#ef4444'; // Very High
-      if (pct > 0.5) return '#f97316';  // High
-      if (pct > 0.25) return '#eab308';  // Medium
-      return '#22c55e';                   // Low
+        if (sortedSales.length < 4) { // Not enough data for robust categories, use simple linear
+            const maxAmount = Math.max(...salesValues);
+            const minAmount = Math.min(...salesValues);
+            const range = maxAmount - minAmount;
+            const pct = range > 0 ? (amount - minAmount) / range : 0;
+            if (pct > 0.75) return '#ef4444'; // Very High
+            if (pct > 0.5) return '#f97316';  // High
+            if (pct > 0.25) return '#eab308';  // Medium
+            return '#22c55e';                   // Low
+        }
+
+        const topValue = sortedSales[sortedSales.length - 1];
+        const secondTopValue = sortedSales[sortedSales.length - 2] || 0;
+
+        // Identify a significant outlier
+        const isOutlier = topValue > secondTopValue * 3 && sortedSales.length > 2;
+
+        if (isOutlier && amount === topValue) {
+            return '#ef4444'; // Very High for the outlier
+        }
+
+        const effectiveMax = isOutlier ? secondTopValue : topValue;
+        const effectiveMin = sortedSales[0];
+        const effectiveRange = effectiveMax - effectiveMin;
+
+        if (effectiveRange <= 0) {
+            return '#22c55e'; // All are low if no range
+        }
+        
+        const pct = (amount - effectiveMin) / effectiveRange;
+
+        if (amount === topValue && !isOutlier) return '#ef4444'; // Very High for non-outlier max
+        if (pct >= 0.7) return '#f97316';  // High
+        if (pct >= 0.3) return '#eab308';  // Medium
+        return '#22c55e';                   // Low
     };
 
     const getRadius = (count: number) => {
@@ -396,7 +428,7 @@ export default function SalesMap({ salesByCityData, totalSales }: SalesMapProps)
       { color: '#22c55e', label: 'Low' },
     ];
 
-    return { markerData, legendItems, minSales: minAmount, maxSales: maxAmount };
+    return { markerData, legendItems, minSales: sortedSales[0] || 0, maxSales: sortedSales[sortedSales.length - 1] || 0 };
   }, [salesByCityData, totalSales]);
 
   const Legend = () => (
