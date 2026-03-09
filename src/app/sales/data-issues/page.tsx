@@ -18,6 +18,8 @@ type Lead = {
   customerName: string;
   deliveryDate: string | null;
   submissionDateTime: string;
+  city?: string;
+  salesRepresentative: string;
 };
 
 export default function DataIssuesPage() {
@@ -32,14 +34,12 @@ export default function DataIssuesPage() {
   // This hook will now fetch all leads.
   const { data: leads, isLoading, error } = useCollection<Lead>(allLeadsQuery);
 
-  // Filter for leads that have a JO number and sort them.
   const leadsToDisplay = useMemo(() => {
     if (!leads) return [];
     return leads
-      .filter(lead => lead.joNumber)
       .sort((a, b) => {
-        const dateA = a.deliveryDate ? new Date(a.deliveryDate).getTime() : 0;
-        const dateB = b.deliveryDate ? new Date(b.deliveryDate).getTime() : 0;
+        const dateA = new Date(a.submissionDateTime).getTime();
+        const dateB = new Date(b.submissionDateTime).getTime();
         return dateB - dateA;
       });
   }, [leads]);
@@ -49,17 +49,19 @@ export default function DataIssuesPage() {
       <main className="p-4 sm:p-6 lg:p-8">
         <Card>
           <CardHeader>
-            <CardTitle>All Job Orders</CardTitle>
-            <CardDescription>A list of all orders with a J.O. Number for review.</CardDescription>
+            <CardTitle>All Orders</CardTitle>
+            <CardDescription>A list of all orders for review.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="border rounded-md">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>J.O. Number</TableHead>
                     <TableHead>Customer Name</TableHead>
+                    <TableHead>City/Municipality</TableHead>
+                    <TableHead>SCES</TableHead>
                     <TableHead>Submission Date</TableHead>
+                    <TableHead>J.O. Number</TableHead>
                     <TableHead>Delivery Date Value</TableHead>
                     <TableHead>Action</TableHead>
                   </TableRow>
@@ -67,22 +69,24 @@ export default function DataIssuesPage() {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5}>
+                      <TableCell colSpan={7}>
                         <Skeleton className="h-24 w-full" />
                       </TableCell>
                     </TableRow>
                   ) : error ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-destructive">
+                      <TableCell colSpan={7} className="text-center text-destructive">
                         Error loading data: {error.message}. You may need to create a Firestore index for this query. Check the browser console for a link.
                       </TableCell>
                     </TableRow>
                   ) : leadsToDisplay.length > 0 ? (
                     leadsToDisplay.map(lead => (
                       <TableRow key={lead.id}>
-                        <TableCell>{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell>{lead.customerName}</TableCell>
+                        <TableCell>{lead.city || 'N/A'}</TableCell>
+                        <TableCell>{lead.salesRepresentative}</TableCell>
                         <TableCell>{format(new Date(lead.submissionDateTime), 'MMM-dd-yy')}</TableCell>
+                        <TableCell>{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className={`font-mono ${lead.deliveryDate === null || lead.deliveryDate === '' ? 'text-red-500 font-bold' : ''}`}>
                           {lead.deliveryDate === null ? 'null' : lead.deliveryDate === '' ? '"" (empty string)' : lead.deliveryDate ? format(new Date(lead.deliveryDate), 'MMM-dd-yy') : 'undefined'}
                         </TableCell>
@@ -97,8 +101,8 @@ export default function DataIssuesPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        No Job Orders found.
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        No orders found.
                       </TableCell>
                     </TableRow>
                   )}
