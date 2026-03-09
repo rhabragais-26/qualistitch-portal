@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -277,7 +278,23 @@ export function InventorySummaryTable() {
         };
 
         const getColorCode = (color: string): string => {
-            if (color.toLowerCase() === 'black') return 'BLK';
+            const lowerCaseColor = color.toLowerCase();
+            const specialColorMappings: { [key: string]: string } = {
+                'green': 'GRN',
+                'gold': 'GLD',
+                'black': 'BLK',
+                'brown': 'BRWN',
+                'pink': 'PNK',
+                'purple': 'PRPL',
+                'sky blue': 'SKB',
+                'slate blue': 'SLB'
+            };
+
+            if (specialColorMappings[lowerCaseColor]) {
+                return specialColorMappings[lowerCaseColor];
+            }
+
+            // Fallback for other colors, takes the first letter of each word.
             return color.split(/[\s/]+/).map(w => w[0]).join('').toUpperCase();
         };
 
@@ -639,4 +656,3 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
-
