@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Header } from '@/components/header';
@@ -21,12 +22,19 @@ type Lead = {
 
 export default function DataIssuesPage() {
   const firestore = useFirestore();
-  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  // Query for documents where deliveryDate is exactly null.
+  const leadsWithNullDeliveryDateQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'leads'), where('deliveryDate', '==', null));
+  }, [firestore]);
 
-  const leadsWithNullDeliveryDate = useMemo(() => {
+  // This hook will now only fetch the problematic leads.
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsWithNullDeliveryDateQuery);
+
+  // We still need to filter for those that have a JO number, as that's the context of the error.
+  const leadsToDisplay = useMemo(() => {
     if (!leads) return [];
-    return leads.filter(lead => !lead.deliveryDate && lead.joNumber);
+    return leads.filter(lead => lead.joNumber);
   }, [leads]);
 
   return (
@@ -35,7 +43,7 @@ export default function DataIssuesPage() {
         <Card>
           <CardHeader>
             <CardTitle>Data Integrity Check: Null Delivery Dates</CardTitle>
-            <CardDescription>This temporary page lists all Job Orders where the delivery date is missing (null). These records can cause errors on other pages.</CardDescription>
+            <CardDescription>This temporary page lists all Job Orders where the delivery date is null. These records can cause errors on other pages.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="border rounded-md">
@@ -59,11 +67,11 @@ export default function DataIssuesPage() {
                   ) : error ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center text-destructive">
-                        Error loading data: {error.message}
+                        Error loading data: {error.message}. You may need to create a Firestore index for this query. Check the browser console for a link.
                       </TableCell>
                     </TableRow>
-                  ) : leadsWithNullDeliveryDate.length > 0 ? (
-                    leadsWithNullDeliveryDate.map(lead => (
+                  ) : leadsToDisplay.length > 0 ? (
+                    leadsToDisplay.map(lead => (
                       <TableRow key={lead.id}>
                         <TableCell>{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell>{lead.customerName}</TableCell>
