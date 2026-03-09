@@ -8,9 +8,11 @@ import { Header } from '@/components/header';
 import { formatJoNumber } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 type Lead = {
   id: string;
@@ -24,6 +26,7 @@ type Lead = {
 
 export default function DataIssuesPage() {
   const firestore = useFirestore();
+  const [joFilter, setJoFilter] = useState('All');
   
   // Query for all leads.
   const allLeadsQuery = useMemoFirebase(() => {
@@ -36,32 +39,55 @@ export default function DataIssuesPage() {
 
   const leadsToDisplay = useMemo(() => {
     if (!leads) return [];
-    return leads
+    
+    let filtered = leads;
+
+    if (joFilter === 'With JO') {
+      filtered = filtered.filter(lead => !!lead.joNumber);
+    } else if (joFilter === 'Without JO') {
+      filtered = filtered.filter(lead => !lead.joNumber);
+    }
+
+    return filtered
       .sort((a, b) => {
         const dateA = new Date(a.submissionDateTime).getTime();
         const dateB = new Date(b.submissionDateTime).getTime();
         return dateB - dateA;
       });
-  }, [leads]);
+  }, [leads, joFilter]);
 
   return (
     <Header>
       <main className="p-4 sm:p-6 lg:p-8">
         <Card>
           <CardHeader>
-            <CardTitle>All Orders</CardTitle>
-            <CardDescription>A list of all orders for review.</CardDescription>
+             <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>All Orders Review</CardTitle>
+                <CardDescription>A list of all orders for data integrity review.</CardDescription>
+              </div>
+              <Select value={joFilter} onValueChange={setJoFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by J.O." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Orders</SelectItem>
+                  <SelectItem value="With JO">With J.O.</SelectItem>
+                  <SelectItem value="Without JO">Without J.O.</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="border rounded-md">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Submission Date</TableHead>
+                    <TableHead>J.O. Number</TableHead>
                     <TableHead>Customer Name</TableHead>
                     <TableHead>City/Municipality</TableHead>
                     <TableHead>SCES</TableHead>
-                    <TableHead>Submission Date</TableHead>
-                    <TableHead>J.O. Number</TableHead>
                     <TableHead>Delivery Date Value</TableHead>
                     <TableHead>Action</TableHead>
                   </TableRow>
@@ -82,12 +108,14 @@ export default function DataIssuesPage() {
                   ) : leadsToDisplay.length > 0 ? (
                     leadsToDisplay.map(lead => (
                       <TableRow key={lead.id}>
+                        <TableCell>{format(new Date(lead.submissionDateTime), 'MMM-dd-yy')}</TableCell>
+                        <TableCell className={cn(!lead.joNumber && 'text-red-500 font-bold')}>
+                          {formatJoNumber(lead.joNumber)}
+                        </TableCell>
                         <TableCell>{lead.customerName}</TableCell>
                         <TableCell>{lead.city || 'N/A'}</TableCell>
                         <TableCell>{lead.salesRepresentative}</TableCell>
-                        <TableCell>{format(new Date(lead.submissionDateTime), 'MMM-dd-yy')}</TableCell>
-                        <TableCell>{formatJoNumber(lead.joNumber)}</TableCell>
-                        <TableCell className={`font-mono ${lead.deliveryDate === null || lead.deliveryDate === '' ? 'text-red-500 font-bold' : ''}`}>
+                        <TableCell className={cn('font-mono', !lead.deliveryDate && 'text-red-500 font-bold')}>
                           {lead.deliveryDate === null ? 'null' : lead.deliveryDate === '' ? '"" (empty string)' : lead.deliveryDate ? format(new Date(lead.deliveryDate), 'MMM-dd-yy') : 'undefined'}
                         </TableCell>
                         <TableCell>
