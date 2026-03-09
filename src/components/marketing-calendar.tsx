@@ -28,7 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Upload, Trash2, ChevronLeft, ChevronRight, Edit, Plus, ArrowLeft, X } from 'lucide-react';
 import Image from 'next/image';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { doc, setDoc, collection, query, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
@@ -133,6 +133,7 @@ function EventForm({
 export function MarketingCalendar() {
   const { userProfile } = useUser();
   const firestore = useFirestore();
+  const firebaseApp = useFirebaseApp();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -184,7 +185,7 @@ export function MarketingCalendar() {
 
     const isNew = !eventData.id;
     const eventId = isNew ? uuidv4() : eventData.id!;
-    const storage = getStorage();
+    const storage = getStorage(firebaseApp);
 
     let finalImageUrl = eventData.imageUrl;
     const fileToUpload = eventData._fileToUpload;

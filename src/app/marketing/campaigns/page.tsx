@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
-import { useFirestore, useUser, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useUser, setDocumentNonBlocking, useCollection, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { doc, collection, query, orderBy, deleteDoc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 // Import Firebase Storage functions
@@ -74,6 +74,7 @@ const adAccountOptions = ["Personal Account", "AD Account 101", "AD Account 102"
 // --- Manage Campaigns Dialog ---
 function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open: boolean, onOpenChange: (open: boolean) => void, onCampaignsUpdate: () => void }) {
     const firestore = useFirestore();
+    const firebaseApp = useFirebaseApp();
     const { toast } = useToast();
     const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns')) : null, [firestore]);
     const { data: campaigns, refetch } = useCollection<AdCampaign>(campaignsQuery);
@@ -113,7 +114,7 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
         try {
             const campaignId = uuidv4();
 
-            const storage = getStorage();
+            const storage = getStorage(firebaseApp);
             const storageRef = ref(storage, `adCampaigns-images/${campaignId}/${newCampaignFile.name}`);
             const uploadResult = await uploadBytes(storageRef, newCampaignFile);
             

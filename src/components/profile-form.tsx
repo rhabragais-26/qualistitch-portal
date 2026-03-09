@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useUser, useFirestore, useAuth } from '@/firebase';
+import { useUser, useFirestore, useAuth, useFirebaseApp } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useRef, useEffect } from 'react';
@@ -89,6 +89,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function ProfileForm() {
   const { user, userProfile, isUserLoading, isAdmin } = useUser();
   const firestore = useFirestore();
+  const firebaseApp = useFirebaseApp();
   const auth = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -172,7 +173,7 @@ export function ProfileForm() {
         if (dirtyFields.phoneNumber) profileDataToUpdate.phoneNumber = values.phoneNumber;
         
         if (dirtyFields.photoURL && values.photoURL && values.photoURL.startsWith('data:')) {
-            const storage = getStorage();
+            const storage = getStorage(firebaseApp);
             const storageRef = ref(storage, `profile-photos/${user.uid}`);
             const snapshot = await uploadString(storageRef, values.photoURL, 'data_url');
             profileDataToUpdate.photoURL = await getDownloadURL(snapshot.ref);

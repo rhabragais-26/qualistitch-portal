@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { isEqual } from 'lodash';
@@ -48,6 +48,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   const { user, userProfile, isAdmin, isUserLoading: isAuthLoading } = useUser();
   
   const firestore = useFirestore();
+  const firebaseApp = useFirebaseApp();
   const sizeChartRef = useMemoFirebase(() => firestore ? doc(firestore, 'sizeCharts', 'default') : null, [firestore]);
   const { data: fetchedData, isLoading, refetch } = useDoc<SizeChartData>(sizeChartRef, undefined, { listen: false });
 
@@ -219,7 +220,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     if (!sizeChartRef || !firestore || !userProfile) return;
   
     try {
-      const storage = getStorage();
+      const storage = getStorage(firebaseApp);
       const dataToSave: SizeChartData = JSON.parse(JSON.stringify(sizeChartData));
       
       const tabsWithNewFiles = (Object.keys(filesToUpload) as TabValue[]).filter(tab => filesToUpload[tab]);

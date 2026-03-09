@@ -14,6 +14,7 @@ import {
   Legend,
   ResponsiveContainer,
   LabelList,
+  LineChart,
 } from 'recharts';
 import {
   Card,
@@ -33,14 +34,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format, getYear, getMonth } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Header } from '@/components/header';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-
+import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { Separator } from '@/components/ui/separator';
 
 type AdSpendInquiry = {
   id: string;
   date: string; // ISO string
   adsSpent: number;
   metaInquiries: number;
+  adAccount: string;
 };
 
 const chartConfig = {
@@ -53,6 +55,8 @@ const chartConfig = {
     color: 'hsl(180, 80%, 40%)',
   },
 };
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1967'];
 
 const renderAmountLabel = (props: any) => {
     const { x, y, width, value, stroke } = props;
@@ -140,6 +144,49 @@ export default function AnalyticsPage() {
 
   }, [adSpendData, selectedYear, selectedMonth]);
 
+  const adSpendByAccountData = useMemo(() => {
+    if (!adSpendData) return [];
+
+    const year = parseInt(selectedYear, 10);
+    const month = parseInt(selectedMonth, 10) - 1;
+
+    const dataByDate: Record<string, Record<string, number>> = {};
+    
+    adSpendData.forEach(item => {
+        const itemDate = new Date(item.date);
+        if (getYear(itemDate) === year && getMonth(itemDate) === month) {
+            const day = format(itemDate, 'MMM-dd');
+            if (!dataByDate[day]) {
+                dataByDate[day] = {};
+            }
+            if (!dataByDate[day][item.adAccount]) {
+                dataByDate[day][item.adAccount] = 0;
+            }
+            dataByDate[day][item.adAccount] += item.adsSpent;
+        }
+    });
+
+    return Object.entries(dataByDate)
+        .map(([date, accounts]) => ({ date, ...accounts }))
+        .sort((a,b) => new Date(a.date).getDate() - new Date(b.date).getDate());
+  }, [adSpendData, selectedYear, selectedMonth]);
+
+  const adAccountNames = useMemo(() => {
+    if (!adSpendData) return [];
+    return Array.from(new Set(adSpendData.map(d => d.adAccount))).sort();
+  }, [adSpendData]);
+  
+  const adAccountChartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    adAccountNames.forEach((account, index) => {
+        config[account] = {
+            label: account,
+            color: COLORS[index % COLORS.length]
+        };
+    });
+    return config;
+  }, [adAccountNames]);
+
   if (isLoading) {
     return (
       <Header>
@@ -180,32 +227,61 @@ export default function AnalyticsPage() {
                 </div>
              </div>
           </CardHeader>
-          <CardContent className="h-[300px]">
-            <ChartContainer config={chartConfig} className="w-full h-full">
-              <ResponsiveContainer>
-                <ComposedChart data={filteredData}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis yAxisId="left" stroke={chartConfig.adsSpent.color} tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
-                  <YAxis yAxisId="right" orientation="right" stroke={chartConfig.cpm.color} tickFormatter={(value) => formatCurrency(value)} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
-                  <Tooltip content={<ChartTooltipContent formatter={(value, name) => formatCurrency(value as number)} />} />
-                  <Legend />
-                  <Bar dataKey="cpm" yAxisId="right" fill="var(--color-cpm)" name="CPM" radius={[4, 4, 0, 0]}>
-                    <LabelList
-                      dataKey="cpm"
-                      position="center"
-                      fill="#004d4d"
-                      formatter={(value: number) => value > 0 ? formatCurrency(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
-                      fontSize={12}
-                      fontWeight="bold"
-                    />
-                  </Bar>
-                  <Line dataKey="adsSpent" type="monotone" yAxisId="left" stroke={chartConfig.adsSpent.color} name="Ads Spent" strokeWidth={2}>
-                    <LabelList dataKey="adsSpent" content={renderAmountLabel} />
-                  </Line>
-                </ComposedChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+          <CardContent className="space-y-8">
+            <div className="h-[300px]">
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                <ResponsiveContainer>
+                    <ComposedChart data={filteredData}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis yAxisId="left" stroke={chartConfig.adsSpent.color} tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
+                    <YAxis yAxisId="right" orientation="right" stroke={chartConfig.cpm.color} tickFormatter={(value) => formatCurrency(value)} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
+                    <Tooltip content={<ChartTooltipContent formatter={(value, name) => formatCurrency(value as number)} />} />
+                    <Legend />
+                    <Bar dataKey="cpm" yAxisId="right" fill="var(--color-cpm)" name="CPM" radius={[4, 4, 0, 0]}>
+                        <LabelList
+                        dataKey="cpm"
+                        position="center"
+                        fill="#004d4d"
+                        formatter={(value: number) => value > 0 ? formatCurrency(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}
+                        fontSize={12}
+                        fontWeight="bold"
+                        />
+                    </Bar>
+                    <Line dataKey="adsSpent" type="monotone" yAxisId="left" stroke={chartConfig.adsSpent.color} name="Ads Spent" strokeWidth={2}>
+                        <LabelList dataKey="adsSpent" content={renderAmountLabel} />
+                    </Line>
+                    </ComposedChart>
+                </ResponsiveContainer>
+                </ChartContainer>
+            </div>
+            <Separator />
+            <div>
+              <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
+              <CardDescription>Daily ad spend broken down by account.</CardDescription>
+            </div>
+             <div className="h-[300px]">
+               <ChartContainer config={adAccountChartConfig} className="w-full h-full">
+                <ResponsiveContainer>
+                    <LineChart data={adSpendByAccountData}>
+                        <CartesianGrid vertical={false} />
+                        <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                        <YAxis tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} />
+                        <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                        <Legend />
+                        {adAccountNames.map((account) => (
+                            <Line
+                                key={account}
+                                type="monotone"
+                                dataKey={account}
+                                stroke={`var(--color-${account})`}
+                                strokeWidth={2}
+                            />
+                        ))}
+                    </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
           </CardContent>
         </Card>
       </main>

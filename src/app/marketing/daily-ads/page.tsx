@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { format, subDays } from 'date-fns';
-import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useUser, useCollection, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { doc, collection, query, orderBy, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
@@ -67,6 +67,7 @@ type ImageState = {
 
 function DailyAdsPage() {
   const firestore = useFirestore();
+  const firebaseApp = useFirebaseApp();
   const { userProfile, isAdmin } = useUser();
   const { toast } = useToast();
   const [editingAd, setEditingAd] = useState<DailyAd | null>(null);
@@ -144,7 +145,7 @@ function DailyAdsPage() {
         return;
     }
 
-    const storage = getStorage();
+    const storage = getStorage(firebaseApp);
     const adId = editingAd?.id || uuidv4();
 
     try {

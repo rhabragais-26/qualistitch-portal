@@ -30,7 +30,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
 import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
@@ -113,6 +113,7 @@ const allCaseTypes = ['Return to Sender (RTS)', 'Quality Errors', 'Replacement']
 const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange, isReadOnly, setImageInView, initialJoNumber, source }: OperationalCasesFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const firebaseApp = useFirebaseApp();
   const { userProfile } = useUser();
   const imageUploadRef = useRef<HTMLInputElement>(null);
   const [joInput, setJoInput] = useState('');
@@ -315,7 +316,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
         const caseId = isEditing && editingCase ? editingCase.id : uuidv4();
         
         if (values.image && values.image.startsWith('data:')) {
-            const storage = getStorage();
+            const storage = getStorage(firebaseApp);
             const storageRef = ref(storage, `operational-cases/${caseId}/image.png`);
             const snapshot = await uploadString(storageRef, values.image, 'data_url');
             imageUrl = await getDownloadURL(snapshot.ref);

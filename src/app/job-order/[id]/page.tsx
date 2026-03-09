@@ -2,7 +2,7 @@
 
 'use client';
 
-    import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+    import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
     import { collection, doc, query, updateDoc, getDoc, runTransaction } from 'firebase/firestore';
     import { useParams, useRouter, usePathname } from 'next/navigation';
     import { Button } from '@/components/ui/button';
@@ -202,12 +202,13 @@
       const params = useParams();
       const id = useMemo(() => (params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : ''), [params]);
       const firestore = useFirestore();
+      const firebaseApp = useFirebaseApp();
       const { toast } = useToast();
       const router = useRouter();
       const { userProfile } = useUser();
       const pathname = usePathname();
       const canEdit = hasEditPermission(userProfile?.position as any, `/job-order`);
-      const storage = getStorage();
+      const storage = getStorage(firebaseApp);
       
       const [currentPage, setCurrentPage] = useState(0);
       const [imageInView, setImageInView] = useState<string | null>(null);

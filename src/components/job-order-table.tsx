@@ -28,7 +28,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { Badge } from './ui/badge';
 import { formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Checkbox } from './ui/checkbox';
@@ -553,6 +553,7 @@ RecordsTableRow.displayName = 'RecordsTableRow';
 
 export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const firestore = useFirestore();
+  const firebaseApp = useFirebaseApp();
   const { userProfile, isAdmin } = useUser();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -937,7 +938,7 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     const layouts = uploadLead.layouts?.length ? JSON.parse(JSON.stringify(uploadLead.layouts)) : [{}];
     let existingLayout = layouts[0] || {};
     const now = new Date().toISOString();
-    const storage = getStorage();
+    const storage = getStorage(firebaseApp);
 
     const uploadAndGetURL = async (imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
       if (!imageData) return null;

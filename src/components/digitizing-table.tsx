@@ -1298,7 +1298,7 @@ export function DigitizingTable({
   const layouts = lead.layouts?.length ? JSON.parse(JSON.stringify(lead.layouts)) : [{}];
   let existingLayout = layouts[0] || {};
   const now = new Date().toISOString();
-  const storage = getStorage();
+  const storage = getStorage(firebaseApp);
 
   const uploadAndGetURL = async (imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
     if (!imageData) return null;
