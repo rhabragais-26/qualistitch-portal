@@ -412,6 +412,11 @@ const HeaderMemo = React.memo(function Header({
                       <LineChart className="mr-2" />
                       Reports
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleNavigation('/sales/data-issues')}>
+                      <TriangleAlert className="mr-2 text-destructive" />
+                      <span className="text-destructive">Data Issues</span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'digitizing'} onOpenChange={(isOpen) => handleMenuOpenChange('digitizing', isOpen)}>
