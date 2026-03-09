@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
@@ -9,6 +10,7 @@ import { generateSku, formatCurrency } from '@/lib/utils';
 import Barcode from 'react-barcode';
 import { getUnitPrice, type PricingConfig } from '@/lib/pricing';
 import { initialPricingConfig } from '@/lib/pricing-data';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type InventoryItem = {
   id: string;
@@ -63,8 +65,8 @@ export function SkuBarcodeList() {
   if (isLoading) {
     return (
         <div className="space-y-4">
-            <Skeleton className="h-10 w-1/3" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Skeleton className="h-10 w-full" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
                 {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-40 w-full" />)}
             </div>
         </div>
@@ -74,28 +76,39 @@ export function SkuBarcodeList() {
   if (error) {
     return <p className="text-destructive">Error loading inventory: {error.message}</p>;
   }
+  
+  const productTypes = Object.keys(groupedSkus);
+
+  if (productTypes.length === 0) {
+    return <p className="text-muted-foreground">No inventory items found to generate SKUs and barcodes.</p>
+  }
 
   return (
-    <div className="space-y-8">
+    <Tabs defaultValue={productTypes[0]} className="w-full">
+      <TabsList className="flex flex-wrap h-auto justify-start">
+        {productTypes.map(productType => (
+            <TabsTrigger key={productType} value={productType}>{productType}</TabsTrigger>
+        ))}
+      </TabsList>
       {Object.entries(groupedSkus).map(([productType, items]) => (
-        <div key={productType}>
-          <h2 className="text-2xl font-bold mb-4">{productType}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {items.map(item => (
-              <Card key={item.id} className="flex flex-col items-center p-4">
-                <CardContent className="flex flex-col items-center text-center p-0">
-                  <div className="font-bold">{item.productType}</div>
-                  <div className="text-sm text-muted-foreground">{item.color} - {item.size}</div>
-                  <div className="text-lg font-bold mt-1">{formatCurrency(item.unitPrice)}</div>
-                  <div className="mt-2">
-                    <Barcode value={item.sku} width={1.5} height={50} fontSize={12} />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <TabsContent key={productType} value={productType} className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {items.map(item => (
+                <Card key={item.id} className="flex flex-col items-center p-4">
+                    <CardContent className="flex flex-col items-center text-center p-0">
+                    <div className="font-bold">{item.productType}</div>
+                    <div className="text-sm text-muted-foreground">{item.color} - {item.size}</div>
+                    <div className="text-lg font-bold mt-1">{formatCurrency(item.unitPrice)}</div>
+                    <div className="mt-2">
+                        <Barcode value={item.sku} width={1.5} height={50} fontSize={12} />
+                    </div>
+                    </CardContent>
+                </Card>
+                ))}
+            </div>
+        </TabsContent>
       ))}
-    </div>
+    </Tabs>
   );
 }
+
