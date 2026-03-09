@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -182,6 +181,7 @@ export default function DataIssuesPage() {
   const firestore = useFirestore();
   const [joFilter, setJoFilter] = useState('All');
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [locationSearch, setLocationSearch] = useState('');
 
   const allLeadsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -201,13 +201,21 @@ export default function DataIssuesPage() {
       filtered = filtered.filter(lead => !lead.joNumber);
     }
 
+    if (locationSearch) {
+        const lowerLocationSearch = locationSearch.toLowerCase();
+        filtered = filtered.filter(lead => 
+            (lead.city && lead.city.toLowerCase().includes(lowerLocationSearch)) ||
+            (lead.province && lead.province.toLowerCase().includes(lowerLocationSearch))
+        );
+    }
+
     return filtered
       .sort((a, b) => {
         const dateA = new Date(a.submissionDateTime).getTime();
         const dateB = new Date(b.submissionDateTime).getTime();
         return dateB - dateA;
       });
-  }, [leads, joFilter]);
+  }, [leads, joFilter, locationSearch]);
 
   return (
     <>
@@ -220,16 +228,24 @@ export default function DataIssuesPage() {
                 <CardTitle>Data Integrity Checking</CardTitle>
                 <CardDescription>Review all orders to ensure data integrity.</CardDescription>
               </div>
-              <Select value={joFilter} onValueChange={setJoFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by J.O." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Orders</SelectItem>
-                  <SelectItem value="With JO">With J.O.</SelectItem>
-                  <SelectItem value="Without JO">Without J.O.</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Search City or Province..."
+                  value={locationSearch}
+                  onChange={(e) => setLocationSearch(e.target.value)}
+                  className="w-[200px]"
+                />
+                <Select value={joFilter} onValueChange={setJoFilter}>
+                    <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by J.O." />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="All">All Orders</SelectItem>
+                    <SelectItem value="With JO">With J.O.</SelectItem>
+                    <SelectItem value="Without JO">Without J.O.</SelectItem>
+                    </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
