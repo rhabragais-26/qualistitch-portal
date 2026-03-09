@@ -154,6 +154,7 @@ const HeaderMemo = React.memo(function Header({
   const canSendAnnouncement = isAdmin || (userProfile && announcementPositions.includes(userProfile.position as UserPosition));
 
   const canViewFinance = isAdmin || userProfile?.position === 'CEO' || userProfile?.position === 'Finance';
+  const canViewDataIntegrity = isAdmin || userProfile?.position === 'Sales Manager' || userProfile?.position === 'Sales Supervisor';
 
   useEffect(() => {
     setIsClient(true);
@@ -368,7 +369,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment', '/sales/quotation', '/sales/unclosed-leads']))}>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment', '/sales/quotation', '/sales/unclosed-leads', '/sales/data-issues']))}>
                       <TrendingUp className="mr-2" />
                       Sales
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -412,11 +413,15 @@ const HeaderMemo = React.memo(function Header({
                       <LineChart className="mr-2" />
                       Reports
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleNavigation('/sales/data-issues')}>
-                      <TriangleAlert className="mr-2 text-destructive" />
-                      <span className="text-destructive">Data Integrity Checking</span>
-                    </DropdownMenuItem>
+                    {canViewDataIntegrity && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleNavigation('/sales/data-issues')}>
+                          <TriangleAlert className="mr-2 text-destructive" />
+                          <span className="text-destructive">Data Integrity Checking</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'digitizing'} onOpenChange={(isOpen) => handleMenuOpenChange('digitizing', isOpen)}>
@@ -656,3 +661,4 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
+    
