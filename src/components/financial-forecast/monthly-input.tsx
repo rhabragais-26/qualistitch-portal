@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -54,10 +53,10 @@ export function MonthlyForecastInput() {
   const canEdit = isAdmin || userProfile?.position === 'Finance';
   
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeCategories'), orderBy('name')) : null, [firestore]);
-  const { data: categories, isLoading: categoriesLoading } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
 
   const forecastQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeForecastMonthly'), orderBy('month', 'desc'), orderBy('updatedAt', 'desc')) : null, [firestore]);
-  const { data: forecasts, isLoading: forecastsLoading, refetch } = useCollection<FinanceForecastMonthly>(forecastQuery, undefined, { listen: false });
+  const { data: forecasts, isLoading: forecastsLoading, error: forecastsError, refetch } = useCollection<FinanceForecastMonthly>(forecastQuery, undefined, { listen: false });
 
   const form = useForm<ForecastFormValues>({
     resolver: zodResolver(forecastSchema),
@@ -141,6 +140,7 @@ export function MonthlyForecastInput() {
   }, [forecasts]);
 
   const isLoading = categoriesLoading || forecastsLoading;
+  const error = categoriesError || forecastsError;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start mt-6">
