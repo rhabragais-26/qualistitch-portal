@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
@@ -8,7 +9,8 @@ import { Skeleton } from './ui/skeleton';
 import React, { useMemo } from 'react';
 import { generateSku, formatCurrency } from '@/lib/utils';
 import Barcode from 'react-barcode';
-import { getUnitPrice, type PricingConfig, initialPricingConfig } from '@/lib/pricing';
+import { getUnitPrice, type PricingConfig } from '@/lib/pricing';
+import { initialPricingConfig } from '@/lib/pricing-data';
 
 type InventoryItem = {
   id: string;
