@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, getYear, getMonth } from 'date-fns';
+import { format, getYear, getMonth, startOfMonth, endOfMonth, eachDayOfInterval, parse } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Header } from '@/components/header';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
@@ -144,7 +144,7 @@ export default function AnalyticsPage() {
       date,
       adsSpent: data.adsSpent,
       cpm: data.metaInquiries > 0 ? data.adsSpent / data.metaInquiries : 0,
-    })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    })).sort((a,b) => parse(a.date, 'MMM-dd', new Date()).getTime() - parse(b.date, 'MMM-dd', new Date()).getTime());
 
   }, [adSpendData, selectedYear, selectedMonth]);
 
@@ -164,27 +164,52 @@ export default function AnalyticsPage() {
 
     const year = parseInt(selectedYear, 10);
     const month = parseInt(selectedMonth, 10) - 1;
+    if (isNaN(year) || isNaN(month)) return [];
+
+    // Get all days in the selected month
+    const start = startOfMonth(new Date(year, month));
+    const end = endOfMonth(start);
+    const daysInMonth = eachDayOfInterval({ start, end });
+
+    // Get all unique ad account keys that appear in the data for the selected month/year
+    const sanitizedAccountNames = Array.from(new Set(
+        adSpendData
+            .filter(item => {
+                const itemDate = new Date(item.date);
+                return getYear(itemDate) === year && getMonth(itemDate) === month;
+            })
+            .map(item => sanitizeKey(item.adAccount))
+    ));
 
     const dataByDate: Record<string, Record<string, number>> = {};
     
+    // 1. Initialize all days with all accounts set to 0
+    daysInMonth.forEach(day => {
+        const dayKey = format(day, 'MMM-dd');
+        dataByDate[dayKey] = {};
+        sanitizedAccountNames.forEach(accountName => {
+            dataByDate[dayKey][accountName] = 0;
+        });
+    });
+
+    // 2. Populate with actual data
     adSpendData.forEach(item => {
         const itemDate = new Date(item.date);
         if (getYear(itemDate) === year && getMonth(itemDate) === month) {
             const day = format(itemDate, 'MMM-dd');
-            if (!dataByDate[day]) {
-                dataByDate[day] = {};
+            if (dataByDate[day]) { // Only process if the day is in our initialized map
+                const sanitizedAccount = sanitizeKey(item.adAccount);
+                if (dataByDate[day].hasOwnProperty(sanitizedAccount)) { // Ensure account is expected
+                    dataByDate[day][sanitizedAccount] += item.adsSpent;
+                }
             }
-            const sanitizedAccount = sanitizeKey(item.adAccount);
-            if (!dataByDate[day][sanitizedAccount]) {
-                dataByDate[day][sanitizedAccount] = 0;
-            }
-            dataByDate[day][sanitizedAccount] += item.adsSpent;
         }
     });
 
     return Object.entries(dataByDate)
         .map(([date, accounts]) => ({ date, ...accounts }))
-        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        .sort((a,b) => parse(a.date, 'MMM-dd', new Date()).getTime() - parse(b.date, 'MMM-dd', new Date()).getTime());
+        
   }, [adSpendData, selectedYear, selectedMonth]);
   
   const adAccountChartConfig = useMemo(() => {
