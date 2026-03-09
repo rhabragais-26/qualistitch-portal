@@ -85,7 +85,7 @@ export function SkuBarcodeList() {
 
   return (
     <Tabs defaultValue={productTypes[0]} className="w-full">
-      <TabsList className="flex flex-wrap h-auto justify-start">
+      <TabsList className="flex flex-wrap h-auto justify-evenly w-full">
         {productTypes.map(productType => (
             <TabsTrigger key={productType} value={productType}>{productType}</TabsTrigger>
         ))}
