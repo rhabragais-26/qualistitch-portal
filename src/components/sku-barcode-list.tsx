@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
@@ -175,12 +176,12 @@ export function SkuBarcodeList() {
                   {filteredItems.length > 0 ? filteredItems.map(item => (
                   <Card key={item.id} className="flex flex-col items-center p-4">
                       <CardContent className="flex flex-col items-center text-center p-0">
-                      <div className="font-bold">{item.productType}</div>
-                      <div className="text-sm text-muted-foreground">{item.color} - {item.size}</div>
-                      <div className="text-lg font-bold mt-1">{formatCurrency(item.unitPrice)}</div>
-                      <div className="mt-2">
-                          <Barcode value={item.sku} width={1.5} height={50} fontSize={12} />
-                      </div>
+                        <div className="font-bold">{item.productType}</div>
+                        <div className="text-sm font-medium">{item.color} - {item.size}</div>
+                        <div className="mt-2">
+                            <Barcode value={item.sku} width={1.5} height={50} fontSize={12} />
+                        </div>
+                        <div className="text-lg font-bold mt-1">{formatCurrency(item.unitPrice)}</div>
                       </CardContent>
                   </Card>
                   )) : (
