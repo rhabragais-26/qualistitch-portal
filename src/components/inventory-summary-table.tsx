@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -53,6 +52,7 @@ type InventoryItem = {
 };
 
 type EnrichedInventoryItem = InventoryItem & {
+  sku: string;
   soldQty: number;
   onProcess: number;
   dispatched: number;
@@ -249,6 +249,53 @@ export function InventorySummaryTable() {
     const soldQuantities = new Map<string, number>();
     const onProcessQuantities = new Map<string, number>();
     const dispatchedQuantities = new Map<string, number>();
+    
+    const generateSku = (item: { productType: string; color: string; size: string }): string => {
+        const getProductCode = (productType: string): string => {
+            const mappings: { [key: string]: string } = {
+                'Corporate Jacket': 'CJ',
+                'Executive Jacket 1': 'EJ1',
+                'Executive Jacket v2 (with lines)': 'EJ2',
+                'Turtle Neck Jacket': 'TNJ',
+                'Reversible v1': 'R1',
+                'Reversible v2': 'R2',
+                'Polo Shirt (Smilee) - Cool Pass': 'PSCP',
+                'Polo Shirt (Smilee) - Cotton Blend': 'PSCB',
+                'Polo Shirt (Lifeline)': 'PL',
+                'Polo Shirt (Blue Corner)': 'PBC',
+                'Polo Shirt (Softex)': 'PS',
+            };
+            const productCode = mappings[productType];
+            if (productCode) return productCode;
+            
+            return productType
+                .replace(/\(.*\)/g, '') // remove parentheses content
+                .split(/[\s-]+/)
+                .map(w => w[0])
+                .join('')
+                .toUpperCase();
+        };
+
+        const getColorCode = (color: string): string => {
+            if (color.toLowerCase() === 'black') return 'BLK';
+            return color.split(/[\s/]+/).map(w => w[0]).join('').toUpperCase();
+        };
+
+        const getSizeCode = (size: string): string => {
+            switch (size) {
+            case 'Medium': return 'M';
+            case 'Large': return 'L';
+            case 'Small': return 'S';
+            default: return size;
+            }
+        };
+
+        const productCode = getProductCode(item.productType);
+        const colorCode = getColorCode(item.color);
+        const sizeCode = getSizeCode(item.size);
+
+        return `${productCode}-${colorCode}-${sizeCode}`;
+    };
 
     leads.forEach(lead => {
         const createKey = (order: Order) => `${order.productType}-${order.color}-${order.size}`;
@@ -281,9 +328,11 @@ export function InventorySummaryTable() {
         const sellThroughRate = (onHand + soldQty) > 0 ? (soldQty / (onHand + soldQty)) * 100 : 0;
         
         const remaining = (onHand + onProcess + dispatched) - soldQty;
+        const sku = generateSku(item);
 
         return {
             ...item,
+            sku,
             soldQty,
             onProcess,
             dispatched,
@@ -308,7 +357,10 @@ export function InventorySummaryTable() {
       const matchesStatus = statusFilter === 'All Statuses' || status === statusFilter;
       
       const lowercasedSearchTerm = searchTerm.toLowerCase();
-      const matchesSearch = searchTerm ? item.productType.toLowerCase().includes(lowercasedSearchTerm) : true;
+      const matchesSearch = searchTerm ? 
+        (item.productType.toLowerCase().includes(lowercasedSearchTerm) ||
+         item.sku.toLowerCase().includes(lowercasedSearchTerm)) 
+        : true;
       
       return matchesProductType && matchesColor && matchesSize && matchesStatus && matchesSearch;
     }).sort((a, b) => {
@@ -438,7 +490,7 @@ export function InventorySummaryTable() {
            )}
           <div className="flex items-center gap-2 pt-4">
               <Input
-                  placeholder="Search item..."
+                  placeholder="Search SKU or Item..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500 max-w-xs"
@@ -511,6 +563,7 @@ export function InventorySummaryTable() {
                 <Table>
                   <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                     <TableRow>
+                      <TableHead className="text-white font-bold align-middle">SKU</TableHead>
                       <TableHead className="text-white font-bold align-middle">Item</TableHead>
                       <TableHead className="text-white font-bold align-middle">Color</TableHead>
                       <TableHead className="text-white font-bold align-middle">Size</TableHead>
@@ -526,6 +579,7 @@ export function InventorySummaryTable() {
                     <TableBody>
                     {filteredItems.map((item) => (
                         <TableRow key={item.id}>
+                            <TableCell className="font-medium text-xs align-middle py-2 text-black">{item.sku}</TableCell>
                             <TableCell className="font-medium text-xs align-middle py-2 text-black">{item.productType}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">
                                 {isEditMode ? (
@@ -585,3 +639,4 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
+
