@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Header } from '@/components/header';
@@ -22,16 +21,17 @@ type Lead = {
 
 export default function DataIssuesPage() {
   const firestore = useFirestore();
-  // Query for documents where deliveryDate is exactly null.
-  const leadsWithNullDeliveryDateQuery = useMemoFirebase(() => {
+  
+  // Query for all leads.
+  const allLeadsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'leads'), where('deliveryDate', '==', null));
+    return query(collection(firestore, 'leads'));
   }, [firestore]);
 
-  // This hook will now only fetch the problematic leads.
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsWithNullDeliveryDateQuery);
+  // This hook will now fetch all leads.
+  const { data: leads, isLoading, error } = useCollection<Lead>(allLeadsQuery);
 
-  // We still need to filter for those that have a JO number, as that's the context of the error.
+  // Filter for leads that have a JO number.
   const leadsToDisplay = useMemo(() => {
     if (!leads) return [];
     return leads.filter(lead => lead.joNumber);
@@ -42,8 +42,8 @@ export default function DataIssuesPage() {
       <main className="p-4 sm:p-6 lg:p-8">
         <Card>
           <CardHeader>
-            <CardTitle>Data Integrity Check: Null Delivery Dates</CardTitle>
-            <CardDescription>This temporary page lists all Job Orders where the delivery date is null. These records can cause errors on other pages.</CardDescription>
+            <CardTitle>All Job Orders</CardTitle>
+            <CardDescription>A list of all orders with a J.O. Number for review.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="border rounded-md">
@@ -76,7 +76,9 @@ export default function DataIssuesPage() {
                         <TableCell>{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell>{lead.customerName}</TableCell>
                         <TableCell>{new Date(lead.submissionDateTime).toLocaleDateString()}</TableCell>
-                        <TableCell className="font-mono text-red-500">{String(lead.deliveryDate)}</TableCell>
+                        <TableCell className={`font-mono ${lead.deliveryDate === null || lead.deliveryDate === '' ? 'text-red-500 font-bold' : ''}`}>
+                          {lead.deliveryDate === null ? 'null' : lead.deliveryDate === '' ? '"" (empty string)' : lead.deliveryDate ? new Date(lead.deliveryDate).toLocaleDateString() : 'undefined'}
+                        </TableCell>
                         <TableCell>
                           <Button asChild variant="outline" size="sm">
                             <Link href={`/job-order/${lead.id}`}>
@@ -89,7 +91,7 @@ export default function DataIssuesPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        No Job Orders with null delivery dates found.
+                        No Job Orders found.
                       </TableCell>
                     </TableRow>
                   )}
