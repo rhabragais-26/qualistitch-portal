@@ -69,7 +69,7 @@ const addressSchema = z.object({
 
 type AddressFormValues = z.infer<typeof addressSchema>;
 
-const AddressEditDialog = ({ lead, isOpen, onClose }: { lead: Lead; isOpen: boolean; onClose: () => void; }) => {
+const AddressEditDialog = ({ lead, isOpen, onSave, onCancel }: { lead: Lead; isOpen: boolean; onSave: () => void; onCancel: () => void; }) => {
     const firestore = useFirestore();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
@@ -108,7 +108,7 @@ const AddressEditDialog = ({ lead, isOpen, onClose }: { lead: Lead; isOpen: bool
             await updateDoc(leadDocRef, updateData);
 
             toast({ title: 'Address Updated', description: `Address for ${lead.customerName} has been saved.` });
-            onClose();
+            onSave();
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
         } finally {
@@ -117,7 +117,7 @@ const AddressEditDialog = ({ lead, isOpen, onClose }: { lead: Lead; isOpen: bool
     };
     
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Edit Address for {lead.customerName}</DialogTitle>
@@ -168,7 +168,7 @@ const AddressEditDialog = ({ lead, isOpen, onClose }: { lead: Lead; isOpen: bool
                             )}
                         />
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
                             <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Address'}</Button>
                         </DialogFooter>
                     </form>
@@ -188,7 +188,7 @@ export default function DataIssuesPage() {
     return query(collection(firestore, 'leads'));
   }, [firestore]);
 
-  const { data: leads, isLoading, error } = useCollection<Lead>(allLeadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(allLeadsQuery, undefined, { listen: false });
 
   const leadsToDisplay = useMemo(() => {
     if (!leads) return [];
@@ -306,10 +306,13 @@ export default function DataIssuesPage() {
         <AddressEditDialog
             lead={editingLead}
             isOpen={!!editingLead}
-            onClose={() => setEditingLead(null)}
+            onSave={() => {
+              setEditingLead(null);
+              refetch();
+            }}
+            onCancel={() => setEditingLead(null)}
         />
     )}
     </>
   );
 }
-
