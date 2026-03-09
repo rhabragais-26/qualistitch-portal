@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
@@ -126,7 +127,7 @@ export function SkuBarcodeList() {
 
   return (
     <Tabs defaultValue={productTypes[0]} value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-start items-center mb-4 gap-4">
         <TabsList className="flex flex-wrap h-auto justify-start">
           {productTypes.map(productType => (
               <TabsTrigger key={productType} value={productType}>{productType}</TabsTrigger>
