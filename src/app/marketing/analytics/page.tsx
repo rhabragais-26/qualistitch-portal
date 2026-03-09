@@ -290,7 +290,9 @@ export default function AnalyticsPage() {
                                 name={sanitizedName}
                                 stroke={`var(--color-${sanitizedName})`}
                                 strokeWidth={2}
-                            />
+                            >
+                              <LabelList content={renderAmountLabel} />
+                            </Line>
                         ))}
                     </LineChart>
                 </ResponsiveContainer>
