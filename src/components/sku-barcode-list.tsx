@@ -1,12 +1,14 @@
+
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import React, { useMemo } from 'react';
-import { generateSku } from '@/lib/utils';
+import { generateSku, formatCurrency } from '@/lib/utils';
 import Barcode from 'react-barcode';
+import { getUnitPrice, type PricingConfig, initialPricingConfig } from '@/lib/pricing';
 
 type InventoryItem = {
   id: string;
@@ -18,26 +20,45 @@ type InventoryItem = {
 
 export function SkuBarcodeList() {
   const firestore = useFirestore();
-
+  const { user, isUserLoading } = useUser();
   const inventoryQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'inventory'), orderBy('productType', 'asc'), orderBy('color', 'asc'));
-  }, [firestore]);
+    if (!firestore || !user || isUserLoading) return null;
+    return query(
+      collection(firestore, 'inventory'),
+      orderBy('productType', 'asc'),
+      orderBy('color', 'asc')
+    );
+  }, [firestore, user, isUserLoading]);
 
-  const { data: inventoryItems, isLoading, error } = useCollection<InventoryItem>(inventoryQuery);
+  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery);
+
+  const pricingConfigRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'pricing', 'default') : null),
+    [firestore]
+  );
+  const { data: fetchedConfig, isLoading: isPricingLoading } = useDoc<PricingConfig>(pricingConfigRef);
+
+  const pricingConfig = useMemo(() => {
+    if (fetchedConfig) return fetchedConfig;
+    return initialPricingConfig as PricingConfig;
+  }, [fetchedConfig]);
 
   const groupedSkus = useMemo(() => {
-    if (!inventoryItems) return {};
+    if (!inventoryItems || !pricingConfig) return {};
 
     return inventoryItems.reduce((acc, item) => {
       const sku = generateSku(item);
+      const unitPrice = getUnitPrice(item.productType, 1, 'logo', pricingConfig);
       if (!acc[item.productType]) {
         acc[item.productType] = [];
       }
-      acc[item.productType].push({ ...item, sku });
+      acc[item.productType].push({ ...item, sku, unitPrice });
       return acc;
-    }, {} as Record<string, (InventoryItem & { sku: string })[]>);
-  }, [inventoryItems]);
+    }, {} as Record<string, (InventoryItem & { sku: string; unitPrice: number })[]>);
+  }, [inventoryItems, pricingConfig]);
+
+  const isLoading = isInventoryLoading || isPricingLoading;
+  const error = inventoryError;
 
   if (isLoading) {
     return (
@@ -65,6 +86,7 @@ export function SkuBarcodeList() {
                 <CardContent className="flex flex-col items-center text-center p-0">
                   <div className="font-bold">{item.sku}</div>
                   <div className="text-sm text-muted-foreground">{item.color} - {item.size}</div>
+                  <div className="text-lg font-bold mt-1">{formatCurrency(item.unitPrice)}</div>
                   <div className="mt-2">
                     <Barcode value={item.sku} width={1.5} height={50} fontSize={12} />
                   </div>

@@ -89,23 +89,14 @@ export function useCollection<T = any>(
       setError(null);
     } catch (e: any) {
       if (e instanceof ZodError) {
-         setError(e);
+        setError(e);
       } else {
-        const path: string =
-          ref.type === 'collection'
-            ? (ref as CollectionReference).path
-            : (ref as unknown as InternalQuery)._query.path.canonicalString();
-
-        const contextualError = new FirestorePermissionError({
-          operation: 'list',
-          path,
-        });
-
-        setError(contextualError);
-        errorEmitter.emit('permission-error', contextualError);
+        setError(e);
+        console.error('Firestore fetchData error:', e);
       }
       setData(null);
     } finally {
+      
       setIsLoading(false);
     }
   }, [schema]);
@@ -118,67 +109,80 @@ export function useCollection<T = any>(
 
 
   useEffect(() => {
-    if (!memoizedTargetRefOrQuery || isUserLoading || !user) {
-      if (isUserLoading || !user) {
-        setIsLoading(true);
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+  
+    const start = async () => {
+      if (!memoizedTargetRefOrQuery) {
+        setIsLoading(false);
         setData(null);
         setError(null);
-      }
-      return;
-    }
-
-    if (options.listen === false) {
-        fetchData(memoizedTargetRefOrQuery);
         return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    const unsubscribe = onSnapshot(
-      memoizedTargetRefOrQuery,
-      (snapshot: QuerySnapshot<DocumentData>) => {
-        try {
-          const results: ResultItemType[] = snapshot.docs.map(doc => {
-            const docData = doc.data();
-            if (schema) {
-              const validationResult = schema.safeParse(docData);
-              if (!validationResult.success) {
-                // Throw a detailed error for a specific document
-                throw new ZodError(validationResult.error.issues);
-              }
-              return { ...(validationResult.data as T), id: doc.id };
-            }
-            return { ...(docData as T), id: doc.id };
-          });
-          setData(results);
-          setError(null);
-        } catch (e: any) {
-           setError(e instanceof Error ? e : new Error('An unknown validation error occurred.'));
-        } finally {
-          setIsLoading(false);
+      }
+  
+      if (isUserLoading || !user) {
+        setIsLoading(false);
+        setData(null);
+        setError(null);
+        return;
+      }
+  
+      setIsLoading(true);
+      setError(null);
+  
+      try {
+        await user.getIdToken();
+  
+        if (cancelled) return;
+  
+        if (options.listen === false) {
+          await fetchData(memoizedTargetRefOrQuery);
+          return;
         }
-      },
-      (error: FirestoreError) => {
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString();
-
-        const contextualError = new FirestorePermissionError({
-          operation: 'list',
-          path,
-        });
-
-        setError(contextualError);
+  
+        unsubscribe = onSnapshot(
+          memoizedTargetRefOrQuery,
+          (snapshot: QuerySnapshot<DocumentData>) => {
+            try {
+              const results: ResultItemType[] = snapshot.docs.map(doc => {
+                const docData = doc.data();
+                if (schema) {
+                  const validationResult = schema.safeParse(docData);
+                  if (!validationResult.success) {
+                    throw new ZodError(validationResult.error.issues);
+                  }
+                  return { ...(validationResult.data as T), id: doc.id };
+                }
+                return { ...(docData as T), id: doc.id };
+              });
+              setData(results);
+              setError(null);
+            } catch (e: any) {
+              setError(e instanceof Error ? e : new Error('An unknown validation error occurred.'));
+            } finally {
+              setIsLoading(false);
+            }
+          },
+          (error: FirestoreError) => {
+            console.error('Firestore onSnapshot error:', error);
+            setError(error);
+            setData(null);
+            setIsLoading(false);
+          }
+        );
+      } catch (e: any) {
+        setError(e instanceof Error ? e : new Error('Failed to initialize Firestore listener.'));
         setData(null);
         setIsLoading(false);
-
-        errorEmitter.emit('permission-error', contextualError);
       }
-    );
-
-    return () => unsubscribe();
+    };
+  
+    start();
+  
+    return () => {
+      cancelled = true;
+      if (unsubscribe) unsubscribe();
+    };
   }, [memoizedTargetRefOrQuery, isUserLoading, user, schema, options.listen, fetchData]);
   
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {

@@ -51,12 +51,11 @@ type InventoryReportTableProps = {
 
 export function InventoryReportTable({ reportType = 'inventory', productTypeFilter, colorFilter, sizeFilter, sellThroughRateFilter }: InventoryReportTableProps) {
   const firestore = useFirestore();
-  const { user, isUserLoading: isAuthLoading } = useUser();
-
+  const { user, isUserLoading } = useUser();
   const inventoryQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !user || isUserLoading) return null;
     return query(collection(firestore, 'inventory'));
-  }, [firestore, user]);
+  }, [firestore, user, isUserLoading]);
 
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;

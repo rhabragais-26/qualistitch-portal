@@ -3,7 +3,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, runTransaction, getDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, runTransaction, getDoc, writeBatch, getDocs } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -91,6 +91,7 @@ export function InventorySummaryTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading, isAdmin } = useUser();
   const { toast } = useToast();
+
   const [productTypeFilter, setProductTypeFilter] = React.useState('All');
   const [colorFilter, setColorFilter] = React.useState('All');
   const [statusFilter, setStatusFilter] = React.useState('All Statuses');
@@ -101,17 +102,18 @@ export function InventorySummaryTable() {
   const [editedColors, setEditedColors] = useState<Record<string, string>>({});
 
   const inventoryQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !user || isAuthLoading) return null;
     return query(collection(firestore, 'inventory'), orderBy('productType', 'asc'));
-  }, [firestore, user]);
-
+  }, [firestore, user, isAuthLoading]);
+  
   const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !user || isAuthLoading) return null;
     return query(collection(firestore, 'leads'));
-  }, [firestore, user]);
+  }, [firestore, user, isAuthLoading]);
 
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError, refetch } = useCollection<InventoryItem>(inventoryQuery);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+
 
   const handleStockChange = (itemId: string, value: string) => {
     const newStock = parseInt(value, 10);

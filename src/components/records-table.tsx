@@ -359,14 +359,18 @@ RecordsTableRow.displayName = 'RecordsTableRow';
 
 export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; filterType?: 'ONGOING' | 'COMPLETED' }) {
   const firestore = useFirestore();
-  const { userProfile, isAdmin } = useUser();
+  const { user, isUserLoading, userProfile, isAdmin } = useUser();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
   
-  const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
+  const inventoryQuery = useMemoFirebase(() => {
+    if (!firestore || !user || isUserLoading) return null;
+    return query(collection(firestore, 'inventory'));
+  }, [firestore, user, isUserLoading]);
+  
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, inventoryItemSchema, { listen: false });
 
   const isLoading = areLeadsLoading || isInventoryLoading;

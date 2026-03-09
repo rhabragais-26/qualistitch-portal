@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Legend, Bar } from 'recharts';
 import { Skeleton } from './ui/skeleton';
@@ -73,6 +73,7 @@ const renderRemainingStockLabel = (props: any) => {
 
 export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFilter, timeRange }: DailySoldQuantityChartProps) {
   const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
 
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
@@ -80,7 +81,11 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
   const replenishmentsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory_replenishments')) : null), [firestore]);
   const { data: replenishments, isLoading: areReplenishmentsLoading, error: replenishmentsError } = useCollection<InventoryReplenishment>(replenishmentsQuery, undefined, { listen: false });
   
-  const inventoryQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory')) : null), [firestore]);
+  const inventoryQuery = useMemoFirebase(() => {
+    if (!firestore || !user || isUserLoading) return null;
+    return query(collection(firestore, 'inventory'));
+  }, [firestore, user, isUserLoading]);
+  
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
   
   const chartData = useMemo(() => {

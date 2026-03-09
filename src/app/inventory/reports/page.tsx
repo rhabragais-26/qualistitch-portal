@@ -8,7 +8,7 @@ import { EndorsedItemsChart } from '@/components/endorsed-items-chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import React, { useState, useMemo, useEffect } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/utils';
@@ -53,9 +53,15 @@ export default function InventoryReportsPage() {
   const [sellThroughRateFilter, setSellThroughRateFilter] = useState('All');
 
   const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
-  const inventoryQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory')) : null), [firestore]);
+
+  const inventoryQuery = useMemoFirebase(() => {
+    if (!firestore || !user || isUserLoading) return null;
+    return query(collection(firestore, 'inventory'));
+  }, [firestore, user, isUserLoading]);
+
   const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
 
   const productTypes = useMemo(() => {

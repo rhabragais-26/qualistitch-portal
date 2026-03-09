@@ -238,7 +238,7 @@ export function LeadForm({
   const [activeField, setActiveField] = useState<string | null>(null);
   const [showSecondMobile, setShowSecondMobile] = useState(false);
 
-  const { isAdmin } = useUser();
+  const {user, isUserLoading, isAdmin } = useUser();
   const [isForcedNew, setIsForcedNew] = useState(false);
   const [isForceNewDialogOpen, setIsForceNewDialogOpen] = useState(false);
   
@@ -335,7 +335,11 @@ export function LeadForm({
   const { data: leads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   const { data: allLeads } = useCollection<LeadType>(leadsQuery, undefined, { listen: false });
 
-  const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
+  const inventoryQuery = useMemoFirebase(() => {
+    if (!firestore || !user || isUserLoading) return null;
+    return query(collection(firestore, 'inventory'));
+  }, [firestore, user, isUserLoading]);
+  
   const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery, inventoryItemSchema, { listen: false });
 
   

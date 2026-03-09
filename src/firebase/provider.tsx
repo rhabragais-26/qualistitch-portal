@@ -4,7 +4,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, onSnapshot, DocumentData, Unsubscribe, getDoc, updateDoc } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged } from 'firebase/auth';
+import { Auth, User, onIdTokenChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 import { initiateAnonymousSignIn } from './auth-writes';
 
@@ -119,7 +119,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     let profileUnsubscribe: Unsubscribe | undefined;
 
-    const authUnsubscribe = onAuthStateChanged(
+    const authUnsubscribe = onIdTokenChanged(
       auth,
       (firebaseUser) => {
         // If a previous user's profile listener is active, unsubscribe from it.
@@ -172,6 +172,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           // No user is signed in.
           setUserAuthState({ user: null, userProfile: null, isAdmin: false, isUserLoading: false, userError: null });
         }
+        
       },
       (error) => {
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
@@ -204,7 +205,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   return (
     <FirebaseContext.Provider value={contextValue}>
-      <FirebaseErrorListener />
+      {/* <FirebaseErrorListener /> */}
       {children}
     </FirebaseContext.Provider>
   );

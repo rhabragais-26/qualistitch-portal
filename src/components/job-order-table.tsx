@@ -554,7 +554,7 @@ RecordsTableRow.displayName = 'RecordsTableRow';
 export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const firestore = useFirestore();
   const firebaseApp = useFirebaseApp();
-  const { userProfile, isAdmin } = useUser();
+  const { user, isUserLoading, userProfile, isAdmin } = useUser();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -595,7 +595,11 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
   
-  const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
+  const inventoryQuery = useMemoFirebase(() => {
+    if (!firestore || !user || isUserLoading) return null;
+    return query(collection(firestore, 'inventory'));
+  }, [firestore, user, isUserLoading]);
+  
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, inventoryItemSchema, { listen: false });
 
   const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
