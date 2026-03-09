@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
@@ -156,7 +155,7 @@ export function SkuBarcodeList() {
             </Select>
         </div>
       </div>
-
+      
       {Object.entries(groupedSkus).map(([productType, items]) => {
         const filteredItems = items.filter(item => 
           (colorFilter === 'All' || item.color === colorFilter) &&
