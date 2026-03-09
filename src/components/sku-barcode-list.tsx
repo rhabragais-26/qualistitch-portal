@@ -11,6 +11,7 @@ import { getUnitPrice, type PricingConfig } from '@/lib/pricing';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Button } from './ui/button';
 
 type InventoryItem = {
   id: string;
@@ -80,6 +81,11 @@ export function SkuBarcodeList() {
     setColorFilter('All');
     setSizeFilter('All');
   }, [activeTab]);
+  
+  const handleResetFilters = () => {
+    setColorFilter('All');
+    setSizeFilter('All');
+  };
 
   const availableColors = useMemo(() => {
     if (!inventoryItems || !activeTab) return ['All'];
@@ -126,7 +132,7 @@ export function SkuBarcodeList() {
 
   return (
     <Tabs defaultValue={productTypes[0]} value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <div className="flex justify-start items-center mb-4 gap-4">
+      <div className="flex justify-between items-center mb-4">
         <TabsList className="flex flex-wrap h-auto justify-start">
           {productTypes.map(productType => (
               <TabsTrigger key={productType} value={productType}>{productType}</TabsTrigger>
@@ -153,6 +159,7 @@ export function SkuBarcodeList() {
                 ))}
               </SelectContent>
             </Select>
+            <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset</Button>
         </div>
       </div>
       
