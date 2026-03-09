@@ -188,7 +188,7 @@ export default function DataIssuesPage() {
     return query(collection(firestore, 'leads'));
   }, [firestore]);
 
-  const { data: leads, isLoading, error } = useCollection<Lead>(allLeadsQuery);
+  const { data: leads, isLoading, error } = useCollection<Lead>(allLeadsQuery, undefined, { listen: false });
 
   const leadsToDisplay = useMemo(() => {
     if (!leads) return [];
@@ -217,8 +217,8 @@ export default function DataIssuesPage() {
           <CardHeader>
              <div className="flex justify-between items-center">
               <div>
-                <CardTitle>All Orders Review</CardTitle>
-                <CardDescription>A list of all orders for data integrity review.</CardDescription>
+                <CardTitle>Data Integrity Checking</CardTitle>
+                <CardDescription>Review all orders to ensure data integrity.</CardDescription>
               </div>
               <Select value={joFilter} onValueChange={setJoFilter}>
                 <SelectTrigger className="w-[180px]">
@@ -313,4 +313,3 @@ export default function DataIssuesPage() {
   );
 }
 
-    

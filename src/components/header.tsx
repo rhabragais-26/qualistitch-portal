@@ -415,7 +415,7 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleNavigation('/sales/data-issues')}>
                       <TriangleAlert className="mr-2 text-destructive" />
-                      <span className="text-destructive">Data Issues</span>
+                      <span className="text-destructive">Data Integrity Checking</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
