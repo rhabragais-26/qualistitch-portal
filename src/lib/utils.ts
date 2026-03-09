@@ -71,3 +71,67 @@ export const formatJoNumber = (joNumber: number | undefined): string => {
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
 };
+
+export const generateSku = (item: { productType: string; color: string; size: string }): string => {
+  const getProductCode = (productType: string): string => {
+    const mappings: { [key: string]: string } = {
+      'Corporate Jacket': 'CJ',
+      'Executive Jacket 1': 'EJ1',
+      'Executive Jacket v2 (with lines)': 'EJ2',
+      'Turtle Neck Jacket': 'TNJ',
+      'Reversible v1': 'R1',
+      'Reversible v2': 'R2',
+      'Polo Shirt (Smilee) - Cool Pass': 'PSCP',
+      'Polo Shirt (Smilee) - Cotton Blend': 'PSCB',
+      'Polo Shirt (Lifeline)': 'PL',
+      'Polo Shirt (Blue Corner)': 'PBC',
+      'Polo Shirt (Softex)': 'PS',
+    };
+    const productCode = mappings[productType];
+    if (productCode) return productCode;
+    
+    return productType
+      .replace(/\(.*\)/g, '')
+      .split(/[\s-]+/)
+      .map(w => w[0])
+      .join('')
+      .toUpperCase();
+  };
+
+  const getColorCode = (color: string): string => {
+    const lowerCaseColor = color.toLowerCase();
+    const specialColorMappings: { [key: string]: string } = {
+        'green': 'GRN',
+        'gold': 'GLD',
+        'black': 'BLK',
+        'brown': 'BRWN',
+        'pink': 'PNK',
+        'purple': 'PRPL',
+        'sky blue': 'SKB',
+        'slate blue': 'SLB',
+        'oatmeal': 'OAT',
+        'orange': 'ORNG'
+    };
+
+    if (specialColorMappings[lowerCaseColor]) {
+        return specialColorMappings[lowerCaseColor];
+    }
+
+    return color.split(/[\s/]+/).map(w => w[0]).join('').toUpperCase();
+  };
+
+  const getSizeCode = (size: string): string => {
+    switch (size) {
+    case 'Medium': return 'M';
+    case 'Large': return 'L';
+    case 'Small': return 'S';
+    default: return size;
+    }
+  };
+
+  const productCode = getProductCode(item.productType);
+  const colorCode = getColorCode(item.color);
+  const sizeCode = getSizeCode(item.size);
+
+  return `${productCode}-${colorCode}-${sizeCode}`;
+};

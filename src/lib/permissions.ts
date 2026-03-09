@@ -54,6 +54,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/inventory/completed-endorsement': 'inventory',
   '/inventory/summary': 'inventory',
   '/inventory/reports': 'inventory',
+  '/inventory/sku-list-and-barcodes': 'inventory',
   '/inventory/operational-cases': 'logistics',
   '/production/production-queue': 'production',
   '/production/daily-logs': 'production',

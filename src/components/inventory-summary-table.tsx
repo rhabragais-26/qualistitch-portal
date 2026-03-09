@@ -27,7 +27,7 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Boxes, Shirt, PackageX, MinusCircle, Edit, Save, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, generateSku } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 type Order = {
@@ -251,71 +251,6 @@ export function InventorySummaryTable() {
     const onProcessQuantities = new Map<string, number>();
     const dispatchedQuantities = new Map<string, number>();
     
-    const generateSku = (item: { productType: string; color: string; size: string }): string => {
-        const getProductCode = (productType: string): string => {
-            const mappings: { [key: string]: string } = {
-                'Corporate Jacket': 'CJ',
-                'Executive Jacket 1': 'EJ1',
-                'Executive Jacket v2 (with lines)': 'EJ2',
-                'Turtle Neck Jacket': 'TNJ',
-                'Reversible v1': 'R1',
-                'Reversible v2': 'R2',
-                'Polo Shirt (Smilee) - Cool Pass': 'PSCP',
-                'Polo Shirt (Smilee) - Cotton Blend': 'PSCB',
-                'Polo Shirt (Lifeline)': 'PL',
-                'Polo Shirt (Blue Corner)': 'PBC',
-                'Polo Shirt (Softex)': 'PS',
-            };
-            const productCode = mappings[productType];
-            if (productCode) return productCode;
-            
-            return productType
-                .replace(/\(.*\)/g, '') // remove parentheses content
-                .split(/[\s-]+/)
-                .map(w => w[0])
-                .join('')
-                .toUpperCase();
-        };
-
-        const getColorCode = (color: string): string => {
-            const lowerCaseColor = color.toLowerCase();
-            const specialColorMappings: { [key: string]: string } = {
-                'green': 'GRN',
-                'gold': 'GLD',
-                'black': 'BLK',
-                'brown': 'BRWN',
-                'pink': 'PNK',
-                'purple': 'PRPL',
-                'sky blue': 'SKB',
-                'slate blue': 'SLB',
-                'oatmeal': 'OAT',
-                'orange': 'ORNG'
-            };
-
-            if (specialColorMappings[lowerCaseColor]) {
-                return specialColorMappings[lowerCaseColor];
-            }
-
-            // Fallback for other colors, takes the first letter of each word.
-            return color.split(/[\s/]+/).map(w => w[0]).join('').toUpperCase();
-        };
-
-        const getSizeCode = (size: string): string => {
-            switch (size) {
-            case 'Medium': return 'M';
-            case 'Large': return 'L';
-            case 'Small': return 'S';
-            default: return size;
-            }
-        };
-
-        const productCode = getProductCode(item.productType);
-        const colorCode = getColorCode(item.color);
-        const sizeCode = getSizeCode(item.size);
-
-        return `${productCode}-${colorCode}-${sizeCode}`;
-    };
-
     leads.forEach(lead => {
         const createKey = (order: Order) => `${order.productType}-${order.color}-${order.size}`;
 

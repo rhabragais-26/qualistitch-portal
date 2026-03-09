@@ -449,7 +449,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'inventory'} onOpenChange={(isOpen) => handleMenuOpenChange('inventory', isOpen)}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports']))}>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/sku-list-and-barcodes', '/inventory/summary', '/inventory/reports']))}>
                         <Boxes className="mr-2" />
                         Inventory
                         <ChevronDown className="ml-2 h-4 w-4" />
@@ -463,6 +463,10 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/item-preparation-for-production')}>
                       <Package className="mr-2" />
                       Item Preparation
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/inventory/sku-list-and-barcodes')}>
+                      <ScanLine className="mr-2" />
+                      SKU Lists and Barcodes
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/summary')}>
                       <Database className="mr-2" />
