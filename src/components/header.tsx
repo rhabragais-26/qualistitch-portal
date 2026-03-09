@@ -59,7 +59,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -466,7 +466,7 @@ const HeaderMemo = React.memo(function Header({
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/sku-list-and-barcodes')}>
                       <ScanLine className="mr-2" />
-                      SKU Lists and Barcodes
+                      SKU and Barcodes
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/summary')}>
                       <Database className="mr-2" />

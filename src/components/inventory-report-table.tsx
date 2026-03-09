@@ -159,18 +159,24 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
       });
       return { color, ...sizeData };
     }).filter(row => {
-        if(reportType === 'priority') {
-            return sizes.some(size => row[size] !== null && row[size]! <= 10);
-        }
-        return sizes.some(size => row[size] !== null);
-    });
+      const typedRow = row as Record<string, number | string | null>;
+  
+      if (reportType === 'priority') {
+          return sizes.some(size => {
+              const value = typedRow[size];
+              return typeof value === 'number' && value <= 10;
+          });
+      }
+  
+      return sizes.some(size => typedRow[size] !== null);
+  });
     
     return { headers: sizes, rows };
 
   }, [inventoryItems, leads, productTypeFilter, colorFilter, sizeFilter, reportType, sellThroughRateFilter]);
   
 
-  const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
+  const isLoading = isUserLoading || isInventoryLoading || areLeadsLoading;
   const error = inventoryError || leadsError;
 
   return (
