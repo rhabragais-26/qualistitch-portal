@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 
 type Lead = {
   id: string;
@@ -31,10 +32,16 @@ export default function DataIssuesPage() {
   // This hook will now fetch all leads.
   const { data: leads, isLoading, error } = useCollection<Lead>(allLeadsQuery);
 
-  // Filter for leads that have a JO number.
+  // Filter for leads that have a JO number and sort them.
   const leadsToDisplay = useMemo(() => {
     if (!leads) return [];
-    return leads.filter(lead => lead.joNumber);
+    return leads
+      .filter(lead => lead.joNumber)
+      .sort((a, b) => {
+        const dateA = a.deliveryDate ? new Date(a.deliveryDate).getTime() : 0;
+        const dateB = b.deliveryDate ? new Date(b.deliveryDate).getTime() : 0;
+        return dateB - dateA;
+      });
   }, [leads]);
 
   return (
@@ -75,9 +82,9 @@ export default function DataIssuesPage() {
                       <TableRow key={lead.id}>
                         <TableCell>{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell>{lead.customerName}</TableCell>
-                        <TableCell>{new Date(lead.submissionDateTime).toLocaleDateString()}</TableCell>
+                        <TableCell>{format(new Date(lead.submissionDateTime), 'MMM-dd-yy')}</TableCell>
                         <TableCell className={`font-mono ${lead.deliveryDate === null || lead.deliveryDate === '' ? 'text-red-500 font-bold' : ''}`}>
-                          {lead.deliveryDate === null ? 'null' : lead.deliveryDate === '' ? '"" (empty string)' : lead.deliveryDate ? new Date(lead.deliveryDate).toLocaleDateString() : 'undefined'}
+                          {lead.deliveryDate === null ? 'null' : lead.deliveryDate === '' ? '"" (empty string)' : lead.deliveryDate ? format(new Date(lead.deliveryDate), 'MMM-dd-yy') : 'undefined'}
                         </TableCell>
                         <TableCell>
                           <Button asChild variant="outline" size="sm">
