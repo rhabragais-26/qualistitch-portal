@@ -50,6 +50,12 @@ type AdSpendInquiry = {
   adAccount: string;
 };
 
+type Lead = {
+  id: string;
+  submissionDateTime: string;
+  grandTotal?: number;
+};
+
 const chartConfig = {
   adsSpent: {
     label: 'Ads Spent',
@@ -131,7 +137,17 @@ export default function AnalyticsPage() {
     () => (firestore ? query(collection(firestore, 'ad_spend_inquiries')) : null),
     [firestore]
   );
-  const { data: adSpendData, isLoading, error } = useCollection<AdSpendInquiry>(adSpendQuery);
+  const { data: adSpendData, isLoading: adSpendLoading, error: adSpendError } = useCollection<AdSpendInquiry>(adSpendQuery);
+  
+  const leadsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'leads')) : null),
+    [firestore]
+  );
+  const { data: leadsData, isLoading: leadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  
+  const isLoading = adSpendLoading || leadsLoading;
+  const error = adSpendError || leadsError;
+
 
   const { availableYears, months } = useMemo(() => {
     if (!adSpendData) {
@@ -191,12 +207,12 @@ export default function AnalyticsPage() {
     return map;
   }, [adSpendData]);
 
-  const adSpendByAccountData = useMemo(() => {
-    if (!adSpendData) return [];
+  const { adSpendByAccountData, totalAdSpend, totalSales } = useMemo(() => {
+    if (!adSpendData || !leadsData) return { adSpendByAccountData: [], totalAdSpend: 0, totalSales: 0 };
 
     const year = parseInt(selectedYear, 10);
     const month = parseInt(selectedMonth, 10) - 1;
-    if (isNaN(year) || isNaN(month)) return [];
+    if (isNaN(year) || isNaN(month)) return { adSpendByAccountData: [], totalAdSpend: 0, totalSales: 0 };
 
     const start = startOfMonth(new Date(year, month));
     const today = endOfToday();
@@ -215,11 +231,11 @@ export default function AnalyticsPage() {
             .map(item => sanitizeKey(item.adAccount))
     ));
 
-    const dataByDate: Record<string, Record<string, number>> = {};
+    const dataByDate: Record<string, Record<string, number> & { totalSales: number }> = {};
     
     daysInRange.forEach(day => {
         const dayKey = format(day, 'MMM-dd');
-        dataByDate[dayKey] = {};
+        dataByDate[dayKey] = { totalSales: 0 };
         sanitizedAccountNames.forEach(accountName => {
             dataByDate[dayKey][accountName] = 0;
         });
@@ -237,12 +253,30 @@ export default function AnalyticsPage() {
             }
         }
     });
+    
+    leadsData.forEach(lead => {
+        const itemDate = new Date(lead.submissionDateTime);
+        if (getYear(itemDate) === year && getMonth(itemDate) === month) {
+            const day = format(itemDate, 'MMM-dd');
+            if (dataByDate[day]) {
+                dataByDate[day].totalSales += lead.grandTotal || 0;
+            }
+        }
+    });
 
-    return Object.entries(dataByDate)
-        .map(([date, accounts]) => ({ date, ...accounts }))
+    const finalData = Object.entries(dataByDate)
+        .map(([date, data]) => ({ date, ...data }))
         .sort((a,b) => parse(a.date, 'MMM-dd', new Date()).getTime() - parse(b.date, 'MMM-dd', new Date()).getTime());
+
+    const periodTotalAdSpend = finalData.reduce((sum, day) => {
+        return sum + sanitizedAccountNames.reduce((daySum, accName) => daySum + (day[accName] || 0), 0);
+    }, 0);
+
+    const periodTotalSales = finalData.reduce((sum, day) => sum + day.totalSales, 0);
+    
+    return { adSpendByAccountData: finalData, totalAdSpend: periodTotalAdSpend, totalSales: periodTotalSales };
         
-  }, [adSpendData, selectedYear, selectedMonth]);
+  }, [adSpendData, leadsData, selectedYear, selectedMonth]);
   
   const adAccountChartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -282,11 +316,6 @@ export default function AnalyticsPage() {
 
     return { monthlyAnniversaryData: chartData };
   }, []);
-  
-  const totalAdSpend = useMemo(() => {
-    if (!filteredData) return 0;
-    return filteredData.reduce((sum, item) => sum + item.adsSpent, 0);
-  }, [filteredData]);
 
   if (isLoading) {
     return (
@@ -368,32 +397,37 @@ export default function AnalyticsPage() {
                 <div className="text-right">
                     <p className="text-sm font-medium text-muted-foreground">Total Ad Spend</p>
                     <p className="text-2xl font-bold">{formatCurrency(totalAdSpend)}</p>
+                    <p className="text-sm font-medium text-muted-foreground mt-2">Total Sales</p>
+                    <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSales)}</p>
                 </div>
               </div>
-               <ChartContainer config={adAccountChartConfig} className="w-full h-[calc(100%-40px)]">
+               <ChartContainer config={adAccountChartConfig} className="w-full h-full">
                 <ResponsiveContainer>
-                    <LineChart data={adSpendByAccountData}>
+                    <ComposedChart data={adSpendByAccountData}>
                         <CartesianGrid vertical={false} />
                         <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
-                        <YAxis tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
+                        <YAxis yAxisId="left" orientation="left" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
+                        <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
                         <Tooltip
                             cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
                             content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
                         />
                         <Legend />
+                        <Bar yAxisId="right" dataKey="totalSales" name="Total Sales" fill="hsl(var(--chart-3))" fillOpacity={0.7} barSize={20}>
+                            <LabelList dataKey="totalSales" content={renderAmountLabel} />
+                        </Bar>
                         {Object.entries(adAccountChartConfig).map(([sanitizedName, config]) => (
                             <Line
                                 key={sanitizedName}
+                                yAxisId="left"
                                 type="monotone"
                                 dataKey={sanitizedName}
                                 name={config.label as string}
                                 stroke={`var(--color-${sanitizedName})`}
                                 strokeWidth={2}
-                            >
-                              <LabelList content={renderAmountLabel} />
-                            </Line>
+                            />
                         ))}
-                    </LineChart>
+                    </ComposedChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
@@ -431,4 +465,5 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
+
 
