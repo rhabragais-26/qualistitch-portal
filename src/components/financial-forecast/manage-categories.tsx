@@ -100,7 +100,7 @@ export function ManageCategories() {
         <Accordion type="single" collapsible className="w-full">
             {departmentOptions.map(dept => (
                 <AccordionItem value={dept} key={dept}>
-                    <AccordionTrigger className="font-bold data-[state=open]:bg-muted/50">{dept}</AccordionTrigger>
+                    <AccordionTrigger className="font-bold data-[state=open]:bg-muted/50 px-4">{dept}</AccordionTrigger>
                     <AccordionContent>
                         <div className="space-y-2">
                             {categoriesByDepartment[dept]?.map(cat => (
