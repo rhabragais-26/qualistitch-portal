@@ -65,6 +65,7 @@ export function MonthlyForecastInput() {
 
   const form = useForm<ForecastFormValues>({
     resolver: zodResolver(forecastSchema),
+    mode: 'onChange',
     defaultValues: { month: format(new Date(), 'yyyy-MM'), categoryId: '', department: '', amount: 0, notes: '' },
   });
   
