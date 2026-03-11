@@ -48,11 +48,12 @@
             "id": { "type": "string" },
             "month": { "type": "string", "format": "yyyy-MM", "description": "The month of the forecast (e.g., '2024-08')." },
             "categoryId": { "type": "string", "description": "Reference to the FinanceCategory." },
+            "department": { "type": "string", "description": "The department associated with the expense." },
             "amount": { "type": "number" },
             "notes": { "type": "string" },
             "createdAt": { "type": "string", "format": "date-time" }
         },
-        "required": ["id", "month", "categoryId", "amount"]
+        "required": ["id", "month", "categoryId", "amount", "department"]
     },
     "FinanceForecastScheduled": {
         "title": "FinanceForecastScheduled",
@@ -1048,7 +1049,7 @@
     "AdSpendInquiry": {
       "title": "AdSpendInquiry",
       "type": "object",
-      "description": "Represents daily ad spend and inquiry counts.",
+      "description": "Represents daily ad spent and inquiry counts.",
       "properties": {
         "id": { "type": "string" },
         "date": { "type": "string", "format": "date-time" },
@@ -1388,7 +1389,7 @@
         "definition": {
           "entityName": "AdSpendInquiry",
           "schema": { "$ref": "#/backend/entities/AdSpendInquiry" },
-          "description": "Stores daily ad spend and inquiry data.",
+          "description": "Stores daily ad spent and inquiry data.",
           "params": [
             {
               "name": "inquiryId",
