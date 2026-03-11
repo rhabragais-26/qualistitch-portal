@@ -7,7 +7,7 @@ import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Respon
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer } from '@/components/ui/chart';
 
 
 type Order = {
@@ -219,6 +219,50 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
     }
   };
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        const replenishment = data.replenished;
+        return (
+            <div className="p-2.5 bg-background border rounded-md shadow-lg text-sm">
+                <p className="font-bold mb-2">{label}</p>
+                <div className="space-y-1">
+                    {payload.map((entry: any) => {
+                        if (entry.dataKey === 'replenished') return null;
+
+                        let color;
+                        if (entry.dataKey === 'sold') {
+                            color = COLORS[0];
+                        } else if (entry.dataKey === 'remaining') {
+                            color = entry.value < 0 ? '#ef4444' : COLORS[1];
+                        }
+
+                        return (
+                            <div key={`tooltip-${entry.dataKey}`} className="flex justify-between items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }}/>
+                                    <span>{entry.name}:</span>
+                                </div>
+                                <span className="font-mono font-medium" style={{ color }}>{entry.value.toLocaleString()}</span>
+                            </div>
+                        );
+                    })}
+                    {replenishment > 0 && (
+                        <div key="tooltip-replenished" className="flex justify-between items-center gap-4">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#22c55e' }}/>
+                                <span>Replenishment Count:</span>
+                            </div>
+                            <span className="font-mono font-medium" style={{ color: '#22c55e' }}>{replenishment.toLocaleString()}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+    return null;
+  };
+
   if (isLoading) {
     return <Skeleton className="h-[350px] w-full" />;
   }
@@ -236,61 +280,16 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
             <XAxis dataKey="date" tick={{ fontSize: 12 }} interval={0} />
             <YAxis yAxisId="left" stroke={COLORS[0]} allowDecimals={false} domain={[0, dataMax => Math.round(dataMax * 1.5)]} />
             <YAxis yAxisId="right" orientation="right" stroke={COLORS[1]} allowDecimals={false} domain={yDomainRight} />
-            <Tooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(value, name, item) => {
-                      if (typeof value !== 'number') return value;
-                      const isRemaining = name === 'Remaining Stocks';
-                      
-                      let color, dotColor;
-                      if (name === 'Quantity Sold') {
-                          color = dotColor = COLORS[0];
-                      } else if (name === 'Remaining Stocks') {
-                          color = value < 0 ? '#ef4444' : COLORS[1];
-                          dotColor = COLORS[1];
-                      } else { // Replenishment
-                          color = dotColor = '#22c55e';
-                      }
-
-                      const replenishment = item.payload.replenished;
-                      
-                      return (
-                          <div className="flex flex-col gap-1">
-                              <div className="flex w-full items-center justify-between gap-4 text-base">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
-                                    <span>{name}</span>
-                                </div>
-                                <span className={cn("font-mono font-medium", isRemaining && value < 0 && "text-destructive")} style={{ color: color }}>
-                                    {value.toLocaleString()}
-                                </span>
-                              </div>
-                              {replenishment > 0 && name !== 'Replenishment Count' && (
-                                <div className="flex w-full items-center justify-between gap-4 text-base">
-                                  <div className="flex items-center gap-1.5">
-                                      <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-                                      <span>Replenishment Count</span>
-                                  </div>
-                                  <span className="font-mono font-medium text-green-600">
-                                      {replenishment.toLocaleString()}
-                                  </span>
-                                </div>
-                              )}
-                          </div>
-                      )
-                  }}
-                  cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
-                />
-              }
-            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.5)' }} />
             <Legend />
             <defs>
               <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                 <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor={COLORS[1]} floodOpacity="0.5" />
               </filter>
             </defs>
-            <Bar yAxisId="left" dataKey="replenished" name="Replenishment Count" barSize={10} radius={[4, 4, 0, 0]} fill="#22c55e" />
+            <Bar yAxisId="left" dataKey="replenished" name="Replenishment Count" barSize={20} radius={[4, 4, 0, 0]} fill="#22c55e" fillOpacity={0.6}>
+              <LabelList dataKey="replenished" position="top" formatter={(value: number) => value > 0 ? value.toLocaleString() : null} fill="black" fontWeight="bold" />
+            </Bar>
             <Area 
                 yAxisId="left"
                 type="monotone" 
