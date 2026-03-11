@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -58,7 +56,7 @@ type Lead = {
 
 const chartConfig = {
   adsSpent: {
-    label: 'Ads Spent',
+    label: 'Ad Spent',
     color: 'hsl(var(--chart-1))',
   },
   cpm: {
@@ -111,7 +109,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               <div key={entry.name} className="flex justify-between items-center gap-4">
                 <span className="flex items-center gap-2" style={{ color: entry.stroke || entry.fill }}>
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.stroke || entry.fill }}/>
-                    {entry.name}:
+                    {entry.name === 'adsSpent' ? 'Ad Spent' : entry.name}:
                 </span>
                 <span className="font-semibold" style={{ color: entry.stroke || entry.fill }}>
                   {formatCurrency(entry.value as number, {
@@ -339,7 +337,7 @@ export default function AnalyticsPage() {
              <div className="flex justify-between items-center">
                 <div>
                     <CardTitle>Daily Ad Performance</CardTitle>
-                    <CardDescription>Ads Spent vs. Cost Per Message (CPM) for the selected period.</CardDescription>
+                    <CardDescription>Ad Spent vs. Cost Per Message (CPM) for the selected period.</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -381,55 +379,61 @@ export default function AnalyticsPage() {
                         fontWeight="bold"
                         />
                     </Bar>
-                    <Line dataKey="adsSpent" type="monotone" yAxisId="left" stroke={chartConfig.adsSpent.color} name="Ads Spent" strokeWidth={2}>
+                    <Line dataKey="adsSpent" type="monotone" yAxisId="left" stroke={chartConfig.adsSpent.color} name="Ad Spent" strokeWidth={2}>
                         <LabelList dataKey="adsSpent" content={renderAmountLabel} />
                     </Line>
                     </ComposedChart>
                 </ResponsiveContainer>
                 </ChartContainer>
             </div>
-            <div className="h-[300px]">
-              <div className="flex justify-between items-start mb-2">
+            <div className="h-[350px]">
+              <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
-                  <CardDescription>Daily ad spend broken down by account.</CardDescription>
+                  <CardTitle className="text-lg">Ad Spent per Ad Account</CardTitle>
+                  <CardDescription>Daily ad spent broken down by account.</CardDescription>
                 </div>
-                <div className="text-right">
-                    <p className="text-sm font-medium text-muted-foreground">Total Ad Spend</p>
-                    <p className="text-2xl font-bold">{formatCurrency(totalAdSpend)}</p>
-                    <p className="text-sm font-medium text-muted-foreground mt-2">Total Sales</p>
-                    <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSales)}</p>
+                <div className="flex items-center gap-8">
+                    <div className="text-right">
+                        <p className="text-sm font-medium text-muted-foreground">Total Ad Spent</p>
+                        <p className="text-2xl font-bold">{formatCurrency(totalAdSpend)}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
+                        <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSales)}</p>
+                    </div>
                 </div>
               </div>
-               <ChartContainer config={adAccountChartConfig} className="w-full h-full">
-                <ResponsiveContainer>
-                    <ComposedChart data={adSpendByAccountData}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
-                        <YAxis yAxisId="left" orientation="left" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
-                        <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
-                        <Tooltip
-                            cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
-                            content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
-                        />
-                        <Legend />
-                        <Bar yAxisId="right" dataKey="totalSales" name="Total Sales" fill="hsl(var(--chart-3))" fillOpacity={0.7} barSize={20}>
-                            <LabelList dataKey="totalSales" content={renderAmountLabel} />
-                        </Bar>
-                        {Object.entries(adAccountChartConfig).map(([sanitizedName, config]) => (
-                            <Line
-                                key={sanitizedName}
-                                yAxisId="left"
-                                type="monotone"
-                                dataKey={sanitizedName}
-                                name={config.label as string}
-                                stroke={`var(--color-${sanitizedName})`}
-                                strokeWidth={2}
-                            />
-                        ))}
-                    </ComposedChart>
-                </ResponsiveContainer>
-              </ChartContainer>
+               <div className="h-[250px] mt-4">
+                 <ChartContainer config={adAccountChartConfig} className="w-full h-full">
+                  <ResponsiveContainer>
+                      <ComposedChart data={adSpendByAccountData}>
+                          <CartesianGrid vertical={false} />
+                          <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
+                          <YAxis yAxisId="left" orientation="left" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
+                          <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
+                          <Tooltip
+                              cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
+                              content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
+                          />
+                          <Legend />
+                          <Bar yAxisId="right" dataKey="totalSales" name="Total Sales" fill="hsl(var(--chart-3))" fillOpacity={0.7} barSize={20}>
+                              <LabelList dataKey="totalSales" content={renderAmountLabel} />
+                          </Bar>
+                          {Object.entries(adAccountChartConfig).map(([sanitizedName, config]) => (
+                              <Line
+                                  key={sanitizedName}
+                                  yAxisId="left"
+                                  type="monotone"
+                                  dataKey={sanitizedName}
+                                  name={config.label as string}
+                                  stroke={`var(--color-${sanitizedName})`}
+                                  strokeWidth={2}
+                              />
+                          ))}
+                      </ComposedChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+               </div>
             </div>
           </CardContent>
         </Card>
@@ -465,5 +469,3 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
-
-

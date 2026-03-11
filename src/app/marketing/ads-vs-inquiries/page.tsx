@@ -185,8 +185,8 @@ function AdsVsInquiriesPage() {
           <div>
             <Card className="max-w-md mx-auto">
               <CardHeader>
-                <CardTitle>{editingInquiry ? 'Edit' : 'Record'} Ad Spend vs. Inquiries</CardTitle>
-                <CardDescription>{editingInquiry ? 'Update the details below.' : 'Enter the daily ad spend and generated inquiries.'}</CardDescription>
+                <CardTitle>{editingInquiry ? 'Edit' : 'Record'} Ad Spent vs. Inquiries</CardTitle>
+                <CardDescription>{editingInquiry ? 'Update the details below.' : 'Enter the daily ad spent and generated inquiries.'}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
@@ -205,7 +205,7 @@ function AdsVsInquiriesPage() {
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="adsSpent" render={({ field }) => (
-                      <FormItem><FormLabel>Ads Spent</FormLabel>
+                      <FormItem><FormLabel>Ad Spent</FormLabel>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
                             <FormControl>
@@ -247,7 +247,7 @@ function AdsVsInquiriesPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Recent Records</CardTitle>
-                <CardDescription>A log of all recorded ad spend and inquiries.</CardDescription>
+                <CardDescription>A log of all recorded ad spent and inquiries.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="border rounded-md h-[75vh] overflow-y-auto modern-scrollbar">
@@ -256,7 +256,7 @@ function AdsVsInquiriesPage() {
                       <TableRow>
                         <TableHead className="text-center text-white font-bold">Date</TableHead>
                         <TableHead className="text-white font-bold">Ad Account</TableHead>
-                        <TableHead className="text-center text-white font-bold">Ads Spent</TableHead>
+                        <TableHead className="text-center text-white font-bold">Ad Spent</TableHead>
                         <TableHead className="text-center text-white font-bold">Meta Inquiries</TableHead>
                         <TableHead className="text-center text-white font-bold">Pancake Inquiries</TableHead>
                         <TableHead className="text-center text-white font-bold">CPM</TableHead>
