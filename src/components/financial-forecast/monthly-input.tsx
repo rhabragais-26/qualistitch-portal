@@ -17,10 +17,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { format, parse } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Cog } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { updateMonthlyForecastRollup } from '@/app/finance/financial-forecast/actions';
 import { v4 as uuidv4 } from 'uuid';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ManageCategories } from './manage-categories';
+
 
 const forecastSchema = z.object({
   month: z.string().min(1, 'Month is required.'),
@@ -58,7 +61,7 @@ export function MonthlyForecastInput() {
   const departmentOptions = ['Production', 'Sales', 'Marketing', 'Finance', 'Human Resources', 'Programming & I.T.', 'Operations'];
   
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeCategories'), orderBy('name')) : null, [firestore]);
-  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
 
   const forecastQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeForecastMonthly'), orderBy('month', 'desc'), orderBy('updatedAt', 'desc')) : null, [firestore]);
   const { data: forecasts, isLoading: forecastsLoading, error: forecastsError, refetch } = useCollection<FinanceForecastMonthly>(forecastQuery, undefined, { listen: false });
@@ -202,7 +205,21 @@ export function MonthlyForecastInput() {
                                 )}/>
                                 <FormField control={form.control} name="categoryId" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Category</FormLabel>
+                                        <div className="flex justify-between items-center">
+                                            <FormLabel>Category</FormLabel>
+                                            {canEdit && (
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7">
+                                                            <Cog className="h-4 w-4" />
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="max-w-4xl">
+                                                        <ManageCategories />
+                                                    </DialogContent>
+                                                </Dialog>
+                                            )}
+                                        </div>
                                         <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading || !departmentValue}>
                                             <FormControl><SelectTrigger><SelectValue placeholder={!departmentValue ? "Select a department first" : "Select Category"} /></SelectTrigger></FormControl>
                                             <SelectContent>

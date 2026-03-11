@@ -6,7 +6,6 @@ import { FinancialForecastDashboard } from '@/components/financial-forecast/dash
 import { MonthlyForecastInput } from '@/components/financial-forecast/monthly-input';
 import { ScheduledExpenses } from '@/components/financial-forecast/scheduled-expenses';
 import { Assumptions } from '@/components/financial-forecast/assumptions';
-import { ManageCategories } from '@/components/financial-forecast/manage-categories';
 import { useEffect } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, query, writeBatch, doc } from 'firebase/firestore';
@@ -57,12 +56,11 @@ export default function FinancialForecastPage() {
     <Header>
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="monthly-input">Monthly Forecast Input</TabsTrigger>
             <TabsTrigger value="scheduled-expenses">Scheduled Expenses</TabsTrigger>
             <TabsTrigger value="assumptions">Assumptions</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard">
             <FinancialForecastDashboard />
@@ -75,9 +73,6 @@ export default function FinancialForecastPage() {
           </TabsContent>
           <TabsContent value="assumptions">
              <Assumptions />
-          </TabsContent>
-          <TabsContent value="categories">
-             <ManageCategories />
           </TabsContent>
         </Tabs>
       </main>

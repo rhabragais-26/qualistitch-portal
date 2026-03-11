@@ -29,7 +29,7 @@ export function ManageCategories() {
   const canEdit = isAdmin || userProfile?.position === 'Finance';
 
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeCategories'), orderBy('name')) : null, [firestore]);
-  const { data: categories, isLoading, refetch } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
+  const { data: categories, isLoading, refetch } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: true });
   
   const [newCategoryName, setNewCategoryName] = useState<Record<string, string>>({});
   const [editingCategory, setEditingCategory] = useState<FinanceCategory | null>(null);
@@ -45,7 +45,6 @@ export function ManageCategories() {
       await setDoc(docRef, { id: newId, name, department, group: 'Variable' });
       toast({ title: 'Category Added', description: `"${name}" has been added to ${department}.` });
       setNewCategoryName(prev => ({...prev, [department]: ''}));
-      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Add Failed', description: e.message });
     }
@@ -58,7 +57,6 @@ export function ManageCategories() {
       await setDoc(docRef, editingCategory, { merge: true });
       toast({ title: 'Category Updated' });
       setEditingCategory(null);
-      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Update Failed', description: e.message });
     }
@@ -70,10 +68,10 @@ export function ManageCategories() {
       const docRef = doc(firestore, 'financeCategories', deletingCategory.id);
       await deleteDoc(docRef);
       toast({ title: 'Category Deleted' });
-      setDeletingCategory(null);
-      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Delete Failed', description: e.message });
+    } finally {
+        setDeletingCategory(null);
     }
   };
 
@@ -96,12 +94,7 @@ export function ManageCategories() {
   }
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle>Manage Forecast Categories</CardTitle>
-        <CardDescription>Add, edit, or delete expense categories for each department.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="py-4">
         <Accordion type="multiple" className="w-full">
             {departmentOptions.map(dept => (
                 <AccordionItem value={dept} key={dept}>
@@ -166,7 +159,6 @@ export function ManageCategories() {
             </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
