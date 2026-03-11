@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
 
     return (
         <text x={x} y={y} dy={-8} fill={stroke} fontSize={12} fontWeight="bold" textAnchor="middle">
-            {formatCurrency(value, { notation: 'compact', maximumFractionDigits: 0 })}
+            {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </text>
     );
   };
@@ -436,12 +436,12 @@ export default function AnalyticsPage() {
                 </ChartContainer>
             </div>
             <div>
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between items-start mb-2">
                 <div>
                     <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
                     <CardDescription>Daily ad spend broken down by account.</CardDescription>
                 </div>
-                <div className="flex items-center gap-8 text-left">
+                <div className="flex items-center gap-8 text-right">
                     <div>
                         <p className="text-sm font-medium text-muted-foreground">Total Ad Spent</p>
                         <p className="text-2xl font-bold">{formatCurrency(totalAdSpent)}</p>
@@ -459,7 +459,7 @@ export default function AnalyticsPage() {
                           <CartesianGrid vertical={false} />
                           <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
                           <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-2))" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.1)]} />
-                          <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-3))" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 2)]} />
+                          <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-3))" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.1)]} />
                           <Tooltip
                               cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
                               content={<CustomAdSpendTooltip />}
@@ -478,7 +478,7 @@ export default function AnalyticsPage() {
                                   stroke={`var(--color-${sanitizedName})`}
                                   strokeWidth={2}
                               >
-                                <LabelList content={renderLineLabel} />
+                                <LabelList content={(props) => renderLineLabel({...props, stroke: config.color })} />
                               </Line>
                           ))}
                       </ComposedChart>
@@ -520,4 +520,3 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
-
