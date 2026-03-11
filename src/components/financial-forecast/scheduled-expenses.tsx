@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -25,8 +26,11 @@ import { updateMonthlyForecastRollup } from '@/app/finance/financial-forecast/ac
 import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
 
+const departmentOptions = ['Production', 'Sales', 'Marketing', 'Finance', 'Human Resources', 'Programming & I.T.', 'Operations'];
+
 const scheduledExpenseSchema = z.object({
     date: z.string().min(1, 'Date is required.'),
+    department: z.string().min(1, 'Department is required.'),
     categoryId: z.string().min(1, 'Category is required.'),
     amount: z.coerce.number().min(0, 'Amount must be a positive number.'),
     vendor: z.string().optional(),
@@ -40,15 +44,15 @@ const scheduledExpenseSchema = z.object({
 
 type ScheduledExpenseFormValues = z.infer<typeof scheduledExpenseSchema>;
 
-type FinanceCategory = { id: string; name: string; group: string; };
-type FinanceForecastScheduled = ScheduledExpenseFormValues & {
+type FinanceCategory = { id: string; name: string; group: string; department: string; };
+type FinanceForecastScheduled = Omit<ScheduledExpenseFormValues, 'department'> & {
   id: string;
   createdAt: string;
   updatedAt: string;
   createdBy: string;
 };
 
-function ScheduledExpenseForm({ onSave, existingRecord, onClose }: { onSave: (data: any) => void; existingRecord: Partial<FinanceForecastScheduled> | null; onClose: () => void; }) {
+function ScheduledExpenseForm({ onSave, existingRecord, onClose }: { onSave: (data: any) => void; existingRecord: Partial<FinanceForecastScheduled> & { department?: string } | null; onClose: () => void; }) {
     const { userProfile } = useUser();
     const firestore = useFirestore();
     const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeCategories'), orderBy('name')) : null, [firestore]);
@@ -57,21 +61,55 @@ function ScheduledExpenseForm({ onSave, existingRecord, onClose }: { onSave: (da
     const form = useForm<ScheduledExpenseFormValues>({
       resolver: zodResolver(scheduledExpenseSchema),
       defaultValues: {
-        date: existingRecord?.date ? format(new Date(existingRecord.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-        categoryId: existingRecord?.categoryId || '',
-        amount: existingRecord?.amount || 0,
-        vendor: existingRecord?.vendor || '',
-        notes: existingRecord?.notes || '',
-        recurrence: existingRecord?.recurrence || 'One-time',
-        endDate: existingRecord?.endDate ? format(new Date(existingRecord.endDate), 'yyyy-MM-dd') : '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        department: '',
+        categoryId: '',
+        amount: 0,
+        vendor: '',
+        notes: '',
+        recurrence: 'One-time',
+        endDate: '',
       },
     });
-
+    
+    const { watch, setValue, reset } = form;
+    const departmentValue = watch('department');
     const recurrenceValue = form.watch('recurrence');
+
+    useEffect(() => {
+        if (existingRecord && categories) {
+            const category = categories.find(c => c.id === existingRecord.categoryId);
+            reset({
+                date: existingRecord.date ? format(new Date(existingRecord.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+                department: category?.department || '',
+                categoryId: existingRecord.categoryId || '',
+                amount: existingRecord.amount || 0,
+                vendor: existingRecord.vendor || '',
+                notes: existingRecord.notes || '',
+                recurrence: existingRecord.recurrence || 'One-time',
+                endDate: existingRecord.endDate ? format(new Date(existingRecord.endDate), 'yyyy-MM-dd') : '',
+            });
+        }
+    }, [existingRecord, categories, reset]);
+    
+    const filteredCategories = useMemo(() => {
+        if (!categories || !departmentValue) return [];
+        return categories.filter(c => c.department === departmentValue);
+    }, [categories, departmentValue]);
+
+    useEffect(() => {
+        const subscription = watch((value, { name, type }) => {
+            if (name === 'department' && type === 'change') {
+                setValue('categoryId', '', { shouldValidate: true });
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, [watch, setValue]);
   
     const onSubmit = (data: ScheduledExpenseFormValues) => {
+        const { department, ...dataToSaveWithoutDept } = data;
         const dataToSave = {
-            ...data,
+            ...dataToSaveWithoutDept,
             id: existingRecord?.id || uuidv4(),
             updatedAt: new Date().toISOString(),
             ...(existingRecord ? {} : {
@@ -85,15 +123,23 @@ function ScheduledExpenseForm({ onSave, existingRecord, onClose }: { onSave: (da
     return (
         <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField control={form.control} name="date" render={({ field }) => (
+                    <FormItem><FormLabel>Start/Due Date</FormLabel><Input type="date" {...field} /><FormMessage /></FormItem>
+                )} />
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="date" render={({ field }) => (
-                        <FormItem><FormLabel>Start/Due Date</FormLabel><Input type="date" {...field} /><FormMessage /></FormItem>
+                     <FormField control={form.control} name="department" render={({ field }) => (
+                        <FormItem><FormLabel>Department</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger></FormControl>
+                                <SelectContent>{departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                            </Select>
+                        <FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="categoryId" render={({ field }) => (
                         <FormItem><FormLabel>Category</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
-                            <SelectContent>{categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading || !departmentValue}>
+                            <FormControl><SelectTrigger><SelectValue placeholder={!departmentValue ? "Select a department first" : "Select Category"} /></SelectTrigger></FormControl>
+                            <SelectContent>{filteredCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                         </Select><FormMessage /></FormItem>
                     )} />
                 </div>
@@ -162,21 +208,18 @@ export function ScheduledExpenses() {
     const scheduledQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeForecastScheduled'), orderBy('date', 'desc')) : null, [firestore]);
     const { data: scheduledExpenses, isLoading: expensesLoading, error: expensesError, refetch } = useCollection<FinanceForecastScheduled>(scheduledQuery, undefined, { listen: false });
 
-    const handleSave = async (data: FinanceForecastScheduled) => {
+    const handleSave = async (data: Omit<FinanceForecastScheduled, 'department'>) => {
         if (!firestore) return;
         const docRef = doc(firestore, 'financeForecastScheduled', data.id);
         
         try {
             await setDoc(docRef, data, { merge: true });
             
-            // Trigger rollups for affected months
             const affectedMonths = new Set<string>();
             affectedMonths.add(format(new Date(data.date), 'yyyy-MM'));
             if (editingRecord) {
               affectedMonths.add(format(new Date(editingRecord.date), 'yyyy-MM'));
             }
-            // More complex logic would be needed here for recurring items spanning many months
-            // For now, we update the start month.
             await Promise.all(Array.from(affectedMonths).map(month => updateMonthlyForecastRollup(month)));
 
             toast({ title: `Scheduled Expense ${editingRecord ? 'Updated' : 'Saved'}` });
