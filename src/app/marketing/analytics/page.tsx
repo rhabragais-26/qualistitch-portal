@@ -293,8 +293,8 @@ export default function AnalyticsPage() {
                 </div>
              </div>
           </CardHeader>
-          <CardContent className="space-y-8">
-            <div className="h-[300px]">
+          <CardContent className="space-y-4">
+            <div className="h-[250px]">
                 <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer>
                     <ComposedChart data={filteredData}>
@@ -329,7 +329,7 @@ export default function AnalyticsPage() {
               <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
               <CardDescription>Daily ad spend broken down by account.</CardDescription>
             </div>
-             <div className="h-[300px]">
+             <div className="h-[250px]">
                <ChartContainer config={adAccountChartConfig} className="w-full h-full">
                 <ResponsiveContainer>
                     <LineChart data={adSpendByAccountData}>
