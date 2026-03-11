@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -16,6 +15,8 @@ import {
   ResponsiveContainer,
   LabelList,
   LineChart,
+  BarChart,
+  Cell,
 } from 'recharts';
 import {
   Card,
@@ -37,6 +38,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Header } from '@/components/header';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Separator } from '@/components/ui/separator';
+import { anniversaryData } from '@/lib/anniversaries-data';
 
 type AdSpendInquiry = {
   id: string;
@@ -252,6 +254,39 @@ export default function AnalyticsPage() {
     });
     return config;
   }, [adAccountNameMap]);
+  
+  const { monthlyAnniversaryData, allIndustries } = useMemo(() => {
+    const dataByMonth: Record<string, Record<string, number>> = {
+        'Jan': {}, 'Feb': {}, 'Mar': {}, 'Apr': {}, 'May': {}, 'Jun': {},
+        'Jul': {}, 'Aug': {}, 'Sep': {}, 'Oct': {}, 'Nov': {}, 'Dec': {}
+    };
+    const industries = new Set<string>();
+
+    anniversaryData.forEach(org => {
+        try {
+            const date = new Date(org.dateFounded);
+            const month = format(date, 'MMM');
+            const industry = org.industry;
+            industries.add(industry);
+
+            if (dataByMonth[month]) {
+                if (!dataByMonth[month][industry]) {
+                    dataByMonth[month][industry] = 0;
+                }
+                dataByMonth[month][industry]++;
+            }
+        } catch (e) {
+            // ignore invalid dates
+        }
+    });
+
+    const chartData = Object.entries(dataByMonth).map(([month, industryCounts]) => ({
+        month,
+        ...industryCounts
+    }));
+
+    return { monthlyAnniversaryData: chartData, allIndustries: Array.from(industries).sort() };
+  }, []);
 
   if (isLoading) {
     return (
@@ -269,7 +304,7 @@ export default function AnalyticsPage() {
 
   return (
     <Header>
-      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 space-y-8">
         <Card>
           <CardHeader>
              <div className="flex justify-between items-center">
@@ -293,7 +328,7 @@ export default function AnalyticsPage() {
                 </div>
              </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-8">
             <div className="h-[250px]">
                 <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer>
@@ -358,6 +393,38 @@ export default function AnalyticsPage() {
               </ChartContainer>
             </div>
           </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Founding Anniversaries per Month</CardTitle>
+                <CardDescription>
+                    Count of organization anniversaries, stacked by industry.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="h-[300px]">
+                  <ChartContainer config={{}} className="w-full h-full">
+                    <ResponsiveContainer>
+                        <BarChart data={monthlyAnniversaryData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false}/>
+                            <XAxis dataKey="month" />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip content={<ChartTooltipContent />} />
+                            <Legend />
+                            {allIndustries.map((industry, index) => (
+                                <Bar
+                                key={industry}
+                                dataKey={industry}
+                                stackId="a"
+                                fill={COLORS[index % COLORS.length]}
+                                name={industry}
+                                />
+                            ))}
+                        </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+            </CardContent>
         </Card>
       </main>
     </Header>
