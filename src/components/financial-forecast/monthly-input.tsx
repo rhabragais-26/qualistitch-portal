@@ -169,31 +169,31 @@ export function MonthlyForecastInput() {
                                             <FormMessage />
                                         </FormItem>
                                     )} />
-                                    <FormField control={form.control} name="categoryId" render={({ field }) => (
+                                    <FormField control={form.control} name="department" render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Category</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading}>
-                                                <FormControl><SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
+                                            <FormLabel>Department</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormControl><SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger></FormControl>
                                                 <SelectContent>
-                                                    {categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                                    {departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
                                         </FormItem>
-                                    )} />
+                                    )}/>
                                 </div>
-                                <FormField control={form.control} name="department" render={({ field }) => (
+                                <FormField control={form.control} name="categoryId" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Department</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger></FormControl>
+                                        <FormLabel>Category</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
                                             <SelectContent>
-                                                {departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                                {categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
                                     </FormItem>
-                                )}/>
+                                )} />
                                 <FormField control={form.control} name="amount" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Amount</FormLabel>
@@ -268,8 +268,8 @@ export function MonthlyForecastInput() {
                             <TableHeader className="sticky top-0 bg-neutral-800 z-10">
                                 <TableRow>
                                     <TableHead className="text-white">Month</TableHead>
-                                    <TableHead className="text-white">Category</TableHead>
                                     <TableHead className="text-white">Department</TableHead>
+                                    <TableHead className="text-white">Category</TableHead>
                                     <TableHead className="text-white text-right">Amount</TableHead>
                                     <TableHead className="text-white">Notes</TableHead>
                                     <TableHead className="text-white">Updated</TableHead>
@@ -282,8 +282,8 @@ export function MonthlyForecastInput() {
                                     : filteredForecasts.length > 0 ? filteredForecasts.map(item => (
                                         <TableRow key={item.id}>
                                             <TableCell className="font-medium">{format(parse(item.month, 'yyyy-MM', new Date()), 'MMM yyyy')}</TableCell>
-                                            <TableCell>{categories?.find(c => c.id === item.categoryId)?.name}</TableCell>
                                             <TableCell>{item.department}</TableCell>
+                                            <TableCell>{categories?.find(c => c.id === item.categoryId)?.name}</TableCell>
                                             <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
                                             <TableCell className="max-w-[200px] truncate">{item.notes}</TableCell>
                                             <TableCell>{format(new Date(item.updatedAt), 'MMM dd, h:mm a')}</TableCell>
