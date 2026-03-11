@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -321,7 +322,7 @@ export default function AnalyticsPage() {
                 </div>
              </div>
           </CardHeader>
-          <CardContent className="space-y-8 h-[550px]">
+          <CardContent className="space-y-8">
             <div className="h-[250px]">
                 <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer>
@@ -335,7 +336,7 @@ export default function AnalyticsPage() {
                         content={<CustomTooltip />}
                       />
                     <Legend />
-                    <Bar dataKey="cpm" yAxisId="right" fill={chartConfig.cpm.color} name="CPM" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="cpm" yAxisId="right" fill="var(--color-cpm)" name="CPM" radius={[4, 4, 0, 0]}>
                         <LabelList
                         dataKey="cpm"
                         position="center"
@@ -353,7 +354,7 @@ export default function AnalyticsPage() {
                 </ChartContainer>
             </div>
             <Separator />
-            <div className="h-[250px]">
+            <div className="h-[300px]">
               <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
               <CardDescription>Daily ad spend broken down by account.</CardDescription>
                <ChartContainer config={adAccountChartConfig} className="w-full h-full">
@@ -364,7 +365,7 @@ export default function AnalyticsPage() {
                         <YAxis tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
                         <Tooltip
                             cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
-                            content={<CustomTooltip />}
+                            content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
                         />
                         <Legend />
                         {Object.entries(adAccountChartConfig).map(([sanitizedName, config]) => (
