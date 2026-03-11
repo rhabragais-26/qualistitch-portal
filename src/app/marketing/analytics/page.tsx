@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -353,7 +354,7 @@ export default function AnalyticsPage() {
                 </ChartContainer>
             </div>
             <Separator />
-            <div className="h-[400px]">
+            <div className="h-[350px]">
               <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
               <CardDescription className="mb-2">Daily ad spend broken down by account.</CardDescription>
                <ChartContainer config={adAccountChartConfig} className="w-full h-full">
