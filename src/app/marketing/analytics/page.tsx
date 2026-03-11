@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -410,7 +411,7 @@ export default function AnalyticsPage() {
                         cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
                         content={<CustomTooltip />}
                       />
-                    <Legend />
+                    <Legend wrapperStyle={{ paddingTop: '0' }} />
                     <Bar dataKey="cpm" yAxisId="right" fill="var(--color-cpm)" name="CPM" radius={[4, 4, 0, 0]}>
                         <LabelList
                         dataKey="cpm"
@@ -428,11 +429,11 @@ export default function AnalyticsPage() {
                 </ResponsiveContainer>
                 </ChartContainer>
             </div>
-            <div className="h-[300px]">
+            <div>
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-lg">Ad Spent per Ad Account</CardTitle>
-                  <CardDescription className="mb-2">Daily ad spend broken down by account.</CardDescription>
+                  <CardDescription>Daily ad spend broken down by account.</CardDescription>
                 </div>
                 <div className="flex items-center gap-8 text-left">
                     <div>
@@ -451,13 +452,13 @@ export default function AnalyticsPage() {
                       <ComposedChart data={adSpendByAccountData}>
                           <CartesianGrid vertical={false} />
                           <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
-                          <YAxis yAxisId="left" orientation="left" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 2)]} />
-                          <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.1)]} />
+                          <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-2))" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.1)]} />
+                          <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-3))" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 2)]} />
                           <Tooltip
                               cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
                               content={<CustomAdSpendTooltip />}
                           />
-                          <Legend />
+                          <Legend wrapperStyle={{ paddingTop: '20px' }}/>
                           <Bar yAxisId="right" dataKey="totalSales" name="Total Sales" fill="hsl(var(--chart-3))" fillOpacity={0.7} barSize={20}>
                               <LabelList dataKey="totalSales" content={renderAmountLabel} />
                           </Bar>
@@ -513,3 +514,4 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
+
