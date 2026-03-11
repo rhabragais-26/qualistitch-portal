@@ -473,8 +473,8 @@ export default function AnalyticsPage() {
                       <ComposedChart data={adSpendByAccountData}>
                           <CartesianGrid vertical={false} />
                           <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
-                          <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-2))" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.1)]} />
-                          <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-3))" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.1)]} />
+                          <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-2))" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, 30000]} />
+                          <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-3))" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, 2000000]} ticks={[0, 100000, 300000, 1800000]} />
                           <Tooltip
                               cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
                               content={<CustomAdSpendTooltip />}
