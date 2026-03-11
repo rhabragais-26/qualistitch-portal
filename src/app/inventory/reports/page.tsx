@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Header } from '@/components/header';
@@ -317,13 +316,15 @@ export default function InventoryReportsPage() {
             
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold mt-4">
-                        <span className="text-teal-600">Remaining Stocks</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
-                    </h3>
+                    <div className="flex justify-between items-center h-[40px] mt-4">
+                        <h3 className="text-lg font-bold">
+                            <span className="text-teal-600">Remaining Stocks</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
+                        </h3>
+                    </div>
                     <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} />
                 </div>
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center mt-4">
+                    <div className="flex justify-between items-center h-[40px] mt-4">
                         <h3 className="text-lg font-bold">
                             <span className="text-teal-600">For Priority Purchase</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
                         </h3>
