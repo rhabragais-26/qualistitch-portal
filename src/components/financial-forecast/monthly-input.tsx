@@ -32,7 +32,7 @@ const forecastSchema = z.object({
 
 type ForecastFormValues = z.infer<typeof forecastSchema>;
 
-type FinanceCategory = { id: string; name: string; group: string; };
+type FinanceCategory = { id: string; name: string; group: string; department: string };
 type FinanceForecastMonthly = ForecastFormValues & {
   id: string;
   createdAt: string;
@@ -67,6 +67,20 @@ export function MonthlyForecastInput() {
     resolver: zodResolver(forecastSchema),
     defaultValues: { month: format(new Date(), 'yyyy-MM'), categoryId: '', department: '', amount: 0, notes: '' },
   });
+  
+  const { watch, setValue } = form;
+  const departmentValue = watch('department');
+
+  useEffect(() => {
+    if (departmentValue) {
+        setValue('categoryId', '');
+    }
+  }, [departmentValue, setValue]);
+
+  const filteredCategories = useMemo(() => {
+    if (!categories || !departmentValue) return [];
+    return categories.filter(c => c.department === departmentValue);
+  }, [categories, departmentValue]);
 
   useEffect(() => {
     if (editingRecord) {
@@ -161,34 +175,32 @@ export function MonthlyForecastInput() {
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                             <fieldset disabled={!canEdit} className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField control={form.control} name="month" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Month</FormLabel>
-                                            <Input type="month" {...field} />
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-                                    <FormField control={form.control} name="department" render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Department</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl><SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger></FormControl>
-                                                <SelectContent>
-                                                    {departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}/>
-                                </div>
+                                <FormField control={form.control} name="month" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Month</FormLabel>
+                                        <Input type="month" {...field} />
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                                <FormField control={form.control} name="department" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Department</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder="Select Department" /></SelectTrigger></FormControl>
+                                            <SelectContent>
+                                                {departmentOptions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}/>
                                 <FormField control={form.control} name="categoryId" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Category</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
+                                        <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading || !departmentValue}>
+                                            <FormControl><SelectTrigger><SelectValue placeholder={!departmentValue ? "Select a department first" : "Select Category"} /></SelectTrigger></FormControl>
                                             <SelectContent>
-                                                {categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                                {filteredCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

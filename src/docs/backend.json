@@ -1,6 +1,23 @@
 
+
 {
   "entities": {
+    "InventoryReplenishment": {
+        "title": "InventoryReplenishment",
+        "type": "object",
+        "description": "Represents a record of stock being added to the inventory.",
+        "properties": {
+          "id": { "type": "string" },
+          "date": { "type": "string", "format": "date-time" },
+          "productType": { "type": "string" },
+          "color": { "type": "string" },
+          "size": { "type": "string" },
+          "quantity": { "type": "number" },
+          "submittedBy": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "date", "productType", "color", "size", "quantity", "submittedBy", "timestamp"]
+    },
     "FinanceCategory": {
         "title": "FinanceCategory",
         "type": "object",
@@ -8,9 +25,10 @@
         "properties": {
             "id": { "type": "string" },
             "name": { "type": "string" },
+            "department": { "type": "string" },
             "group": { "type": "string", "enum": ["Fixed", "Variable", "One-Time"] }
         },
-        "required": ["id", "name", "group"]
+        "required": ["id", "name", "group", "department"]
     },
     "FinanceAssumption": {
         "title": "FinanceAssumption",
@@ -31,11 +49,12 @@
             "id": { "type": "string" },
             "month": { "type": "string", "format": "yyyy-MM", "description": "The month of the forecast (e.g., '2024-08')." },
             "categoryId": { "type": "string", "description": "Reference to the FinanceCategory." },
+            "department": { "type": "string", "description": "The department associated with the expense." },
             "amount": { "type": "number" },
             "notes": { "type": "string" },
             "createdAt": { "type": "string", "format": "date-time" }
         },
-        "required": ["id", "month", "categoryId", "amount"]
+        "required": ["id", "month", "categoryId", "amount", "department"]
     },
     "FinanceForecastScheduled": {
         "title": "FinanceForecastScheduled",
@@ -1070,6 +1089,16 @@
   "firestore": {
     "structure": [
       {
+        "path": "/inventory_replenishments/{replenishmentId}",
+        "definition": {
+          "entityName": "InventoryReplenishment",
+          "schema": {
+            "$ref": "#/backend/entities/InventoryReplenishment"
+          },
+          "description": "Stores historical records of inventory replenishments."
+        }
+      },
+      {
         "path": "/financeCategories/{categoryId}",
         "definition": {
           "entityName": "FinanceCategory",
@@ -1365,7 +1394,7 @@
           "params": [
             {
               "name": "inquiryId",
-              "description": "Unique identifier for the ad spent inquiry document."
+              "description": "Unique identifier for the ad spend inquiry document."
             }
           ]
         }
@@ -1400,3 +1429,4 @@
     "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\\n\\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\\n\\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
   }
 }
+
