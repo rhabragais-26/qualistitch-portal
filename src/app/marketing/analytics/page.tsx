@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -247,7 +248,7 @@ export default function AnalyticsPage() {
              <div className="flex justify-between items-center">
                 <div>
                     <CardTitle>Daily Ad Performance</CardTitle>
-                    <CardDescription>Ads Spent vs. Cost Per Mille (CPM) for the selected period.</CardDescription>
+                    <CardDescription>Ads Spent vs. Cost Per Message (CPM) for the selected period.</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -329,3 +330,4 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
+
