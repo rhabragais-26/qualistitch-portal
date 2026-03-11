@@ -147,6 +147,48 @@ export default function AnalyticsPage() {
   const error = adSpendError || leadsError;
 
 
+  const renderLineLabel = (props: any) => {
+    const { x, y, value, stroke } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+
+    return (
+        <text x={x} y={y} dy={-8} fill={stroke} fontSize={12} fontWeight="bold" textAnchor="middle">
+            {formatCurrency(value, { notation: 'compact', maximumFractionDigits: 0 })}
+        </text>
+    );
+  };
+
+  const CustomAdSpendTooltip = ({ active, payload, label }: any) => {
+      if (active && payload && payload.length) {
+        return (
+          <div className="p-3 bg-card border rounded-lg shadow-lg text-base">
+            <p className="font-bold mb-2 text-card-foreground">{label}</p>
+            <div className="space-y-1">
+              {payload.map((entry: any) => {
+                  if (entry.value === 0 && entry.dataKey !== 'totalSales') return null;
+                  return (
+                      <div key={entry.name} className="flex justify-between items-center gap-4">
+                          <span className="flex items-center gap-2" style={{ color: entry.stroke || entry.fill }}>
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.stroke || entry.fill }}/>
+                              {entry.name}:
+                          </span>
+                          <span className="font-semibold" style={{ color: entry.stroke || entry.fill }}>
+                          {formatCurrency(entry.value as number, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                          })}
+                          </span>
+                      </div>
+                  )
+              })}
+            </div>
+          </div>
+        );
+      }
+      return null;
+  };
+
+
   const { availableYears, months } = useMemo(() => {
     if (!adSpendData) {
         const currentYear = new Date().getFullYear();
@@ -386,24 +428,24 @@ export default function AnalyticsPage() {
                 </ResponsiveContainer>
                 </ChartContainer>
             </div>
-            <div className="h-[350px]">
+            <div className="h-[300px]">
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-lg">Ad Spent per Ad Account</CardTitle>
-                  <CardDescription>Daily ad spent broken down by account.</CardDescription>
+                  <CardDescription className="mb-2">Daily ad spend broken down by account.</CardDescription>
                 </div>
-                <div className="flex items-center gap-8">
-                    <div className="text-right">
+                <div className="flex items-center gap-8 text-left">
+                    <div>
                         <p className="text-sm font-medium text-muted-foreground">Total Ad Spent</p>
                         <p className="text-2xl font-bold">{formatCurrency(totalAdSpend)}</p>
                     </div>
-                    <div className="text-right">
+                    <div>
                         <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
                         <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSales)}</p>
                     </div>
                 </div>
               </div>
-               <div className="h-[250px] mt-4">
+               <div className="h-[260px] mt-4">
                  <ChartContainer config={adAccountChartConfig} className="w-full h-full">
                   <ResponsiveContainer>
                       <ComposedChart data={adSpendByAccountData}>
@@ -413,7 +455,7 @@ export default function AnalyticsPage() {
                           <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
                           <Tooltip
                               cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
-                              content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
+                              content={<CustomAdSpendTooltip />}
                           />
                           <Legend />
                           <Bar yAxisId="right" dataKey="totalSales" name="Total Sales" fill="hsl(var(--chart-3))" fillOpacity={0.7} barSize={20}>
@@ -428,7 +470,9 @@ export default function AnalyticsPage() {
                                   name={config.label as string}
                                   stroke={`var(--color-${sanitizedName})`}
                                   strokeWidth={2}
-                              />
+                              >
+                                <LabelList content={renderLineLabel} />
+                              </Line>
                           ))}
                       </ComposedChart>
                   </ResponsiveContainer>
