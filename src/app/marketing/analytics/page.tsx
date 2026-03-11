@@ -59,7 +59,7 @@ const chartConfig = {
   },
 };
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1967'];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1967', '#3498DB', '#2ECC71', '#F1C40F', '#E67E22', '#9B59B6', '#E74C3C'];
 
 const renderAmountLabel = (props: any) => {
     const { x, y, width, value, stroke } = props;
@@ -255,37 +255,30 @@ export default function AnalyticsPage() {
     return config;
   }, [adAccountNameMap]);
   
-  const { monthlyAnniversaryData, allIndustries } = useMemo(() => {
-    const dataByMonth: Record<string, Record<string, number>> = {
-        'Jan': {}, 'Feb': {}, 'Mar': {}, 'Apr': {}, 'May': {}, 'Jun': {},
-        'Jul': {}, 'Aug': {}, 'Sep': {}, 'Oct': {}, 'Nov': {}, 'Dec': {}
+  const { monthlyAnniversaryData } = useMemo(() => {
+    const dataByMonth: Record<string, { total: number }> = {
+        'Jan': { total: 0 }, 'Feb': { total: 0 }, 'Mar': { total: 0 }, 'Apr': { total: 0 }, 'May': { total: 0 }, 'Jun': { total: 0 },
+        'Jul': { total: 0 }, 'Aug': { total: 0 }, 'Sep': { total: 0 }, 'Oct': { total: 0 }, 'Nov': { total: 0 }, 'Dec': { total: 0 }
     };
-    const industries = new Set<string>();
-
+    
     anniversaryData.forEach(org => {
         try {
             const date = new Date(org.dateFounded);
             const month = format(date, 'MMM');
-            const industry = org.industry;
-            industries.add(industry);
-
             if (dataByMonth[month]) {
-                if (!dataByMonth[month][industry]) {
-                    dataByMonth[month][industry] = 0;
-                }
-                dataByMonth[month][industry]++;
+                dataByMonth[month].total++;
             }
         } catch (e) {
             // ignore invalid dates
         }
     });
 
-    const chartData = Object.entries(dataByMonth).map(([month, industryCounts]) => ({
+    const chartData = Object.entries(dataByMonth).map(([month, data]) => ({
         month,
-        ...industryCounts
+        total: data.total
     }));
 
-    return { monthlyAnniversaryData: chartData, allIndustries: Array.from(industries).sort() };
+    return { monthlyAnniversaryData: chartData };
   }, []);
 
   if (isLoading) {
@@ -398,7 +391,7 @@ export default function AnalyticsPage() {
             <CardHeader>
                 <CardTitle>Founding Anniversaries per Month</CardTitle>
                 <CardDescription>
-                    Count of organization anniversaries, stacked by industry.
+                    Total count of organization anniversaries per month.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -409,17 +402,13 @@ export default function AnalyticsPage() {
                             <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                             <XAxis dataKey="month" />
                             <YAxis allowDecimals={false} />
-                            <Tooltip content={<ChartTooltipContent />} />
-                            <Legend />
-                            {allIndustries.map((industry, index) => (
-                                <Bar
-                                key={industry}
-                                dataKey={industry}
-                                stackId="a"
-                                fill={COLORS[index % COLORS.length]}
-                                name={industry}
-                                />
-                            ))}
+                            <Tooltip content={<ChartTooltipContent formatter={(value) => `${value} organizations`} />} />
+                            <Bar dataKey="total" name="Organizations">
+                                {monthlyAnniversaryData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                                <LabelList dataKey="total" position="top" />
+                            </Bar>
                         </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
