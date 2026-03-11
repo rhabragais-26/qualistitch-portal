@@ -225,10 +225,10 @@ function FinanceDashboard() {
             <CardContent>
               <ChartContainer config={{}} className="w-full h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={opExByCategory} layout="vertical" margin={{ left: 100 }}>
+                   <BarChart data={opExByCategory} layout="vertical" margin={{ left: 140 }}>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                         <XAxis type="number" tickFormatter={(value) => formatCurrency(value as number)} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} />
+                        <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={130} />
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]}>
                             <LabelList dataKey="value" position="right" formatter={(value: number) => formatCurrency(value)} fontSize={12} />
