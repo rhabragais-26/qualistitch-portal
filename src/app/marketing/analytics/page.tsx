@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -322,7 +321,7 @@ export default function AnalyticsPage() {
                 </div>
              </div>
           </CardHeader>
-          <CardContent className="space-y-8 h-[900px]">
+          <CardContent className="space-y-8">
             <div className="h-[250px]">
                 <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer>
@@ -354,9 +353,9 @@ export default function AnalyticsPage() {
                 </ChartContainer>
             </div>
             <Separator />
-            <div className="h-[350px]">
+            <div className="h-[400px]">
               <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
-              <CardDescription>Daily ad spend broken down by account.</CardDescription>
+              <CardDescription className="mb-2">Daily ad spend broken down by account.</CardDescription>
                <ChartContainer config={adAccountChartConfig} className="w-full h-full">
                 <ResponsiveContainer>
                     <LineChart data={adSpendByAccountData}>
