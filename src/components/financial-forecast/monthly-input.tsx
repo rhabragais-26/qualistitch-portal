@@ -72,10 +72,15 @@ export function MonthlyForecastInput() {
   const departmentValue = watch('department');
 
   useEffect(() => {
-    if (departmentValue) {
-        setValue('categoryId', '');
-    }
-  }, [departmentValue, setValue]);
+    const subscription = watch((value, { name, type }) => {
+      // Only clear category when department is changed by the user.
+      if (name === 'department' && type === 'change') {
+        setValue('categoryId', '', { shouldValidate: true });
+      }
+    })
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
+
 
   const filteredCategories = useMemo(() => {
     if (!categories || !departmentValue) return [];

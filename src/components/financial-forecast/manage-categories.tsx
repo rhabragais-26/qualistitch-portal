@@ -14,17 +14,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 const departmentOptions = ['Production', 'Sales', 'Marketing', 'Finance', 'Human Resources', 'Programming & I.T.', 'Operations'];
 
-const initialCategoriesData: { department: string; categories: { name: string; group: 'Fixed' | 'Variable' | 'One-Time' }[] }[] = [
-  { department: 'Production', categories: [ { name: 'Direct Labor', group: 'Variable' }, { name: 'Factory Utilities & Supplies', group: 'Variable' } ] },
-  { department: 'Sales', categories: [ { name: 'Sales Commissions', group: 'Variable' }, { name: 'Clients Meet Up Allowance', group: 'Variable' }, { name: 'Sales Salary', group: 'Fixed' }, { name: 'Office Supplies', group: 'Variable' } ] },
-  { department: 'Marketing', categories: [ { name: 'Advertising & Promotions', group: 'Variable' }, { name: 'Branding Campaigns', group: 'Variable' }, { name: 'Marketing Salary', group: 'Fixed' } ] },
-  { department: 'Finance', categories: [ { name: 'Accounting Salaries', group: 'Fixed' }, { name: 'Bank Charges', group: 'Variable' }, { name: 'Office Supplies', group: 'Variable' } ] },
-  { department: 'Human Resources', categories: [ { name: 'Employee Welfare & Improvements', group: 'Variable' } ] },
-  { department: 'Programming & I.T.', categories: [ { name: 'Software Licenses/Subscription', group: 'Fixed' }, { name: 'Programming Supplies', group: 'Variable' }, { name: 'Programmer Salary Allocation', group: 'Fixed' } ] },
-  { department: 'Operations', categories: [ { name: 'Logistics Supplies', group: 'Variable' }, { name: 'Logistics & Delivery', group: 'Variable' }, { name: 'Administrative Utilities', group: 'Fixed' }, { name: 'Salary', group: 'Fixed' } ] }
-];
-
-
 type FinanceCategory = {
   id: string;
   name: string;
@@ -45,26 +34,6 @@ export function ManageCategories() {
   const [newCategoryName, setNewCategoryName] = useState<Record<string, string>>({});
   const [editingCategory, setEditingCategory] = useState<FinanceCategory | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<FinanceCategory | null>(null);
-
-  useEffect(() => {
-    if (!isLoading && categories?.length === 0 && canEdit && firestore) {
-      const batch = writeBatch(firestore);
-      initialCategoriesData.forEach(dept => {
-        dept.categories.forEach(cat => {
-          const newId = uuidv4();
-          const docRef = doc(firestore, 'financeCategories', newId);
-          batch.set(docRef, { ...cat, department: dept.department, id: newId });
-        });
-      });
-      batch.commit().then(() => {
-        toast({ title: "Categories Initialized", description: "Default forecast categories have been added."});
-        refetch();
-      }).catch(e => {
-        console.error("Error initializing categories:", e);
-        toast({ variant: 'destructive', title: "Initialization Failed", description: e.message });
-      });
-    }
-  }, [isLoading, categories, canEdit, firestore, toast, refetch]);
 
   const handleAddCategory = async (department: string) => {
     const name = newCategoryName[department]?.trim();
