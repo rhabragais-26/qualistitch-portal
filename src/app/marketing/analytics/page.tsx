@@ -322,7 +322,7 @@ export default function AnalyticsPage() {
                 </div>
              </div>
           </CardHeader>
-          <CardContent className="space-y-8">
+          <CardContent className="space-y-8 h-[900px]">
             <div className="h-[250px]">
                 <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer>
@@ -354,7 +354,7 @@ export default function AnalyticsPage() {
                 </ChartContainer>
             </div>
             <Separator />
-            <div className="h-[300px]">
+            <div className="h-[350px]">
               <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
               <CardDescription>Daily ad spend broken down by account.</CardDescription>
                <ChartContainer config={adAccountChartConfig} className="w-full h-full">
