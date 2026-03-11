@@ -60,6 +60,7 @@ function ScheduledExpenseForm({ onSave, existingRecord, onClose }: { onSave: (da
   
     const form = useForm<ScheduledExpenseFormValues>({
       resolver: zodResolver(scheduledExpenseSchema),
+      mode: 'onChange',
       defaultValues: {
         date: format(new Date(), 'yyyy-MM-dd'),
         department: '',
@@ -139,7 +140,9 @@ function ScheduledExpenseForm({ onSave, existingRecord, onClose }: { onSave: (da
                         <FormItem><FormLabel>Category</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value} disabled={categoriesLoading || !departmentValue}>
                             <FormControl><SelectTrigger><SelectValue placeholder={!departmentValue ? "Select a department first" : "Select Category"} /></SelectTrigger></FormControl>
-                            <SelectContent>{filteredCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                            <SelectContent>
+                                {filteredCategories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                            </SelectContent>
                         </Select><FormMessage /></FormItem>
                     )} />
                 </div>
@@ -206,7 +209,7 @@ export function ScheduledExpenses() {
     const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
 
     const scheduledQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeForecastScheduled'), orderBy('date', 'desc')) : null, [firestore]);
-    const { data: scheduledExpenses, isLoading: expensesLoading, error: expensesError, refetch } = useCollection<FinanceForecastScheduled>(scheduledQuery, undefined, { listen: false });
+    const { data: scheduledExpenses, isLoading: expensesLoading, error: expensesError, refetch } = useCollection<FinanceForecastScheduled>(scheduledQuery, undefined, { listen: true });
 
     const handleSave = async (data: Omit<FinanceForecastScheduled, 'department'>) => {
         if (!firestore) return;
