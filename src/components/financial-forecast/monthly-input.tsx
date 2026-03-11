@@ -21,14 +21,14 @@ import { Edit, Trash2, Cog } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { updateMonthlyForecastRollup } from '@/app/finance/financial-forecast/actions';
 import { v4 as uuidv4 } from 'uuid';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { ManageCategories } from './manage-categories';
 
 
 const forecastSchema = z.object({
   month: z.string().min(1, 'Month is required.'),
-  categoryId: z.string().min(1, 'Category is required.'),
   department: z.string().min(1, 'Department is required.'),
+  categoryId: z.string().min(1, 'Category is required.'),
   amount: z.coerce.number().min(0, 'Amount must be a positive number.'),
   notes: z.string().optional(),
 });
@@ -95,8 +95,8 @@ export function MonthlyForecastInput() {
     if (editingRecord) {
       form.reset({
         month: editingRecord.month,
-        categoryId: editingRecord.categoryId,
         department: editingRecord.department || '',
+        categoryId: editingRecord.categoryId,
         amount: editingRecord.amount,
         notes: editingRecord.notes || '',
       });
@@ -173,7 +173,7 @@ export function MonthlyForecastInput() {
   const error = categoriesError || forecastsError;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start mt-6">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-6">
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
@@ -215,6 +215,12 @@ export function MonthlyForecastInput() {
                                                         </Button>
                                                     </DialogTrigger>
                                                     <DialogContent className="max-w-4xl">
+                                                        <DialogHeader>
+                                                            <DialogTitle>Manage Categories</DialogTitle>
+                                                            <DialogDescription>
+                                                                Add, edit, or delete expense categories for each department.
+                                                            </DialogDescription>
+                                                        </DialogHeader>
                                                         <ManageCategories />
                                                     </DialogContent>
                                                 </Dialog>
