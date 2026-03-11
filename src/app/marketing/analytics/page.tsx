@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -281,6 +282,11 @@ export default function AnalyticsPage() {
 
     return { monthlyAnniversaryData: chartData };
   }, []);
+  
+  const totalAdSpend = useMemo(() => {
+    if (!filteredData) return 0;
+    return filteredData.reduce((sum, item) => sum + item.adsSpent, 0);
+  }, [filteredData]);
 
   if (isLoading) {
     return (
@@ -353,11 +359,18 @@ export default function AnalyticsPage() {
                 </ResponsiveContainer>
                 </ChartContainer>
             </div>
-            <Separator />
-            <div className="h-[350px]">
-              <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
-              <CardDescription className="mb-2">Daily ad spend broken down by account.</CardDescription>
-               <ChartContainer config={adAccountChartConfig} className="w-full h-full">
+            <div className="h-[300px]">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
+                  <CardDescription>Daily ad spend broken down by account.</CardDescription>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm font-medium text-muted-foreground">Total Ad Spend</p>
+                    <p className="text-2xl font-bold">{formatCurrency(totalAdSpend)}</p>
+                </div>
+              </div>
+               <ChartContainer config={adAccountChartConfig} className="w-full h-[calc(100%-40px)]">
                 <ResponsiveContainer>
                     <LineChart data={adSpendByAccountData}>
                         <CartesianGrid vertical={false} />
@@ -406,7 +419,7 @@ export default function AnalyticsPage() {
                                 {monthlyAnniversaryData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
-                                <LabelList dataKey="total" position="top" fill="black" fontWeight="bold" />
+                                <LabelList dataKey="total" position="top" className="fill-black font-bold" fontSize={12} />
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
@@ -418,3 +431,4 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
+
