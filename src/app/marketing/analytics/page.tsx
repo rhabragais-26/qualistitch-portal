@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -318,6 +319,8 @@ export default function AnalyticsPage() {
         
   }, [adSpendData, leadsData, selectedYear, selectedMonth]);
   
+  const adSpentPercentage = totalSales > 0 ? (totalAdSpent / totalSales) * 100 : 0;
+  
   const adAccountChartConfig = useMemo(() => {
     const config: ChartConfig = {};
     const colorAssignments: Record<string, string> = {
@@ -442,6 +445,10 @@ export default function AnalyticsPage() {
                     <CardDescription>Daily ad spend broken down by account.</CardDescription>
                 </div>
                 <div className="flex items-center gap-8 text-right">
+                    <div>
+                        <p className="text-sm font-medium text-muted-foreground">Ad Spent Percentage</p>
+                        <p className="text-2xl font-bold">{adSpentPercentage.toFixed(2)}%</p>
+                    </div>
                     <div>
                         <p className="text-sm font-medium text-muted-foreground">Total Ad Spent</p>
                         <p className="text-2xl font-bold">{formatCurrency(totalAdSpent)}</p>
