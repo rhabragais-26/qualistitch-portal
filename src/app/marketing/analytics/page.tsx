@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -89,6 +90,33 @@ const renderAmountLabel = (props: any) => {
 const sanitizeKey = (key: string) => {
   return key.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
 }
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="p-3 bg-card border rounded-lg shadow-lg text-base">
+          <p className="font-bold mb-2 text-card-foreground">{label}</p>
+          <div className="space-y-1">
+            {payload.map((entry: any) => (
+              <div key={entry.name} className="flex justify-between items-center gap-4">
+                <span className="flex items-center gap-2" style={{ color: entry.stroke || entry.fill }}>
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.stroke || entry.fill }}/>
+                    {entry.name}:
+                </span>
+                <span className="font-semibold" style={{ color: entry.stroke || entry.fill }}>
+                  {formatCurrency(entry.value as number, {
+                      minimumFractionDigits: entry.dataKey === 'cpm' ? 2 : 0,
+                      maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
 export default function AnalyticsPage() {
   const firestore = useFirestore();
@@ -225,33 +253,6 @@ export default function AnalyticsPage() {
     return config;
   }, [adAccountNameMap]);
 
-  const CustomTooltipForComposedChart = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="p-3 bg-card border rounded-lg shadow-lg text-base">
-          <p className="font-bold mb-2 text-card-foreground">{label}</p>
-          <div className="space-y-1">
-            {payload.map((entry: any) => (
-              <div key={entry.name} className="flex justify-between items-center gap-4">
-                <span className="flex items-center gap-2" style={{ color: entry.stroke || entry.fill }}>
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.stroke || entry.fill }}/>
-                    {entry.name}:
-                </span>
-                <span className="font-semibold" style={{ color: entry.stroke || entry.fill }}>
-                  {formatCurrency(entry.value as number, {
-                      minimumFractionDigits: entry.dataKey === 'cpm' ? 2 : 0,
-                      maximumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
   if (isLoading) {
     return (
       <Header>
@@ -303,7 +304,7 @@ export default function AnalyticsPage() {
                     <YAxis yAxisId="right" orientation="right" stroke={chartConfig.cpm.color} tickFormatter={(value) => formatCurrency(value)} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
                     <Tooltip
                         cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
-                        content={<CustomTooltipForComposedChart />}
+                        content={<CustomTooltip />}
                       />
                     <Legend />
                     <Bar dataKey="cpm" yAxisId="right" fill={chartConfig.cpm.color} name="CPM" radius={[4, 4, 0, 0]}>
@@ -335,7 +336,10 @@ export default function AnalyticsPage() {
                         <CartesianGrid vertical={false} />
                         <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
                         <YAxis tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
-                        <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                        <Tooltip
+                            cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
+                            content={<CustomTooltip />}
+                        />
                         <Legend />
                         {Object.entries(adAccountChartConfig).map(([sanitizedName, config]) => (
                             <Line
