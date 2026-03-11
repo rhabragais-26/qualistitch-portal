@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -248,12 +247,12 @@ export default function AnalyticsPage() {
     return map;
   }, [adSpendData]);
 
-  const { adSpendByAccountData, totalAdSpend, totalSales } = useMemo(() => {
-    if (!adSpendData || !leadsData) return { adSpendByAccountData: [], totalAdSpend: 0, totalSales: 0 };
+  const { adSpendByAccountData, totalAdSpent, totalSales } = useMemo(() => {
+    if (!adSpendData || !leadsData) return { adSpendByAccountData: [], totalAdSpent: 0, totalSales: 0 };
 
     const year = parseInt(selectedYear, 10);
     const month = parseInt(selectedMonth, 10) - 1;
-    if (isNaN(year) || isNaN(month)) return { adSpendByAccountData: [], totalAdSpend: 0, totalSales: 0 };
+    if (isNaN(year) || isNaN(month)) return { adSpendByAccountData: [], totalAdSpent: 0, totalSales: 0 };
 
     const start = startOfMonth(new Date(year, month));
     const today = endOfToday();
@@ -309,25 +308,32 @@ export default function AnalyticsPage() {
         .map(([date, data]) => ({ date, ...data }))
         .sort((a,b) => parse(a.date, 'MMM-dd', new Date()).getTime() - parse(b.date, 'MMM-dd', new Date()).getTime());
 
-    const periodTotalAdSpend = finalData.reduce((sum, day) => {
+    const periodTotalAdSpent = finalData.reduce((sum, day) => {
         return sum + sanitizedAccountNames.reduce((daySum, accName) => daySum + (day[accName] || 0), 0);
     }, 0);
 
     const periodTotalSales = finalData.reduce((sum, day) => sum + day.totalSales, 0);
     
-    return { adSpendByAccountData: finalData, totalAdSpend: periodTotalAdSpend, totalSales: periodTotalSales };
+    return { adSpendByAccountData: finalData, totalAdSpent: periodTotalAdSpent, totalSales: periodTotalSales };
         
   }, [adSpendData, leadsData, selectedYear, selectedMonth]);
   
   const adAccountChartConfig = useMemo(() => {
     const config: ChartConfig = {};
-    let index = 0;
-    adAccountNameMap.forEach((sanitizedName, originalName) => {
-        config[sanitizedName] = {
-            label: originalName,
-            color: COLORS[index % COLORS.length]
-        };
-        index++;
+    const colorAssignments: Record<string, string> = {
+        'AD Account 101': '#0088FE',
+        'Personal Account': '#00C49F',
+    };
+    let otherColorIndex = 2;
+
+    const accountNames = Array.from(adAccountNameMap.keys());
+
+    accountNames.forEach(originalName => {
+      const sanitizedName = adAccountNameMap.get(originalName)!;
+      config[sanitizedName] = {
+        label: originalName,
+        color: colorAssignments[originalName] || COLORS[otherColorIndex++ % COLORS.length]
+      };
     });
     return config;
   }, [adAccountNameMap]);
@@ -411,7 +417,7 @@ export default function AnalyticsPage() {
                         cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
                         content={<CustomTooltip />}
                       />
-                    <Legend wrapperStyle={{ paddingTop: '0' }} />
+                    <Legend />
                     <Bar dataKey="cpm" yAxisId="right" fill="var(--color-cpm)" name="CPM" radius={[4, 4, 0, 0]}>
                         <LabelList
                         dataKey="cpm"
@@ -432,13 +438,13 @@ export default function AnalyticsPage() {
             <div>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">Ad Spent per Ad Account</CardTitle>
-                  <CardDescription>Daily ad spend broken down by account.</CardDescription>
+                    <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
+                    <CardDescription>Daily ad spend broken down by account.</CardDescription>
                 </div>
                 <div className="flex items-center gap-8 text-left">
                     <div>
                         <p className="text-sm font-medium text-muted-foreground">Total Ad Spent</p>
-                        <p className="text-2xl font-bold">{formatCurrency(totalAdSpend)}</p>
+                        <p className="text-2xl font-bold">{formatCurrency(totalAdSpent)}</p>
                     </div>
                     <div>
                         <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
