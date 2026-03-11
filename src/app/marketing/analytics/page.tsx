@@ -319,7 +319,7 @@ export default function AnalyticsPage() {
         
   }, [adSpendData, leadsData, selectedYear, selectedMonth]);
   
-  const adSpentPercentage = totalSales > 0 ? (totalAdSpent / totalSales) * 100 : 0;
+  const roasPercentage = totalAdSpent > 0 ? (totalSales / totalAdSpent) * 100 : 0;
   
   const adAccountChartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -444,16 +444,16 @@ export default function AnalyticsPage() {
                     <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
                     <CardDescription>Daily ad spend broken down by account.</CardDescription>
                 </div>
-                <div className="flex items-center gap-8 text-right">
-                    <div>
-                        <p className="text-sm font-medium text-muted-foreground">Ad Spent Percentage</p>
-                        <p className="text-2xl font-bold">{adSpentPercentage.toFixed(2)}%</p>
+                <div className="flex items-center justify-end gap-8">
+                    <div className="flex flex-col items-center">
+                        <p className="text-sm font-medium text-muted-foreground">ROAs percentage</p>
+                        <p className="text-2xl font-bold">{roasPercentage.toFixed(2)}%</p>
                     </div>
-                    <div>
+                    <div className="flex flex-col items-center">
                         <p className="text-sm font-medium text-muted-foreground">Total Ad Spent</p>
                         <p className="text-2xl font-bold">{formatCurrency(totalAdSpent)}</p>
                     </div>
-                    <div>
+                    <div className="flex flex-col items-center">
                         <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
                         <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSales)}</p>
                     </div>
@@ -527,3 +527,4 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
+
