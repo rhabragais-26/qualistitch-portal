@@ -40,6 +40,7 @@ import { Header } from '@/components/header';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Separator } from '@/components/ui/separator';
 import { anniversaryData } from '@/lib/anniversaries-data';
+import { Button } from '@/components/ui/button';
 
 type AdSpendInquiry = {
   id: string;
@@ -131,6 +132,7 @@ export default function AnalyticsPage() {
   const firestore = useFirestore();
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  const [orgTypeFilter, setOrgTypeFilter] = useState('All');
 
   const adSpendQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'ad_spend_inquiries')) : null),
@@ -341,13 +343,19 @@ export default function AnalyticsPage() {
     return config;
   }, [adAccountNameMap]);
   
+  const organizationTypes = useMemo(() => {
+    return ['All', ...[...new Set(anniversaryData.map(org => org.type))].sort()];
+  }, []);
+
   const { monthlyAnniversaryData } = useMemo(() => {
     const dataByMonth: Record<string, { total: number }> = {
         'Jan': { total: 0 }, 'Feb': { total: 0 }, 'Mar': { total: 0 }, 'Apr': { total: 0 }, 'May': { total: 0 }, 'Jun': { total: 0 },
         'Jul': { total: 0 }, 'Aug': { total: 0 }, 'Sep': { total: 0 }, 'Oct': { total: 0 }, 'Nov': { total: 0 }, 'Dec': { total: 0 }
     };
     
-    anniversaryData.forEach(org => {
+    anniversaryData
+      .filter(org => orgTypeFilter === 'All' || org.type === orgTypeFilter)
+      .forEach(org => {
         try {
             const date = new Date(org.dateFounded);
             const month = format(date, 'MMM');
@@ -365,7 +373,7 @@ export default function AnalyticsPage() {
     }));
 
     return { monthlyAnniversaryData: chartData };
-  }, []);
+  }, [orgTypeFilter]);
 
   if (isLoading) {
     return (
@@ -497,10 +505,27 @@ export default function AnalyticsPage() {
         </Card>
         <Card>
             <CardHeader>
-                <CardTitle>Founding Anniversaries per Month</CardTitle>
-                <CardDescription>
-                    Total count of organization anniversaries per month.
-                </CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Founding Anniversaries per Month</CardTitle>
+                        <CardDescription>
+                            Total count of organization anniversaries per month.
+                        </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Select value={orgTypeFilter} onValueChange={setOrgTypeFilter}>
+                            <SelectTrigger className="w-[220px]">
+                                <SelectValue placeholder="Filter by Organization Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {organizationTypes.map(type => (
+                                    <SelectItem key={type} value={type}>{type === 'All' ? 'All Organization Types' : type}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button variant="outline" onClick={() => setOrgTypeFilter('All')}>Reset Filter</Button>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
                 <div className="h-[300px]">
