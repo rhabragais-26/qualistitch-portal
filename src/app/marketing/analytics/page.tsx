@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -171,12 +170,10 @@ export default function AnalyticsPage() {
     const today = endOfToday();
     const monthEnd = endOfMonth(start);
 
-    // Only show dates up to today for the current month
     const end = isBefore(monthEnd, today) ? monthEnd : today;
     
     const daysInRange = eachDayOfInterval({ start, end });
 
-    // Get all unique ad account keys that appear in the data for the selected month/year
     const sanitizedAccountNames = Array.from(new Set(
         adSpendData
             .filter(item => {
@@ -188,7 +185,6 @@ export default function AnalyticsPage() {
 
     const dataByDate: Record<string, Record<string, number>> = {};
     
-    // 1. Initialize all days with all accounts set to 0
     daysInRange.forEach(day => {
         const dayKey = format(day, 'MMM-dd');
         dataByDate[dayKey] = {};
@@ -197,14 +193,13 @@ export default function AnalyticsPage() {
         });
     });
 
-    // 2. Populate with actual data
     adSpendData.forEach(item => {
         const itemDate = new Date(item.date);
         if (getYear(itemDate) === year && getMonth(itemDate) === month) {
             const day = format(itemDate, 'MMM-dd');
-            if (dataByDate[day]) { // Only process if the day is in our initialized map
+            if (dataByDate[day]) {
                 const sanitizedAccount = sanitizeKey(item.adAccount);
-                if (dataByDate[day].hasOwnProperty(sanitizedAccount)) { // Ensure account is expected
+                if (dataByDate[day].hasOwnProperty(sanitizedAccount)) {
                     dataByDate[day][sanitizedAccount] += item.adsSpent;
                 }
             }
@@ -229,6 +224,33 @@ export default function AnalyticsPage() {
     });
     return config;
   }, [adAccountNameMap]);
+
+  const CustomTooltipForComposedChart = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="p-3 bg-card border rounded-lg shadow-lg text-base">
+          <p className="font-bold mb-2 text-card-foreground">{label}</p>
+          <div className="space-y-1">
+            {payload.map((entry: any) => (
+              <div key={entry.name} className="flex justify-between items-center gap-4">
+                <span className="flex items-center gap-2" style={{ color: entry.stroke || entry.fill }}>
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.stroke || entry.fill }}/>
+                    {entry.name}:
+                </span>
+                <span className="font-semibold" style={{ color: entry.stroke || entry.fill }}>
+                  {formatCurrency(entry.value as number, {
+                      minimumFractionDigits: entry.dataKey === 'cpm' ? 2 : 0,
+                      maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   if (isLoading) {
     return (
@@ -279,9 +301,12 @@ export default function AnalyticsPage() {
                     <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
                     <YAxis yAxisId="left" stroke={chartConfig.adsSpent.color} tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
                     <YAxis yAxisId="right" orientation="right" stroke={chartConfig.cpm.color} tickFormatter={(value) => formatCurrency(value)} domain={[0, (dataMax: number) => Math.round(dataMax * 1.2)]} />
-                    <Tooltip content={<ChartTooltipContent formatter={(value, name) => formatCurrency(value as number)} />} />
+                    <Tooltip
+                        cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
+                        content={<CustomTooltipForComposedChart />}
+                      />
                     <Legend />
-                    <Bar dataKey="cpm" yAxisId="right" fill="var(--color-cpm)" name="CPM" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="cpm" yAxisId="right" fill={chartConfig.cpm.color} name="CPM" radius={[4, 4, 0, 0]}>
                         <LabelList
                         dataKey="cpm"
                         position="center"
