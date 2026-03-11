@@ -321,7 +321,7 @@ export default function AnalyticsPage() {
                 </div>
              </div>
           </CardHeader>
-          <CardContent className="space-y-8">
+          <CardContent className="space-y-8 h-[550px]">
             <div className="h-[250px]">
                 <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer>
@@ -353,11 +353,9 @@ export default function AnalyticsPage() {
                 </ChartContainer>
             </div>
             <Separator />
-            <div>
+            <div className="h-[250px]">
               <CardTitle className="text-lg">Ads Spent per Ad Account</CardTitle>
               <CardDescription>Daily ad spend broken down by account.</CardDescription>
-            </div>
-             <div className="h-[250px]">
                <ChartContainer config={adAccountChartConfig} className="w-full h-full">
                 <ResponsiveContainer>
                     <LineChart data={adSpendByAccountData}>
@@ -407,7 +405,7 @@ export default function AnalyticsPage() {
                                 {monthlyAnniversaryData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
-                                <LabelList dataKey="total" position="top" />
+                                <LabelList dataKey="total" position="top" fill="black" fontWeight="bold" />
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
