@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, getYear, getMonth, startOfMonth, endOfMonth, eachDayOfInterval, parse } from 'date-fns';
+import { format, getYear, getMonth, startOfMonth, endOfMonth, eachDayOfInterval, parse, isBefore, endOfToday } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Header } from '@/components/header';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
@@ -167,10 +167,14 @@ export default function AnalyticsPage() {
     const month = parseInt(selectedMonth, 10) - 1;
     if (isNaN(year) || isNaN(month)) return [];
 
-    // Get all days in the selected month
     const start = startOfMonth(new Date(year, month));
-    const end = endOfMonth(start);
-    const daysInMonth = eachDayOfInterval({ start, end });
+    const today = endOfToday();
+    const monthEnd = endOfMonth(start);
+
+    // Only show dates up to today for the current month
+    const end = isBefore(monthEnd, today) ? monthEnd : today;
+    
+    const daysInRange = eachDayOfInterval({ start, end });
 
     // Get all unique ad account keys that appear in the data for the selected month/year
     const sanitizedAccountNames = Array.from(new Set(
@@ -185,7 +189,7 @@ export default function AnalyticsPage() {
     const dataByDate: Record<string, Record<string, number>> = {};
     
     // 1. Initialize all days with all accounts set to 0
-    daysInMonth.forEach(day => {
+    daysInRange.forEach(day => {
         const dayKey = format(day, 'MMM-dd');
         dataByDate[dayKey] = {};
         sanitizedAccountNames.forEach(accountName => {
@@ -304,16 +308,16 @@ export default function AnalyticsPage() {
                 <ResponsiveContainer>
                     <LineChart data={adSpendByAccountData}>
                         <CartesianGrid vertical={false} />
-                        <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
-                        <YAxis tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} />
+                        <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
+                        <YAxis tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
-                        {Array.from(adAccountNameMap.values()).map((sanitizedName) => (
+                        {Object.entries(adAccountChartConfig).map(([sanitizedName, config]) => (
                             <Line
                                 key={sanitizedName}
                                 type="monotone"
                                 dataKey={sanitizedName}
-                                name={sanitizedName}
+                                name={config.label as string}
                                 stroke={`var(--color-${sanitizedName})`}
                                 strokeWidth={2}
                             >
@@ -330,4 +334,3 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
-

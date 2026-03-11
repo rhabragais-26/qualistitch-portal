@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, getYear, getMonth } from 'date-fns';
+import { format, getYear, getMonth, startOfMonth, endOfMonth, eachDayOfInterval, parse, isBefore, endOfToday } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import { Header } from '@/components/header';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
@@ -86,6 +86,10 @@ const renderAmountLabel = (props: any) => {
       </g>
     );
 };
+
+const sanitizeKey = (key: string) => {
+  return key.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+}
 
 export default function AnalyticsPage() {
   const firestore = useFirestore();
@@ -141,52 +145,90 @@ export default function AnalyticsPage() {
       date,
       adsSpent: data.adsSpent,
       cpm: data.metaInquiries > 0 ? data.adsSpent / data.metaInquiries : 0,
-    })).sort((a,b) => new Date(a.date).getDate() - new Date(b.date).getDate());
+    })).sort((a,b) => parse(a.date, 'MMM-dd', new Date()).getTime() - parse(b.date, 'MMM-dd', new Date()).getTime());
 
   }, [adSpendData, selectedYear, selectedMonth]);
+
+  const adAccountNameMap = useMemo(() => {
+    if (!adSpendData) return new Map();
+    const map = new Map<string, string>();
+    adSpendData.forEach(d => {
+      if (!map.has(d.adAccount)) {
+        map.set(d.adAccount, sanitizeKey(d.adAccount));
+      }
+    });
+    return map;
+  }, [adSpendData]);
 
   const adSpendByAccountData = useMemo(() => {
     if (!adSpendData) return [];
 
     const year = parseInt(selectedYear, 10);
     const month = parseInt(selectedMonth, 10) - 1;
+    if (isNaN(year) || isNaN(month)) return [];
+
+    const start = startOfMonth(new Date(year, month));
+    const today = endOfToday();
+    const monthEnd = endOfMonth(start);
+
+    // Only show dates up to today for the current month
+    const end = isBefore(monthEnd, today) ? monthEnd : today;
+    
+    const daysInRange = eachDayOfInterval({ start, end });
+
+    // Get all unique ad account keys that appear in the data for the selected month/year
+    const sanitizedAccountNames = Array.from(new Set(
+        adSpendData
+            .filter(item => {
+                const itemDate = new Date(item.date);
+                return getYear(itemDate) === year && getMonth(itemDate) === month;
+            })
+            .map(item => sanitizeKey(item.adAccount))
+    ));
 
     const dataByDate: Record<string, Record<string, number>> = {};
     
+    // 1. Initialize all days with all accounts set to 0
+    daysInRange.forEach(day => {
+        const dayKey = format(day, 'MMM-dd');
+        dataByDate[dayKey] = {};
+        sanitizedAccountNames.forEach(accountName => {
+            dataByDate[dayKey][accountName] = 0;
+        });
+    });
+
+    // 2. Populate with actual data
     adSpendData.forEach(item => {
         const itemDate = new Date(item.date);
         if (getYear(itemDate) === year && getMonth(itemDate) === month) {
             const day = format(itemDate, 'MMM-dd');
-            if (!dataByDate[day]) {
-                dataByDate[day] = {};
+            if (dataByDate[day]) { // Only process if the day is in our initialized map
+                const sanitizedAccount = sanitizeKey(item.adAccount);
+                if (dataByDate[day].hasOwnProperty(sanitizedAccount)) { // Ensure account is expected
+                    dataByDate[day][sanitizedAccount] += item.adsSpent;
+                }
             }
-            if (!dataByDate[day][item.adAccount]) {
-                dataByDate[day][item.adAccount] = 0;
-            }
-            dataByDate[day][item.adAccount] += item.adsSpent;
         }
     });
 
     return Object.entries(dataByDate)
         .map(([date, accounts]) => ({ date, ...accounts }))
-        .sort((a,b) => new Date(a.date).getDate() - new Date(b.date).getDate());
+        .sort((a,b) => parse(a.date, 'MMM-dd', new Date()).getTime() - parse(b.date, 'MMM-dd', new Date()).getTime());
+        
   }, [adSpendData, selectedYear, selectedMonth]);
-
-  const adAccountNames = useMemo(() => {
-    if (!adSpendData) return [];
-    return Array.from(new Set(adSpendData.map(d => d.adAccount))).sort();
-  }, [adSpendData]);
   
   const adAccountChartConfig = useMemo(() => {
     const config: ChartConfig = {};
-    adAccountNames.forEach((account, index) => {
-        config[account] = {
-            label: account,
+    let index = 0;
+    adAccountNameMap.forEach((sanitizedName, originalName) => {
+        config[sanitizedName] = {
+            label: originalName,
             color: COLORS[index % COLORS.length]
         };
+        index++;
     });
     return config;
-  }, [adAccountNames]);
+  }, [adAccountNameMap]);
 
   if (isLoading) {
     return (
@@ -266,18 +308,21 @@ export default function AnalyticsPage() {
                 <ResponsiveContainer>
                     <LineChart data={adSpendByAccountData}>
                         <CartesianGrid vertical={false} />
-                        <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
-                        <YAxis tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} />
+                        <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
+                        <YAxis tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })} domain={[0, dataMax => Math.round(dataMax * 1.25)]} />
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
-                        {adAccountNames.map((account) => (
+                        {Object.entries(adAccountChartConfig).map(([sanitizedName, config]) => (
                             <Line
-                                key={account}
+                                key={sanitizedName}
                                 type="monotone"
-                                dataKey={account}
-                                stroke={`var(--color-${account})`}
+                                dataKey={sanitizedName}
+                                name={config.label as string}
+                                stroke={`var(--color-${sanitizedName})`}
                                 strokeWidth={2}
-                            />
+                            >
+                              <LabelList content={renderAmountLabel} />
+                            </Line>
                         ))}
                     </LineChart>
                 </ResponsiveContainer>
@@ -289,4 +334,3 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
-
