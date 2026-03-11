@@ -61,10 +61,10 @@ export function MonthlyForecastInput() {
   const departmentOptions = ['Production', 'Sales', 'Marketing', 'Finance', 'Human Resources', 'Programming & I.T.', 'Operations'];
   
   const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeCategories'), orderBy('name')) : null, [firestore]);
-  const { data: categories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: false });
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCollection<FinanceCategory>(categoriesQuery, undefined, { listen: true });
 
   const forecastQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeForecastMonthly'), orderBy('month', 'desc'), orderBy('updatedAt', 'desc')) : null, [firestore]);
-  const { data: forecasts, isLoading: forecastsLoading, error: forecastsError, refetch } = useCollection<FinanceForecastMonthly>(forecastQuery, undefined, { listen: false });
+  const { data: forecasts, isLoading: forecastsLoading, error: forecastsError, refetch } = useCollection<FinanceForecastMonthly>(forecastQuery, undefined, { listen: true });
 
   const form = useForm<ForecastFormValues>({
     resolver: zodResolver(forecastSchema),
