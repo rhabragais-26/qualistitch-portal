@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, getYear, getMonth, startOfMonth, endOfMonth, eachDayOfInterval, parse, isBefore, endOfToday } from 'date-fns';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { Header } from '@/components/header';
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Separator } from '@/components/ui/separator';
@@ -455,7 +455,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-end gap-8">
                     <div className="flex flex-col items-center">
                         <p className="text-sm font-medium text-muted-foreground">ROAs percentage</p>
-                        <p className="text-2xl font-bold">{roasPercentage.toFixed(2)}%</p>
+                        <p className={cn("text-2xl font-bold", roasPercentage < 1846 && "text-destructive")}>{roasPercentage.toFixed(0)}%</p>
                     </div>
                     <div className="flex flex-col items-center">
                         <p className="text-sm font-medium text-muted-foreground">Total Ad Spent</p>
@@ -553,3 +553,4 @@ export default function AnalyticsPage() {
   );
 }
 
+    
