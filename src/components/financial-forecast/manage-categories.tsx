@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
@@ -97,7 +96,7 @@ export function ManageCategories() {
 
   return (
     <div className="py-4">
-        <Accordion type="multiple" className="w-full">
+        <Accordion type="single" collapsible className="w-full">
             {departmentOptions.map(dept => (
                 <AccordionItem value={dept} key={dept}>
                     <AccordionTrigger>{dept}</AccordionTrigger>
