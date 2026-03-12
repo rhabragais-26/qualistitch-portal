@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -303,7 +304,7 @@ function FinanceDashboard() {
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
                         <Area type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)">
-                            <LabelList dataKey="amount" position="top" formatter={(value: number) => value > 0 ? formatCurrency(value as number, { notation: 'compact', maximumFractionDigits: 0 }) : ''} />
+                            <LabelList dataKey="amount" position="top" formatter={(value: number) => value > 0 ? formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : ''} />
                         </Area>
                     </AreaChart>
                 </ResponsiveContainer>
