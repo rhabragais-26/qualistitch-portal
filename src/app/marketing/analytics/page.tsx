@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -321,7 +320,8 @@ export default function AnalyticsPage() {
         
   }, [adSpendData, leadsData, selectedYear, selectedMonth]);
   
-  const roasPercentage = totalAdSpent > 0 ? (totalSales / totalAdSpent) * 100 : 0;
+  // ROAs = Return on Ad Spend. The formula is (Total Sales / Total Ad Spent)
+  const roas = totalAdSpent > 0 ? totalSales / totalAdSpent : 0;
   
   const adAccountChartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -454,8 +454,8 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="flex items-center justify-end gap-8">
                     <div className="flex flex-col items-center">
-                        <p className="text-sm font-medium text-muted-foreground">ROAs percentage</p>
-                        <p className={cn("text-2xl font-bold", roasPercentage < 1846 && "text-destructive")}>{roasPercentage.toFixed(0)}%</p>
+                        <p className="text-sm font-medium text-muted-foreground">ROAs</p>
+                        <p className={cn("text-2xl font-bold", roas < 18.46 && "text-destructive")}>{roas.toFixed(2)}</p>
                     </div>
                     <div className="flex flex-col items-center">
                         <p className="text-sm font-medium text-muted-foreground">Total Ad Spent</p>
@@ -552,5 +552,3 @@ export default function AnalyticsPage() {
     </Header>
   );
 }
-
-    
