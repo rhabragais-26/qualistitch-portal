@@ -305,44 +305,6 @@ function FinanceDashboard() {
 
     return Object.entries(dailyTotals).map(([date, values]) => ({ date, ...values })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [monthlyOpEx, monthlyCogs, monthlyCapEx]);
-
-  const CustomCashInflowLabel = (props: any) => {
-    const { x, y, value } = props;
-    if (value <= 0 || typeof x !== 'number' || typeof y !== 'number') return null;
-  
-    return (
-      <text
-        x={x}
-        y={y}
-        dy={-10}
-        fill="black"
-        fontSize={12}
-        fontWeight="bold"
-        textAnchor="middle"
-      >
-        {formatCurrency(value)}
-      </text>
-    );
-  };
-
-  const CustomExpenseLabel = (props: any) => {
-    const { x, y, value, stroke } = props;
-    if (value <= 0 || typeof x !== 'number' || typeof y !== 'number') return null;
-
-    return (
-      <text
-        x={x}
-        y={y}
-        dy={-10}
-        fill={stroke || 'black'}
-        fontSize={12}
-        fontWeight="bold"
-        textAnchor="middle"
-      >
-        {formatCurrency(value)}
-      </text>
-    );
-  };
   
   const CustomExpenseTooltip = ({ active, payload, label }: any) => {
       if (active && payload && payload.length) {
@@ -431,9 +393,7 @@ function FinanceDashboard() {
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
-                        <Area type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)">
-                            <LabelList dataKey="amount" content={<CustomCashInflowLabel />} />
-                        </Area>
+                        <Area type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)" dot={{ r: 2 }} activeDot={{ r: 4 }} />
                     </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -455,24 +415,12 @@ function FinanceDashboard() {
                         <YAxis yAxisId="right" orientation="right" stroke={COLORS[2]} tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
-                        <Line yAxisId="left" type="monotone" dataKey="Downpayment" stroke={COLORS[0]} strokeWidth={2} name="Downpayment" dot={false}>
-                          <LabelList content={<CustomCashInflowLabel />} />
-                        </Line>
-                        <Line yAxisId="left" type="monotone" dataKey="Full Payment" stroke={COLORS[1]} strokeWidth={2} name="Full Payment" dot={false}>
-                          <LabelList content={<CustomCashInflowLabel />} />
-                        </Line>
-                        <Line yAxisId="right" type="monotone" dataKey="Balance Payment" stroke={COLORS[2]} strokeWidth={2} name="Balance Payment" dot={false}>
-                           <LabelList content={<CustomCashInflowLabel />} />
-                        </Line>
-                        <Line yAxisId="right" type="monotone" dataKey="Additional Payment" stroke={COLORS[3]} strokeWidth={2} name="Additional" dot={false}>
-                           <LabelList content={<CustomCashInflowLabel />} />
-                        </Line>
-                        <Line yAxisId="right" type="monotone" dataKey="Security Deposit" stroke={COLORS[4]} strokeWidth={2} name="Security Deposit" dot={false}>
-                           <LabelList content={<CustomCashInflowLabel />} />
-                        </Line>
-                        <Line yAxisId="right" type="monotone" dataKey="Other Inflows" stroke={COLORS[5]} strokeWidth={2} name="Others" dot={false}>
-                           <LabelList content={<CustomCashInflowLabel />} />
-                        </Line>
+                        <Line yAxisId="left" type="monotone" dataKey="Downpayment" stroke={COLORS[0]} strokeWidth={2} name="Downpayment" dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                        <Line yAxisId="left" type="monotone" dataKey="Full Payment" stroke={COLORS[1]} strokeWidth={2} name="Full Payment" dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                        <Line yAxisId="right" type="monotone" dataKey="Balance Payment" stroke={COLORS[2]} strokeWidth={2} name="Balance Payment" dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                        <Line yAxisId="right" type="monotone" dataKey="Additional Payment" stroke={COLORS[3]} strokeWidth={2} name="Additional" dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                        <Line yAxisId="right" type="monotone" dataKey="Security Deposit" stroke={COLORS[4]} strokeWidth={2} name="Security Deposit" dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                        <Line yAxisId="right" type="monotone" dataKey="Other Inflows" stroke={COLORS[5]} strokeWidth={2} name="Others" dot={{ r: 2 }} activeDot={{ r: 4 }} />
                     </LineChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -553,15 +501,9 @@ function FinanceDashboard() {
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
-                        <Area type="monotone" dataKey="Operational" name="OPEX" stroke={'#8884d8'} strokeWidth={2} fillOpacity={1} fill="url(#colorOpEx)">
-                            <LabelList dataKey="Operational" content={CustomExpenseLabel} />
-                        </Area>
-                        <Area type="monotone" dataKey="COGS" name="COGS" stroke={'#82ca9d'} strokeWidth={2} fillOpacity={1} fill="url(#colorCogs)">
-                            <LabelList dataKey="COGS" content={CustomExpenseLabel} />
-                        </Area>
-                        <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={'#ffc658'} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)">
-                            <LabelList dataKey="Capital" content={CustomExpenseLabel} />
-                        </Area>
+                        <Area type="monotone" dataKey="Operational" name="OPEX" stroke={'#8884d8'} strokeWidth={2} fillOpacity={1} fill="url(#colorOpEx)" dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                        <Area type="monotone" dataKey="COGS" name="COGS" stroke={'#82ca9d'} strokeWidth={2} fillOpacity={1} fill="url(#colorCogs)" dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                        <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={'#ffc658'} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)" dot={{ r: 2 }} activeDot={{ r: 4 }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartContainer>
