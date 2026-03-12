@@ -239,6 +239,27 @@ function FinanceDashboard() {
     return Object.entries(dailyTotals).map(([date, values]) => ({ date, ...values })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [monthlyOpEx, monthlyCogs, monthlyCapEx]);
 
+  const CustomCashInflowLabel = (props: any) => {
+    const { x, y, value } = props;
+    if (value <= 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+  
+    return (
+      <text
+        x={x}
+        y={y}
+        dy={-10}
+        fill="black"
+        fontSize={12}
+        fontWeight="bold"
+        textAnchor="middle"
+      >
+        {formatCurrency(value, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        })}
+      </text>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -304,7 +325,7 @@ function FinanceDashboard() {
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
                         <Area type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)">
-                            <LabelList dataKey="amount" position="top" formatter={(value: number) => value > 0 ? formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : ''} />
+                            <LabelList dataKey="amount" content={<CustomCashInflowLabel />} />
                         </Area>
                     </AreaChart>
                 </ResponsiveContainer>
