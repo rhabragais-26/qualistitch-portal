@@ -378,11 +378,11 @@ function FinanceDashboard() {
     const chartColors = [color, '#e5e7eb'];
 
     return (
-        <Card className="flex flex-col items-center justify-center p-2">
+        <Card className="flex flex-col items-center justify-center p-4">
             <CardHeader className="p-0 mb-2 text-center">
                 <CardTitle className="text-base font-medium">{title}</CardTitle>
             </CardHeader>
-            <CardContent className="p-0 relative w-24 h-24">
+            <CardContent className="p-0 relative w-32 h-32">
                 <ChartContainer config={{}} className="w-full h-full">
                   <PieChart>
                       <Pie
@@ -404,7 +404,7 @@ function FinanceDashboard() {
                   </PieChart>
                 </ChartContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-lg font-bold">{formatCurrency(amount, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                    <span className="text-2xl font-bold">{formatCurrency(amount, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
             </CardContent>
         </Card>
@@ -490,7 +490,7 @@ function FinanceDashboard() {
                     <CardTitle>Daily Inflows Breakdown</CardTitle>
                     <CardDescription>Breakdown of daily inflows by payment type.</CardDescription>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-4">
                       {Object.entries(paymentTypeTotals).map(([type, total], index) => total > 0 && (
                           <DoughnutChartCard
                               key={type}
