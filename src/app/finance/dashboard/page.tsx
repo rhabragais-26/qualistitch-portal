@@ -257,6 +257,49 @@ function FinanceDashboard() {
     );
   };
 
+  const CustomExpenseLabel = (props: any) => {
+    const { x, y, value, stroke } = props;
+    if (value <= 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+
+    return (
+      <text
+        x={x}
+        y={y}
+        dy={-10}
+        fill={stroke || 'black'}
+        fontSize={12}
+        fontWeight="bold"
+        textAnchor="middle"
+      >
+        {formatCurrency(value)}
+      </text>
+    );
+  };
+  
+  const CustomExpenseTooltip = ({ active, payload, label }: any) => {
+      if (active && payload && payload.length) {
+        return (
+          <div className="p-3 bg-card border rounded-lg shadow-lg text-base">
+            <p className="font-bold mb-2 text-card-foreground">{label}</p>
+            <div className="space-y-1">
+              {payload.map((entry: any) => (
+                <div key={entry.name} className="flex justify-between items-center gap-4">
+                  <span className="flex items-center gap-2" style={{ color: entry.stroke || entry.fill }}>
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.stroke || entry.fill }}/>
+                      {entry.name}:
+                  </span>
+                  <span className="font-semibold" style={{ color: entry.stroke || entry.fill }}>
+                    {formatCurrency(entry.value as number)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+      return null;
+  };
+
   if (isLoading) {
     return (
         <Header>
@@ -380,16 +423,36 @@ function FinanceDashboard() {
             <CardContent>
                 <ChartContainer config={{}} className="w-full h-80">
                   <ResponsiveContainer>
-                    <LineChart data={expensesOverTime} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
+                    <AreaChart data={expensesOverTime} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
+                        <defs>
+                            <linearGradient id="colorOpEx" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={COLORS[0]} stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor={COLORS[0]} stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorCogs" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={COLORS[1]} stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor={COLORS[1]} stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorCapEx" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={COLORS[2]} stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor={COLORS[2]} stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
-                        <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                        <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
-                        <Line type="monotone" dataKey="Operational" stroke={COLORS[0]} />
-                        <Line type="monotone" dataKey="COGS" stroke={COLORS[1]} />
-                        <Line type="monotone" dataKey="Capital" stroke={COLORS[2]} />
-                    </LineChart>
+                        <Area type="monotone" dataKey="Operational" name="OPEX" stroke={COLORS[0]} strokeWidth={2} fillOpacity={1} fill="url(#colorOpEx)">
+                            <LabelList dataKey="Operational" content={CustomExpenseLabel} />
+                        </Area>
+                        <Area type="monotone" dataKey="COGS" name="COGS" stroke={COLORS[1]} strokeWidth={2} fillOpacity={1} fill="url(#colorCogs)">
+                            <LabelList dataKey="COGS" content={CustomExpenseLabel} />
+                        </Area>
+                        <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={COLORS[2]} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)">
+                            <LabelList dataKey="Capital" content={CustomExpenseLabel} />
+                        </Area>
+                    </AreaChart>
                   </ResponsiveContainer>
                 </ChartContainer>
             </CardContent>
