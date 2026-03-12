@@ -94,7 +94,7 @@ const renderAmountLabel = (props: any) => {
           fontWeight="bold"
           textAnchor="middle"
         >
-          {formatCurrency(value, { notation: 'compact', maximumFractionDigits: 0 })}
+          {formatCurrency(value, { maximumFractionDigits: 0 })}
         </text>
     );
 };
