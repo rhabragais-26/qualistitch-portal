@@ -28,11 +28,12 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/header';
-import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, eachDayOfInterval } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/lib/utils';
 
+// Types for expenses
 type OperationalExpense = {
   id: string;
   date: string;
@@ -53,6 +54,28 @@ type CapitalExpense = {
     assetName: string;
 }
 
+// Types for cash inflows
+type Payment = {
+    id?: string;
+    type: 'down' | 'full' | 'balance' | 'additional' | 'securityDeposit';
+    amount: number;
+    mode: string;
+    timestamp?: string;
+    actualTransactionDate?: string;
+};
+  
+type Lead = {
+    id: string;
+    payments?: Payment[];
+    submissionDateTime: string;
+};
+
+type OtherCashInflow = {
+    id: string;
+    date: string;
+    amount: number;
+};
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#a2d2ff', '#cdb4db'];
 
 function FinanceDashboard() {
@@ -60,6 +83,7 @@ function FinanceDashboard() {
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
+  // Expense queries
   const operationalExpensesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operational_expenses'), orderBy('date', 'desc')) : null, [firestore]);
   const { data: operationalExpenses, isLoading: opExLoading } = useCollection<OperationalExpense>(operationalExpensesQuery);
 
@@ -69,16 +93,25 @@ function FinanceDashboard() {
   const capitalExpensesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'capital_expenses'), orderBy('date', 'desc')) : null, [firestore]);
   const { data: capitalExpenses, isLoading: capExLoading } = useCollection<CapitalExpense>(capitalExpensesQuery);
   
+  // Inflow queries
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading: leadsLoading } = useCollection<Lead>(leadsQuery);
+  
+  const otherInflowsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'other_cash_inflows'), orderBy('date', 'desc')) : null, [firestore]);
+  const { data: otherInflows, isLoading: otherInflowsLoading } = useCollection<OtherCashInflow>(otherInflowsQuery);
+
+  const isLoading = opExLoading || cogsLoading || capExLoading || leadsLoading || otherInflowsLoading;
+
   const { years, months } = useMemo(() => {
-    const allExpenses = [...(operationalExpenses || []), ...(cogs || []), ...(capitalExpenses || [])];
-    if (allExpenses.length === 0) {
+    const allEntries = [...(operationalExpenses || []), ...(cogs || []), ...(capitalExpenses || []), ...(otherInflows || []), ...(leads || []).flatMap(l => l.payments?.map(p => ({date: p.timestamp || l.submissionDateTime})) || [])];
+    if (allEntries.length === 0) {
       const currentYear = new Date().getFullYear();
       return {
         years: [currentYear.toString()],
         months: Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: format(new Date(currentYear, i), 'MMMM') }))
       };
     }
-    const yearsSet = new Set(allExpenses.map(e => getYear(new Date(e.date))));
+    const yearsSet = new Set(allEntries.map(e => getYear(new Date(e.date))));
     const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
 
     const monthOptions = Array.from({ length: 12 }, (_, i) => ({
@@ -87,9 +120,9 @@ function FinanceDashboard() {
     }));
 
     return { years: sortedYears.map(String), months: monthOptions };
-  }, [operationalExpenses, cogs, capitalExpenses]);
+  }, [operationalExpenses, cogs, capitalExpenses, leads, otherInflows]);
 
-  const filteredData = useMemo(() => {
+  const { monthlyOpEx, monthlyCogs, monthlyCapEx } = useMemo(() => {
     const year = parseInt(selectedYear);
     const month = parseInt(selectedMonth) - 1;
     const startDate = startOfMonth(new Date(year, month));
@@ -98,8 +131,10 @@ function FinanceDashboard() {
     const filterByMonth = (data: any[] | null) => {
         if (!data) return [];
         return data.filter(item => {
-            const itemDate = new Date(item.date);
-            return isWithinInterval(itemDate, { start: startDate, end: endDate });
+            try {
+                const itemDate = new Date(item.date);
+                return isWithinInterval(itemDate, { start: startDate, end: endDate });
+            } catch(e) { return false; }
         });
     };
 
@@ -110,7 +145,50 @@ function FinanceDashboard() {
     }
   }, [operationalExpenses, cogs, capitalExpenses, selectedMonth, selectedYear]);
 
-  const { monthlyOpEx, monthlyCogs, monthlyCapEx } = filteredData;
+  const dailyCashInflows = useMemo(() => {
+    if (!leads && !otherInflows) return [];
+
+    const year = parseInt(selectedYear, 10);
+    const month = parseInt(selectedMonth, 10) - 1;
+    const startDate = startOfMonth(new Date(year, month));
+    const endDate = endOfMonth(new Date(year, month));
+
+    const inflowsByDay: {[key: string]: number} = {};
+
+    const processDate = (dateString: string, amount: number) => {
+        try {
+            const date = new Date(dateString);
+            if (isWithinInterval(date, { start: startDate, end: endDate })) {
+                const day = format(date, 'MMM-dd');
+                inflowsByDay[day] = (inflowsByDay[day] || 0) + amount;
+            }
+        } catch (e) {
+            // ignore invalid dates
+        }
+    };
+
+    (leads || []).forEach(lead => {
+        (lead.payments || []).forEach(payment => {
+            const dateToUse = payment.actualTransactionDate || payment.timestamp || lead.submissionDateTime;
+            processDate(dateToUse, payment.amount);
+        });
+    });
+
+    (otherInflows || []).forEach(inflow => {
+        processDate(inflow.date, inflow.amount);
+    });
+
+    const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
+    
+    return daysInMonth.map(day => {
+        const dateStr = format(day, 'MMM-dd');
+        return {
+            date: dateStr,
+            amount: inflowsByDay[dateStr] || 0
+        };
+    });
+
+  }, [leads, otherInflows, selectedMonth, selectedYear]);
   
   const opExByCategory = useMemo(() => {
     if (!monthlyOpEx) return [];
@@ -143,24 +221,27 @@ function FinanceDashboard() {
     const dailyTotals: {[key: string]: { Operational: number, COGS: number, Capital: number }} = {};
 
     allExpenses.forEach(exp => {
-        const day = format(new Date(exp.date), 'MMM-dd');
-        if (!dailyTotals[day]) {
-            dailyTotals[day] = { Operational: 0, COGS: 0, Capital: 0 };
-        }
-        dailyTotals[day][exp.type as 'Operational' | 'COGS' | 'Capital'] += exp.amount;
+        try {
+            const day = format(new Date(exp.date), 'MMM-dd');
+            if (!dailyTotals[day]) {
+                dailyTotals[day] = { Operational: 0, COGS: 0, Capital: 0 };
+            }
+            dailyTotals[day][exp.type as 'Operational' | 'COGS' | 'Capital'] += exp.amount;
+        } catch(e) {}
     });
 
     return Object.entries(dailyTotals).map(([date, values]) => ({ date, ...values })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [monthlyOpEx, monthlyCogs, monthlyCapEx]);
 
 
-  if (opExLoading || cogsLoading || capExLoading) {
+  if (isLoading) {
     return (
         <Header>
             <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Skeleton className="h-96 w-full" />
                 <Skeleton className="h-96 w-full" />
                 <Skeleton className="h-96 w-full lg:col-span-2" />
+                 <Skeleton className="h-96 w-full lg:col-span-2" />
             </div>
         </Header>
     );
@@ -168,8 +249,8 @@ function FinanceDashboard() {
 
   return (
     <Header>
-      <main className="p-4 sm:p-6 lg:p-8">
-        <Card className="mb-8 p-4">
+      <main className="p-4 sm:p-6 lg:p-8 space-y-8">
+        <Card className="p-4">
             <div className="flex justify-start items-center gap-4">
                  <div className="flex items-center gap-2">
                     <span className="font-medium">Year:</span>
@@ -195,6 +276,28 @@ function FinanceDashboard() {
                  </div>
             </div>
         </Card>
+
+        <Card>
+          <CardHeader>
+              <CardTitle>Daily Cash Inflows</CardTitle>
+              <CardDescription>Cash inflows from lead payments and other sources for the selected month.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <ChartContainer config={{}} className="w-full h-80">
+                <ResponsiveContainer>
+                  <LineChart data={dailyCashInflows} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
+                      <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                      <Legend />
+                      <Line type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} dot={{r: 4}} activeDot={{r: 6}} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
@@ -246,10 +349,10 @@ function FinanceDashboard() {
             <CardContent>
                 <ChartContainer config={{}} className="w-full h-80">
                   <ResponsiveContainer>
-                    <LineChart data={expensesOverTime} margin={{ top: 5, right: 20, left: 50, bottom: 5 }}>
+                    <LineChart data={expensesOverTime} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" />
-                        <YAxis tickFormatter={(value) => formatCurrency(value as number)}/>
+                        <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
                         <Line type="monotone" dataKey="Operational" stroke={COLORS[0]} />
