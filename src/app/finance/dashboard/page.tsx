@@ -83,7 +83,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 
 const renderAmountLabel = (props: any) => {
     const { x, y, width, value } = props;
-    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number' || isNaN(x)) return null;
     
     const xPos = width ? x + width / 2 : x;
 
@@ -618,3 +618,5 @@ function FinanceDashboard() {
     </Header>
   );
 }
+
+export default FinanceDashboard;
