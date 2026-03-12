@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -30,7 +31,7 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/header';
-import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, eachDayOfInterval, endOfDay, isBefore } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, eachDayOfInterval, endOfDay, isBefore, parseISO } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/lib/utils';
@@ -195,6 +196,73 @@ function FinanceDashboard() {
 
   }, [leads, otherInflows, selectedMonth, selectedYear]);
   
+  const dailyInflowBreakdown = useMemo(() => {
+    if (!leads && !otherInflows) return [];
+
+    const year = parseInt(selectedYear, 10);
+    const month = parseInt(selectedMonth, 10) - 1;
+    const startDate = startOfMonth(new Date(year, month));
+    
+    const today = endOfDay(new Date());
+    const monthEndForSelected = endOfMonth(new Date(year, month));
+    const endDate = isBefore(monthEndForSelected, today) ? monthEndForSelected : today;
+
+    const inflowsByDay: {[key: string]: { [key: string]: number }} = {};
+
+    const processPayment = (dateString: string, amount: number, type: string) => {
+        try {
+            const date = new Date(dateString);
+            if (isWithinInterval(date, { start: startDate, end: endDate })) {
+                const day = format(date, 'MMM-dd');
+                if (!inflowsByDay[day]) {
+                  inflowsByDay[day] = {};
+                }
+                inflowsByDay[day][type] = (inflowsByDay[day][type] || 0) + amount;
+            }
+        } catch (e) {
+            // ignore invalid dates
+        }
+    };
+    
+    const typeMapping: {[key: string]: string} = {
+        'down': 'Downpayment',
+        'full': 'Full Payment',
+        'balance': 'Balance Payment',
+        'additional': 'Additional Payment',
+        'securityDeposit': 'Security Deposit'
+    };
+
+    (leads || []).forEach(lead => {
+        (lead.payments || []).forEach(payment => {
+            const dateToUse = payment.actualTransactionDate || payment.timestamp || lead.submissionDateTime;
+            const mappedType = typeMapping[payment.type];
+            if (mappedType) {
+              processPayment(dateToUse, payment.amount, mappedType);
+            }
+        });
+    });
+
+    (otherInflows || []).forEach(inflow => {
+        processPayment(inflow.date, inflow.amount, 'Other Inflows');
+    });
+
+    const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
+    
+    return daysInMonth.map(day => {
+        const dateStr = format(day, 'MMM-dd');
+        return {
+            date: dateStr,
+            'Downpayment': inflowsByDay[dateStr]?.['Downpayment'] || 0,
+            'Full Payment': inflowsByDay[dateStr]?.['Full Payment'] || 0,
+            'Balance Payment': inflowsByDay[dateStr]?.['Balance Payment'] || 0,
+            'Additional Payment': inflowsByDay[dateStr]?.['Additional Payment'] || 0,
+            'Security Deposit': inflowsByDay[dateStr]?.['Security Deposit'] || 0,
+            'Other Inflows': inflowsByDay[dateStr]?.['Other Inflows'] || 0
+        };
+    });
+
+  }, [leads, otherInflows, selectedMonth, selectedYear]);
+
   const opExByCategory = useMemo(() => {
     if (!monthlyOpEx) return [];
     const byCategory = monthlyOpEx.reduce((acc, expense) => {
@@ -367,6 +435,32 @@ function FinanceDashboard() {
                             <LabelList dataKey="amount" content={<CustomCashInflowLabel />} />
                         </Area>
                     </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+              <CardTitle>Daily Inflows Breakdown</CardTitle>
+              <CardDescription>Breakdown of daily inflows by payment type.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <ChartContainer config={{}} className="w-full h-80">
+                <ResponsiveContainer>
+                    <LineChart data={dailyInflowBreakdown} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
+                        <CartesianGrid stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                        <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
+                        <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                        <Legend />
+                        <Line type="monotone" dataKey="Downpayment" stroke={COLORS[0]} strokeWidth={2} name="Downpayment" dot={false} />
+                        <Line type="monotone" dataKey="Full Payment" stroke={COLORS[1]} strokeWidth={2} name="Full Payment" dot={false} />
+                        <Line type="monotone" dataKey="Balance Payment" stroke={COLORS[2]} strokeWidth={2} name="Balance Payment" dot={false} />
+                        <Line type="monotone" dataKey="Additional Payment" stroke={COLORS[3]} strokeWidth={2} name="Additional" dot={false} />
+                        <Line type="monotone" dataKey="Security Deposit" stroke={COLORS[4]} strokeWidth={2} name="Security Deposit" dot={false} />
+                        <Line type="monotone" dataKey="Other Inflows" stroke={COLORS[5]} strokeWidth={2} name="Others" dot={false} />
+                    </LineChart>
                 </ResponsiveContainer>
               </ChartContainer>
           </CardContent>
