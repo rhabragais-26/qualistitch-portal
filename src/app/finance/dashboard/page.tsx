@@ -24,11 +24,13 @@ import {
   LineChart,
   Line,
   LabelList,
+  AreaChart,
+  Area,
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/header';
-import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, eachDayOfInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, eachDayOfInterval, endOfDay, isBefore } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/lib/utils';
@@ -151,7 +153,10 @@ function FinanceDashboard() {
     const year = parseInt(selectedYear, 10);
     const month = parseInt(selectedMonth, 10) - 1;
     const startDate = startOfMonth(new Date(year, month));
-    const endDate = endOfMonth(new Date(year, month));
+    
+    const today = endOfDay(new Date());
+    const monthEndForSelected = endOfMonth(new Date(year, month));
+    const endDate = isBefore(monthEndForSelected, today) ? monthEndForSelected : today;
 
     const inflowsByDay: {[key: string]: number} = {};
 
@@ -285,14 +290,22 @@ function FinanceDashboard() {
           <CardContent>
               <ChartContainer config={{}} className="w-full h-80">
                 <ResponsiveContainer>
-                  <LineChart data={dailyCashInflows} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
-                      <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
-                      <Legend />
-                      <Line type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} dot={{r: 4}} activeDot={{r: 6}} />
-                  </LineChart>
+                    <AreaChart data={dailyCashInflows} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
+                        <defs>
+                            <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={COLORS[3]} stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor={COLORS[3]} stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
+                        <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                        <Legend />
+                        <Area type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)">
+                            <LabelList dataKey="amount" position="top" formatter={(value: number) => value > 0 ? formatCurrency(value as number, { notation: 'compact', maximumFractionDigits: 0 }) : ''} />
+                        </Area>
+                    </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
           </CardContent>
