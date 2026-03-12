@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -80,6 +79,26 @@ type OtherCashInflow = {
 };
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#a2d2ff', '#cdb4db'];
+
+const renderAmountLabel = (props: any) => {
+    const { x, y, value } = props;
+    if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+
+    return (
+        <text
+          x={x}
+          y={y}
+          dy={-8}
+          fill="black"
+          fontSize={12}
+          fontWeight="bold"
+          textAnchor="middle"
+        >
+          {formatCurrency(value, { notation: 'compact', maximumFractionDigits: 0 })}
+        </text>
+    );
+};
+
 
 function FinanceDashboard() {
   const firestore = useFirestore();
@@ -393,7 +412,9 @@ function FinanceDashboard() {
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
-                        <Area type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)" dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                        <Area type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
+                            <LabelList content={renderAmountLabel} />
+                        </Area>
                     </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -501,9 +522,15 @@ function FinanceDashboard() {
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
-                        <Area type="monotone" dataKey="Operational" name="OPEX" stroke={'#8884d8'} strokeWidth={2} fillOpacity={1} fill="url(#colorOpEx)" dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                        <Area type="monotone" dataKey="COGS" name="COGS" stroke={'#82ca9d'} strokeWidth={2} fillOpacity={1} fill="url(#colorCogs)" dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                        <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={'#ffc658'} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)" dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                        <Area type="monotone" dataKey="Operational" name="OPEX" stroke={'#8884d8'} strokeWidth={2} fillOpacity={1} fill="url(#colorOpEx)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
+                           <LabelList content={renderAmountLabel} />
+                        </Area>
+                        <Area type="monotone" dataKey="COGS" name="COGS" stroke={'#82ca9d'} strokeWidth={2} fillOpacity={1} fill="url(#colorCogs)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
+                           <LabelList content={renderAmountLabel} />
+                        </Area>
+                        <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={'#ffc658'} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
+                           <LabelList content={renderAmountLabel} />
+                        </Area>
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartContainer>
