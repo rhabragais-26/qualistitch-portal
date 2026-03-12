@@ -81,12 +81,14 @@ type OtherCashInflow = {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#a2d2ff', '#cdb4db'];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, value } = props;
+    const { x, y, width, value } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number') return null;
+    
+    const xPos = width ? x + width / 2 : x;
 
     return (
         <text
-          x={x}
+          x={xPos}
           y={y}
           dy={-8}
           fill="black"
@@ -281,6 +283,24 @@ function FinanceDashboard() {
     });
 
   }, [leads, otherInflows, selectedMonth, selectedYear]);
+  
+  const paymentTypeTotals = useMemo(() => {
+    if (!dailyInflowBreakdown) return {};
+    return dailyInflowBreakdown.reduce((acc, day) => {
+        Object.keys(day).forEach(key => {
+            if(key !== 'date') {
+                if(!acc[key]) acc[key] = 0;
+                acc[key] += (day as any)[key];
+            }
+        });
+        return acc;
+    }, {} as Record<string, number>);
+  }, [dailyInflowBreakdown]);
+
+  const totalInflowForPeriod = useMemo(() => {
+    return Object.values(paymentTypeTotals).reduce((sum, val) => sum + val, 0);
+  }, [paymentTypeTotals]);
+
 
   const opExByCategory = useMemo(() => {
     if (!monthlyOpEx) return [];
@@ -348,6 +368,48 @@ function FinanceDashboard() {
       }
       return null;
   };
+  
+    const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string; amount: number; percentage: number; color: string }) => {
+    const data = [
+        { name: title, value: Math.max(0, Math.min(100, percentage)) },
+        { name: 'remaining', value: Math.max(0, 100 - Math.max(0, Math.min(100, percentage))) },
+    ];
+    
+    const chartColors = [color, '#e5e7eb'];
+
+    return (
+        <Card className="flex flex-col items-center justify-center p-2">
+            <CardHeader className="p-0 mb-2 text-center">
+                <CardTitle className="text-base font-medium">{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 relative w-24 h-24">
+                <ChartContainer config={{}} className="w-full h-full">
+                  <PieChart>
+                      <Pie
+                          data={data}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="60%"
+                          outerRadius="80%"
+                          startAngle={90}
+                          endAngle={450}
+                          stroke="none"
+                      >
+                          {data.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                          ))}
+                      </Pie>
+                  </PieChart>
+                </ChartContainer>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-lg font-bold">{formatCurrency(amount, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                </div>
+            </CardContent>
+        </Card>
+    )
+  }
 
   if (isLoading) {
     return (
@@ -413,7 +475,7 @@ function FinanceDashboard() {
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
                         <Area type="monotone" dataKey="amount" name="Cash Inflow" stroke={COLORS[3]} strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
-                            <LabelList content={renderAmountLabel} />
+                            <LabelList dataKey="amount" content={renderAmountLabel} />
                         </Area>
                     </AreaChart>
                 </ResponsiveContainer>
@@ -423,26 +485,40 @@ function FinanceDashboard() {
         
         <Card>
           <CardHeader>
-              <CardTitle>Daily Inflows Breakdown</CardTitle>
-              <CardDescription>Breakdown of daily inflows by payment type.</CardDescription>
+              <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>Daily Inflows Breakdown</CardTitle>
+                    <CardDescription>Breakdown of daily inflows by payment type.</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                      {Object.entries(paymentTypeTotals).map(([type, total], index) => total > 0 && (
+                          <DoughnutChartCard
+                              key={type}
+                              title={type}
+                              amount={total}
+                              percentage={totalInflowForPeriod > 0 ? (total / totalInflowForPeriod) * 100 : 0}
+                              color={COLORS[index % COLORS.length]}
+                          />
+                      ))}
+                  </div>
+              </div>
           </CardHeader>
           <CardContent>
               <ChartContainer config={{}} className="w-full h-80">
                 <ResponsiveContainer>
-                    <LineChart data={dailyInflowBreakdown} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
+                    <AreaChart data={dailyInflowBreakdown} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
                         <CartesianGrid stroke="hsl(var(--border))" />
                         <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
-                        <YAxis yAxisId="left" orientation="left" stroke={COLORS[0]} tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
-                        <YAxis yAxisId="right" orientation="right" stroke={COLORS[2]} tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
+                        <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
-                        <Line yAxisId="left" type="monotone" dataKey="Downpayment" stroke={COLORS[0]} strokeWidth={2} name="Downpayment" dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                        <Line yAxisId="left" type="monotone" dataKey="Full Payment" stroke={COLORS[1]} strokeWidth={2} name="Full Payment" dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                        <Line yAxisId="right" type="monotone" dataKey="Balance Payment" stroke={COLORS[2]} strokeWidth={2} name="Balance Payment" dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                        <Line yAxisId="right" type="monotone" dataKey="Additional Payment" stroke={COLORS[3]} strokeWidth={2} name="Additional" dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                        <Line yAxisId="right" type="monotone" dataKey="Security Deposit" stroke={COLORS[4]} strokeWidth={2} name="Security Deposit" dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                        <Line yAxisId="right" type="monotone" dataKey="Other Inflows" stroke={COLORS[5]} strokeWidth={2} name="Others" dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                    </LineChart>
+                        <Area type="monotone" dataKey="Downpayment" stackId="1" name="Downpayment" stroke={COLORS[0]} fill={COLORS[0]} fillOpacity={0.6} />
+                        <Area type="monotone" dataKey="Full Payment" stackId="1" name="Full Payment" stroke={COLORS[1]} fill={COLORS[1]} fillOpacity={0.6} />
+                        <Area type="monotone" dataKey="Balance Payment" stackId="1" name="Balance Payment" stroke={COLORS[2]} fill={COLORS[2]} fillOpacity={0.6} />
+                        <Area type="monotone" dataKey="Additional Payment" stackId="1" name="Additional" stroke={COLORS[3]} fill={COLORS[3]} fillOpacity={0.6} />
+                        <Area type="monotone" dataKey="Security Deposit" stackId="1" name="Security Deposit" stroke={COLORS[4]} fill={COLORS[4]} fillOpacity={0.6} />
+                        <Area type="monotone" dataKey="Other Inflows" stackId="1" name="Others" stroke={COLORS[5]} fill={COLORS[5]} fillOpacity={0.6} />
+                    </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
           </CardContent>
