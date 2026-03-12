@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -404,7 +405,7 @@ function FinanceDashboard() {
                   </PieChart>
                 </ChartContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-bold">{formatCurrency(amount, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                    <span className="text-xl font-bold">{formatCurrency(amount, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
                 </div>
             </CardContent>
         </Card>
@@ -490,7 +491,7 @@ function FinanceDashboard() {
                     <CardTitle>Daily Inflows Breakdown</CardTitle>
                     <CardDescription>Breakdown of daily inflows by payment type.</CardDescription>
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap justify-end gap-x-6 gap-y-4">
                       {Object.entries(paymentTypeTotals).map(([type, total], index) => total > 0 && (
                           <DoughnutChartCard
                               key={type}
@@ -617,5 +618,3 @@ function FinanceDashboard() {
     </Header>
   );
 }
-
-export default FinanceDashboard;
