@@ -402,12 +402,15 @@ function FinanceDashboard() {
             <CardContent>
               <ChartContainer config={{}} className="w-full h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={opExByCategory} layout="vertical" margin={{ left: 140, top: 20, right: 30, bottom: 5 }}>
+                   <BarChart data={opExByCategory} layout="vertical" margin={{ left: 20, top: 20, right: 50, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" tickFormatter={(value) => formatCurrency(value as number)} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={130} />
+                        <XAxis type="number" tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })} />
+                        <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={120} interval={0}/>
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
-                        <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]}>
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                             {opExByCategory.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
                             <LabelList dataKey="value" position="right" formatter={(value: number) => formatCurrency(value)} fontSize={12} />
                         </Bar>
                    </BarChart>
