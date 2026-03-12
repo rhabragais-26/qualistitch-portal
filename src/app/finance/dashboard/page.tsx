@@ -451,15 +451,28 @@ function FinanceDashboard() {
                     <LineChart data={dailyInflowBreakdown} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
                         <CartesianGrid stroke="hsl(var(--border))" />
                         <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
-                        <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
-                        <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                        <YAxis yAxisId="left" orientation="left" stroke={COLORS[0]} tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
+                        <YAxis yAxisId="right" orientation="right" stroke={COLORS[2]} tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
+                        <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
-                        <Line type="monotone" dataKey="Downpayment" stroke={COLORS[0]} strokeWidth={2} name="Downpayment" dot={false} />
-                        <Line type="monotone" dataKey="Full Payment" stroke={COLORS[1]} strokeWidth={2} name="Full Payment" dot={false} />
-                        <Line type="monotone" dataKey="Balance Payment" stroke={COLORS[2]} strokeWidth={2} name="Balance Payment" dot={false} />
-                        <Line type="monotone" dataKey="Additional Payment" stroke={COLORS[3]} strokeWidth={2} name="Additional" dot={false} />
-                        <Line type="monotone" dataKey="Security Deposit" stroke={COLORS[4]} strokeWidth={2} name="Security Deposit" dot={false} />
-                        <Line type="monotone" dataKey="Other Inflows" stroke={COLORS[5]} strokeWidth={2} name="Others" dot={false} />
+                        <Line yAxisId="left" type="monotone" dataKey="Downpayment" stroke={COLORS[0]} strokeWidth={2} name="Downpayment" dot={false}>
+                          <LabelList content={<CustomCashInflowLabel />} />
+                        </Line>
+                        <Line yAxisId="left" type="monotone" dataKey="Full Payment" stroke={COLORS[1]} strokeWidth={2} name="Full Payment" dot={false}>
+                          <LabelList content={<CustomCashInflowLabel />} />
+                        </Line>
+                        <Line yAxisId="right" type="monotone" dataKey="Balance Payment" stroke={COLORS[2]} strokeWidth={2} name="Balance Payment" dot={false}>
+                           <LabelList content={<CustomCashInflowLabel />} />
+                        </Line>
+                        <Line yAxisId="right" type="monotone" dataKey="Additional Payment" stroke={COLORS[3]} strokeWidth={2} name="Additional" dot={false}>
+                           <LabelList content={<CustomCashInflowLabel />} />
+                        </Line>
+                        <Line yAxisId="right" type="monotone" dataKey="Security Deposit" stroke={COLORS[4]} strokeWidth={2} name="Security Deposit" dot={false}>
+                           <LabelList content={<CustomCashInflowLabel />} />
+                        </Line>
+                        <Line yAxisId="right" type="monotone" dataKey="Other Inflows" stroke={COLORS[5]} strokeWidth={2} name="Others" dot={false}>
+                           <LabelList content={<CustomCashInflowLabel />} />
+                        </Line>
                     </LineChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -523,16 +536,16 @@ function FinanceDashboard() {
                     <AreaChart data={expensesOverTime} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
                         <defs>
                             <linearGradient id="colorOpEx" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={COLORS[0]} stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor={COLORS[0]} stopOpacity={0}/>
+                                <stop offset="5%" stopColor={'#8884d8'} stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor={'#8884d8'} stopOpacity={0}/>
                             </linearGradient>
                             <linearGradient id="colorCogs" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={COLORS[1]} stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor={COLORS[1]} stopOpacity={0}/>
+                                <stop offset="5%" stopColor={'#82ca9d'} stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor={'#82ca9d'} stopOpacity={0}/>
                             </linearGradient>
                             <linearGradient id="colorCapEx" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={COLORS[2]} stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor={COLORS[2]} stopOpacity={0}/>
+                                <stop offset="5%" stopColor={'#ffc658'} stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor={'#ffc658'} stopOpacity={0}/>
                             </linearGradient>
                         </defs>
                         <CartesianGrid stroke="hsl(var(--border))" />
@@ -540,13 +553,13 @@ function FinanceDashboard() {
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
-                        <Area type="monotone" dataKey="Operational" name="OPEX" stroke={COLORS[0]} strokeWidth={2} fillOpacity={1} fill="url(#colorOpEx)">
+                        <Area type="monotone" dataKey="Operational" name="OPEX" stroke={'#8884d8'} strokeWidth={2} fillOpacity={1} fill="url(#colorOpEx)">
                             <LabelList dataKey="Operational" content={CustomExpenseLabel} />
                         </Area>
-                        <Area type="monotone" dataKey="COGS" name="COGS" stroke={COLORS[1]} strokeWidth={2} fillOpacity={1} fill="url(#colorCogs)">
+                        <Area type="monotone" dataKey="COGS" name="COGS" stroke={'#82ca9d'} strokeWidth={2} fillOpacity={1} fill="url(#colorCogs)">
                             <LabelList dataKey="COGS" content={CustomExpenseLabel} />
                         </Area>
-                        <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={COLORS[2]} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)">
+                        <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={'#ffc658'} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)">
                             <LabelList dataKey="Capital" content={CustomExpenseLabel} />
                         </Area>
                     </AreaChart>
