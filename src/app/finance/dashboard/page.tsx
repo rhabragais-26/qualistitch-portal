@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -253,10 +252,7 @@ function FinanceDashboard() {
         fontWeight="bold"
         textAnchor="middle"
       >
-        {formatCurrency(value, {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        })}
+        {formatCurrency(value)}
       </text>
     );
   };
@@ -319,8 +315,8 @@ function FinanceDashboard() {
                                 <stop offset="95%" stopColor={COLORS[3]} stopOpacity={0}/>
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
+                        <CartesianGrid stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                         <Legend />
@@ -363,7 +359,7 @@ function FinanceDashboard() {
             <CardContent>
               <ChartContainer config={{}} className="w-full h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={opExByCategory} layout="vertical" margin={{ left: 140 }}>
+                   <BarChart data={opExByCategory} layout="vertical" margin={{ left: 140, top: 20, right: 30, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                         <XAxis type="number" tickFormatter={(value) => formatCurrency(value as number)} />
                         <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={130} />
