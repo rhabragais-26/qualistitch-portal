@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -28,7 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Send, ArrowLeft, Loader2 } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Music } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
@@ -131,6 +130,14 @@ export function ChatLayout() {
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const chatSoundRef = useRef<HTMLAudioElement | null>(null);
+  const messagesSnapshotRef = useRef<ChatMessage[]>([]);
+  const lastPlayedTimestampRef = useRef<number>(0);
+
+  useEffect(() => {
+    chatSoundRef.current = new Audio('https://cdn.freesound.org/previews/514/514486_11048033-lq.mp3');
+    chatSoundRef.current.volume = 0.5;
+  }, []);
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('nickname', 'asc')) : null, [firestore]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
@@ -148,6 +155,7 @@ export function ChatLayout() {
   
   // State for paginated messages
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  messagesSnapshotRef.current = messages;
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [moreMessagesLoading, setMoreMessagesLoading] = useState(false);
   const [lastMessageDoc, setLastMessageDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -240,6 +248,17 @@ export function ChatLayout() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const newMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage)).reverse();
         
+        if (messagesSnapshotRef.current.length > 0 && newMessages.length > messagesSnapshotRef.current.length) {
+            const lastNewMessage = newMessages[newMessages.length - 1];
+            if (lastNewMessage && lastNewMessage.senderId !== user?.uid) {
+                const now = Date.now();
+                if (now - lastPlayedTimestampRef.current > 1000) {
+                    chatSoundRef.current?.play().catch(error => console.error("Chat audio play failed:", error));
+                    lastPlayedTimestampRef.current = now;
+                }
+            }
+        }
+        
         setMessages(newMessages);
 
         const lastVisible = snapshot.docs[snapshot.docs.length - 1];
@@ -252,7 +271,7 @@ export function ChatLayout() {
     });
 
     return () => unsubscribe();
-  }, [messagesRef]);
+  }, [messagesRef, user?.uid]);
 
   const loadOlderMessages = async () => {
     if (!messagesRef || !lastMessageDoc || !hasMore || moreMessagesLoading) return;
@@ -389,10 +408,18 @@ export function ChatLayout() {
   }, [users, user, channels]);
 
   if (!selectedUser) {
+    const playTestSound = () => {
+        chatSoundRef.current?.play().catch(error => console.error("Test audio play failed:", error));
+    };
+
     return (
         <div className="flex flex-col h-full rounded-t-lg overflow-hidden" style={{ backgroundColor: '#e6fafa' }}>
             <div className="p-4 border-b flex justify-between items-center rounded-t-lg" style={{ backgroundColor: '#d9f7f2' }}>
                 <h2 className="text-xl font-bold">Chats</h2>
+                 <Button variant="outline" size="sm" onClick={playTestSound}>
+                    <Music className="mr-2 h-4 w-4" />
+                    Test Sound
+                </Button>
                 <p className="text-xs text-black/70 max-w-sm text-left pl-5">
                     This chat function is only intended for Follow Ups, Reminders and Order-related transactions. Do not use this for non-work-related stuffs. (press <span className="font-bold">ESC</span> to close)
                 </p>

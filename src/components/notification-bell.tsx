@@ -71,8 +71,12 @@ export function NotificationBell() {
   const { data: appState } = useDoc<AppState>(appStateRef);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const lastProcessedAnnouncementTimestamp = useRef<string | null>(null);
+  const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    notificationSoundRef.current = new Audio('https://cdn.freesound.org/previews/587/587283_12839997-lq.mp3');
+    notificationSoundRef.current.volume = 0.5;
+
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission !== 'granted') {
           Notification.requestPermission().then(permission => {
@@ -193,6 +197,10 @@ export function NotificationBell() {
       localStorage.setItem('lastNotificationFiredAt', now.toString());
 
       setIsAnimating(true);
+      notificationSoundRef.current?.play().catch(error => {
+        console.error("Audio play failed:", error);
+      });
+
 
       if (notificationPermission === 'granted') {
         const newNotificationsCount = unreadCount - prevUnreadCountRef.current;
