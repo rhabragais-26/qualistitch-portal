@@ -648,7 +648,7 @@ function FinanceDashboard() {
         </Card>
 
         <Card className="lg:col-span-2">
-            <CardHeader>
+            <CardHeader className="py-4">
                 <div className="flex justify-between items-start">
                     <div>
                         <CardTitle>Daily Sales vs. Daily Expenses</CardTitle>
@@ -686,10 +686,10 @@ function FinanceDashboard() {
                         <Tooltip content={<CustomCombinedTooltip />} />
                         <Legend />
                         <Area type="monotone" dataKey="sales" name="Sales" stroke="#22c55e" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
-                           <LabelList dataKey="sales" content={renderAmountLabel} />
+                           <LabelList dataKey="sales" content={(props) => renderAmountLabel({...props, dataKey: 'sales'})} />
                         </Area>
                         <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpenses)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
-                           <LabelList dataKey="expenses" content={renderAmountLabel} />
+                           <LabelList dataKey="expenses" content={(props) => renderAmountLabel({...props, dataKey: 'expenses'})} />
                         </Area>
                     </AreaChart>
                   </ResponsiveContainer>
@@ -799,3 +799,5 @@ function FinanceDashboard() {
 }
 
 export default FinanceDashboard;
+
+    
