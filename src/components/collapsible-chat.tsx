@@ -45,8 +45,11 @@ export function CollapsibleChat() {
     window.addEventListener('keydown', handleKeyDown);
 
     // Initialize Audio object on the client side
-    chatSoundRef.current = new Audio('/Chat_Sound.mp3');
-    chatSoundRef.current.volume = 0.5;
+    if (typeof window !== 'undefined') {
+      chatSoundRef.current = new Audio('/Chat_Sound.mp3');
+      chatSoundRef.current.volume = 0.5;
+    }
+
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
@@ -129,7 +132,6 @@ export function CollapsibleChat() {
           </TooltipProvider>
         </div>
       </div>
-      {isExpanded && <Button onClick={playTestSound} variant="secondary" className="absolute bottom-2 right-2">Test Sound <Music className="ml-2 h-4 w-4" /></Button>}
     </div>
   );
 }
