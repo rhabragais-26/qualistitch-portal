@@ -218,6 +218,10 @@ function FinanceDashboard() {
 
   }, [leads, otherInflows, selectedMonth, selectedYear]);
   
+  const totalInflowForPeriod = useMemo(() => {
+    return dailyCashInflows.reduce((sum, day) => sum + day.amount, 0);
+  }, [dailyCashInflows]);
+
   const dailyInflowBreakdown = useMemo(() => {
     if (!leads && !otherInflows) return [];
 
@@ -298,7 +302,7 @@ function FinanceDashboard() {
     }, {} as Record<string, number>);
   }, [dailyInflowBreakdown]);
 
-  const totalInflowForPeriod = useMemo(() => {
+  const totalInflowBreakdownForPeriod = useMemo(() => {
     return Object.values(paymentTypeTotals).reduce((sum, val) => sum + val, 0);
   }, [paymentTypeTotals]);
 
@@ -345,6 +349,10 @@ function FinanceDashboard() {
 
     return Object.entries(dailyTotals).map(([date, values]) => ({ date, ...values })).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [monthlyOpEx, monthlyCogs, monthlyCapEx]);
+
+  const totalExpenseForPeriod = useMemo(() => {
+    return expensesOverTime.reduce((sum, day) => sum + day.Operational + day.COGS + day.Capital, 0);
+  }, [expensesOverTime]);
   
   const CustomExpenseTooltip = ({ active, payload, label }: any) => {
       if (active && payload && payload.length) {
@@ -457,8 +465,16 @@ function FinanceDashboard() {
 
         <Card>
           <CardHeader>
-              <CardTitle>Daily Cash Inflows</CardTitle>
-              <CardDescription>Cash inflows from lead payments and other sources for the selected month.</CardDescription>
+              <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>Daily Cash Inflows</CardTitle>
+                    <CardDescription>Cash inflows from lead payments and other sources for the selected month.</CardDescription>
+                  </div>
+                   <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Total Inflows</p>
+                        <p className="text-2xl font-bold">{formatCurrency(totalInflowForPeriod)}</p>
+                    </div>
+              </div>
           </CardHeader>
           <CardContent>
               <ChartContainer config={{}} className="w-full h-80">
@@ -497,7 +513,7 @@ function FinanceDashboard() {
                               key={type}
                               title={type}
                               amount={total}
-                              percentage={totalInflowForPeriod > 0 ? (total / totalInflowForPeriod) * 100 : 0}
+                              percentage={totalInflowBreakdownForPeriod > 0 ? (total / totalInflowBreakdownForPeriod) * 100 : 0}
                               color={COLORS[index % COLORS.length]}
                           />
                       ))}
@@ -507,19 +523,19 @@ function FinanceDashboard() {
           <CardContent>
               <ChartContainer config={{}} className="w-full h-80">
                 <ResponsiveContainer>
-                    <AreaChart data={dailyInflowBreakdown} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
+                    <BarChart data={dailyInflowBreakdown} stackOffset="sign" margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
                         <CartesianGrid stroke="hsl(var(--border))" />
                         <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
-                        <Area type="monotone" dataKey="Downpayment" stackId="1" name="Downpayment" stroke={COLORS[0]} fill={COLORS[0]} fillOpacity={0.6} />
-                        <Area type="monotone" dataKey="Full Payment" stackId="1" name="Full Payment" stroke={COLORS[1]} fill={COLORS[1]} fillOpacity={0.6} />
-                        <Area type="monotone" dataKey="Balance Payment" stackId="1" name="Balance Payment" stroke={COLORS[2]} fill={COLORS[2]} fillOpacity={0.6} />
-                        <Area type="monotone" dataKey="Additional Payment" stackId="1" name="Additional" stroke={COLORS[3]} fill={COLORS[3]} fillOpacity={0.6} />
-                        <Area type="monotone" dataKey="Security Deposit" stackId="1" name="Security Deposit" stroke={COLORS[4]} fill={COLORS[4]} fillOpacity={0.6} />
-                        <Area type="monotone" dataKey="Other Inflows" stackId="1" name="Others" stroke={COLORS[5]} fill={COLORS[5]} fillOpacity={0.6} />
-                    </AreaChart>
+                        <Bar dataKey="Downpayment" stackId="a" name="Downpayment" fill={COLORS[0]} />
+                        <Bar dataKey="Full Payment" stackId="a" name="Full Payment" fill={COLORS[1]} />
+                        <Bar dataKey="Balance Payment" stackId="a" name="Balance Payment" fill={COLORS[2]} />
+                        <Bar dataKey="Additional Payment" stackId="a" name="Additional" fill={COLORS[3]} />
+                        <Bar dataKey="Security Deposit" stackId="a" name="Security Deposit" fill={COLORS[4]} />
+                        <Bar dataKey="Other Inflows" stackId="a" name="Others" fill={COLORS[5]} />
+                    </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
           </CardContent>
@@ -572,8 +588,16 @@ function FinanceDashboard() {
           </Card>
            <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Daily Expense Trend</CardTitle>
-                <CardDescription>Total expenses logged per day for the selected month.</CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle>Daily Expense Trend</CardTitle>
+                        <CardDescription>Total expenses logged per day for the selected month.</CardDescription>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Total Expenses</p>
+                        <p className="text-2xl font-bold">{formatCurrency(totalExpenseForPeriod)}</p>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={{}} className="w-full h-80">
@@ -599,13 +623,13 @@ function FinanceDashboard() {
                         <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
                         <Area type="monotone" dataKey="Operational" name="OPEX" stroke={'#8884d8'} strokeWidth={2} fillOpacity={1} fill="url(#colorOpEx)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
-                           <LabelList content={renderAmountLabel} />
+                           <LabelList dataKey="Operational" content={renderAmountLabel} />
                         </Area>
                         <Area type="monotone" dataKey="COGS" name="COGS" stroke={'#82ca9d'} strokeWidth={2} fillOpacity={1} fill="url(#colorCogs)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
-                           <LabelList content={renderAmountLabel} />
+                           <LabelList dataKey="COGS" content={renderAmountLabel} />
                         </Area>
                         <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={'#ffc658'} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
-                           <LabelList content={renderAmountLabel} />
+                           <LabelList dataKey="Capital" content={renderAmountLabel} />
                         </Area>
                     </AreaChart>
                   </ResponsiveContainer>
