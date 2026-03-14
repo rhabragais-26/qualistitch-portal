@@ -83,11 +83,15 @@ type OtherCashInflow = {
 const COLORS = ['#0088FE', '#A090B0', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#a2d2ff', '#cdb4db'];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, width, value, dataKey } = props;
+    const { x, y, width, value, stroke, dataKey } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number' || isNaN(x)) return null;
     
     const xPos = width ? x + width / 2 : x;
-    const color = dataKey === 'expenses' ? '#ef4444' : 'black';
+    
+    let color = 'black'; // default color
+    if (stroke === '#ef4444' || dataKey === 'expenses') {
+        color = '#ef4444';
+    }
 
     return (
         <text
