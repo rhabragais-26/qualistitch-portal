@@ -80,20 +80,21 @@ type OtherCashInflow = {
     amount: number;
 };
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#a2d2ff', '#cdb4db'];
+const COLORS = ['#0088FE', '#A090B0', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#a2d2ff', '#cdb4db'];
 
 const renderAmountLabel = (props: any) => {
-    const { x, y, width, value } = props;
+    const { x, y, width, value, dataKey } = props;
     if (value === 0 || typeof x !== 'number' || typeof y !== 'number' || isNaN(x)) return null;
     
     const xPos = width ? x + width / 2 : x;
+    const color = dataKey === 'expenses' ? '#ef4444' : 'black';
 
     return (
         <text
           x={xPos}
           y={y}
           dy={-8}
-          fill="black"
+          fill={color}
           fontSize={12}
           fontWeight="bold"
           textAnchor="middle"
@@ -138,7 +139,7 @@ const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string
                 </PieChart>
               </ChartContainer>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="text-lg font-bold">{formatCurrency(amount, { notation: 'compact', maximumFractionDigits: 1})}</span>
+                  <span className="text-xl font-bold">{formatCurrency(amount, { notation: 'compact', maximumFractionDigits: 1})}</span>
               </div>
           </CardContent>
       </Card>
@@ -364,7 +365,7 @@ function FinanceDashboard() {
   }, [dailyInflowBreakdown]);
 
   const inflowCategories = useMemo(() => [
-    { title: 'Downpayment', amount: totalDownpayment, color: 'hsl(var(--chart-2))' },
+    { title: 'Downpayment', amount: totalDownpayment, color: '#22c55e' },
     { title: 'Full Payment', amount: totalFullPayment, color: COLORS[0] },
     { title: 'Balance Payment', amount: totalBalancePayment, color: COLORS[2] },
     { title: 'Additional Payment', amount: totalAdditionalPayment, color: COLORS[3] },
@@ -610,7 +611,7 @@ function FinanceDashboard() {
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<CustomCombinedTooltip />} />
                         <Legend />
-                        <Bar dataKey="Downpayment" stackId="a" name="Downpayment" fill="hsl(var(--chart-2))" />
+                        <Bar dataKey="Downpayment" stackId="a" name="Downpayment" fill="#22c55e" />
                         <Bar dataKey="Full Payment" stackId="a" name="Full Payment" fill={COLORS[0]} />
                         <Bar dataKey="Balance Payment" stackId="a" name="Balance Payment" fill={COLORS[2]} />
                         <Bar dataKey="Additional Payment" stackId="a" name="Additional" fill={COLORS[3]} />
@@ -678,7 +679,7 @@ function FinanceDashboard() {
                     <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)}/>} />
                     <Pie data={totalExpensesData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                       {totalExpensesData.map((entry, index) => {
-                        const expenseColors = ['#FF8042', '#A090B0', '#22c55e']; // Orange, Muted Purple, Green
+                        const expenseColors = ['#A090B0', '#ffc658', '#22c55e']; // Muted Purple, Orange, Green
                         return <Cell key={`cell-${index}`} fill={expenseColors[index % expenseColors.length]} />
                       })}
                     </Pie>
