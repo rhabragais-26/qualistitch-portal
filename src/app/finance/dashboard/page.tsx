@@ -31,7 +31,7 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/header';
-import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, eachDayOfInterval, endOfDay, isBefore, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, eachDayOfInterval, endOfDay, isBefore, parseISO, parse } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/lib/utils';
@@ -97,7 +97,7 @@ const renderAmountLabel = (props: any) => {
           fontWeight="bold"
           textAnchor="middle"
         >
-          {formatCurrency(value, { maximumFractionDigits: 0 })}
+          {formatCurrency(value, { maximumFractionDigits: 0, notation: 'compact' })}
         </text>
     );
 };
@@ -143,7 +143,6 @@ const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string
       </Card>
   )
 }
-
 
 function FinanceDashboard() {
   const firestore = useFirestore();
@@ -418,8 +417,30 @@ function FinanceDashboard() {
   const totalExpenseForPeriod = useMemo(() => {
     return expensesOverTime.reduce((sum, day) => sum + day.Operational + day.COGS + day.Capital, 0);
   }, [expensesOverTime]);
+
+  const dailySalesAndExpenses = useMemo(() => {
+    const combinedData: { [key: string]: { sales: number; expenses: number } } = {};
+    const allDates = new Set([...dailyCashInflows.map(d => d.date), ...expensesOverTime.map(d => d.date)]);
+    
+    const sortedDates = Array.from(allDates).sort((a,b) => parse(a, 'MMM-dd', new Date()).getTime() - parse(b, 'MMM-dd', new Date()).getTime());
+
+    sortedDates.forEach(date => {
+        const inflow = dailyCashInflows.find(d => d.date === date);
+        const outflow = expensesOverTime.find(d => d.date === date);
+        combinedData[date] = {
+            sales: inflow ? inflow.amount : 0,
+            expenses: outflow ? outflow.Operational + outflow.COGS + outflow.Capital : 0
+        };
+    });
+
+    return Object.entries(combinedData).map(([date, values]) => ({
+      date,
+      sales: values.sales,
+      expenses: values.expenses
+    }));
+  }, [dailyCashInflows, expensesOverTime]);
   
-  const CustomExpenseTooltip = ({ active, payload, label }: any) => {
+  const CustomCombinedTooltip = ({ active, payload, label }: any) => {
       if (active && payload && payload.length) {
         return (
           <div className="p-3 bg-card border rounded-lg shadow-lg text-base">
@@ -550,7 +571,7 @@ function FinanceDashboard() {
                         <CartesianGrid stroke="hsl(var(--border))" />
                         <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
-                        <Tooltip content={<CustomExpenseTooltip />} />
+                        <Tooltip content={<CustomCombinedTooltip />} />
                         <Legend />
                         <Bar dataKey="Downpayment" stackId="a" name="Downpayment" fill="hsl(var(--chart-2))" />
                         <Bar dataKey="Full Payment" stackId="a" name="Full Payment" fill={COLORS[0]} />
@@ -561,7 +582,7 @@ function FinanceDashboard() {
                            <LabelList 
                                 dataKey="total" 
                                 position="top" 
-                                formatter={(value: number) => value > 0 ? formatCurrency(value) : null}
+                                formatter={(value: number) => value > 0 ? formatCurrency(value, {notation: 'compact', maximumFractionDigits: 0}) : null}
                                 className="fill-black font-bold"
                                 fontSize={12}
                            />
@@ -651,7 +672,7 @@ function FinanceDashboard() {
                         <CartesianGrid stroke="hsl(var(--border))" />
                         <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
-                        <Tooltip content={<CustomExpenseTooltip />} />
+                        <Tooltip content={<CustomCombinedTooltip />} />
                         <Legend />
                         <Area type="monotone" dataKey="Operational" name="OPEX" stroke={'#8884d8'} strokeWidth={2} fillOpacity={1} fill="url(#colorOpEx)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
                            <LabelList dataKey="Operational" content={renderAmountLabel} />
@@ -661,6 +682,41 @@ function FinanceDashboard() {
                         </Area>
                         <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={'#ffc658'} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
                            <LabelList dataKey="Capital" content={renderAmountLabel} />
+                        </Area>
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+            </CardContent>
+           </Card>
+           <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle>Daily Sales vs. Daily Expenses</CardTitle>
+                <CardDescription>A comparison of cash inflows and outflows for the selected month.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={{}} className="w-full h-80">
+                  <ResponsiveContainer>
+                    <AreaChart data={dailySalesAndExpenses} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
+                        <defs>
+                            <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                        <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
+                        <Tooltip content={<CustomCombinedTooltip />} />
+                        <Legend />
+                        <Area type="monotone" dataKey="sales" name="Sales" stroke="#22c55e" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
+                           <LabelList dataKey="sales" content={renderAmountLabel} />
+                        </Area>
+                        <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpenses)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
+                           <LabelList dataKey="expenses" content={renderAmountLabel} />
                         </Area>
                     </AreaChart>
                   </ResponsiveContainer>
