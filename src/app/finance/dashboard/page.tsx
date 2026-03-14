@@ -276,8 +276,7 @@ function FinanceDashboard() {
     
     return daysInMonth.map(day => {
         const dateStr = format(day, 'MMM-dd');
-        return {
-            date: dateStr,
+        const breakdown = {
             'Downpayment': inflowsByDay[dateStr]?.['Downpayment'] || 0,
             'Full Payment': inflowsByDay[dateStr]?.['Full Payment'] || 0,
             'Balance Payment': inflowsByDay[dateStr]?.['Balance Payment'] || 0,
@@ -285,27 +284,16 @@ function FinanceDashboard() {
             'Security Deposit': inflowsByDay[dateStr]?.['Security Deposit'] || 0,
             'Other Inflows': inflowsByDay[dateStr]?.['Other Inflows'] || 0
         };
+        const total = Object.values(breakdown).reduce((sum, val) => sum + val, 0);
+
+        return {
+            date: dateStr,
+            ...breakdown,
+            total,
+        };
     });
 
   }, [leads, otherInflows, selectedMonth, selectedYear]);
-  
-  const paymentTypeTotals = useMemo(() => {
-    if (!dailyInflowBreakdown) return {};
-    return dailyInflowBreakdown.reduce((acc, day) => {
-        Object.keys(day).forEach(key => {
-            if(key !== 'date') {
-                if(!acc[key]) acc[key] = 0;
-                acc[key] += (day as any)[key];
-            }
-        });
-        return acc;
-    }, {} as Record<string, number>);
-  }, [dailyInflowBreakdown]);
-
-  const totalInflowBreakdownForPeriod = useMemo(() => {
-    return Object.values(paymentTypeTotals).reduce((sum, val) => sum + val, 0);
-  }, [paymentTypeTotals]);
-
 
   const opExByCategory = useMemo(() => {
     if (!monthlyOpEx) return [];
@@ -378,48 +366,6 @@ function FinanceDashboard() {
       return null;
   };
   
-    const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string; amount: number; percentage: number; color: string }) => {
-    const data = [
-        { name: title, value: Math.max(0, Math.min(100, percentage)) },
-        { name: 'remaining', value: Math.max(0, 100 - Math.max(0, Math.min(100, percentage))) },
-    ];
-    
-    const chartColors = [color, '#e5e7eb'];
-
-    return (
-        <Card className="flex flex-col items-center justify-center p-4">
-            <CardHeader className="p-0 mb-2 text-center">
-                <CardTitle className="text-base font-medium">{title}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 relative w-32 h-32">
-                <ChartContainer config={{}} className="w-full h-full">
-                  <PieChart>
-                      <Pie
-                          data={data}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius="60%"
-                          outerRadius="80%"
-                          startAngle={90}
-                          endAngle={450}
-                          stroke="none"
-                      >
-                          {data.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-                          ))}
-                      </Pie>
-                  </PieChart>
-                </ChartContainer>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-xl font-bold">{formatCurrency(amount, { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                </div>
-            </CardContent>
-        </Card>
-    )
-  }
-
   if (isLoading) {
     return (
         <Header>
@@ -507,17 +453,6 @@ function FinanceDashboard() {
                     <CardTitle>Daily Inflows Breakdown</CardTitle>
                     <CardDescription>Breakdown of daily inflows by payment type.</CardDescription>
                   </div>
-                  <div className="flex flex-wrap justify-end gap-x-6 gap-y-4">
-                      {Object.entries(paymentTypeTotals).map(([type, total], index) => total > 0 && (
-                          <DoughnutChartCard
-                              key={type}
-                              title={type}
-                              amount={total}
-                              percentage={totalInflowBreakdownForPeriod > 0 ? (total / totalInflowBreakdownForPeriod) * 100 : 0}
-                              color={COLORS[index % COLORS.length]}
-                          />
-                      ))}
-                  </div>
               </div>
           </CardHeader>
           <CardContent>
@@ -529,12 +464,20 @@ function FinanceDashboard() {
                         <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
                         <Tooltip content={<CustomExpenseTooltip />} />
                         <Legend />
-                        <Bar dataKey="Downpayment" stackId="a" name="Downpayment" fill={COLORS[0]} />
-                        <Bar dataKey="Full Payment" stackId="a" name="Full Payment" fill={COLORS[1]} />
+                        <Bar dataKey="Downpayment" stackId="a" name="Downpayment" fill="hsl(var(--chart-2))" />
+                        <Bar dataKey="Full Payment" stackId="a" name="Full Payment" fill={COLORS[0]} />
                         <Bar dataKey="Balance Payment" stackId="a" name="Balance Payment" fill={COLORS[2]} />
                         <Bar dataKey="Additional Payment" stackId="a" name="Additional" fill={COLORS[3]} />
                         <Bar dataKey="Security Deposit" stackId="a" name="Security Deposit" fill={COLORS[4]} />
-                        <Bar dataKey="Other Inflows" stackId="a" name="Others" fill={COLORS[5]} />
+                        <Bar dataKey="Other Inflows" stackId="a" name="Others" fill={COLORS[5]}>
+                           <LabelList 
+                                dataKey="total" 
+                                position="top" 
+                                formatter={(value: number) => value > 0 ? formatCurrency(value) : null}
+                                className="fill-black font-bold"
+                                fontSize={12}
+                           />
+                        </Bar>
                     </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -643,5 +586,3 @@ function FinanceDashboard() {
 }
 
 export default FinanceDashboard;
-
-    
