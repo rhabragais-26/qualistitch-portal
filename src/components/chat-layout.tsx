@@ -132,12 +132,11 @@ export function ChatLayout() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatSoundRef = useRef<HTMLAudioElement | null>(null);
-  const messagesSnapshotRef = useRef<ChatMessage[]>([]);
   const lastPlayedTimestampRef = useRef<number>(0);
 
   useEffect(() => {
     // Initialize Audio object on the client side
-    chatSoundRef.current = new Audio('https://cdn.freesound.org/previews/514/514486_11048033-lq.mp3');
+    chatSoundRef.current = new Audio('/Chat_Sound.mp3');
     chatSoundRef.current.volume = 0.5;
   }, []);
 
@@ -157,7 +156,7 @@ export function ChatLayout() {
   
   // State for paginated messages
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  messagesSnapshotRef.current = messages;
+  const messagesSnapshotRef = useRef<ChatMessage[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [moreMessagesLoading, setMoreMessagesLoading] = useState(false);
   const [lastMessageDoc, setLastMessageDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -244,6 +243,7 @@ export function ChatLayout() {
     }
     setMessagesLoading(true);
     setMessages([]); // Clear messages immediately on channel change
+    messagesSnapshotRef.current = [];
     setHasMore(true);
     const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(20));
 
@@ -261,6 +261,7 @@ export function ChatLayout() {
             }
         }
         
+        messagesSnapshotRef.current = newMessages;
         setMessages(newMessages);
 
         const lastVisible = snapshot.docs[snapshot.docs.length - 1];
