@@ -15,7 +15,7 @@ type AppState = {
   announcementType?: 'banner' | 'notification';
   announcementTimestamp?: string;
   announcementSender?: string;
-  announcementDepartment?: PageGroup | 'All';
+  announcementDepartment?: string[];
 };
 
 function BannerContent() {
@@ -43,26 +43,23 @@ function BannerContent() {
         return;
       }
 
-      const targetDepartment = appState.announcementDepartment;
+      const targetDepartments = appState.announcementDepartment;
+      const departmentsToShow = Array.isArray(targetDepartments) ? targetDepartments : [];
       
-      if (!userProfile) {
-        if (targetDepartment === 'All') {
-           setIsVisible(true);
-        } else {
-           setIsVisible(false);
-        }
-        return;
-      }
-
-      if (targetDepartment && targetDepartment !== 'All') {
-        const pageGroupInfo = allPageGroups.find(g => g.id === targetDepartment);
-        if (pageGroupInfo && !hasEditPermission(userProfile.position as UserPosition, pageGroupInfo.path, userProfile.permissions)) {
-          setIsVisible(false);
-          return;
-        }
+      let shouldBeVisible = false;
+      if (departmentsToShow.length === 0 || departmentsToShow.includes('All')) {
+          shouldBeVisible = true;
+      } else if (userProfile) {
+          shouldBeVisible = departmentsToShow.some(dept => {
+              const pageGroupInfo = allPageGroups.find(g => g.id === dept);
+              if (pageGroupInfo) {
+                  return hasEditPermission(userProfile.position as UserPosition, pageGroupInfo.path, userProfile.permissions);
+              }
+              return false;
+          });
       }
       
-      setIsVisible(true);
+      setIsVisible(shouldBeVisible);
 
     } else {
         setIsVisible(false);

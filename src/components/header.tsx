@@ -67,6 +67,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -126,7 +127,7 @@ const HeaderMemo = React.memo(function Header({
   const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = useState(false);
   const [announcementText, setAnnouncementText] = useState('');
   const [announcementType, setAnnouncementType] = useState<'banner' | 'notification'>('banner');
-  const [announcementDepartment, setAnnouncementDepartment] = useState('All');
+  const [announcementDepartment, setAnnouncementDepartment] = useState<string[]>(['All']);
   const appStateRef = useMemoFirebase(() => firestore ? doc(firestore, 'appState', 'global') : null, [firestore]);
 
 
@@ -162,6 +163,41 @@ const HeaderMemo = React.memo(function Header({
     setIsClient(true);
   }, []);
   
+  const departmentOptions = allPageGroups.filter(g => g.id !== 'admin');
+
+  const handleDepartmentSelect = (departmentId: string) => {
+      setAnnouncementDepartment(prev => {
+          if (departmentId === 'All') {
+              return ['All'];
+          }
+
+          let newSelection = prev.includes('All') ? [] : [...prev];
+          
+          const index = newSelection.indexOf(departmentId);
+          if (index > -1) {
+              newSelection.splice(index, 1);
+          } else {
+              newSelection.push(departmentId);
+          }
+
+          if (newSelection.length === 0 || newSelection.length === departmentOptions.length) {
+              return ['All'];
+          }
+
+          return newSelection;
+      });
+  };
+
+  const getDisplayValue = () => {
+      if (announcementDepartment.includes('All')) {
+          return 'All Departments';
+      }
+      if (announcementDepartment.length > 2) {
+          return `${announcementDepartment.length} departments selected`;
+      }
+      return announcementDepartment.map(id => allPageGroups.find(g => g.id === id)?.label || id).join(', ');
+  };
+
   const handleSendAnnouncement = async () => {
     if (!announcementText.trim() || !appStateRef || !userProfile) {
         toast({
@@ -176,7 +212,7 @@ const HeaderMemo = React.memo(function Header({
         await setDoc(appStateRef, {
             announcementText,
             announcementType,
-            announcementDepartment,
+            announcementDepartment: announcementDepartment,
             announcementTimestamp: new Date().toISOString(),
             announcementSender: userProfile.nickname,
         }, { merge: true });
@@ -186,7 +222,7 @@ const HeaderMemo = React.memo(function Header({
             description: 'Your announcement has been broadcast to all users.',
         });
         setAnnouncementText('');
-        setAnnouncementDepartment('All');
+        setAnnouncementDepartment(['All']);
         setIsAnnouncementDialogOpen(false);
     } catch (e: any) {
         toast({
@@ -582,7 +618,7 @@ const HeaderMemo = React.memo(function Header({
                                 <span>Admin Settings</span>
                             </div>
                             {unassignedUsersCount > 0 && (
-                                <Badge variant="destructive" className="h-5 w-5 shrink-0 justify-center rounded-full p-0">
+                                <Badge variant="destructive" className="h-4 w-4 shrink-0 justify-center rounded-full p-0">
                                     {unassignedUsersCount}
                                 </Badge>
                             )}
@@ -639,17 +675,32 @@ const HeaderMemo = React.memo(function Header({
             <div className="py-4 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="announcement-department">Department:</Label>
-                  <Select value={announcementDepartment} onValueChange={setAnnouncementDepartment}>
-                      <SelectTrigger id="announcement-department">
-                          <SelectValue placeholder="Select Department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="All">All Departments</SelectItem>
-                          {allPageGroups.map(group => (
-                              <SelectItem key={group.id} value={group.id}>{group.label}</SelectItem>
-                          ))}
-                      </SelectContent>
-                  </Select>
+                   <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" id="announcement-department" className="w-full justify-between">
+                                <span>{getDisplayValue()}</span>
+                                <ChevronDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                            <DropdownMenuCheckboxItem
+                                checked={announcementDepartment.includes('All')}
+                                onSelect={(e) => { e.preventDefault(); handleDepartmentSelect('All'); }}
+                            >
+                                All Departments
+                            </DropdownMenuCheckboxItem>
+                            <DropdownMenuSeparator />
+                            {departmentOptions.map(group => (
+                                <DropdownMenuCheckboxItem
+                                    key={group.id}
+                                    checked={announcementDepartment.includes(group.id)}
+                                    onSelect={(e) => { e.preventDefault(); handleDepartmentSelect(group.id); }}
+                                >
+                                    {group.label}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 <Textarea
                     placeholder="Type your announcement here..."
