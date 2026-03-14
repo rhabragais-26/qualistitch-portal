@@ -583,9 +583,10 @@ function FinanceDashboard() {
                   <PieChart>
                     <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)}/>} />
                     <Pie data={totalExpensesData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                      {totalExpensesData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
+                      {totalExpensesData.map((entry, index) => {
+                        const expenseColors = ['#FF8042', '#A090B0', '#22c55e']; // Orange, Muted Purple, Green
+                        return <Cell key={`cell-${index}`} fill={expenseColors[index % expenseColors.length]} />
+                      })}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
