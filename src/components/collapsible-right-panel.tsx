@@ -105,7 +105,7 @@ function JoNotesPanel() {
     }, []);
 
     const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-    const { data: allLeads } = useCollection<Lead>(leadsQuery);
+    const { data: allLeads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
     const getContactDisplay = (lead: Lead) => {
         const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -248,6 +248,7 @@ function JoNotesPanel() {
         }
         
         localStorage.setItem('jo-notifications', JSON.stringify(updatedNotifications));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'jo-notifications' }));
         setNotifications(updatedNotifications);
         
         toast({ title: 'Notification Set!', description: `You will be notified on ${format(notifyAt, 'MMM dd, yyyy @ h:mm a')}` });

@@ -106,7 +106,7 @@ export function NotificationBell() {
   useEffect(() => {
     loadLocalNotifications();
     loadGlobalAnnouncements();
-    const interval = setInterval(loadLocalNotifications, 30000); // Check every 30 seconds
+    const interval = setInterval(loadLocalNotifications, 5000); 
     
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'jo-notifications' || event.key === 'progress-notifications') {
