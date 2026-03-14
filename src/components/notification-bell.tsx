@@ -74,9 +74,8 @@ export function NotificationBell() {
   const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (notificationSoundRef.current) {
-        notificationSoundRef.current.volume = 0.5;
-    }
+    notificationSoundRef.current = new Audio('https://actions.google.com/sounds/v1/events/notification_high_intensity.ogg');
+    notificationSoundRef.current.volume = 0.5;
 
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission !== 'granted') {
@@ -279,7 +278,6 @@ export function NotificationBell() {
 
   return (
     <>
-      <audio ref={notificationSoundRef} src="https://cdn.freesound.org/previews/587/587283_12839997-lq.mp3" preload="auto" />
       <Popover onOpenChange={handlePopoverOpenChange}>
         <PopoverTrigger asChild>
           <div

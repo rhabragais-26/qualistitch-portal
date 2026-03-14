@@ -136,9 +136,9 @@ export function ChatLayout() {
   const lastPlayedTimestampRef = useRef<number>(0);
 
   useEffect(() => {
-    if (chatSoundRef.current) {
-        chatSoundRef.current.volume = 0.5;
-    }
+    // Initialize Audio object on the client side
+    chatSoundRef.current = new Audio('https://cdn.freesound.org/previews/514/514486_11048033-lq.mp3');
+    chatSoundRef.current.volume = 0.5;
   }, []);
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('nickname', 'asc')) : null, [firestore]);
@@ -416,7 +416,6 @@ export function ChatLayout() {
 
     return (
         <div className="flex flex-col h-full rounded-t-lg overflow-hidden" style={{ backgroundColor: '#e6fafa' }}>
-            <audio ref={chatSoundRef} src="https://cdn.freesound.org/previews/514/514486_11048033-lq.mp3" preload="auto" />
             <div className="p-4 border-b flex justify-between items-center rounded-t-lg" style={{ backgroundColor: '#d9f7f2' }}>
                 <h2 className="text-xl font-bold">Chats</h2>
                  <Button variant="outline" size="sm" onClick={playTestSound}>
@@ -500,7 +499,6 @@ export function ChatLayout() {
 
   return (
     <div className="flex flex-col h-full rounded-t-lg" style={{ backgroundColor: '#e6fafa' }}>
-        <audio ref={chatSoundRef} src="https://cdn.freesound.org/previews/514/514486_11048033-lq.mp3" preload="auto" />
         <div className="p-4 border-b flex items-center gap-4 rounded-t-lg" style={{ backgroundColor: '#d9f7f2' }}>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(null)}>
                 <ArrowLeft className="h-5 w-5" />
