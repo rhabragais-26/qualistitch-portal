@@ -74,7 +74,7 @@ export function NotificationBell() {
   const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    notificationSoundRef.current = new Audio('https://actions.google.com/sounds/v1/events/notification_high_intensity.ogg');
+    notificationSoundRef.current = new Audio('/Announcement_Sound.mp3');
     notificationSoundRef.current.volume = 0.5;
 
     if (typeof window !== 'undefined' && 'Notification' in window) {

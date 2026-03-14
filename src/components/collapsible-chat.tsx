@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChatLayout } from '@/components/chat-layout';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection, query, where } from 'firebase/firestore';
 import type { DirectMessageChannel } from './chat-layout';
 import { Badge } from './ui/badge';
+import { Music } from 'lucide-react';
 
 export function CollapsibleChat() {
   const { user, isUserLoading } = useUser();
@@ -16,6 +17,7 @@ export function CollapsibleChat() {
   const [isMounted, setIsMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isContentVisible, setIsContentVisible] = useState(false);
+  const chatSoundRef = useRef<HTMLAudioElement | null>(null);
 
   const channelsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -42,6 +44,10 @@ export function CollapsibleChat() {
 
     window.addEventListener('keydown', handleKeyDown);
 
+    // Initialize Audio object on the client side
+    chatSoundRef.current = new Audio('/Chat_Sound.mp3');
+    chatSoundRef.current.volume = 0.5;
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -64,6 +70,10 @@ export function CollapsibleChat() {
     }
     return () => clearTimeout(timer);
   }, [isExpanded]);
+  
+  const playTestSound = () => {
+    chatSoundRef.current?.play().catch(error => console.error("Test audio play failed:", error));
+  };
 
 
   if (!isMounted || isUserLoading || !user || user.isAnonymous) {
@@ -119,6 +129,7 @@ export function CollapsibleChat() {
           </TooltipProvider>
         </div>
       </div>
+      {isExpanded && <Button onClick={playTestSound} variant="secondary" className="absolute bottom-2 right-2">Test Sound <Music className="ml-2 h-4 w-4" /></Button>}
     </div>
   );
 }
