@@ -74,8 +74,9 @@ export function NotificationBell() {
   const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    notificationSoundRef.current = new Audio('https://cdn.freesound.org/previews/587/587283_12839997-lq.mp3');
-    notificationSoundRef.current.volume = 0.5;
+    if (notificationSoundRef.current) {
+        notificationSoundRef.current.volume = 0.5;
+    }
 
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission !== 'granted') {
@@ -277,138 +278,141 @@ export function NotificationBell() {
   }, [sortedNotifications, showAll]);
 
   return (
-    <Popover onOpenChange={handlePopoverOpenChange}>
-      <PopoverTrigger asChild>
-        <div
-          role="button"
-          className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-background"
-        >
-          <Bell className={cn("h-6 w-6", isAnimating && "animate-buzz")} />
-          {unreadCount > 0 && (
-            <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center rounded-full p-0">
-              {unreadCount}
-            </Badge>
-          )}
-        </div>
-      </PopoverTrigger>
-      <PopoverContent onOpenAutoFocus={(event) => event.preventDefault()} className="w-96 p-0" align="end">
-        <Card className="border-none shadow-none h-[450px] flex flex-col">
-          <CardHeader className="p-4 border-b flex-shrink-0">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-sm font-semibold">Notifications</CardTitle>
-              {sortedNotifications.length > 0 && (
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
-                        <Check className="mr-1 h-4 w-4"/>
-                        Mark all as read
-                    </Button>
+    <>
+      <audio ref={notificationSoundRef} src="https://cdn.freesound.org/previews/587/587283_12839997-lq.mp3" preload="auto" />
+      <Popover onOpenChange={handlePopoverOpenChange}>
+        <PopoverTrigger asChild>
+          <div
+            role="button"
+            className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-background"
+          >
+            <Bell className={cn("h-6 w-6", isAnimating && "animate-buzz")} />
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center rounded-full p-0">
+                {unreadCount}
+              </Badge>
+            )}
+          </div>
+        </PopoverTrigger>
+        <PopoverContent onOpenAutoFocus={(event) => event.preventDefault()} className="w-96 p-0" align="end">
+          <Card className="border-none shadow-none h-[450px] flex flex-col">
+            <CardHeader className="p-4 border-b flex-shrink-0">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-sm font-semibold">Notifications</CardTitle>
+                {sortedNotifications.length > 0 && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
+                          <Check className="mr-1 h-4 w-4"/>
+                          Mark all as read
+                      </Button>
+                    </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 flex-1 overflow-hidden">
+              {sortedNotifications.length > 0 ? (
+                  <ScrollArea className="h-full modern-scrollbar">
+                    <div className="p-2 space-y-1">
+                      {displayedNotifications.map(n => {
+                          const isAnnouncement = 'leadId' in n && n.leadId === 'global';
+                          const isProgress = 'message' in n;
+                          const isNote = !isAnnouncement && !isProgress;
+
+                          if (isProgress) {
+                              const notification = n as ProgressNotification;
+                              return (
+                                  <div 
+                                      key={notification.id} 
+                                      className={cn(
+                                          'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
+                                          !notification.isRead && 'bg-blue-100',
+                                          notification.isRead && 'bg-muted/30'
+                                      )}
+                                      onClick={() => handleMarkAsRead(notification.id)}
+                                  >
+                                      <div className="flex justify-between items-start">
+                                          <div>
+                                              <p className="text-sm font-bold text-gray-800">{notification.joNumber}</p>
+                                              <div className="text-xs text-muted-foreground mt-1">
+                                                  <p>{notification.customerName}</p>
+                                                  {notification.companyName && notification.companyName !== '-' && <p>{notification.companyName}</p>}
+                                                  {notification.contactNumber && <p>{notification.contactNumber}</p>}
+                                              </div>
+                                          </div>
+                                          <Badge variant={notification.isDisapproved ? 'destructive' : 'success'}>Progress</Badge>
+                                      </div>
+                                      <div className="mt-2 w-full">
+                                        <p className={cn("text-sm w-full pl-4 text-black", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>
+                                            {notification.message}
+                                        </p>
+                                        <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
+                                          {typeof notification.overdueStatus === 'string'
+                                              ? notification.overdueStatus
+                                              : 'Status unavailable'}
+                                        </p>
+                                      </div>
+                                      <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
+                                          {format(new Date(notification.timestamp), 'MMM dd, yyyy @ h:mm a')}
+                                      </p>
+                                  </div>
+                              )
+                          }
+
+                          const notification = n as JoNoteNotification | GlobalAnnouncement;
+                          const title = isAnnouncement ? 'Important Notice!' : 'Reminder';
+                          
+                          return (
+                          <div 
+                            key={notification.id} 
+                            className={cn(
+                              'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
+                              !notification.isRead && (isAnnouncement ? 'bg-yellow-200' : 'bg-blue-100'),
+                              notification.isRead && 'bg-muted/30'
+                            )}
+                            onClick={() => handleMarkAsRead(notification.id)}
+                          >
+                              <div className="flex justify-between items-start">
+                                  {isAnnouncement ? (
+                                      <div>
+                                          <p className="text-sm font-bold text-gray-800">ANNOUNCEMENT</p>
+                                          <p className="text-xs text-muted-foreground">by {notification.joNumber}</p>
+                                      </div>
+                                  ) : (
+                                      <div>
+                                          <p className="text-sm font-bold text-gray-800">{notification.joNumber}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                              {notification.customerName}
+                                              {(notification as JoNoteNotification).contactNumber && ` | ${(notification as JoNoteNotification).contactNumber}`}
+                                          </p>
+                                      </div>
+                                  )}
+                                  <Badge variant={isAnnouncement ? 'warning' : 'destructive'} className={cn(isAnnouncement && 'bg-yellow-200 text-yellow-800')}>{title}</Badge> 
+                              </div>
+                              <p className="text-sm mt-1 pl-4 text-black w-full">"{notification.noteContent}"</p>
+                              <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
+                                {format(new Date(notification.notifyAt), 'MMM dd, yyyy @ h:mm a')}
+                              </p>
+                          </div>
+                          )
+                      })}
+                    </div>
+                  </ScrollArea>
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                      No new notifications.
                   </div>
               )}
-            </div>
-          </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-hidden">
-            {sortedNotifications.length > 0 ? (
-                <ScrollArea className="h-full modern-scrollbar">
-                  <div className="p-2 space-y-1">
-                    {displayedNotifications.map(n => {
-                        const isAnnouncement = 'leadId' in n && n.leadId === 'global';
-                        const isProgress = 'message' in n;
-                        const isNote = !isAnnouncement && !isProgress;
-
-                        if (isProgress) {
-                            const notification = n as ProgressNotification;
-                            return (
-                                <div 
-                                    key={notification.id} 
-                                    className={cn(
-                                        'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
-                                        !notification.isRead && 'bg-blue-100',
-                                        notification.isRead && 'bg-muted/30'
-                                    )}
-                                    onClick={() => handleMarkAsRead(notification.id)}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-800">{notification.joNumber}</p>
-                                            <div className="text-xs text-muted-foreground mt-1">
-                                                <p>{notification.customerName}</p>
-                                                {notification.companyName && notification.companyName !== '-' && <p>{notification.companyName}</p>}
-                                                {notification.contactNumber && <p>{notification.contactNumber}</p>}
-                                            </div>
-                                        </div>
-                                        <Badge variant={notification.isDisapproved ? 'destructive' : 'success'}>Progress</Badge>
-                                    </div>
-                                    <div className="mt-2 w-full">
-                                      <p className={cn("text-sm w-full pl-4 text-black", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>
-                                          {notification.message}
-                                      </p>
-                                      <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
-                                        {typeof notification.overdueStatus === 'string'
-                                            ? notification.overdueStatus
-                                            : 'Status unavailable'}
-                                      </p>
-                                    </div>
-                                    <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
-                                        {format(new Date(notification.timestamp), 'MMM dd, yyyy @ h:mm a')}
-                                    </p>
-                                </div>
-                            )
-                        }
-
-                        const notification = n as JoNoteNotification | GlobalAnnouncement;
-                        const title = isAnnouncement ? 'Important Notice!' : 'Reminder';
-                        
-                        return (
-                         <div 
-                          key={notification.id} 
-                          className={cn(
-                            'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
-                             !notification.isRead && (isAnnouncement ? 'bg-yellow-200' : 'bg-blue-100'),
-                             notification.isRead && 'bg-muted/30'
-                          )}
-                          onClick={() => handleMarkAsRead(notification.id)}
-                        >
-                            <div className="flex justify-between items-start">
-                                {isAnnouncement ? (
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-800">ANNOUNCEMENT</p>
-                                        <p className="text-xs text-muted-foreground">by {notification.joNumber}</p>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-800">{notification.joNumber}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {notification.customerName}
-                                            {(notification as JoNoteNotification).contactNumber && ` | ${(notification as JoNoteNotification).contactNumber}`}
-                                        </p>
-                                    </div>
-                                )}
-                                <Badge variant={isAnnouncement ? 'warning' : 'destructive'} className={cn(isAnnouncement && 'bg-yellow-200 text-yellow-800')}>{title}</Badge> 
-                            </div>
-                            <p className="text-sm mt-1 pl-4 text-black w-full">"{notification.noteContent}"</p>
-                            <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
-                              {format(new Date(notification.notifyAt), 'MMM dd, yyyy @ h:mm a')}
-                            </p>
-                        </div>
-                        )
-                    })}
-                  </div>
-                </ScrollArea>
-            ) : (
-              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                    No new notifications.
-                </div>
+            </CardContent>
+            {sortedNotifications.length > 5 && !showAll && (
+                <CardFooter className="p-2 border-t justify-center flex-shrink-0">
+                    <Button variant="link" className="text-sm h-auto p-0" onClick={() => setShowAll(true)}>
+                        Load older notifications
+                    </Button>
+                </CardFooter>
             )}
-          </CardContent>
-          {sortedNotifications.length > 5 && !showAll && (
-              <CardFooter className="p-2 border-t justify-center flex-shrink-0">
-                  <Button variant="link" className="text-sm h-auto p-0" onClick={() => setShowAll(true)}>
-                      Load older notifications
-                  </Button>
-              </CardFooter>
-          )}
-        </Card>
-      </PopoverContent>
-    </Popover>
+          </Card>
+        </PopoverContent>
+      </Popover>
+    </>
   );
 }
