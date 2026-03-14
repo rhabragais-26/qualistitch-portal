@@ -97,7 +97,7 @@ const renderAmountLabel = (props: any) => {
           fontWeight="bold"
           textAnchor="middle"
         >
-          {formatCurrency(value, { maximumFractionDigits: 0, notation: 'compact' })}
+          {formatCurrency(value, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </text>
     );
 };
@@ -582,7 +582,7 @@ function FinanceDashboard() {
                            <LabelList 
                                 dataKey="total" 
                                 position="top" 
-                                formatter={(value: number) => value > 0 ? formatCurrency(value, {notation: 'compact', maximumFractionDigits: 0}) : null}
+                                formatter={(value: number) => value > 0 ? formatCurrency(value, {minimumFractionDigits: 0, maximumFractionDigits: 0}) : null}
                                 className="fill-black font-bold"
                                 fontSize={12}
                            />
