@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { ChatLayout } from '@/components/chat-layout';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore'; // Import onSnapshot
 import type { DirectMessageChannel } from './chat-layout';
 import { Badge } from './ui/badge';
-import { Music } from 'lucide-react';
 
 export function CollapsibleChat() {
   const { user, isUserLoading } = useUser();
@@ -18,21 +17,52 @@ export function CollapsibleChat() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isContentVisible, setIsContentVisible] = useState(false);
   const chatSoundRef = useRef<HTMLAudioElement | null>(null);
-  const prevUnreadCountRef = useRef(0);
+  
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
+  const isInitialFetchRef = useRef(true);
 
-  const channelsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'direct_messages'), where('participants', 'array-contains', user.uid));
-  }, [firestore, user]);
+  // This useEffect will now handle fetching the unread count and playing the sound.
+  useEffect(() => {
+    if (!firestore || !user?.uid) {
+      setTotalUnreadCount(0);
+      return;
+    }
 
-  const { data: channels } = useCollection<DirectMessageChannel>(channelsQuery);
+    const channelsQuery = query(
+      collection(firestore, 'direct_messages'), 
+      where('participants', 'array-contains', user.uid)
+    );
 
-  const totalUnreadCount = useMemo(() => {
-    if (!channels || !user) return 0;
-    return channels.reduce((total, channel) => {
-      return total + (channel.unreadCount?.[user.uid] || 0);
-    }, 0);
-  }, [channels, user]);
+    const unsubscribe = onSnapshot(channelsQuery, (snapshot) => {
+      let newTotalUnread = 0;
+      snapshot.forEach(doc => {
+        const channel = doc.data() as DirectMessageChannel;
+        newTotalUnread += channel.unreadCount?.[user.uid] || 0;
+      });
+
+      // On the very first data load, just set the count, don't play sound.
+      if (isInitialFetchRef.current) {
+        setTotalUnreadCount(newTotalUnread);
+        isInitialFetchRef.current = false;
+        return;
+      }
+      
+      // For subsequent updates, if the count has increased, play the sound.
+      setTotalUnreadCount(prevCount => {
+        if (newTotalUnread > prevCount) {
+            chatSoundRef.current?.play().catch(error => console.error("Chat audio play failed:", error));
+        }
+        return newTotalUnread;
+      });
+    });
+
+    return () => {
+      unsubscribe();
+      isInitialFetchRef.current = true; // Reset for next user/login
+    };
+
+  }, [firestore, user?.uid]);
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -45,7 +75,6 @@ export function CollapsibleChat() {
 
     window.addEventListener('keydown', handleKeyDown);
 
-    // Initialize Audio object on the client side
     if (typeof window !== 'undefined') {
       chatSoundRef.current = new Audio('/Chat_Sound.mp3');
       chatSoundRef.current.volume = 0.5;
@@ -57,14 +86,6 @@ export function CollapsibleChat() {
   }, []);
 
   useEffect(() => {
-    if (totalUnreadCount > prevUnreadCountRef.current) {
-        chatSoundRef.current?.play().catch(error => console.error("Chat audio play failed:", error));
-    }
-    prevUnreadCountRef.current = totalUnreadCount;
-  }, [totalUnreadCount]);
-
-  useEffect(() => {
-    // When the user logs in or out, ensure the chat is collapsed.
     if (!isUserLoading) {
       setIsExpanded(false);
     }
@@ -76,7 +97,7 @@ export function CollapsibleChat() {
     if (isExpanded) {
       setIsContentVisible(true);
     } else {
-      timer = setTimeout(() => setIsContentVisible(false), 300); // Matches duration-300
+      timer = setTimeout(() => setIsContentVisible(false), 300);
     }
     return () => clearTimeout(timer);
   }, [isExpanded]);
@@ -94,7 +115,6 @@ export function CollapsibleChat() {
           isExpanded ? "w-[400px] h-[70vh] max-h-[500px]" : "w-9 h-24"
         )}
       >
-        {/* Chat Window */}
         <div
           className={cn(
             "absolute inset-0 border rounded-t-lg shadow-xl flex flex-col transition-all duration-300 ease-in-out",
@@ -106,7 +126,6 @@ export function CollapsibleChat() {
           </div>
         </div>
 
-        {/* CHAT Button */}
         <div
           className={cn(
             "absolute inset-0 transition-opacity duration-300",
