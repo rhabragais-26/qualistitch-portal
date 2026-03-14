@@ -102,6 +102,48 @@ const renderAmountLabel = (props: any) => {
     );
 };
 
+const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string; amount: number; percentage: number; color: string }) => {
+  const data = [
+      { name: 'value', value: Math.max(0, Math.min(100, percentage)) },
+      { name: 'remaining', value: Math.max(0, 100 - Math.max(0, Math.min(100, percentage))) },
+  ];
+  
+  const chartColors = [color, '#e5e7eb'];
+
+  return (
+      <Card className="flex flex-col items-center justify-center p-4 space-y-2">
+          <CardHeader className="p-0 text-center">
+              <CardTitle className="text-sm font-medium leading-none">{title}</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 relative w-28 h-28">
+              <ChartContainer config={{}} className="w-full h-full">
+                <PieChart>
+                    <Pie
+                        data={data}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius="65%"
+                        outerRadius="80%"
+                        startAngle={90}
+                        endAngle={450}
+                        stroke="none"
+                    >
+                        {data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                        ))}
+                    </Pie>
+                </PieChart>
+              </ChartContainer>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="text-lg font-bold">{formatCurrency(amount, { notation: 'compact', maximumFractionDigits: 1})}</span>
+              </div>
+          </CardContent>
+      </Card>
+  )
+}
+
 
 function FinanceDashboard() {
   const firestore = useFirestore();
@@ -295,6 +337,41 @@ function FinanceDashboard() {
 
   }, [leads, otherInflows, selectedMonth, selectedYear]);
 
+  const {
+    totalDownpayment,
+    totalFullPayment,
+    totalBalancePayment,
+    totalAdditionalPayment,
+    totalSecurityDeposit,
+    totalOtherInflows,
+  } = useMemo(() => {
+    return (dailyInflowBreakdown || []).reduce((acc, day) => {
+        acc.totalDownpayment += day['Downpayment'] || 0;
+        acc.totalFullPayment += day['Full Payment'] || 0;
+        acc.totalBalancePayment += day['Balance Payment'] || 0;
+        acc.totalAdditionalPayment += day['Additional Payment'] || 0;
+        acc.totalSecurityDeposit += day['Security Deposit'] || 0;
+        acc.totalOtherInflows += day['Other Inflows'] || 0;
+        return acc;
+    }, {
+        totalDownpayment: 0,
+        totalFullPayment: 0,
+        totalBalancePayment: 0,
+        totalAdditionalPayment: 0,
+        totalSecurityDeposit: 0,
+        totalOtherInflows: 0,
+    });
+  }, [dailyInflowBreakdown]);
+
+  const inflowCategories = useMemo(() => [
+    { title: 'Downpayment', amount: totalDownpayment, color: 'hsl(var(--chart-2))' },
+    { title: 'Full Payment', amount: totalFullPayment, color: COLORS[0] },
+    { title: 'Balance Payment', amount: totalBalancePayment, color: COLORS[2] },
+    { title: 'Additional Payment', amount: totalAdditionalPayment, color: COLORS[3] },
+    { title: 'Security Deposit', amount: totalSecurityDeposit, color: COLORS[4] },
+    { title: 'Other Inflows', amount: totalOtherInflows, color: COLORS[5] },
+  ].filter(cat => cat.amount > 0), [totalDownpayment, totalFullPayment, totalBalancePayment, totalAdditionalPayment, totalSecurityDeposit, totalOtherInflows]);
+
   const opExByCategory = useMemo(() => {
     if (!monthlyOpEx) return [];
     const byCategory = monthlyOpEx.reduce((acc, expense) => {
@@ -447,12 +524,23 @@ function FinanceDashboard() {
         </Card>
         
         <Card>
-          <CardHeader>
+           <CardHeader>
               <div className="flex justify-between items-start">
                   <div>
                     <CardTitle>Daily Inflows Breakdown</CardTitle>
                     <CardDescription>Breakdown of daily inflows by payment type.</CardDescription>
                   </div>
+                   <div className="flex justify-center items-center gap-4 pt-4">
+                        {inflowCategories.map(cat => (
+                        <DoughnutChartCard 
+                            key={cat.title}
+                            title={cat.title}
+                            amount={cat.amount}
+                            percentage={totalInflowForPeriod > 0 ? (cat.amount / totalInflowForPeriod) * 100 : 0}
+                            color={cat.color}
+                        />
+                        ))}
+                    </div>
               </div>
           </CardHeader>
           <CardContent>
@@ -488,7 +576,6 @@ function FinanceDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Total Expenses Breakdown</CardTitle>
-              <CardDescription>Comparison of different expense types for the selected month.</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer config={{}} className="w-full h-80">
