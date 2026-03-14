@@ -71,6 +71,7 @@ type Lead = {
     id: string;
     payments?: Payment[];
     submissionDateTime: string;
+    grandTotal?: number;
 };
 
 type OtherCashInflow = {
@@ -418,17 +419,53 @@ function FinanceDashboard() {
     return expensesOverTime.reduce((sum, day) => sum + day.Operational + day.COGS + day.Capital, 0);
   }, [expensesOverTime]);
 
+  const dailyLeadSales = useMemo(() => {
+    if (!leads) return [];
+
+    const year = parseInt(selectedYear, 10);
+    const month = parseInt(selectedMonth, 10) - 1;
+    const startDate = startOfMonth(new Date(year, month));
+    
+    const today = endOfDay(new Date());
+    const monthEndForSelected = endOfMonth(new Date(year, month));
+    const endDate = isBefore(monthEndForSelected, today) ? monthEndForSelected : today;
+
+    const salesByDay: {[key: string]: number} = {};
+
+    (leads || []).forEach(lead => {
+        try {
+            const date = new Date(lead.submissionDateTime);
+            if (isWithinInterval(date, { start: startDate, end: endDate })) {
+                const day = format(date, 'MMM-dd');
+                salesByDay[day] = (salesByDay[day] || 0) + (lead.grandTotal || 0);
+            }
+        } catch (e) {
+            // ignore invalid dates
+        }
+    });
+
+    const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
+    
+    return daysInMonth.map(day => {
+        const dateStr = format(day, 'MMM-dd');
+        return {
+            date: dateStr,
+            amount: salesByDay[dateStr] || 0
+        };
+    });
+  }, [leads, selectedMonth, selectedYear]);
+
   const dailySalesAndExpenses = useMemo(() => {
     const combinedData: { [key: string]: { sales: number; expenses: number } } = {};
-    const allDates = new Set([...dailyCashInflows.map(d => d.date), ...expensesOverTime.map(d => d.date)]);
+    const allDates = new Set([...dailyLeadSales.map(d => d.date), ...expensesOverTime.map(d => d.date)]);
     
     const sortedDates = Array.from(allDates).sort((a,b) => parse(a, 'MMM-dd', new Date()).getTime() - parse(b, 'MMM-dd', new Date()).getTime());
 
     sortedDates.forEach(date => {
-        const inflow = dailyCashInflows.find(d => d.date === date);
+        const sale = dailyLeadSales.find(d => d.date === date);
         const outflow = expensesOverTime.find(d => d.date === date);
         combinedData[date] = {
-            sales: inflow ? inflow.amount : 0,
+            sales: sale ? sale.amount : 0,
             expenses: outflow ? outflow.Operational + outflow.COGS + outflow.Capital : 0
         };
     });
@@ -438,7 +475,7 @@ function FinanceDashboard() {
       sales: values.sales,
       expenses: values.expenses
     }));
-  }, [dailyCashInflows, expensesOverTime]);
+  }, [dailyLeadSales, expensesOverTime]);
   
   const CustomCombinedTooltip = ({ active, payload, label }: any) => {
       if (active && payload && payload.length) {
@@ -593,6 +630,42 @@ function FinanceDashboard() {
           </CardContent>
         </Card>
 
+        <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle>Daily Sales vs. Daily Expenses</CardTitle>
+                <CardDescription>A comparison of cash inflows and outflows for the selected month.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={{}} className="w-full h-80">
+                  <ResponsiveContainer>
+                    <AreaChart data={dailySalesAndExpenses} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
+                        <defs>
+                            <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
+                        <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
+                        <Tooltip content={<CustomCombinedTooltip />} />
+                        <Legend />
+                        <Area type="monotone" dataKey="sales" name="Sales" stroke="#22c55e" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
+                           <LabelList dataKey="sales" content={renderAmountLabel} />
+                        </Area>
+                        <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpenses)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
+                           <LabelList dataKey="expenses" content={renderAmountLabel} />
+                        </Area>
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+            </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
@@ -682,41 +755,6 @@ function FinanceDashboard() {
                         </Area>
                         <Area type="monotone" dataKey="Capital" name="CAPEX" stroke={'#ffc658'} strokeWidth={2} fillOpacity={1} fill="url(#colorCapEx)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
                            <LabelList dataKey="Capital" content={renderAmountLabel} />
-                        </Area>
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-            </CardContent>
-           </Card>
-           <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle>Daily Sales vs. Daily Expenses</CardTitle>
-                <CardDescription>A comparison of cash inflows and outflows for the selected month.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ChartContainer config={{}} className="w-full h-80">
-                  <ResponsiveContainer>
-                    <AreaChart data={dailySalesAndExpenses} margin={{ top: 20, right: 30, left: 30, bottom: 5 }}>
-                        <defs>
-                            <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                            </linearGradient>
-                            <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid stroke="hsl(var(--border))" />
-                        <XAxis dataKey="date" tick={{ fill: 'black', fontWeight: 'bold', fontSize: 12, opacity: 1 }} />
-                        <YAxis tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}/>
-                        <Tooltip content={<CustomCombinedTooltip />} />
-                        <Legend />
-                        <Area type="monotone" dataKey="sales" name="Sales" stroke="#22c55e" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
-                           <LabelList dataKey="sales" content={renderAmountLabel} />
-                        </Area>
-                        <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpenses)" dot={{ r: 2 }} activeDot={{ r: 4 }}>
-                           <LabelList dataKey="expenses" content={renderAmountLabel} />
                         </Area>
                     </AreaChart>
                   </ResponsiveContainer>
