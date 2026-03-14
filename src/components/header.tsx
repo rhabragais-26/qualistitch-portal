@@ -89,7 +89,8 @@ import { Textarea } from './ui/textarea';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
-import type { UserPosition } from '@/lib/permissions';
+import { UserPosition, hasEditPermission, PageGroup, allPageGroups, defaultPermissions } from '@/lib/permissions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
@@ -125,6 +126,7 @@ const HeaderMemo = React.memo(function Header({
   const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = useState(false);
   const [announcementText, setAnnouncementText] = useState('');
   const [announcementType, setAnnouncementType] = useState<'banner' | 'notification'>('banner');
+  const [announcementDepartment, setAnnouncementDepartment] = useState('All');
   const appStateRef = useMemoFirebase(() => firestore ? doc(firestore, 'appState', 'global') : null, [firestore]);
 
 
@@ -174,6 +176,7 @@ const HeaderMemo = React.memo(function Header({
         await setDoc(appStateRef, {
             announcementText,
             announcementType,
+            announcementDepartment,
             announcementTimestamp: new Date().toISOString(),
             announcementSender: userProfile.nickname,
         }, { merge: true });
@@ -183,6 +186,7 @@ const HeaderMemo = React.memo(function Header({
             description: 'Your announcement has been broadcast to all users.',
         });
         setAnnouncementText('');
+        setAnnouncementDepartment('All');
         setIsAnnouncementDialogOpen(false);
     } catch (e: any) {
         toast({
@@ -369,7 +373,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment', '/sales/quotation', '/sales/unclosed-leads', '/sales/data-issues']))}>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment', '/sales/quotation', '/sales/data-issues']))}>
                       <TrendingUp className="mr-2" />
                       Sales
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -633,6 +637,20 @@ const HeaderMemo = React.memo(function Header({
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="announcement-department">Department:</Label>
+                  <Select value={announcementDepartment} onValueChange={setAnnouncementDepartment}>
+                      <SelectTrigger id="announcement-department">
+                          <SelectValue placeholder="Select Department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="All">All Departments</SelectItem>
+                          {allPageGroups.map(group => (
+                              <SelectItem key={group.id} value={group.id}>{group.label}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+                </div>
                 <Textarea
                     placeholder="Type your announcement here..."
                     value={announcementText}

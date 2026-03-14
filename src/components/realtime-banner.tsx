@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,12 +8,14 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { hasEditPermission, allPageGroups, type PageGroup, type UserPosition } from '@/lib/permissions';
 
 type AppState = {
   announcementText?: string;
   announcementType?: 'banner' | 'notification';
   announcementTimestamp?: string;
   announcementSender?: string;
+  announcementDepartment?: PageGroup | 'All';
 };
 
 function BannerContent() {
@@ -35,13 +38,36 @@ function BannerContent() {
       appState.announcementTimestamp
     ) {
       const lastDismissedTimestamp = localStorage.getItem('announcementLastDismissed');
-      if (appState.announcementTimestamp !== lastDismissedTimestamp) {
-        setIsVisible(true);
+      if (appState.announcementTimestamp === lastDismissedTimestamp) {
+        setIsVisible(false);
+        return;
       }
+
+      const targetDepartment = appState.announcementDepartment;
+      
+      if (!userProfile) {
+        if (targetDepartment === 'All') {
+           setIsVisible(true);
+        } else {
+           setIsVisible(false);
+        }
+        return;
+      }
+
+      if (targetDepartment && targetDepartment !== 'All') {
+        const pageGroupInfo = allPageGroups.find(g => g.id === targetDepartment);
+        if (pageGroupInfo && !hasEditPermission(userProfile.position as UserPosition, pageGroupInfo.path, userProfile.permissions)) {
+          setIsVisible(false);
+          return;
+        }
+      }
+      
+      setIsVisible(true);
+
     } else {
         setIsVisible(false);
     }
-  }, [appState]);
+  }, [appState, userProfile]);
 
   const handleDismiss = () => {
     setIsVisible(false);

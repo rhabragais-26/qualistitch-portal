@@ -356,6 +356,7 @@
           "congratsPhotoURL": { "type": "string", "format": "uri", "description": "URL to the user's profile picture." },
           "announcementText": { "type": "string", "description": "The text content of a global announcement." },
           "announcementType": { "type": "string", "enum": ["banner", "notification"], "description": "The display type of the announcement." },
+          "announcementDepartment": { "type": "string", "description": "The department the announcement is targeted to. 'All' for everyone." },
           "announcementTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for the announcement event." },
           "announcementSender": { "type": "string", "description": "Nickname of the user who sent the announcement." }
         }

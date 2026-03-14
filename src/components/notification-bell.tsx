@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -10,8 +11,10 @@ import { Button } from './ui/button';
 import { format, isPast } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from './ui/separator';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+import type { PageGroup, UserPosition } from '@/lib/permissions';
+import { allPageGroups, hasEditPermission } from '@/lib/permissions';
 
 type JoNoteNotification = {
   id: string; // noteId or global announcement timestamp
@@ -32,6 +35,7 @@ type GlobalAnnouncement = {
   noteContent: string;
   notifyAt: string; // ISO string
   isRead: boolean;
+  announcementDepartment?: PageGroup | 'All';
 }
 
 type ProgressNotification = {
@@ -56,6 +60,7 @@ type AppState = {
   announcementType?: 'banner' | 'notification';
   announcementTimestamp?: string;
   announcementSender?: string;
+  announcementDepartment?: PageGroup | 'All';
 };
 
 export function NotificationBell() {
@@ -67,6 +72,7 @@ export function NotificationBell() {
   const [isAnimating, setIsAnimating] = useState(false);
   const prevUnreadCountRef = useRef(0);
   const firestore = useFirestore();
+  const { userProfile } = useUser();
   const appStateRef = useMemoFirebase(() => (firestore ? doc(firestore, 'appState', 'global') : null), [firestore]);
   const { data: appState } = useDoc<AppState>(appStateRef);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
@@ -133,6 +139,21 @@ export function NotificationBell() {
     ) {
         lastProcessedAnnouncementTimestamp.current = appState.announcementTimestamp;
 
+        const targetDepartment = appState.announcementDepartment;
+
+        if (!userProfile) {
+            if (targetDepartment !== 'All') {
+                return;
+            }
+        } else {
+            if (targetDepartment && targetDepartment !== 'All') {
+                const pageGroupInfo = allPageGroups.find(g => g.id === targetDepartment);
+                if (pageGroupInfo && !hasEditPermission(userProfile.position as UserPosition, pageGroupInfo.path, userProfile.permissions)) {
+                    return;
+                }
+            }
+        }
+
         const existingAnnouncements = JSON.parse(localStorage.getItem('global-announcements') || '[]') as GlobalAnnouncement[];
         const newAnnouncementId = `global-${appState.announcementTimestamp}`;
 
@@ -144,14 +165,15 @@ export function NotificationBell() {
                 joNumber: appState.announcementSender || 'Admin',
                 noteContent: appState.announcementText,
                 notifyAt: appState.announcementTimestamp,
-                isRead: false
+                isRead: false,
+                announcementDepartment: appState.announcementDepartment,
             };
             const updatedAnnouncements = [...existingAnnouncements, newAnnouncement];
             localStorage.setItem('global-announcements', JSON.stringify(updatedAnnouncements));
             setGlobalAnnouncements(updatedAnnouncements);
         }
     }
-  }, [appState]);
+  }, [appState, userProfile]);
 
   const handlePopoverOpenChange = (isOpen: boolean) => {
     if (isOpen) {
