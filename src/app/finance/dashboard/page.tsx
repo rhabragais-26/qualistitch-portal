@@ -89,7 +89,11 @@ const renderAmountLabel = (props: any) => {
     const xPos = width ? x + width / 2 : x;
     
     let color = 'black'; // default color
-    if (stroke === '#ef4444' || dataKey === 'expenses') {
+    if (dataKey === 'expenses') {
+        color = '#ef4444';
+    } else if (dataKey === 'sales') {
+        color = '#22c55e'
+    } else if (stroke === '#ef4444') {
         color = '#ef4444';
     }
 
@@ -481,6 +485,14 @@ function FinanceDashboard() {
       expenses: values.expenses
     }));
   }, [dailyLeadSales, expensesOverTime]);
+
+  const { totalSalesForComparison, totalExpensesForComparison } = useMemo(() => {
+    return (dailySalesAndExpenses || []).reduce((acc, day) => {
+        acc.totalSalesForComparison += day.sales;
+        acc.totalExpensesForComparison += day.expenses;
+        return acc;
+    }, { totalSalesForComparison: 0, totalExpensesForComparison: 0 });
+  }, [dailySalesAndExpenses]);
   
   const CustomCombinedTooltip = ({ active, payload, label }: any) => {
       if (active && payload && payload.length) {
@@ -637,8 +649,22 @@ function FinanceDashboard() {
 
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Daily Sales vs. Daily Expenses</CardTitle>
-                <CardDescription>A comparison of cash inflows and outflows for the selected month.</CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle>Daily Sales vs. Daily Expenses</CardTitle>
+                        <CardDescription>A comparison of cash inflows and outflows for the selected month.</CardDescription>
+                    </div>
+                    <div className="text-right">
+                         <div className="text-right">
+                            <p className="text-sm text-muted-foreground">Total Sales</p>
+                            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSalesForComparison)}</p>
+                        </div>
+                         <div className="text-right mt-2">
+                            <p className="text-sm text-muted-foreground">Total Expenses</p>
+                            <p className="text-2xl font-bold text-red-500">{formatCurrency(totalExpensesForComparison)}</p>
+                        </div>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={{}} className="w-full h-80">
