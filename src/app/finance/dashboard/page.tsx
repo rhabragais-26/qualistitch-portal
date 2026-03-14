@@ -111,11 +111,11 @@ const DoughnutChartCard = ({ title, amount, percentage, color }: { title: string
   const chartColors = [color, '#e5e7eb'];
 
   return (
-      <Card className="flex flex-col items-center justify-center p-4 space-y-2">
+      <Card className="flex flex-col items-center justify-center pt-4 px-2 pb-2 space-y-2">
           <CardHeader className="p-0 text-center">
               <CardTitle className="text-sm font-medium leading-none">{title}</CardTitle>
           </CardHeader>
-          <CardContent className="p-0 relative w-28 h-28">
+          <CardContent className="p-0 relative w-32 h-32">
               <ChartContainer config={{}} className="w-full h-full">
                 <PieChart>
                     <Pie
