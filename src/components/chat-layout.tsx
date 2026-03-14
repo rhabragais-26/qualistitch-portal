@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Send, ArrowLeft, Loader2, Music } from 'lucide-react';
+import { Send, ArrowLeft, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
@@ -131,43 +131,7 @@ export function ChatLayout() {
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const chatSoundRef = useRef<HTMLAudioElement | null>(null);
-  const lastPlayedTimestampRef = useRef<number>(0);
   const isInitialLoadRef = useRef(true);
-  const audioUnlockedRef = useRef(false);
-
-  useEffect(() => {
-    const audio = new Audio('/Chat_Sound.mp3');
-    audio.volume = 0.5;
-    audio.preload = 'auto';
-    chatSoundRef.current = audio;
-  
-    const unlockAudio = async () => {
-      if (!chatSoundRef.current || audioUnlockedRef.current) return;
-  
-      try {
-        chatSoundRef.current.muted = true;
-        chatSoundRef.current.currentTime = 0;
-        await chatSoundRef.current.play();
-        chatSoundRef.current.pause();
-        chatSoundRef.current.currentTime = 0;
-        chatSoundRef.current.muted = false;
-        audioUnlockedRef.current = true;
-        console.log('Audio unlocked');
-      } catch (error) {
-        console.error('Audio unlock failed:', error);
-      }
-    };
-  
-    window.addEventListener('click', unlockAudio, { once: true });
-    window.addEventListener('keydown', unlockAudio, { once: true });
-  
-    return () => {
-      window.removeEventListener('click', unlockAudio);
-      window.removeEventListener('keydown', unlockAudio);
-    };
-  }, []);
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('nickname', 'asc')) : null, [firestore]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
@@ -272,31 +236,15 @@ export function ChatLayout() {
     setMessagesLoading(true);
     setMessages([]);
     setHasMore(true);
-    isInitialLoadRef.current = true; // Reset for new channel
+    isInitialLoadRef.current = true;
 
     const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(20));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        if (!isInitialLoadRef.current) {
-            snapshot.docChanges().forEach((change) => {
-                if (change.type === "added") {
-                    const newMessageData = change.doc.data();
-                    if (newMessageData && newMessageData.senderId !== user?.uid) {
-                        const now = Date.now();
-                        if (now - lastPlayedTimestampRef.current > 1000) {
-                            chatSoundRef.current?.play().catch(error => console.error("Chat audio play failed:", error));
-                            lastPlayedTimestampRef.current = now;
-                        }
-                    }
-                }
-            });
-        }
-        
         const allMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage)).reverse();
         setMessages(allMessages);
-
-        isInitialLoadRef.current = false; // Mark initial load as complete after first snapshot
-
+        isInitialLoadRef.current = false;
+        
         const lastVisible = snapshot.docs[snapshot.docs.length - 1];
         setLastMessageDoc(lastVisible);
         setHasMore(snapshot.docs.length >= 20);
@@ -307,7 +255,7 @@ export function ChatLayout() {
     });
 
     return () => unsubscribe();
-  }, [messagesRef, user?.uid]);
+  }, [messagesRef]);
 
   const loadOlderMessages = async () => {
     if (!messagesRef || !lastMessageDoc || !hasMore || moreMessagesLoading) return;
@@ -448,20 +396,6 @@ export function ChatLayout() {
         <div className="flex flex-col h-full rounded-t-lg overflow-hidden" style={{ backgroundColor: '#e6fafa' }}>
             <div className="p-4 border-b flex justify-between items-center rounded-t-lg" style={{ backgroundColor: '#d9f7f2' }}>
                 <h2 className="text-xl font-bold">Chats</h2>
-                <Button
-                type="button"
-                onClick={async () => {
-                    try {
-                    const audio = new Audio('/Chat_Sound.mp3');
-                    await audio.play();
-                    console.log('Manual test sound played');
-                    } catch (error) {
-                    console.error('Manual test failed:', error);
-                    }
-                }}
-                >
-                Test Chat Sound
-                </Button>
                 <p className="text-xs text-black/70 max-w-sm text-left pl-5">
                     This chat function is only intended for Follow Ups, Reminders and Order-related transactions. Do not use this for non-work-related stuffs. (press <span className="font-bold">ESC</span> to close)
                 </p>

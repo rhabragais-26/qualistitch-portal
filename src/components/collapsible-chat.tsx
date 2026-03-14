@@ -18,6 +18,7 @@ export function CollapsibleChat() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isContentVisible, setIsContentVisible] = useState(false);
   const chatSoundRef = useRef<HTMLAudioElement | null>(null);
+  const prevUnreadCountRef = useRef(0);
 
   const channelsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -50,11 +51,17 @@ export function CollapsibleChat() {
       chatSoundRef.current.volume = 0.5;
     }
 
-
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    if (totalUnreadCount > prevUnreadCountRef.current) {
+        chatSoundRef.current?.play().catch(error => console.error("Chat audio play failed:", error));
+    }
+    prevUnreadCountRef.current = totalUnreadCount;
+  }, [totalUnreadCount]);
 
   useEffect(() => {
     // When the user logs in or out, ensure the chat is collapsed.
@@ -73,10 +80,6 @@ export function CollapsibleChat() {
     }
     return () => clearTimeout(timer);
   }, [isExpanded]);
-  
-  const playTestSound = () => {
-    chatSoundRef.current?.play().catch(error => console.error("Test audio play failed:", error));
-  };
 
 
   if (!isMounted || isUserLoading || !user || user.isAnonymous) {
