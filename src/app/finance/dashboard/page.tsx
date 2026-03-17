@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -589,10 +588,10 @@ function FinanceDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="font-medium">Week:</span>
-                        <Select value={selectedWeek} onValueChange={setSelectedWeek} disabled={!selectedYear || selectedYear === 'all' || selectedMonth === 'all'}>
+                        <Select value={selectedWeek} onValueChange={(value) => setSelectedWeek(value === 'all-weeks' ? '' : value)} disabled={!selectedYear || selectedYear === 'all' || selectedMonth === 'all'}>
                             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Select a week" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Weeks</SelectItem>
+                                <SelectItem value="all-weeks">All Weeks</SelectItem>
                                 {availableWeeks.map(week => <SelectItem key={week} value={week}>{week}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -695,8 +694,8 @@ function FinanceDashboard() {
                         <CardTitle>Daily Sales vs. Daily Expenses</CardTitle>
                         <CardDescription>A comparison of cash inflows and outflows for the selected month.</CardDescription>
                     </div>
-                    <div className="text-right">
-                         <div className="text-right">
+                     <div className="text-right">
+                        <div className="text-right">
                             <p className="text-sm text-muted-foreground">Total Sales</p>
                             <p className="text-2xl font-bold text-green-600">{formatCurrency(totalSalesForComparison)}</p>
                         </div>
