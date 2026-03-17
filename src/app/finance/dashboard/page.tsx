@@ -31,10 +31,11 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/header';
-import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, eachDayOfInterval, endOfDay, isBefore, parseISO, parse } from 'date-fns';
+import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, eachDayOfInterval, endOfDay, isBefore, parseISO, parse, startOfWeek, endOfWeek, isValid, startOfDay } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/lib/utils';
+import { Button } from '../ui/button';
 
 // Types for expenses
 type OperationalExpense = {
@@ -158,6 +159,7 @@ function FinanceDashboard() {
   const firestore = useFirestore();
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedWeek, setSelectedWeek] = useState('');
 
   // Expense queries
   const operationalExpensesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operational_expenses'), orderBy('date', 'desc')) : null, [firestore]);
@@ -178,16 +180,17 @@ function FinanceDashboard() {
 
   const isLoading = opExLoading || cogsLoading || capExLoading || leadsLoading || otherInflowsLoading;
 
-  const { years, months } = useMemo(() => {
-    const allEntries = [...(operationalExpenses || []), ...(cogs || []), ...(capitalExpenses || []), ...(otherInflows || []), ...(leads || []).flatMap(l => l.payments?.map(p => ({date: p.timestamp || l.submissionDateTime})) || [])];
+  const { years, months, availableWeeks } = useMemo(() => {
+    const allEntries = [...(operationalExpenses || []), ...(cogs || []), ...(capitalExpenses || []), ...(otherInflows || []), ...(leads || []).flatMap(l => l.payments?.map(p => ({date: p.actualTransactionDate || p.timestamp || l.submissionDateTime})) || [])];
     if (allEntries.length === 0) {
       const currentYear = new Date().getFullYear();
       return {
         years: [currentYear.toString()],
-        months: Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: format(new Date(currentYear, i), 'MMMM') }))
+        months: Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: format(new Date(currentYear, i), 'MMMM') })),
+        availableWeeks: [],
       };
     }
-    const yearsSet = new Set(allEntries.map(e => getYear(new Date(e.date))));
+    const yearsSet = new Set(allEntries.map(e => e.date ? getYear(new Date(e.date)) : 0).filter(y => y > 0));
     const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
 
     const monthOptions = Array.from({ length: 12 }, (_, i) => ({
@@ -195,17 +198,51 @@ function FinanceDashboard() {
       label: format(new Date(2000, i), 'MMMM')
     }));
 
-    return { years: sortedYears.map(String), months: monthOptions };
-  }, [operationalExpenses, cogs, capitalExpenses, leads, otherInflows]);
+    const yearForWeeks = parseInt(selectedYear);
+    const weeks = Array.from(new Set(
+        allEntries
+          .filter(entry => entry.date && getYear(new Date(entry.date)) === yearForWeeks)
+          .map(entry => {
+            const date = new Date(entry.date);
+            const start = startOfWeek(date, { weekStartsOn: 1 });
+            const end = endOfWeek(date, { weekStartsOn: 1 });
+            return `${format(start, 'MM.dd')}-${format(end, 'MM.dd')}`;
+          })
+      )).sort((a,b) => {
+          const a_start = parse(a.split('-')[0], 'MM.dd', new Date(yearForWeeks, 0, 1));
+          const b_start = parse(b.split('-')[0], 'MM.dd', new Date(yearForWeeks, 0, 1));
+          return a_start.getTime() - b_start.getTime();
+      });
 
-  const { monthlyOpEx, monthlyCogs, monthlyCapEx } = useMemo(() => {
+    return { years: sortedYears.map(String), months: monthOptions, availableWeeks: weeks };
+  }, [operationalExpenses, cogs, capitalExpenses, leads, otherInflows, selectedYear]);
+
+  const { startDate, endDate } = useMemo(() => {
     const year = parseInt(selectedYear);
     const month = parseInt(selectedMonth) - 1;
-    const startDate = startOfMonth(new Date(year, month));
-    const endDate = endOfMonth(new Date(year, month));
+
+    if (selectedWeek) {
+        const [startStr, endStr] = selectedWeek.split('-');
+        const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
+        const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
+        
+        if(isValid(weekStart) && isValid(weekEnd)) {
+             return { startDate: startOfDay(weekStart), endDate: endOfDay(weekEnd) };
+        }
+    }
     
+    if (isNaN(year)) return { startDate: null, endDate: null };
+    
+    const start = startOfMonth(new Date(year, month));
+    const end = endOfMonth(new Date(year, month));
+
+    return { startDate: start, endDate: end };
+  }, [selectedYear, selectedMonth, selectedWeek]);
+
+
+  const { monthlyOpEx, monthlyCogs, monthlyCapEx } = useMemo(() => {
     const filterByMonth = (data: any[] | null) => {
-        if (!data) return [];
+        if (!data || !startDate || !endDate) return [];
         return data.filter(item => {
             try {
                 const itemDate = new Date(item.date);
@@ -219,25 +256,20 @@ function FinanceDashboard() {
         monthlyCogs: filterByMonth(cogs),
         monthlyCapEx: filterByMonth(capitalExpenses),
     }
-  }, [operationalExpenses, cogs, capitalExpenses, selectedMonth, selectedYear]);
+  }, [operationalExpenses, cogs, capitalExpenses, startDate, endDate]);
 
   const dailyCashInflows = useMemo(() => {
-    if (!leads && !otherInflows) return [];
+    if (!leads && !otherInflows || !startDate || !endDate) return [];
 
-    const year = parseInt(selectedYear, 10);
-    const month = parseInt(selectedMonth, 10) - 1;
-    const startDate = startOfMonth(new Date(year, month));
-    
     const today = endOfDay(new Date());
-    const monthEndForSelected = endOfMonth(new Date(year, month));
-    const endDate = isBefore(monthEndForSelected, today) ? monthEndForSelected : today;
+    const effectiveEndDate = isBefore(endDate, today) ? endDate : today;
 
     const inflowsByDay: {[key: string]: number} = {};
 
     const processDate = (dateString: string, amount: number) => {
         try {
             const date = new Date(dateString);
-            if (isWithinInterval(date, { start: startDate, end: endDate })) {
+            if (isWithinInterval(date, { start: startDate, end: effectiveEndDate })) {
                 const day = format(date, 'MMM-dd');
                 inflowsByDay[day] = (inflowsByDay[day] || 0) + amount;
             }
@@ -257,7 +289,7 @@ function FinanceDashboard() {
         processDate(inflow.date, inflow.amount);
     });
 
-    const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
+    const daysInMonth = eachDayOfInterval({ start: startDate, end: effectiveEndDate });
     
     return daysInMonth.map(day => {
         const dateStr = format(day, 'MMM-dd');
@@ -267,29 +299,24 @@ function FinanceDashboard() {
         };
     });
 
-  }, [leads, otherInflows, selectedMonth, selectedYear]);
+  }, [leads, otherInflows, startDate, endDate]);
   
   const totalInflowForPeriod = useMemo(() => {
     return dailyCashInflows.reduce((sum, day) => sum + day.amount, 0);
   }, [dailyCashInflows]);
 
   const dailyInflowBreakdown = useMemo(() => {
-    if (!leads && !otherInflows) return [];
+    if (!leads && !otherInflows || !startDate || !endDate) return [];
 
-    const year = parseInt(selectedYear, 10);
-    const month = parseInt(selectedMonth, 10) - 1;
-    const startDate = startOfMonth(new Date(year, month));
-    
     const today = endOfDay(new Date());
-    const monthEndForSelected = endOfMonth(new Date(year, month));
-    const endDate = isBefore(monthEndForSelected, today) ? monthEndForSelected : today;
+    const effectiveEndDate = isBefore(endDate, today) ? endDate : today;
 
     const inflowsByDay: {[key: string]: { [key: string]: number }} = {};
 
     const processPayment = (dateString: string, amount: number, type: string) => {
         try {
             const date = new Date(dateString);
-            if (isWithinInterval(date, { start: startDate, end: endDate })) {
+            if (isWithinInterval(date, { start: startDate, end: effectiveEndDate })) {
                 const day = format(date, 'MMM-dd');
                 if (!inflowsByDay[day]) {
                   inflowsByDay[day] = {};
@@ -323,7 +350,7 @@ function FinanceDashboard() {
         processPayment(inflow.date, inflow.amount, 'Other Inflows');
     });
 
-    const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
+    const daysInMonth = eachDayOfInterval({ start: startDate, end: effectiveEndDate });
     
     return daysInMonth.map(day => {
         const dateStr = format(day, 'MMM-dd');
@@ -344,7 +371,7 @@ function FinanceDashboard() {
         };
     });
 
-  }, [leads, otherInflows, selectedMonth, selectedYear]);
+  }, [leads, otherInflows, startDate, endDate]);
 
   const {
     totalDownpayment,
@@ -429,22 +456,17 @@ function FinanceDashboard() {
   }, [expensesOverTime]);
 
   const dailyLeadSales = useMemo(() => {
-    if (!leads) return [];
+    if (!leads || !startDate || !endDate) return [];
 
-    const year = parseInt(selectedYear, 10);
-    const month = parseInt(selectedMonth, 10) - 1;
-    const startDate = startOfMonth(new Date(year, month));
-    
     const today = endOfDay(new Date());
-    const monthEndForSelected = endOfMonth(new Date(year, month));
-    const endDate = isBefore(monthEndForSelected, today) ? monthEndForSelected : today;
+    const effectiveEndDate = isBefore(endDate, today) ? endDate : today;
 
     const salesByDay: {[key: string]: number} = {};
 
     (leads || []).forEach(lead => {
         try {
             const date = new Date(lead.submissionDateTime);
-            if (isWithinInterval(date, { start: startDate, end: endDate })) {
+            if (isWithinInterval(date, { start: startDate, end: effectiveEndDate })) {
                 const day = format(date, 'MMM-dd');
                 salesByDay[day] = (salesByDay[day] || 0) + (lead.grandTotal || 0);
             }
@@ -453,7 +475,7 @@ function FinanceDashboard() {
         }
     });
 
-    const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
+    const daysInMonth = eachDayOfInterval({ start: startDate, end: effectiveEndDate });
     
     return daysInMonth.map(day => {
         const dateStr = format(day, 'MMM-dd');
@@ -462,7 +484,7 @@ function FinanceDashboard() {
             amount: salesByDay[dateStr] || 0
         };
     });
-  }, [leads, selectedMonth, selectedYear]);
+  }, [leads, startDate, endDate]);
 
   const dailySalesAndExpenses = useMemo(() => {
     const combinedData: { [key: string]: { sales: number; expenses: number } } = {};
@@ -517,6 +539,12 @@ function FinanceDashboard() {
       }
       return null;
   };
+
+  const handleResetFilters = () => {
+    setSelectedYear(new Date().getFullYear().toString());
+    setSelectedMonth((new Date().getMonth() + 1).toString());
+    setSelectedWeek('');
+  };
   
   if (isLoading) {
     return (
@@ -535,29 +563,42 @@ function FinanceDashboard() {
     <Header>
       <main className="p-4 sm:p-6 lg:p-8 space-y-8">
         <Card className="p-4">
-            <div className="flex justify-start items-center gap-4">
-                 <div className="flex items-center gap-2">
-                    <span className="font-medium">Year:</span>
-                    <Select value={selectedYear} onValueChange={setSelectedYear}>
-                        <SelectTrigger className="w-[120px]">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {years.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <span className="font-medium">Month:</span>
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {months.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                 </div>
+            <div className="flex justify-between items-center">
+                <div className="flex justify-start items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium">Year:</span>
+                        <Select value={selectedYear} onValueChange={setSelectedYear}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {years.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium">Month:</span>
+                        <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setSelectedWeek(''); }}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {months.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium">Week:</span>
+                        <Select value={selectedWeek} onValueChange={setSelectedWeek} disabled={!selectedYear || selectedYear === 'all' || selectedMonth === 'all'}>
+                            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Select a week" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">All Weeks</SelectItem>
+                                {availableWeeks.map(week => <SelectItem key={week} value={week}>{week}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <Button variant="outline" onClick={handleResetFilters}>Reset Filters</Button>
             </div>
         </Card>
 
@@ -799,5 +840,3 @@ function FinanceDashboard() {
 }
 
 export default FinanceDashboard;
-
-    
