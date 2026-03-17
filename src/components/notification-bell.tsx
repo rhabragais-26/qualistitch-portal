@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -15,9 +14,10 @@ import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import type { PageGroup, UserPosition } from '@/lib/permissions';
 import { allPageGroups, hasEditPermission } from '@/lib/permissions';
+import { isEqual } from 'lodash';
 
 type JoNoteNotification = {
-  id: string; // noteId or global announcement timestamp
+  id: string; // noteId, unique
   leadId: string;
   customerName: string;
   joNumber: string; // For JO notes, this is JO number.
@@ -98,10 +98,25 @@ export function NotificationBell() {
     const storedJoNotes = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as JoNoteNotification[];
     const now = new Date();
     const triggeredJoNotes = storedJoNotes.filter(n => isPast(new Date(n.notifyAt)));
-    setJoNoteNotifications(triggeredJoNotes);
+    
+    setJoNoteNotifications(currentJoNotes => {
+        const currentIds = currentJoNotes.map(c => c.id).sort();
+        const newIds = triggeredJoNotes.map(t => t.id).sort();
+        if (!isEqual(currentIds, newIds)) {
+          return triggeredJoNotes;
+        }
+        return currentJoNotes;
+      });
 
     const storedProgress = JSON.parse(localStorage.getItem('progress-notifications') || '[]') as ProgressNotification[];
-    setProgressNotifications(storedProgress);
+    setProgressNotifications(currentProgress => {
+        const currentIds = currentProgress.map(c => c.id).sort();
+        const newIds = storedProgress.map(s => s.id).sort();
+        if (!isEqual(currentIds, newIds)) {
+          return storedProgress;
+        }
+        return currentProgress;
+    });
   };
 
   const loadGlobalAnnouncements = () => {
@@ -205,17 +220,14 @@ export function NotificationBell() {
 
   useEffect(() => {
     if (unreadCount > prevUnreadCountRef.current) {
-      // Check if a notification was fired very recently by another tab
       const lastFired = parseInt(localStorage.getItem('lastNotificationFiredAt') || '0', 10);
       const now = Date.now();
       
-      // If a notification was fired in the last 2 seconds, suppress this one
       if (now - lastFired < 2000) {
-          prevUnreadCountRef.current = unreadCount; // Still update the count to prevent future firing
+          prevUnreadCountRef.current = unreadCount;
           return;
       }
 
-      // This tab will fire the notification. Record the timestamp.
       localStorage.setItem('lastNotificationFiredAt', now.toString());
 
       setIsAnimating(true);
