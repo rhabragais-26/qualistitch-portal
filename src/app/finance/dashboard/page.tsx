@@ -35,7 +35,7 @@ import { format, startOfMonth, endOfMonth, getMonth, getYear, isWithinInterval, 
 import { useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/lib/utils';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 
 // Types for expenses
 type OperationalExpense = {
