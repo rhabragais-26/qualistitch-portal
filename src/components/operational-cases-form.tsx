@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,6 +56,7 @@ type Lead = {
   orders: LeadOrder[];
   isEndorsedToLogistics?: boolean;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  isDone?: boolean;
 };
 
 type CaseItem = {
@@ -226,9 +226,8 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
     if(searchInput.length > 0) {
         let leadsToSearch = allLeads;
 
-        // If not coming from a specific source like quality check, filter for shipment queue leads.
         if (!source) {
-            leadsToSearch = allLeads.filter(lead => lead.isEndorsedToLogistics && lead.shipmentStatus !== 'Shipped' && lead.shipmentStatus !== 'Delivered');
+            leadsToSearch = allLeads.filter(lead => lead.isDone);
         }
 
         const matchedLeads = leadsToSearch.filter(lead => 
