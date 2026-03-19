@@ -201,6 +201,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             lastModified: new Date().toISOString(),
             lastModifiedBy: userProfile?.nickname,
             forceNewCustomer: formValuesToSave.forceNewCustomer || false,
+            removedFees,
             editedUnitPrices,
             editedAddOnPrices,
             editedProgrammingFees,
@@ -223,7 +224,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             description: e.message || "Could not update the lead.",
         });
     }
-  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, userProfile, editedUnitPrices, editedAddOnPrices, editedProgrammingFees]);
+  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, userProfile, removedFees, editedUnitPrices, editedAddOnPrices, editedProgrammingFees]);
 
   return (
     <>
