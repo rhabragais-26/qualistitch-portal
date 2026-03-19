@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -16,6 +15,7 @@ import {
   LineChart,
   Line,
   LabelList,
+  Tooltip,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -277,5 +277,3 @@ export function FinancialForecastDashboard() {
     </div>
   );
 }
-
-    
