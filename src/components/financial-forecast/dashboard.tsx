@@ -32,7 +32,9 @@ import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, where, orderBy, limit } from 'firebase/firestore';
-import { format, addMonths } from 'date-fns';
+import { format, addMonths, parse } from 'date-fns';
+
+type FinanceCategory = { id: string; name: string; };
 
 type FinanceAssumption = {
   grossMarginPercent: number;
@@ -48,21 +50,22 @@ type FinanceForecastRollup = {
   totalsByCategory: { [key: string]: number };
 };
 
-const CATEGORY_COLORS = {
-  Payroll: "hsl(var(--chart-1))",
-  Materials: "hsl(var(--chart-2))",
-  Marketing: "hsl(var(--chart-3))",
-  Logistics: "hsl(var(--chart-4))",
-  'Mgr.': "hsl(var(--chart-5))",
-  Other: "hsl(var(--muted))",
-};
+const COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(270, 90%, 55%)',
+  'hsl(180, 70%, 45%)',
+  'hsl(40, 80%, 50%)',
+];
 
 const chartConfig = {
   combinedForecastExpense: {
     label: "Total Expense",
     color: "hsl(var(--chart-1))",
   },
-  // ... other categories if needed
 };
 
 
@@ -87,17 +90,35 @@ export function FinancialForecastDashboard() {
 
   const { data: rollups, isLoading: rollupsLoading } = useCollection<FinanceForecastRollup>(rollupsQuery);
   
-  const isLoading = assumptionsLoading || rollupsLoading;
+  const categoriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'financeCategories')) : null, [firestore]);
+  const { data: categories, isLoading: categoriesLoading } = useCollection<FinanceCategory>(categoriesQuery);
 
-  const filteredData = useMemo(() => {
-    if (!rollups) return [];
+  const isLoading = assumptionsLoading || rollupsLoading || categoriesLoading;
+
+  const { filteredData, totalForecastedExpenses, categoryBreakdown } = useMemo(() => {
+    if (!rollups) return { filteredData: [], totalForecastedExpenses: 0, categoryBreakdown: [] };
+
     const months = parseInt(dateRange, 10);
-    return rollups.slice(0, months);
-  }, [rollups, dateRange]);
+    const data = rollups.slice(0, months);
 
-  const totalForecastedExpenses = useMemo(() => {
-    return filteredData.reduce((acc, month) => acc + (month.combinedForecastExpense || 0), 0);
-  }, [filteredData]);
+    const totalExpenses = data.reduce((acc, month) => acc + (month.combinedForecastExpense || 0), 0);
+
+    const categoryMap = new Map(categories?.map(c => [c.id, c.name]));
+    const totals: { [name: string]: number } = {};
+
+    data.forEach(rollup => {
+        if (rollup.totalsByCategory) {
+            Object.entries(rollup.totalsByCategory).forEach(([catId, amount]) => {
+                const catName = categoryMap.get(catId) || 'Other';
+                totals[catName] = (totals[catName] || 0) + amount;
+            });
+        }
+    });
+    
+    const breakdown = Object.entries(totals).map(([name, value]) => ({ name, value }));
+
+    return { filteredData: data, totalForecastedExpenses: totalExpenses, categoryBreakdown: breakdown };
+  }, [rollups, dateRange, categories]);
   
   const revenueTarget = useMemo(() => {
       if (!assumptions || totalForecastedExpenses === 0) return 0;
@@ -214,10 +235,12 @@ export function FinancialForecastDashboard() {
                 <ResponsiveContainer>
                     <LineChart data={filteredData}>
                         <CartesianGrid vertical={false} />
-                        <XAxis dataKey="month" tickFormatter={(value) => format(new Date(`${value}-02`), 'MMM')} />
+                        <XAxis dataKey="month" tickFormatter={(value) => format(parse(value, 'yyyy-MM', new Date()), 'MMM')} />
                         <YAxis tickFormatter={(value) => `${value / 1000}k`} />
                         <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
-                        <Line type="monotone" dataKey="combinedForecastExpense" name="Total Expense" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{r: 5}}/>
+                        <Line type="monotone" dataKey="combinedForecastExpense" name="Total Expense" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{r: 5}}>
+                           <LabelList dataKey="combinedForecastExpense" position="top" formatter={(value: number) => formatCurrency(value)} />
+                        </Line>
                     </LineChart>
                 </ResponsiveContainer>
             </ChartContainer>
@@ -231,15 +254,15 @@ export function FinancialForecastDashboard() {
           <CardContent className="h-[350px] w-full">
              <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer>
-                    <BarChart data={filteredData} layout="vertical" stackOffset="expand">
-                        <XAxis type="number" hide />
-                        <YAxis dataKey="month" type="category" tickFormatter={(value) => format(new Date(`${value}-02`), 'MMM')} hide />
-                        <ChartTooltip content={<ChartTooltipContent formatter={(value, name, item) => `${item.payload.totalsByCategory[name] ? (item.payload.totalsByCategory[name] / item.payload.combinedForecastExpense * 100).toFixed(0) : 0}% (${formatCurrency(item.payload.totalsByCategory[name] || 0)})` } />} />
-                        <Legend />
-                        {Object.entries(CATEGORY_COLORS).map(([category, color]) => (
-                            <Bar key={category} dataKey={`totalsByCategory.${category}`} stackId="a" fill={color} name={category} />
-                        ))}
-                    </BarChart>
+                   <PieChart>
+                    <Tooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)}/>} />
+                    <Pie data={categoryBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                      {categoryBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Legend/>
+                  </PieChart>
                 </ResponsiveContainer>
              </ChartContainer>
           </CardContent>

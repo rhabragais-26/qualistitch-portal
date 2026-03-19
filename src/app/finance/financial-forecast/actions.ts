@@ -2,7 +2,7 @@
 'use server';
 
 import { firestore } from '@/firebase/admin';
-import { collection, query, where, getDocs, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { startOfMonth, endOfMonth, addMonths, isBefore, isEqual, addWeeks, format, parse } from 'date-fns';
 
 type FinanceForecastMonthly = {
@@ -13,11 +13,11 @@ type FinanceForecastMonthly = {
 
 type FinanceForecastScheduled = {
     id: string;
-    date: any; // Firestore timestamp on server, string on client
+    date: string; // ISO string
     categoryId: string;
     amount: number;
     recurrence: "One-time" | "Weekly" | "Monthly";
-    endDate?: any | null; // Firestore timestamp on server, string on client
+    endDate?: string | null; // ISO string
 };
 
 
@@ -60,8 +60,8 @@ export async function updateMonthlyForecastRollup(month: string): Promise<void> 
 
     scheduledSnapshot.forEach(doc => {
       const data = doc.data() as FinanceForecastScheduled;
-      const startDate = (data.date as Timestamp).toDate();
-      const endDate = data.endDate ? (data.endDate as Timestamp).toDate() : null;
+      const startDate = new Date(data.date);
+      const endDate = data.endDate ? new Date(data.endDate) : null;
       
       let currentDate = startDate;
 
