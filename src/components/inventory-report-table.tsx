@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -15,6 +16,7 @@ import { Skeleton } from './ui/skeleton';
 import React from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { generateSku } from '@/lib/utils';
 
 type Order = {
   productType: string;
@@ -71,53 +73,60 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     const soldQuantities = new Map<string, number>();
     const onProcessQuantities = new Map<string, number>();
     const dispatchedQuantities = new Map<string, number>();
+    const allItemsMap = new Map<string, { productType: string, color: string, size: string }>();
+
+    const createKey = (order: { productType: string, color: string, size: string }) => 
+        `${order.productType}-${order.color}-${order.size}`;
     
-    if (leads) {
-        leads.forEach(lead => {
-            const createKey = (order: { productType: string, color: string, size: string }) => `${order.productType}-${order.color}-${order.size}`;
-            
-            lead.orders.forEach(order => {
-                const key = createKey(order);
-                soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
-            });
+    leads.forEach(lead => {
+        lead.orders.forEach(order => {
+            const key = createKey(order);
+            if (!allItemsMap.has(key)) {
+                allItemsMap.set(key, { productType: order.productType, color: order.color, size: order.size });
+            }
+
+            soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
 
             if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
-                lead.orders.forEach(order => {
-                    const key = createKey(order);
-                    dispatchedQuantities.set(key, (dispatchedQuantities.get(key) || 0) + order.quantity);
-                });
+                dispatchedQuantities.set(key, (dispatchedQuantities.get(key) || 0) + order.quantity);
             } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
-                lead.orders.forEach(order => {
-                    const key = createKey(order);
-                    onProcessQuantities.set(key, (onProcessQuantities.get(key) || 0) + order.quantity);
-                });
+                onProcessQuantities.set(key, (onProcessQuantities.get(key) || 0) + order.quantity);
             }
         });
-    }
+    });
 
-    const enrichedItems = inventoryItems.map(item => {
-        const key = `${item.productType}-${item.color}-${item.size}`;
+    inventoryItems.forEach(item => {
+        const key = createKey(item);
+        if (!allItemsMap.has(key)) {
+            allItemsMap.set(key, { productType: item.productType, color: item.color, size: item.size });
+        }
+    });
+    
+    const inventoryMap = new Map(inventoryItems.map(item => [createKey(item), item]));
+    
+    const processedItems = Array.from(allItemsMap.values()).map(itemDetails => {
+        const key = createKey(itemDetails);
+        const inventoryItem = inventoryMap.get(key);
+
         const sold = soldQuantities.get(key) || 0;
         const onProcess = onProcessQuantities.get(key) || 0;
         const dispatched = dispatchedQuantities.get(key) || 0;
-        const onHand = item.stock;
-
-        const count = (onHand + onProcess + dispatched) - sold;
+        const onHand = inventoryItem?.stock ?? 0;
         
+        const count = (onHand + onProcess + dispatched) - sold;
         const totalStockEver = onHand + sold;
         const sellThroughRate = totalStockEver > 0 ? (sold / totalStockEver) * 100 : 0;
 
-        return { ...item, count, sellThroughRate };
-    });
-
-    let processedItems = enrichedItems;
+        return { ...itemDetails, id: inventoryItem?.id || key, count, sellThroughRate };
+      });
     
+    let filteredItems = processedItems;
     if (reportType === 'priority') {
-      processedItems = processedItems.filter(item => item.count <= 10);
+      filteredItems = filteredItems.filter(item => item.count <= 10);
     }
     
     if (reportType === 'priority' && sellThroughRateFilter && sellThroughRateFilter !== 'All') {
-        processedItems = processedItems.filter(item => {
+        filteredItems = filteredItems.filter(item => {
             const rate = item.sellThroughRate;
             switch(sellThroughRateFilter) {
                 case '80-100': return rate >= 80;
@@ -128,7 +137,6 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
         });
     }
     
-    let filteredItems = processedItems;
     if (productTypeFilter && productTypeFilter !== 'All') {
         filteredItems = filteredItems.filter(item => item.productType === productTypeFilter);
     }

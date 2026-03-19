@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, runTransaction, getDoc, writeBatch, getDocs } from 'firebase/firestore';
 import {
   Table,
@@ -252,42 +252,62 @@ export function InventorySummaryTable() {
     const soldQuantities = new Map<string, number>();
     const onProcessQuantities = new Map<string, number>();
     const dispatchedQuantities = new Map<string, number>();
-    
-    leads.forEach(lead => {
-        const createKey = (order: Order) => `${order.productType}-${order.color}-${order.size}`;
+    const allItemsMap = new Map<string, { productType: string; color: string; size: string }>();
 
+    const createKey = (item: { productType: string; color: string; size: string }) => 
+        `${item.productType}-${item.color}-${item.size}`;
+    
+    // Process leads to get sold quantities and a list of all sold items
+    leads.forEach(lead => {
         lead.orders.forEach(order => {
             const key = createKey(order);
-            soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
-        });
+            // Add to all items map
+            if (!allItemsMap.has(key)) {
+                allItemsMap.set(key, { productType: order.productType, color: order.color, size: order.size });
+            }
 
-        if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
-            lead.orders.forEach(order => {
-                const key = createKey(order);
+            // Aggregate sold quantities
+            soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
+            
+            // Aggregate quantities in different stages
+            if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
                 dispatchedQuantities.set(key, (dispatchedQuantities.get(key) || 0) + order.quantity);
-            });
-        } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
-            lead.orders.forEach(order => {
-                const key = createKey(order);
+            } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
                 onProcessQuantities.set(key, (onProcessQuantities.get(key) || 0) + order.quantity);
-            });
-        }
+            }
+        });
     });
 
-    return inventoryItems.map(item => {
-        const key = `${item.productType}-${item.color}-${item.size}`;
+    // Add inventory items to the allItems map to get the full universe of items
+    inventoryItems.forEach(item => {
+        const key = createKey(item);
+        if (!allItemsMap.has(key)) {
+            allItemsMap.set(key, { productType: item.productType, color: item.color, size: item.size });
+        }
+    });
+    
+    const inventoryMap = new Map(inventoryItems.map(item => [createKey(item), item]));
+
+    // Process all unique items from both inventory and sales
+    const enriched = Array.from(allItemsMap.values()).map(itemDetails => {
+        const key = createKey(itemDetails);
+        const inventoryItem = inventoryMap.get(key);
+        
+        const onHand = inventoryItem?.stock ?? 0;
+        const soldQty = soldQuantities.get(key) || 0;
         const onProcess = onProcessQuantities.get(key) || 0;
         const dispatched = dispatchedQuantities.get(key) || 0;
-        const soldQty = soldQuantities.get(key) || 0;
-        const onHand = item.stock;
 
-        const sellThroughRate = (onHand + soldQty) > 0 ? (soldQty / (onHand + soldQty)) * 100 : 0;
+        const totalStockEver = onHand + soldQty;
+        const sellThroughRate = totalStockEver > 0 ? (soldQty / totalStockEver) * 100 : 0;
         
         const remaining = (onHand + onProcess + dispatched) - soldQty;
-        const sku = generateSku(item);
-
+        const sku = generateSku(itemDetails);
+        
         return {
-            ...item,
+            id: inventoryItem?.id || key,
+            ...itemDetails,
+            stock: onHand,
             sku,
             soldQty,
             onProcess,
@@ -296,6 +316,8 @@ export function InventorySummaryTable() {
             sellThroughRate,
         };
     });
+
+    return enriched;
   }, [inventoryItems, leads]);
   
   const filteredItems = useMemo(() => {
