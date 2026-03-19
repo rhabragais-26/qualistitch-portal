@@ -403,7 +403,7 @@ const HeaderMemo = React.memo(function Header({
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/analytics')}>
                       <LineChart className="mr-2" />
-                      Analytics
+                      Reports
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
