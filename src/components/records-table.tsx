@@ -21,7 +21,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from './ui/badge';
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, PlusCircle, Edit, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import {
@@ -122,6 +122,10 @@ const leadSchema = z.object({
   shipmentStatus: z.string().optional(),
   shippedTimestamp: z.string().optional(),
   forceNewCustomer: z.boolean().optional(),
+  removedFees: z.record(z.object({
+    logo: z.boolean().optional(),
+    backText: z.boolean().optional(),
+  })).optional(),
   editedUnitPrices: z.record(z.number()).optional(),
   editedAddOnPrices: z.record(z.number()).optional(),
   editedProgrammingFees: z.record(z.object({
@@ -164,6 +168,8 @@ const poloShirtColors = [
 ];
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
+
+const courierOptions = ['Lalamove', 'J&T', 'LBC', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
 
 const RecordsTableRow = React.memo(({
     lead,
@@ -403,21 +409,20 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   const [csrFilter, setCsrFilter] = useState('All');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [date, setDate] = useState<Date | undefined>();
   const [activeQuickFilter, setActiveQuickFilter] = useState<'today' | 'yesterday' | null>(null);
   
   const handleQuickFilter = (filter: 'today' | 'yesterday') => {
     const targetDate = filter === 'today' ? new Date() : subDays(new Date(), 1);
-    const newRange = { from: startOfDay(targetDate), to: endOfDay(targetDate) };
-
+  
     if (activeQuickFilter === filter) {
-        setActiveQuickFilter(null);
-        setDateRange(undefined);
+      setActiveQuickFilter(null);
+      setDate(undefined);
     } else {
-        setActiveQuickFilter(filter);
-        setDateRange(newRange);
-        setSelectedYear('all');
-        setSelectedMonth('all');
+      setActiveQuickFilter(filter);
+      setDate(targetDate);
+      setSelectedYear('all');
+      setSelectedMonth('all');
     }
   };
 
@@ -426,7 +431,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     setCsrFilter('All');
     setSelectedYear(new Date().getFullYear().toString());
     setSelectedMonth((new Date().getMonth() + 1).toString());
-    setDateRange(undefined);
+    setDate(undefined);
     setActiveQuickFilter(null);
   };
 
@@ -514,9 +519,9 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
       const submissionDate = new Date(lead.submissionDateTime);
       let dateMatches = false;
       
-      if (dateRange?.from) {
-        const from = startOfDay(dateRange.from);
-        const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+      if (date) {
+        const from = startOfDay(date);
+        const to = endOfDay(date);
         dateMatches = submissionDate >= from && submissionDate <= to;
       } else {
         const year = parseInt(selectedYear, 10);
@@ -528,7 +533,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
       
       return matchesSearch && matchesCsr && dateMatches && matchesStatus;
     });
-  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, dateRange, filterType, getOverallStatus]);
+  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, date, filterType, getOverallStatus]);
   
     const { totalAmount, totalQuantity, uniqueCustomers } = useMemo(() => {
         if (!filteredLeads) return { totalAmount: 0, totalQuantity: 0, uniqueCustomers: 0 };
@@ -636,7 +641,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
+              <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDate(undefined); setActiveQuickFilter(null); }}>
                 <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
@@ -647,7 +652,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDateRange(undefined); setActiveQuickFilter(null); }}>
+              <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDate(undefined); setActiveQuickFilter(null); }}>
                 <SelectTrigger className="w-[140px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
@@ -657,9 +662,23 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                   ))}
                 </SelectContent>
               </Select>
+              <Input
+                    type="date"
+                    value={date ? format(date, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => {
+                        const newDate = e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined;
+                        setDate(newDate);
+                        if (newDate) {
+                            setSelectedYear('all');
+                            setSelectedMonth('all');
+                            setActiveQuickFilter(null);
+                        }
+                    }}
+                    className="w-[160px] h-9"
+                />
               <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
               <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
-              <Button onClick={handleResetFilters} variant="outline" className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
+              <Button onClick={handleResetFilters} variant="ghost" className="h-9 bg-teal-600 text-white hover:bg-teal-700">Reset Filters</Button>
             </div>
             <div className="w-full flex justify-between items-center mt-2">
                 <div className="flex items-center gap-4 text-left font-semibold text-sm">
@@ -749,3 +768,4 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   );
 }
 
+```
