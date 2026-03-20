@@ -1,7 +1,6 @@
 
 
 'use client';
-
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import {
@@ -183,7 +182,7 @@ const RecordsTableRow = React.memo(({
     toggleCustomerDetails,
     handleOpenEditLeadDialog,
     handleDeleteLead,
-    setOpenLeadId,
+    setOpenLeadId
 }: {
     lead: EnrichedLead;
     openLeadId: string | null;
@@ -611,58 +610,24 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   }
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
-      <CardHeader className="pb-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-black">
-              {filterType === 'COMPLETED' ? 'Completed Orders' : 'Ongoing Orders'}
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              {filterType === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the ongoing and pending customer orders.'}
-            </CardDescription>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-gray-100 text-black placeholder:text-gray-500 w-48 h-9"
-              />
-              <Select value={csrFilter} onValueChange={setCsrFilter}>
-                <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by SCES" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All SCES</SelectItem>
-                  {salesRepresentatives.map(csr => (
-                    <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDate(undefined); setActiveQuickFilter(null); }}>
-                <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Years</SelectItem>
-                  {availableYears.map(year => (
-                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDate(undefined); setActiveQuickFilter(null); }}>
-                <SelectTrigger className="w-[140px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map(month => (
-                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
+    <>
+      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+        <CardHeader className="pb-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-black">
+                {filterType === 'COMPLETED' ? 'Completed Orders' : 'Ongoing Orders'}
+              </CardTitle>
+              <CardDescription className="text-gray-600">
+                {filterType === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the ongoing and pending customer orders.'}
+              </CardDescription>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                <Button onClick={handleResetFilters} variant="ghost" className="h-9 bg-teal-600 text-white hover:bg-teal-700">Reset Filters</Button>
+                <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
+                <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
+                <Input
                     type="date"
                     value={date ? format(date, 'yyyy-MM-dd') : ''}
                     onChange={(e) => {
@@ -676,11 +641,46 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     }}
                     className="w-[160px] h-9"
                 />
-              <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
-              <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
-              <Button onClick={handleResetFilters} variant="ghost" className="h-9 bg-teal-600 text-white hover:bg-teal-700">Reset Filters</Button>
-            </div>
-            <div className="w-full flex justify-between items-center mt-2">
+                <Select value={csrFilter} onValueChange={setCsrFilter}>
+                  <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by SCES" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All SCES</SelectItem>
+                    {salesRepresentatives.map(csr => (
+                      <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setDate(undefined); setActiveQuickFilter(null); }}>
+                  <SelectTrigger className="w-[120px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Years</SelectItem>
+                    {availableYears.map(year => (
+                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setDate(undefined); setActiveQuickFilter(null); }}>
+                  <SelectTrigger className="w-[140px] h-9 bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map(month => (
+                      <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500 w-48 h-9"
+                />
+              </div>
+              <div className="w-full flex justify-between items-center mt-2">
                 <div className="flex items-center gap-4 text-left font-semibold text-sm">
                     {filterType !== 'COMPLETED' && (
                         <>
@@ -690,82 +690,81 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                         </>
                     )}
                 </div>
-              <div className="flex items-center gap-2">
-                
-                {filterType === 'COMPLETED' ? (
-                    <Link href="/records" className="text-sm text-primary hover:underline">
-                        View Ongoing Orders
-                    </Link>
-                ) : (
-                    <Link href="/records/completed" className="text-sm text-primary hover:underline">
-                        View Completed Orders
-                    </Link>
-                )}
+                <div className="flex items-center gap-2">
+                  
+                  {filterType === 'COMPLETED' ? (
+                      <Link href="/records" className="text-sm text-primary hover:underline">
+                          View Ongoing Orders
+                      </Link>
+                  ) : (
+                      <Link href="/records/completed" className="text-sm text-primary hover:underline">
+                          View Completed Orders
+                      </Link>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto">
-          <div className="border rounded-md relative">
-            <Table>
-                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
-                  <TableRow>
-                    <TableHead className="text-white align-middle text-center">Date & Time</TableHead>
-                    <TableHead className="text-white align-middle text-center">Customer</TableHead>
-                    <TableHead className="text-white align-middle text-center">SCES</TableHead>
-                    <TableHead className="text-white align-middle text-center">Priority</TableHead>
-                    <TableHead className="text-white align-middle text-center">Order Type</TableHead>
-                    <TableHead className="text-white align-middle text-center">Courier</TableHead>
-                    <TableHead className="text-white align-middle text-center">Total Amount</TableHead>
-                    <TableHead className="text-white align-middle text-center">Paid Amount</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Balance</TableHead>
-                    <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
-                    <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
-                    <TableHead className="text-white align-middle text-center">Items</TableHead>
-                    {filterType === 'COMPLETED' ? (
-                        <TableHead className="text-white align-middle text-center">Date Completed</TableHead>
-                    ) : (
-                        <TableHead className="text-white font-bold align-middle text-center w-[140px]">Actions</TableHead>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                {filteredLeads.map((lead) => {
-                  const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
-                  
-                  return (
-                    <RecordsTableRow
-                        key={lead.id}
-                        lead={lead}
-                        openLeadId={openLeadId}
-                        openCustomerDetails={openCustomerDetails}
-                        isRepeat={!lead.forceNewCustomer && lead.orderNumber > 0}
-                        isReadOnly={isReadOnly}
-                        canDelete={canDelete}
-                        filterType={filterType}
-                        getContactDisplay={getContactDisplay}
-                        toggleCustomerDetails={toggleCustomerDetails}
-                        handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
-                        handleDeleteLead={handleDeleteLead}
-                        setOpenLeadId={setOpenLeadId}
-                    />
-                  );
-                })}
-                </TableBody>
-            </Table>
-          </div>
-      </CardContent>
-      {editingLead && (
-        <EditLeadFullDialog
-          isOpen={isEditDialogOpen}
-          onClose={() => { setEditingLead(null); setIsEditDialogOpen(false); }}
-          lead={editingLead}
-          onUpdate={refetchLeads}
-        />
-      )}
-    </Card>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-y-auto">
+            <div className="border rounded-md relative">
+              <Table>
+                  <TableHeader className="bg-neutral-800 sticky top-0 z-10">
+                    <TableRow>
+                      <TableHead className="text-white align-middle text-center">Date & Time</TableHead>
+                      <TableHead className="text-white align-middle text-center">Customer</TableHead>
+                      <TableHead className="text-white align-middle text-center">SCES</TableHead>
+                      <TableHead className="text-white align-middle text-center">Priority</TableHead>
+                      <TableHead className="text-white align-middle text-center">Order Type</TableHead>
+                      <TableHead className="text-white align-middle text-center">Courier</TableHead>
+                      <TableHead className="text-white align-middle text-center">Total Amount</TableHead>
+                      <TableHead className="text-white align-middle text-center">Paid Amount</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Balance</TableHead>
+                      <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
+                      <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
+                      <TableHead className="text-white align-middle text-center">Items</TableHead>
+                      {filterType === 'COMPLETED' ? (
+                          <TableHead className="text-white align-middle text-center">Date Completed</TableHead>
+                      ) : (
+                          <TableHead className="text-white font-bold align-middle text-center w-[140px]">Actions</TableHead>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                  {filteredLeads.map((lead) => {
+                    const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
+                    
+                    return (
+                      <RecordsTableRow
+                          key={lead.id}
+                          lead={lead}
+                          openLeadId={openLeadId}
+                          openCustomerDetails={openCustomerDetails}
+                          isRepeat={!lead.forceNewCustomer && lead.orderNumber > 0}
+                          isReadOnly={isReadOnly}
+                          canDelete={canDelete}
+                          filterType={filterType}
+                          getContactDisplay={getContactDisplay}
+                          toggleCustomerDetails={toggleCustomerDetails}
+                          handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
+                          handleDeleteLead={handleDeleteLead}
+                          setOpenLeadId={setOpenLeadId}
+                      />
+                    );
+                  })}
+                  </TableBody>
+              </Table>
+            </div>
+        </CardContent>
+        {editingLead && (
+          <EditLeadFullDialog
+            isOpen={isEditDialogOpen}
+            onClose={() => { setEditingLead(null); setIsEditDialogOpen(false); }}
+            lead={editingLead}
+            onUpdate={refetchLeads}
+          />
+        )}
+      </Card>
+    </>
   );
 }
-
-```
