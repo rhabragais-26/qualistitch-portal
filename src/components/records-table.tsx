@@ -1,5 +1,3 @@
-
-
 'use client';
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
@@ -47,9 +45,8 @@ import { z, ZodError } from 'zod';
 import { EditLeadFullDialog } from './edit-lead-full-dialog';
 import { FieldErrors } from 'react-hook-form';
 import Link from 'next/link';
-import { getMonth, getYear, startOfDay, endOfDay, subDays } from 'date-fns';
+import { getMonth, getYear, startOfDay, endOfDay, subDays, isSameDay, format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
-
 
 const orderSchema = z.object({
   id: z.string().optional(), // Keep track of original order if needed
@@ -519,9 +516,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
       let dateMatches = false;
       
       if (date) {
-        const from = startOfDay(date);
-        const to = endOfDay(date);
-        dateMatches = submissionDate >= from && submissionDate <= to;
+        dateMatches = isSameDay(submissionDate, date);
       } else {
         const year = parseInt(selectedYear, 10);
         const month = parseInt(selectedMonth, 10);
@@ -627,7 +622,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 <Button onClick={handleResetFilters} variant="ghost" className="h-9 bg-teal-600 text-white hover:bg-teal-700">Reset Filters</Button>
                 <Button variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'} onClick={() => handleQuickFilter('yesterday')} className="h-9">Yesterday</Button>
                 <Button variant={activeQuickFilter === 'today' ? 'default' : 'outline'} onClick={() => handleQuickFilter('today')} className="h-9">Today</Button>
-                <Input
+                 <Input
                     type="date"
                     value={date ? format(date, 'yyyy-MM-dd') : ''}
                     onChange={(e) => {
