@@ -25,6 +25,7 @@ import { Edit, Save, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type InventoryReplenishment = {
   id: string;
@@ -44,17 +45,28 @@ export function ReplenishmentHistoryTable() {
   const { data: replenishments, isLoading, error, refetch } = useCollection<InventoryReplenishment>(replenishmentsQuery, undefined, { listen: false });
 
   const [date, setDate] = useState<Date | undefined>();
+  const [productTypeFilter, setProductTypeFilter] = useState('All');
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedQuantities, setEditedQuantities] = useState<Record<string, number>>({});
+
+  const productTypes = useMemo(() => {
+    if (!replenishments) return [];
+    const uniqueTypes = [...new Set(replenishments.map(item => item.productType))];
+    return ['All', ...uniqueTypes.sort()];
+  }, [replenishments]);
 
   const consolidatedReplenishments = useMemo(() => {
     if (!replenishments) return [];
 
     let itemsToProcess = replenishments;
+    
+    if (productTypeFilter !== 'All') {
+        itemsToProcess = itemsToProcess.filter(item => item.productType === productTypeFilter);
+    }
 
     if (date) {
         const formattedDate = format(date, 'yyyy-MM-dd');
-        itemsToProcess = replenishments.filter(item => {
+        itemsToProcess = itemsToProcess.filter(item => {
             try {
                 return format(new Date(item.date), 'yyyy-MM-dd') === formattedDate;
             } catch (e) {
@@ -92,7 +104,7 @@ export function ReplenishmentHistoryTable() {
             items: sortedItems,
         };
     }).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [replenishments, date]);
+  }, [replenishments, date, productTypeFilter]);
 
   const handleQuantityChange = (compositeId: string, value: string) => {
     const newQuantity = parseInt(value, 10);
@@ -174,6 +186,16 @@ export function ReplenishmentHistoryTable() {
             <CardDescription>History of all inventory replenishments.</CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by Product Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {productTypes.map(type => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Input
               id="date"
               type="date"
