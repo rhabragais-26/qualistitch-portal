@@ -170,23 +170,57 @@ export function ReplenishmentHistoryTable() {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isBatchEditDialogOpen, setIsBatchEditDialogOpen] = useState(false);
 
-  const filteredReplenishments = useMemo(() => {
+  const consolidatedReplenishments = useMemo(() => {
     if (!replenishments) return [];
-    if (!date) return replenishments;
 
-    return replenishments.filter(item => {
-      try {
-        const itemDate = new Date(item.date);
-        return format(itemDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
-      } catch (e) {
-        return false;
-      }
-    });
+    let itemsToProcess = replenishments;
+
+    if (date) {
+        const formattedDate = format(date, 'yyyy-MM-dd');
+        itemsToProcess = replenishments.filter(item => {
+            try {
+                return format(new Date(item.date), 'yyyy-MM-dd') === formattedDate;
+            } catch (e) {
+                return false;
+            }
+        });
+    }
+
+    const grouped = itemsToProcess.reduce((acc, item) => {
+        // Group by the day, not the full timestamp
+        const itemDate = format(new Date(item.date), 'yyyy-MM-dd');
+        const key = `${itemDate}-${item.productType}-${item.color}-${item.size}`;
+
+        if (!acc[key]) {
+            acc[key] = {
+                ...item,
+                date: itemDate, // Use the formatted date for grouping
+                quantity: 0,
+                ids: [],
+                timestamps: [],
+                submittedBySet: new Set()
+            };
+        }
+        acc[key].quantity += item.quantity;
+        acc[key].ids.push(item.id);
+        acc[key].timestamps.push(item.timestamp);
+        acc[key].submittedBySet.add(item.submittedBy);
+        return acc;
+    }, {} as Record<string, InventoryReplenishment & { ids: string[], timestamps: string[], submittedBySet: Set<string> }>);
+
+    return Object.values(grouped).map(item => ({
+        ...item,
+        id: item.ids.join(','), // Create a unique key for the row
+        submittedBy: Array.from(item.submittedBySet).join(', '),
+        timestamp: item.timestamps.sort().pop() || item.timestamp, // Use the latest timestamp for sorting
+    })).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); // sort by latest timestamp
+
   }, [replenishments, date]);
+
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRows(new Set(filteredReplenishments.map(r => r.id)));
+      setSelectedRows(new Set(consolidatedReplenishments.map(r => r.id)));
     } else {
       setSelectedRows(new Set());
     }
@@ -208,22 +242,23 @@ export function ReplenishmentHistoryTable() {
     if (selectedRows.size === 0 || !firestore) return;
     const batch = writeBatch(firestore);
     
-    // Filter out undefined values
-    const cleanUpdateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined));
+    const cleanUpdateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined && v !== ''));
 
     if (Object.keys(cleanUpdateData).length === 0) {
       toast({ variant: 'destructive', title: 'No Changes', description: 'Please select a value to update.' });
       return;
     }
     
-    selectedRows.forEach(id => {
+    const allIdsToUpdate = Array.from(selectedRows).flatMap(rowId => rowId.split(','));
+
+    allIdsToUpdate.forEach(id => {
       const docRef = doc(firestore, 'inventory_replenishments', id);
       batch.update(docRef, cleanUpdateData);
     });
 
     try {
       await batch.commit();
-      toast({ title: 'Batch Update Successful', description: `${selectedRows.size} records have been updated.` });
+      toast({ title: 'Batch Update Successful', description: `${selectedRows.size} record(s) have been updated.` });
       setSelectedRows(new Set());
       setIsBatchEditDialogOpen(false);
     } catch (e: any) {
@@ -262,7 +297,7 @@ export function ReplenishmentHistoryTable() {
                 <TableRow>
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedRows.size > 0 && selectedRows.size === filteredReplenishments.length}
+                      checked={selectedRows.size > 0 && selectedRows.size === consolidatedReplenishments.length}
                       onCheckedChange={(checked) => handleSelectAll(!!checked)}
                       aria-label="Select all"
                     />
@@ -286,8 +321,8 @@ export function ReplenishmentHistoryTable() {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-destructive">Error: {error.message}</TableCell>
                   </TableRow>
-                ) : filteredReplenishments.length > 0 ? (
-                  filteredReplenishments.map((item) => (
+                ) : consolidatedReplenishments.length > 0 ? (
+                  consolidatedReplenishments.map((item) => (
                     <TableRow key={item.id} data-state={selectedRows.has(item.id) && "selected"}>
                       <TableCell>
                         <Checkbox
