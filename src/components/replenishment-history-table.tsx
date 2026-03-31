@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, writeBatch, doc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, runTransaction } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -53,13 +53,13 @@ export function ReplenishmentHistoryTable() {
   const productTypes = useMemo(() => {
     if (!replenishments) return [];
     const uniqueTypes = [...new Set(replenishments.map(item => item.productType))];
-    return ['All', ...uniqueTypes.sort()];
+    return ['All Product Types', ...uniqueTypes.sort()];
   }, [replenishments]);
 
   const availableColors = useMemo(() => {
     if (!replenishments) return ['All'];
     let itemsToConsider = replenishments;
-    if (productTypeFilter !== 'All') {
+    if (productTypeFilter !== 'All Product Types') {
       itemsToConsider = replenishments.filter(item => item.productType === productTypeFilter);
     }
     const uniqueColors = [...new Set(itemsToConsider.map(item => item.color))].sort();
@@ -67,7 +67,9 @@ export function ReplenishmentHistoryTable() {
   }, [replenishments, productTypeFilter]);
 
   useEffect(() => {
-    setColorFilter('All');
+    if (productTypeFilter === 'All Product Types') {
+      setColorFilter('All');
+    }
   }, [productTypeFilter]);
 
   const consolidatedReplenishments = useMemo(() => {
@@ -75,7 +77,7 @@ export function ReplenishmentHistoryTable() {
 
     let itemsToProcess = replenishments;
     
-    if (productTypeFilter !== 'All') {
+    if (productTypeFilter !== 'All Product Types') {
         itemsToProcess = itemsToProcess.filter(item => item.productType === productTypeFilter);
     }
     
@@ -141,54 +143,83 @@ export function ReplenishmentHistoryTable() {
     const updates = Object.entries(editedQuantities);
     if (updates.length === 0) {
       setIsEditMode(false);
+      setEditedQuantities({});
       toast({ title: 'No Changes', description: 'You did not change any quantities.' });
       return;
     }
 
-    const batch = writeBatch(firestore);
-    let updatedCount = 0;
+    let successCount = 0;
+    let errorCount = 0;
 
     for (const [compositeId, newTotalQuantity] of updates) {
       const consolidatedItem = consolidatedReplenishments.find(item => item.id === compositeId);
-      if (!consolidatedItem) continue;
+      if (!consolidatedItem) {
+        errorCount++;
+        continue;
+      }
 
       const originalTotalQuantity = consolidatedItem.items.reduce((sum, i) => sum + i.quantity, 0);
       if (newTotalQuantity === originalTotalQuantity) continue;
 
       const delta = newTotalQuantity - originalTotalQuantity;
-      const latestItem = consolidatedItem.items[0];
+      
+      const inventoryItemId = `${consolidatedItem.productType}-${consolidatedItem.color}-${consolidatedItem.size}`
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/\//g, '-');
+      
+      const inventoryDocRef = doc(firestore, 'inventory', inventoryItemId);
+      const latestReplenishmentItem = consolidatedItem.items[0];
 
-      if (latestItem) {
-        const docRef = doc(firestore, 'inventory_replenishments', latestItem.id);
-        const newQuantityForItem = latestItem.quantity + delta;
+      if (!latestReplenishmentItem) {
+        errorCount++;
+        continue;
+      }
+      const replenishmentDocRef = doc(firestore, 'inventory_replenishments', latestReplenishmentItem.id);
 
-        if (newQuantityForItem < 0) {
-          toast({ variant: 'destructive', title: 'Invalid Quantity', description: `Cannot reduce quantity for ${latestItem.productType} below zero.` });
-          continue;
-        }
+      try {
+        await runTransaction(firestore, async (transaction) => {
+          const inventoryDoc = await transaction.get(inventoryDocRef);
+          
+          if (inventoryDoc.exists()) {
+            const currentStock = inventoryDoc.data().stock || 0;
+            transaction.update(inventoryDocRef, { stock: currentStock + delta });
+          } else {
+            // This case should ideally not happen if replenishment exists.
+            // But as a fallback, create the inventory item.
+             transaction.set(inventoryDocRef, {
+              id: inventoryItemId,
+              productType: consolidatedItem.productType,
+              color: consolidatedItem.color,
+              size: consolidatedItem.size,
+              stock: delta
+            });
+          }
 
-        batch.update(docRef, { quantity: newQuantityForItem });
-        updatedCount++;
+          const newReplenishmentQuantity = latestReplenishmentItem.quantity + delta;
+          if (newQuantityForItem < 0) {
+            throw new Error(`Cannot reduce quantity for ${latestReplenishmentItem.productType} below zero.`);
+          }
+          transaction.update(replenishmentDocRef, { quantity: newReplenishmentQuantity });
+        });
+        successCount++;
+      } catch (e: any) {
+        errorCount++;
+        console.error(`Transaction failed for item ${compositeId}:`, e);
+        toast({ variant: 'destructive', title: `Update Failed for ${consolidatedItem.productType}`, description: e.message });
       }
     }
-
-    if (updatedCount === 0) {
-        setIsEditMode(false);
-        setEditedQuantities({});
-        toast({ title: 'No Effective Changes', description: 'The changes resulted in no updates.' });
-        return;
+    
+    if (errorCount > 0) {
+      toast({ variant: "destructive", title: "Partial Failure", description: `${errorCount} item(s) could not be updated.` });
     }
-
-    try {
-      await batch.commit();
-      toast({ title: 'Success!', description: `${updatedCount} replenishment record(s) updated.` });
-      refetch();
-    } catch (e: any) {
-      toast({ variant: 'destructive', title: 'Update Failed', description: e.message });
-    } finally {
-      setIsEditMode(false);
-      setEditedQuantities({});
+    if (successCount > 0) {
+      toast({ title: "Inventory Updated", description: `${successCount} item(s) have been saved successfully.` });
     }
+    
+    refetch();
+    setEditedQuantities({});
+    setIsEditMode(false);
   };
 
   const handleCancel = () => {
@@ -211,11 +242,11 @@ export function ReplenishmentHistoryTable() {
               </SelectTrigger>
               <SelectContent>
                 {productTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type === 'All' ? 'All Product Types' : type}</SelectItem>
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={colorFilter} onValueChange={setColorFilter}>
+             <Select value={colorFilter} onValueChange={setColorFilter} disabled={productTypeFilter === 'All Product Types'}>
                 <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by Color" />
                 </SelectTrigger>
