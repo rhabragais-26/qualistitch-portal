@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -21,7 +22,6 @@ import {
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Checkbox } from './ui/checkbox';
-import { DateRange } from 'react-day-picker';
 import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar as CalendarIcon, Edit } from 'lucide-react';
@@ -168,22 +168,23 @@ export function ReplenishmentHistoryTable() {
   const replenishmentsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory_replenishments'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: replenishments, isLoading, error } = useCollection<InventoryReplenishment>(replenishmentsQuery, undefined, { listen: false });
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [date, setDate] = useState<Date | undefined>();
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isBatchEditDialogOpen, setIsBatchEditDialogOpen] = useState(false);
 
   const filteredReplenishments = useMemo(() => {
     if (!replenishments) return [];
-    if (!dateRange?.from) return replenishments;
-
-    const from = dateRange.from;
-    const to = dateRange.to || from;
+    if (!date) return replenishments;
 
     return replenishments.filter(item => {
-      const itemDate = new Date(item.date);
-      return itemDate >= from && itemDate <= to;
+      try {
+        const itemDate = new Date(item.date);
+        return format(itemDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+      } catch (e) {
+        return false;
+      }
     });
-  }, [replenishments, dateRange]);
+  }, [replenishments, date]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -247,33 +248,25 @@ export function ReplenishmentHistoryTable() {
                 <Button
                   id="date"
                   variant={"outline"}
-                  className={cn("w-[300px] justify-start text-left font-normal", !dateRange && "text-muted-foreground")}
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      <>
-                        {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
-                      </>
-                    ) : (
-                      format(dateRange.from, "LLL dd, y")
-                    )
-                  ) : (
-                    <span>Pick a date range</span>
-                  )}
+                  {date ? format(date, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
                 <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
                   initialFocus
-                  mode="range"
-                  defaultMonth={dateRange?.from}
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  numberOfMonths={2}
                 />
               </PopoverContent>
             </Popover>
+            <Button variant="ghost" onClick={() => setDate(undefined)} disabled={!date}>Clear Filter</Button>
              <Button onClick={() => setIsBatchEditDialogOpen(true)} disabled={selectedRows.size === 0}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Selected ({selectedRows.size})
