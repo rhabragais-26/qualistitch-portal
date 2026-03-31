@@ -192,7 +192,7 @@ export function ReplenishmentHistoryTable() {
               </SelectTrigger>
               <SelectContent>
                 {productTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                  <SelectItem key={type} value={type}>{type === 'All' ? 'All Product Types' : type}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
