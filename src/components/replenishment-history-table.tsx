@@ -45,9 +45,10 @@ export function ReplenishmentHistoryTable() {
   const { data: replenishments, isLoading, error, refetch } = useCollection<InventoryReplenishment>(replenishmentsQuery, undefined, { listen: false });
 
   const [date, setDate] = useState<Date | undefined>();
-  const [productTypeFilter, setProductTypeFilter] = useState('All');
+  const [productTypeFilter, setProductTypeFilter] = useState('All Product Types');
   const [colorFilter, setColorFilter] = useState('All');
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editedQuantities, setEditedQuantities] = useState<Record<string, number>>({});
 
   const productTypes = useMemo(() => {
@@ -97,21 +98,25 @@ export function ReplenishmentHistoryTable() {
     }
 
     const grouped = itemsToProcess.reduce((acc, item) => {
-        const itemDate = format(new Date(item.date), 'yyyy-MM-dd');
-        const key = `${itemDate}-${item.productType}-${item.color}-${item.size}`;
+        try {
+            const itemDate = format(new Date(item.date), 'yyyy-MM-dd');
+            const key = `${itemDate}-${item.productType}-${item.color}-${item.size}`;
 
-        if (!acc[key]) {
-            acc[key] = {
-                ...item,
-                date: itemDate,
-                quantity: 0,
-                items: [],
-                submittedBySet: new Set()
-            };
+            if (!acc[key]) {
+                acc[key] = {
+                    ...item,
+                    date: itemDate,
+                    quantity: 0,
+                    items: [], // this will hold the original items
+                    submittedBySet: new Set()
+                };
+            }
+            acc[key].quantity += item.quantity;
+            acc[key].items.push(item);
+            acc[key].submittedBySet.add(item.submittedBy);
+        } catch (e) {
+            console.warn("Skipping replenishment item with invalid date:", item);
         }
-        acc[key].quantity += item.quantity;
-        acc[key].items.push(item);
-        acc[key].submittedBySet.add(item.submittedBy);
         return acc;
     }, {} as Record<string, InventoryReplenishment & { items: InventoryReplenishment[], submittedBySet: Set<string> }>);
 
@@ -119,7 +124,7 @@ export function ReplenishmentHistoryTable() {
         const sortedItems = group.items.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         return {
             ...group,
-            id: group.items.map(i => i.id).join(','),
+            id: group.items.map(i => i.id).join(','), // Composite ID
             submittedBy: Array.from(group.submittedBySet).join(', '),
             timestamp: sortedItems[0]?.timestamp || group.timestamp,
             items: sortedItems,
@@ -147,6 +152,7 @@ export function ReplenishmentHistoryTable() {
       toast({ title: 'No Changes', description: 'You did not change any quantities.' });
       return;
     }
+    setIsSaving(true);
 
     let successCount = 0;
     let errorCount = 0;
@@ -159,10 +165,10 @@ export function ReplenishmentHistoryTable() {
       }
 
       const originalTotalQuantity = consolidatedItem.items.reduce((sum, i) => sum + i.quantity, 0);
-      if (newTotalQuantity === originalTotalQuantity) continue;
-
       const delta = newTotalQuantity - originalTotalQuantity;
       
+      if (delta === 0) continue;
+
       const inventoryItemId = `${consolidatedItem.productType}-${consolidatedItem.color}-${consolidatedItem.size}`
         .toLowerCase()
         .replace(/\s+/g, '-')
@@ -185,8 +191,6 @@ export function ReplenishmentHistoryTable() {
             const currentStock = inventoryDoc.data().stock || 0;
             transaction.update(inventoryDocRef, { stock: currentStock + delta });
           } else {
-            // This case should ideally not happen if replenishment exists.
-            // But as a fallback, create the inventory item.
              transaction.set(inventoryDocRef, {
               id: inventoryItemId,
               productType: consolidatedItem.productType,
@@ -197,7 +201,7 @@ export function ReplenishmentHistoryTable() {
           }
 
           const newReplenishmentQuantity = latestReplenishmentItem.quantity + delta;
-          if (newQuantityForItem < 0) {
+          if (newReplenishmentQuantity < 0) {
             throw new Error(`Cannot reduce quantity for ${latestReplenishmentItem.productType} below zero.`);
           }
           transaction.update(replenishmentDocRef, { quantity: newReplenishmentQuantity });
@@ -220,6 +224,7 @@ export function ReplenishmentHistoryTable() {
     refetch();
     setEditedQuantities({});
     setIsEditMode(false);
+    setIsSaving(false);
   };
 
   const handleCancel = () => {
@@ -246,7 +251,7 @@ export function ReplenishmentHistoryTable() {
                 ))}
               </SelectContent>
             </Select>
-             <Select value={colorFilter} onValueChange={setColorFilter} disabled={productTypeFilter === 'All Product Types'}>
+            <Select value={colorFilter} onValueChange={setColorFilter} disabled={productTypeFilter === 'All Product Types'}>
                 <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by Color" />
                 </SelectTrigger>
@@ -265,8 +270,8 @@ export function ReplenishmentHistoryTable() {
             />
             {isEditMode ? (
               <>
-                <Button onClick={handleSave}><Save className="mr-2 h-4 w-4" /> Save</Button>
-                <Button variant="outline" onClick={handleCancel}><X className="mr-2 h-4 w-4" /> Cancel</Button>
+                <Button onClick={handleSave} disabled={isSaving}><Save className="mr-2 h-4 w-4" /> {isSaving ? 'Saving...' : 'Save'}</Button>
+                <Button variant="outline" onClick={handleCancel} disabled={isSaving}><X className="mr-2 h-4 w-4" /> Cancel</Button>
               </>
             ) : (
               <Button onClick={() => setIsEditMode(true)}><Edit className="mr-2 h-4 w-4" /> Edit Quantities</Button>
@@ -322,7 +327,7 @@ export function ReplenishmentHistoryTable() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      No replenishments found for the selected period.
+                      No replenishments found for the selected filters.
                     </TableCell>
                   </TableRow>
                 )}
