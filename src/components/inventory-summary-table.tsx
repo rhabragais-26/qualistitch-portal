@@ -260,6 +260,8 @@ export function InventorySummaryTable() {
     // Process leads to get sold quantities and a list of all sold items
     leads.forEach(lead => {
         lead.orders.forEach(order => {
+            if (order.productType === 'Client Owned') return;
+
             const key = createKey(order);
             // Add to all items map
             if (!allItemsMap.has(key)) {
@@ -280,6 +282,7 @@ export function InventorySummaryTable() {
 
     // Add inventory items to the allItems map to get the full universe of items
     inventoryItems.forEach(item => {
+        if (item.productType === 'Client Owned') return;
         const key = createKey(item);
         if (!allItemsMap.has(key)) {
             allItemsMap.set(key, { productType: item.productType, color: item.color, size: item.size });

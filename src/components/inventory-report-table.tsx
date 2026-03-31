@@ -80,6 +80,7 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     
     leads.forEach(lead => {
         lead.orders.forEach(order => {
+            if (order.productType === 'Client Owned' || order.productType === 'Patches') return;
             const key = createKey(order);
             if (!allItemsMap.has(key)) {
                 allItemsMap.set(key, { productType: order.productType, color: order.color, size: order.size });
@@ -96,6 +97,7 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     });
 
     inventoryItems.forEach(item => {
+        if (item.productType === 'Client Owned' || item.productType === 'Patches') return;
         const key = createKey(item);
         if (!allItemsMap.has(key)) {
             allItemsMap.set(key, { productType: item.productType, color: item.color, size: item.size });
