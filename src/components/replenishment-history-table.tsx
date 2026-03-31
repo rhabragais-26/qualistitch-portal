@@ -21,15 +21,10 @@ import {
 } from '@/components/ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Checkbox } from './ui/checkbox';
-import { Edit } from 'lucide-react';
+import { Edit, Save, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { cn } from '@/lib/utils';
 
 type InventoryReplenishment = {
   id: string;
@@ -42,133 +37,15 @@ type InventoryReplenishment = {
   timestamp: string;
 };
 
-const productTypes = [
-  'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
-  'Corporate Jacket', 'Reversible v1', 'Reversible v2', 'Polo Shirt (Smilee) - Cool Pass',
-  'Polo Shirt (Smilee) - Cotton Blend)', 'Polo Shirt (Lifeline)', 'Polo Shirt (Blue Corner)', 'Polo Shirt (Softex)',
-];
-
-const jacketColors = [
-    'Army Green', 'Black', 'Black/Gray', 'Black/Khaki', 'Black/Navy Blue', 'Brown',
-    'Dark Gray', 'Dark Khaki', 'Khaki', 'Light Gray', 'Light Khaki', 'Maroon/Gray',
-    'Navy Blue', 'Navy Blue/Gray', 'Olive Green',
-];
-
-const poloShirtColors = [
-    'Aqua Blue', 'Black', 'Brown', 'Choco Brown', 'Cream', 'Dark Green', 'Dark Gray', 'Dawn Blue',
-    'Emerald Green', 'Estate Blue', 'Fair Orchid', 'Fuchsia', 'Gold', 'Golden Yellow', 'Green',
-    'Green Briar', 'Honey Mustard', 'Irish Green', 'Jade Green', 'Light Green', 'Light Gray',
-    'Maroon', 'Melange Gray', 'Military Green', 'Mint Green', 'Mocha', 'Navy Blue', 'Nine Ion Gray',
-    'Oatmeal', 'Orange', 'Pink', 'Purple', 'Rapture Rose', 'Red', 'Royal Blue', 'Sky Blue',
-    'Slate Blue', 'Teal', 'White', 'Yellow',
-];
-
-const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
-
-type BatchUpdateData = {
-  date?: string;
-  productType?: string;
-  color?: string;
-  size?: string;
-  quantity?: number;
-};
-
-function BatchEditDialog({
-  open,
-  onOpenChange,
-  selectedCount,
-  onSave,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedCount: number;
-  onSave: (updateData: BatchUpdateData) => void;
-}) {
-  const [updateData, setUpdateData] = useState<BatchUpdateData>({});
-
-  const handleSave = () => {
-    onSave(updateData);
-    setUpdateData({});
-  };
-
-  const isPolo = updateData.productType?.includes('Polo Shirt');
-  const availableColors = isPolo ? poloShirtColors : jacketColors;
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Batch Edit Replenishments</DialogTitle>
-          <DialogDescription>
-            Editing {selectedCount} record(s). Only fill the fields you want to change.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="batch-date">Date</Label>
-            <Input
-              id="batch-date"
-              type="date"
-              onChange={(e) => setUpdateData(prev => ({ ...prev, date: e.target.value ? new Date(e.target.value).toISOString() : undefined }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="batch-product-type">Product Type</Label>
-            <Select onValueChange={(value) => setUpdateData(prev => ({ ...prev, productType: value }))}>
-              <SelectTrigger><SelectValue placeholder="Select a Product Type" /></SelectTrigger>
-              <SelectContent>
-                {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="batch-color">Color</Label>
-              <Select onValueChange={(value) => setUpdateData(prev => ({ ...prev, color: value }))} disabled={!updateData.productType}>
-                <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
-                <SelectContent>
-                  {availableColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="batch-size">Size</Label>
-              <Select onValueChange={(value) => setUpdateData(prev => ({ ...prev, size: value }))}>
-                <SelectTrigger><SelectValue placeholder="Select a Size" /></SelectTrigger>
-                <SelectContent>
-                  {productSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="batch-quantity">Quantity</Label>
-            <Input
-              id="batch-quantity"
-              type="number"
-              placeholder="Leave blank to keep original"
-              onChange={(e) => setUpdateData(prev => ({ ...prev, quantity: e.target.value ? Number(e.target.value) : undefined }))}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave}>Apply Changes</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export function ReplenishmentHistoryTable() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const replenishmentsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory_replenishments'), orderBy('timestamp', 'desc')) : null, [firestore]);
-  const { data: replenishments, isLoading, error } = useCollection<InventoryReplenishment>(replenishmentsQuery, undefined, { listen: false });
+  const { data: replenishments, isLoading, error, refetch } = useCollection<InventoryReplenishment>(replenishmentsQuery, undefined, { listen: false });
 
   const [date, setDate] = useState<Date | undefined>();
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  const [isBatchEditDialogOpen, setIsBatchEditDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedQuantities, setEditedQuantities] = useState<Record<string, number>>({});
 
   const consolidatedReplenishments = useMemo(() => {
     if (!replenishments) return [];
@@ -187,85 +64,106 @@ export function ReplenishmentHistoryTable() {
     }
 
     const grouped = itemsToProcess.reduce((acc, item) => {
-        // Group by the day, not the full timestamp
         const itemDate = format(new Date(item.date), 'yyyy-MM-dd');
         const key = `${itemDate}-${item.productType}-${item.color}-${item.size}`;
 
         if (!acc[key]) {
             acc[key] = {
                 ...item,
-                date: itemDate, // Use the formatted date for grouping
+                date: itemDate,
                 quantity: 0,
-                ids: [],
-                timestamps: [],
+                items: [],
                 submittedBySet: new Set()
             };
         }
         acc[key].quantity += item.quantity;
-        acc[key].ids.push(item.id);
-        acc[key].timestamps.push(item.timestamp);
+        acc[key].items.push(item);
         acc[key].submittedBySet.add(item.submittedBy);
         return acc;
-    }, {} as Record<string, InventoryReplenishment & { ids: string[], timestamps: string[], submittedBySet: Set<string> }>);
+    }, {} as Record<string, InventoryReplenishment & { items: InventoryReplenishment[], submittedBySet: Set<string> }>);
 
-    return Object.values(grouped).map(item => ({
-        ...item,
-        id: item.ids.join(','), // Create a unique key for the row
-        submittedBy: Array.from(item.submittedBySet).join(', '),
-        timestamp: item.timestamps.sort().pop() || item.timestamp, // Use the latest timestamp for sorting
-    })).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); // sort by latest timestamp
-
+    return Object.values(grouped).map(group => {
+        const sortedItems = group.items.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        return {
+            ...group,
+            id: group.items.map(i => i.id).join(','),
+            submittedBy: Array.from(group.submittedBySet).join(', '),
+            timestamp: sortedItems[0]?.timestamp || group.timestamp,
+            items: sortedItems,
+        };
+    }).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [replenishments, date]);
 
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedRows(new Set(consolidatedReplenishments.map(r => r.id)));
-    } else {
-      setSelectedRows(new Set());
+  const handleQuantityChange = (compositeId: string, value: string) => {
+    const newQuantity = parseInt(value, 10);
+    if (!isNaN(newQuantity)) {
+      setEditedQuantities(prev => ({
+        ...prev,
+        [compositeId]: newQuantity,
+      }));
     }
   };
 
-  const handleSelectRow = (id: string, checked: boolean) => {
-    setSelectedRows(prev => {
-      const newSet = new Set(prev);
-      if (checked) {
-        newSet.add(id);
-      } else {
-        newSet.delete(id);
-      }
-      return newSet;
-    });
-  };
+  const handleSave = async () => {
+    if (!firestore) return;
 
-  const handleBatchUpdate = async (updateData: BatchUpdateData) => {
-    if (selectedRows.size === 0 || !firestore) return;
-    const batch = writeBatch(firestore);
-    
-    const cleanUpdateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined && v !== ''));
-
-    if (Object.keys(cleanUpdateData).length === 0) {
-      toast({ variant: 'destructive', title: 'No Changes', description: 'Please select a value to update.' });
+    const updates = Object.entries(editedQuantities);
+    if (updates.length === 0) {
+      setIsEditMode(false);
+      toast({ title: 'No Changes', description: 'You did not change any quantities.' });
       return;
     }
-    
-    const allIdsToUpdate = Array.from(selectedRows).flatMap(rowId => rowId.split(','));
 
-    allIdsToUpdate.forEach(id => {
-      const docRef = doc(firestore, 'inventory_replenishments', id);
-      batch.update(docRef, cleanUpdateData);
-    });
+    const batch = writeBatch(firestore);
+    let updatedCount = 0;
+
+    for (const [compositeId, newTotalQuantity] of updates) {
+      const consolidatedItem = consolidatedReplenishments.find(item => item.id === compositeId);
+      if (!consolidatedItem) continue;
+
+      const originalTotalQuantity = consolidatedItem.items.reduce((sum, i) => sum + i.quantity, 0);
+      if (newTotalQuantity === originalTotalQuantity) continue;
+
+      const delta = newTotalQuantity - originalTotalQuantity;
+      const latestItem = consolidatedItem.items[0];
+
+      if (latestItem) {
+        const docRef = doc(firestore, 'inventory_replenishments', latestItem.id);
+        const newQuantityForItem = latestItem.quantity + delta;
+
+        if (newQuantityForItem < 0) {
+          toast({ variant: 'destructive', title: 'Invalid Quantity', description: `Cannot reduce quantity for ${latestItem.productType} below zero.` });
+          continue;
+        }
+
+        batch.update(docRef, { quantity: newQuantityForItem });
+        updatedCount++;
+      }
+    }
+
+    if (updatedCount === 0) {
+        setIsEditMode(false);
+        setEditedQuantities({});
+        toast({ title: 'No Effective Changes', description: 'The changes resulted in no updates.' });
+        return;
+    }
 
     try {
       await batch.commit();
-      toast({ title: 'Batch Update Successful', description: `${selectedRows.size} record(s) have been updated.` });
-      setSelectedRows(new Set());
-      setIsBatchEditDialogOpen(false);
+      toast({ title: 'Success!', description: `${updatedCount} replenishment record(s) updated.` });
+      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Update Failed', description: e.message });
+    } finally {
+      setIsEditMode(false);
+      setEditedQuantities({});
     }
   };
 
+  const handleCancel = () => {
+    setIsEditMode(false);
+    setEditedQuantities({});
+  };
 
   return (
     <>
@@ -283,11 +181,14 @@ export function ReplenishmentHistoryTable() {
               onChange={(e) => setDate(e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined)}
               className="w-[180px]"
             />
-            <Button variant="ghost" onClick={() => setDate(undefined)} disabled={!date}>Clear Filter</Button>
-             <Button onClick={() => setIsBatchEditDialogOpen(true)} disabled={selectedRows.size === 0}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Selected ({selectedRows.size})
-            </Button>
+            {isEditMode ? (
+              <>
+                <Button onClick={handleSave}><Save className="mr-2 h-4 w-4" /> Save</Button>
+                <Button variant="outline" onClick={handleCancel}><X className="mr-2 h-4 w-4" /> Cancel</Button>
+              </>
+            ) : (
+              <Button onClick={() => setIsEditMode(true)}><Edit className="mr-2 h-4 w-4" /> Edit Quantities</Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -295,13 +196,6 @@ export function ReplenishmentHistoryTable() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedRows.size > 0 && selectedRows.size === consolidatedReplenishments.length}
-                      onCheckedChange={(checked) => handleSelectAll(!!checked)}
-                      aria-label="Select all"
-                    />
-                  </TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Product Type</TableHead>
                   <TableHead>Color</TableHead>
@@ -313,35 +207,39 @@ export function ReplenishmentHistoryTable() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       <Skeleton className="h-20 w-full" />
                     </TableCell>
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-destructive">Error: {error.message}</TableCell>
+                    <TableCell colSpan={6} className="text-center text-destructive">Error: {error.message}</TableCell>
                   </TableRow>
                 ) : consolidatedReplenishments.length > 0 ? (
                   consolidatedReplenishments.map((item) => (
-                    <TableRow key={item.id} data-state={selectedRows.has(item.id) && "selected"}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedRows.has(item.id)}
-                          onCheckedChange={(checked) => handleSelectRow(item.id, !!checked)}
-                          aria-label={`Select row for ${item.id}`}
-                        />
-                      </TableCell>
+                    <TableRow key={item.id}>
                       <TableCell>{format(new Date(item.date), 'MM-dd-yyyy')}</TableCell>
                       <TableCell>{item.productType}</TableCell>
                       <TableCell>{item.color}</TableCell>
                       <TableCell>{item.size}</TableCell>
-                      <TableCell className="text-center">{item.quantity}</TableCell>
+                      <TableCell className="text-center">
+                        {isEditMode ? (
+                          <Input
+                            type="number"
+                            value={editedQuantities[item.id] ?? item.quantity}
+                            onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                            className="w-24 mx-auto h-8 text-center"
+                          />
+                        ) : (
+                          item.quantity
+                        )}
+                      </TableCell>
                       <TableCell>{item.submittedBy}</TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       No replenishments found for the selected period.
                     </TableCell>
                   </TableRow>
@@ -351,12 +249,6 @@ export function ReplenishmentHistoryTable() {
           </div>
         </CardContent>
       </Card>
-      <BatchEditDialog
-        open={isBatchEditDialogOpen}
-        onOpenChange={setIsBatchEditDialogOpen}
-        selectedCount={selectedRows.size}
-        onSave={handleBatchUpdate}
-      />
     </>
   );
 }
