@@ -22,9 +22,7 @@ import {
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Checkbox } from './ui/checkbox';
-import { Calendar } from './ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Calendar as CalendarIcon, Edit } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
@@ -243,29 +241,13 @@ export function ReplenishmentHistoryTable() {
             <CardDescription>History of all inventory replenishments.</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="date"
-                  variant={"outline"}
-                  className={cn(
-                    "w-[240px] justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <Input
+              id="date"
+              type="date"
+              value={date ? format(date, 'yyyy-MM-dd') : ''}
+              onChange={(e) => setDate(e.target.value ? new Date(e.target.value + 'T00:00:00') : undefined)}
+              className="w-[180px]"
+            />
             <Button variant="ghost" onClick={() => setDate(undefined)} disabled={!date}>Clear Filter</Button>
              <Button onClick={() => setIsBatchEditDialogOpen(true)} disabled={selectedRows.size === 0}>
                 <Edit className="mr-2 h-4 w-4" />
