@@ -66,10 +66,11 @@ export const formatCurrency = (value: number, options?: Intl.NumberFormatOptions
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', ...options }).format(value);
 };
 
-export const formatJoNumber = (joNumber: number | undefined): string => {
+export const formatJoNumber = (joNumber: number | undefined, submissionDate?: string): string => {
     if (!joNumber) return 'N/A';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+    const date = submissionDate ? new Date(submissionDate) : new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    return `QSBP-${year}-${joNumber.toString().padStart(5, '0')}`;
 };
 
 export const generateSku = (item: { productType: string; color: string; size: string }): string => {

@@ -1,3 +1,4 @@
+
 'use client';
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
@@ -35,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { formatDateTime, toTitleCase, formatCurrency } from '@/lib/utils';
+import { formatDateTime, toTitleCase, formatCurrency, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
@@ -103,7 +104,7 @@ const leadSchema = z.object({
   orders: z.array(orderSchema),
   submissionDateTime: z.string(),
   lastModified: z.string(),
-  lastModifiedBy: z.string().optional(),
+  lastModifiedBy: z.string().nullable().optional(),
   grandTotal: z.number().optional(),
   paidAmount: z.number().optional(),
   paymentType: z.string().optional(),
@@ -116,7 +117,7 @@ const leadSchema = z.object({
   layouts: z.array(layoutSchema).optional(),
   joNumber: z.number().optional(),
   shipmentStatus: z.string().optional(),
-  shippedTimestamp: z.string().optional(),
+  shippedTimestamp: z.string().nullable().optional(),
   forceNewCustomer: z.boolean().optional(),
   removedFees: z.record(z.object({
     logo: z.boolean().optional(),
