@@ -22,6 +22,7 @@ export type StagedItem = {
 
 export default function AddItemsPage() {
   const [stagedItems, setStagedItems] = useState<StagedItem[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
   const { userProfile } = useUser();
@@ -47,6 +48,8 @@ export default function AddItemsPage() {
   };
   
   const handleSaveAll = async () => {
+    if (isSaving) return;
+
     if (!firestore || !userProfile || stagedItems.length === 0) {
       toast({
         variant: 'destructive',
@@ -55,6 +58,8 @@ export default function AddItemsPage() {
       });
       return;
     }
+
+    setIsSaving(true);
 
     const replenishmentBatch = writeBatch(firestore);
     const now = new Date().toISOString();
@@ -130,6 +135,8 @@ export default function AddItemsPage() {
         title: 'Uh oh! Something went wrong.',
         description: e.message || 'One or more items could not be saved to the inventory.',
       });
+    } finally {
+        setIsSaving(false);
     }
   };
 
@@ -148,6 +155,7 @@ export default function AddItemsPage() {
               onRemoveItem={handleRemoveItem}
               onSaveAll={handleSaveAll}
               isReadOnly={!canEdit}
+              isSaving={isSaving}
             />
           </div>
         </div>

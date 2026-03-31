@@ -27,6 +27,7 @@ type StagedItemsListProps = {
   onRemoveItem: (id: string) => void;
   onSaveAll: () => void;
   isReadOnly: boolean;
+  isSaving: boolean;
 };
 
 const productTypes = [
@@ -142,7 +143,7 @@ function EditItemDialog({
 }
 
 
-const StagedItemsListMemo = React.memo(function StagedItemsList({ items, onUpdateItem, onRemoveItem, onSaveAll, isReadOnly }: StagedItemsListProps) {
+const StagedItemsListMemo = React.memo(function StagedItemsList({ items, onUpdateItem, onRemoveItem, onSaveAll, isReadOnly, isSaving }: StagedItemsListProps) {
     const [editingItem, setEditingItem] = useState<StagedItem | null>(null);
   
     return (
@@ -193,9 +194,9 @@ const StagedItemsListMemo = React.memo(function StagedItemsList({ items, onUpdat
           </ScrollArea>
         </CardContent>
         <CardFooter className="flex justify-end">
-            <Button onClick={onSaveAll} disabled={items.length === 0 || isReadOnly} className="font-bold text-white">
+            <Button onClick={onSaveAll} disabled={items.length === 0 || isReadOnly || isSaving} className="font-bold text-white">
                 <Save className="mr-2 h-4 w-4" />
-                Save All Items
+                {isSaving ? 'Saving...' : 'Save All Items'}
             </Button>
         </CardFooter>
          {editingItem && (
