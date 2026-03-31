@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, writeBatch, doc } from 'firebase/firestore';
 import {
@@ -46,6 +46,7 @@ export function ReplenishmentHistoryTable() {
 
   const [date, setDate] = useState<Date | undefined>();
   const [productTypeFilter, setProductTypeFilter] = useState('All');
+  const [colorFilter, setColorFilter] = useState('All');
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedQuantities, setEditedQuantities] = useState<Record<string, number>>({});
 
@@ -55,6 +56,20 @@ export function ReplenishmentHistoryTable() {
     return ['All', ...uniqueTypes.sort()];
   }, [replenishments]);
 
+  const availableColors = useMemo(() => {
+    if (!replenishments) return ['All'];
+    let itemsToConsider = replenishments;
+    if (productTypeFilter !== 'All') {
+      itemsToConsider = replenishments.filter(item => item.productType === productTypeFilter);
+    }
+    const uniqueColors = [...new Set(itemsToConsider.map(item => item.color))].sort();
+    return ['All', ...uniqueColors];
+  }, [replenishments, productTypeFilter]);
+
+  useEffect(() => {
+    setColorFilter('All');
+  }, [productTypeFilter]);
+
   const consolidatedReplenishments = useMemo(() => {
     if (!replenishments) return [];
 
@@ -62,6 +77,10 @@ export function ReplenishmentHistoryTable() {
     
     if (productTypeFilter !== 'All') {
         itemsToProcess = itemsToProcess.filter(item => item.productType === productTypeFilter);
+    }
+    
+    if (colorFilter !== 'All') {
+        itemsToProcess = itemsToProcess.filter(item => item.color === colorFilter);
     }
 
     if (date) {
@@ -104,7 +123,7 @@ export function ReplenishmentHistoryTable() {
             items: sortedItems,
         };
     }).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [replenishments, date, productTypeFilter]);
+  }, [replenishments, date, productTypeFilter, colorFilter]);
 
   const handleQuantityChange = (compositeId: string, value: string) => {
     const newQuantity = parseInt(value, 10);
@@ -195,6 +214,16 @@ export function ReplenishmentHistoryTable() {
                   <SelectItem key={type} value={type}>{type === 'All' ? 'All Product Types' : type}</SelectItem>
                 ))}
               </SelectContent>
+            </Select>
+            <Select value={colorFilter} onValueChange={setColorFilter}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by Color" />
+                </SelectTrigger>
+                <SelectContent>
+                    {availableColors.map(color => (
+                        <SelectItem key={color} value={color}>{color === 'All' ? 'All Colors' : color}</SelectItem>
+                    ))}
+                </SelectContent>
             </Select>
             <Input
               id="date"
