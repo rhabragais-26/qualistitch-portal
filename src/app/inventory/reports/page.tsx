@@ -27,6 +27,7 @@ type Lead = {
   isEndorsedToLogistics?: boolean;
   endorsedToLogisticsTimestamp?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  priorityType: 'Rush' | 'Regular';
   orders: {
     productType: string;
     color: string;
@@ -48,6 +49,7 @@ export default function InventoryReportsPage() {
   const [productTypeFilter, setProductTypeFilter] = useState('Corporate Jacket');
   const [colorFilter, setColorFilter] = useState('All Colors');
   const [sizeFilter, setSizeFilter] = useState('All Sizes');
+  const [priorityFilter, setPriorityFilter] = useState('All');
   const [timeRange, setTimeRange] = useState('30d');
   const [sellThroughRateFilter, setSellThroughRateFilter] = useState('All');
 
@@ -132,11 +134,14 @@ export default function InventoryReportsPage() {
     setProductTypeFilter('Corporate Jacket');
     setColorFilter('All Colors');
     setSizeFilter('All Sizes');
+    setPriorityFilter('All');
     setTimeRange('30d');
   };
 
   const onHandReportData = useMemo(() => {
     if (!inventoryItems || !leads) return { headers: [], rows: [] };
+    
+    const filteredLeads = leads.filter(lead => priorityFilter === 'All' || lead.priorityType === priorityFilter);
     
     const soldQuantities = new Map<string, number>();
     const onProcessQuantities = new Map<string, number>();
@@ -146,7 +151,7 @@ export default function InventoryReportsPage() {
     const createKey = (order: { productType: string, color: string, size: string }) => 
         `${order.productType}-${order.color}-${order.size}`;
     
-    leads.forEach(lead => {
+    filteredLeads.forEach(lead => {
         lead.orders.forEach(order => {
             if (order.productType === 'Client Owned' || order.productType === 'Patches') return;
             const key = createKey(order);
@@ -220,7 +225,7 @@ export default function InventoryReportsPage() {
 
     return { headers: sizes, rows };
 
-  }, [inventoryItems, leads, productTypeFilter, colorFilter, sizeFilter]);
+  }, [inventoryItems, leads, productTypeFilter, colorFilter, sizeFilter, priorityFilter]);
 
   const { totalPositiveStock, totalNegativeStock } = useMemo(() => {
     if (!onHandReportData.rows || onHandReportData.rows.length === 0) {
@@ -295,6 +300,16 @@ export default function InventoryReportsPage() {
                             ))}
                         </SelectContent>
                     </Select>
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Priorities</SelectItem>
+                            <SelectItem value="Rush">Rush</SelectItem>
+                            <SelectItem value="Regular">Regular</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <Select value={timeRange} onValueChange={setTimeRange}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue />
@@ -308,7 +323,7 @@ export default function InventoryReportsPage() {
                     </Select>
                 </div>
              </div>
-            <DailySoldQuantityChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} />
+            <DailySoldQuantityChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} priorityFilter={priorityFilter}/>
             
             <Separator />
             
@@ -338,7 +353,7 @@ export default function InventoryReportsPage() {
                             <span className="text-teal-600">Remaining Stocks</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
                         </h3>
                     </div>
-                    <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} />
+                    <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} priorityFilter={priorityFilter} />
                 </div>
                 <div className="space-y-4">
                     <div className="flex justify-between items-center h-[40px] mt-4">
@@ -357,7 +372,7 @@ export default function InventoryReportsPage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} sellThroughRateFilter={sellThroughRateFilter} />
+                    <InventoryReportTable reportType="priority" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} sellThroughRateFilter={sellThroughRateFilter} priorityFilter={priorityFilter} />
                 </div>
             </div>
 
@@ -366,7 +381,7 @@ export default function InventoryReportsPage() {
                 Items Endorsed to Production/Logistics Daily
               </h3>
               <div className="mt-2" />
-              <EndorsedItemsChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} />
+              <EndorsedItemsChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} priorityFilter={priorityFilter} />
             </div>
           </CardContent>
         </Card>

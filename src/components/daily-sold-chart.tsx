@@ -25,6 +25,7 @@ type Lead = {
   shippedTimestamp?: string;
   deliveredTimestamp?: string;
   orders: Order[];
+  priorityType: 'Rush' | 'Regular';
 };
 
 type InventoryReplenishment = {
@@ -51,6 +52,7 @@ type DailySoldQuantityChartProps = {
   colorFilter: string;
   sizeFilter: string;
   timeRange: string;
+  priorityFilter: string;
 };
 
 const renderRemainingStockLabel = (props: any) => {
@@ -69,7 +71,7 @@ const renderRemainingStockLabel = (props: any) => {
 };
 
 
-export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFilter, timeRange }: DailySoldQuantityChartProps) {
+export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFilter, timeRange, priorityFilter }: DailySoldQuantityChartProps) {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
 
@@ -88,6 +90,8 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
   
   const chartData = useMemo(() => {
     if (!leads || !inventoryItems || !productTypeFilter || !replenishments) return [];
+
+    const filteredLeads = leads.filter(lead => priorityFilter === 'All' || lead.priorityType === priorityFilter);
 
     // 1. Define date range
     const endDate = endOfDay(new Date());
@@ -118,7 +122,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
             }
         }
     };
-    leads.forEach(lead => lead.orders.forEach(addItemToMap));
+    filteredLeads.forEach(lead => lead.orders.forEach(addItemToMap));
     inventoryItems.forEach(addItemToMap);
     
     const relevantItemsDetails = Array.from(allItemsMap.values());
@@ -127,7 +131,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
     const dailySales: Record<string, number> = {};
     const dailyReplenishments: Record<string, number> = {};
 
-    leads.forEach(lead => {
+    filteredLeads.forEach(lead => {
         const submissionDateStr = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
         lead.orders.forEach(order => {
             if (allItemsMap.has(createKey(order))) {
@@ -151,7 +155,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
         return sum + (inventoryItem?.stock || 0);
     }, 0);
     
-    const { soldEver, onProcessToday, dispatchedToday } = leads.reduce((acc, lead) => {
+    const { soldEver, onProcessToday, dispatchedToday } = filteredLeads.reduce((acc, lead) => {
         lead.orders.forEach(order => {
             if (allItemsMap.has(createKey(order))) {
                 acc.soldEver += order.quantity;
@@ -201,7 +205,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
     
     return dataForChart;
 
-  }, [leads, inventoryItems, replenishments, timeRange, productTypeFilter, colorFilter, sizeFilter]);
+  }, [leads, inventoryItems, replenishments, timeRange, productTypeFilter, colorFilter, sizeFilter, priorityFilter]);
 
   const yDomainRight = useMemo(() => {
     const remainingValues = chartData.map(d => d.remaining).filter(v => v !== null) as number[];

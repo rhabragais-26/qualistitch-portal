@@ -28,6 +28,7 @@ type Lead = {
   isSentToProduction?: boolean;
   isEndorsedToLogistics?: boolean;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  priorityType: 'Rush' | 'Regular';
   orders: Order[];
 };
 
@@ -47,9 +48,10 @@ type InventoryReportTableProps = {
     colorFilter: string;
     sizeFilter: string;
     sellThroughRateFilter?: string;
+    priorityFilter?: string;
 }
 
-export function InventoryReportTable({ reportType = 'inventory', productTypeFilter, colorFilter, sizeFilter, sellThroughRateFilter }: InventoryReportTableProps) {
+export function InventoryReportTable({ reportType = 'inventory', productTypeFilter, colorFilter, sizeFilter, sellThroughRateFilter, priorityFilter = 'All' }: InventoryReportTableProps) {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const inventoryQuery = useMemoFirebase(() => {
@@ -68,6 +70,8 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
   const reportData = React.useMemo(() => {
     if (!inventoryItems || !leads) return { headers: [], rows: [] };
     
+    const filteredLeads = leads.filter(lead => priorityFilter === 'All' || lead.priorityType === priorityFilter);
+    
     const soldQuantities = new Map<string, number>();
     const onProcessQuantities = new Map<string, number>();
     const dispatchedQuantities = new Map<string, number>();
@@ -76,7 +80,7 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     const createKey = (order: { productType: string, color: string, size: string }) => 
         `${order.productType}-${order.color}-${order.size}`;
     
-    leads.forEach(lead => {
+    filteredLeads.forEach(lead => {
         lead.orders.forEach(order => {
             if (order.productType === 'Client Owned' || order.productType === 'Patches') return;
             const key = createKey(order);
@@ -181,7 +185,7 @@ export function InventoryReportTable({ reportType = 'inventory', productTypeFilt
     
     return { headers: sizes, rows };
 
-  }, [inventoryItems, leads, productTypeFilter, colorFilter, sizeFilter, reportType, sellThroughRateFilter]);
+  }, [inventoryItems, leads, productTypeFilter, colorFilter, sizeFilter, reportType, sellThroughRateFilter, priorityFilter]);
   
 
   const isLoading = isUserLoading || isInventoryLoading || areLeadsLoading;

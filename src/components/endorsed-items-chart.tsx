@@ -21,6 +21,7 @@ type Lead = {
   isEndorsedToLogistics?: boolean;
   endorsedToLogisticsTimestamp?: string;
   orders: Order[];
+  priorityType: 'Rush' | 'Regular';
 };
 
 type EndorsedItemsChartProps = {
@@ -28,6 +29,7 @@ type EndorsedItemsChartProps = {
   colorFilter: string;
   sizeFilter: string;
   timeRange: string;
+  priorityFilter: string;
 };
 
 const chartConfig = {
@@ -37,7 +39,7 @@ const chartConfig = {
   },
 };
 
-export function EndorsedItemsChart({ productTypeFilter, colorFilter, sizeFilter, timeRange }: EndorsedItemsChartProps) {
+export function EndorsedItemsChart({ productTypeFilter, colorFilter, sizeFilter, timeRange, priorityFilter }: EndorsedItemsChartProps) {
   const firestore = useFirestore();
 
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
@@ -45,6 +47,8 @@ export function EndorsedItemsChart({ productTypeFilter, colorFilter, sizeFilter,
 
   const chartData = useMemo(() => {
     if (!leads || !productTypeFilter) return [];
+    
+    const filteredLeads = leads.filter(lead => priorityFilter === 'All' || lead.priorityType === priorityFilter);
 
     // 1. Determine date range
     const endDate = new Date();
@@ -63,7 +67,7 @@ export function EndorsedItemsChart({ productTypeFilter, colorFilter, sizeFilter,
 
     // 2. Group endorsed items by date
     const endorsedByDate: { [dateStr: string]: number } = {};
-    leads.forEach(lead => {
+    filteredLeads.forEach(lead => {
       let endorsementTimestamp: string | undefined;
       if (lead.isSentToProduction && lead.sentToProductionTimestamp) {
         endorsementTimestamp = lead.sentToProductionTimestamp;
@@ -98,7 +102,7 @@ export function EndorsedItemsChart({ productTypeFilter, colorFilter, sizeFilter,
         endorsed: endorsedToday,
       };
     });
-  }, [leads, timeRange, productTypeFilter, colorFilter, sizeFilter]);
+  }, [leads, timeRange, productTypeFilter, colorFilter, sizeFilter, priorityFilter]);
   
   if (isLoading) {
     return <Skeleton className="h-[250px] w-full" />;
