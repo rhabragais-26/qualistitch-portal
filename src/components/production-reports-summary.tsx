@@ -15,6 +15,8 @@ import {
   BarChart,
   Bar,
   Cell,
+  ComposedChart,
+  Line,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -22,7 +24,7 @@ import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { getYear, format } from 'date-fns';
+import { getYear, format, parse } from 'date-fns';
 import type { Lead } from '@/app/production/reports/actions';
 import { generateProductionReportAction } from '@/app/production/reports/actions';
 import { Separator } from './ui/separator';
@@ -100,25 +102,30 @@ export function ProductionReportsSummary() {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
+      const designPayloads = payload.filter(p => ['logo', 'backDesign', 'names'].includes(p.dataKey));
+      const totalDesigns = designPayloads.reduce((sum: number, entry: any) => sum + entry.value, 0);
+      
       return (
         <div className="bg-card p-2.5 text-card-foreground rounded-md border shadow-md">
           <p className="font-bold mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-sm">
-              <div className="flex items-center">
-                <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: entry.fill }} />
-                <span>{entry.name}:</span>
+          {payload.map((entry: any, index: number) => {
+            if (entry.dataKey === 'total') return null;
+            return (
+              <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-sm">
+                <div className="flex items-center">
+                  <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: entry.stroke || entry.fill }} />
+                  <span>{entry.name}:</span>
+                </div>
+                <span className="font-bold">{entry.value}</span>
               </div>
-              <span className="font-bold">{entry.value}</span>
-            </div>
-          ))}
-           {payload.length > 1 && (
+            );
+          })}
+          {designPayloads.length > 0 && (
             <>
               <Separator className="my-2" />
               <div className="flex items-center justify-between font-bold text-sm">
-                  <span>Total:</span>
-                  <span>{total}</span>
+                  <span>Total Designs:</span>
+                  <span>{totalDesigns}</span>
               </div>
             </>
           )}
@@ -211,25 +218,38 @@ export function ProductionReportsSummary() {
             <h3 className="font-semibold text-lg text-center mb-2">Daily Productivity by Design Type</h3>
              <ChartContainer config={chartConfig} className="w-full h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <ComposedChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" />
-                    <YAxis allowDecimals={false}/>
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} scale="band" />
+                    <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
+                    <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ bottom: 0 }}/>
-                    <Bar dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                    <Bar yAxisId="left" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
                         <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                     </Bar>
-                    <Bar dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
+                    <Bar yAxisId="left" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
                         <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                     </Bar>
-                    <Bar dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
+                    <Bar yAxisId="left" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
                         <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                     </Bar>
-                     <Bar dataKey="total" name="Total" fill="transparent">
+                    <Bar yAxisId="left" dataKey="total" name="Total Designs" fill="transparent">
                         <LabelList dataKey="total" position="top" className="fill-black" formatter={(value: number) => value > 0 ? value : ''} />
                     </Bar>
-                  </BarChart>
+                    <Line 
+                        yAxisId="right" 
+                        type="monotone" 
+                        dataKey="doneJoCount" 
+                        name="J.O.s Done" 
+                        stroke="#ff7300" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                    >
+                      <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="#ff7300" fontWeight="bold" />
+                    </Line>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </ChartContainer>
         </div>

@@ -52,6 +52,7 @@ export async function generateProductionReportAction(input: GenerateProductionRe
 
     const dailyProduction: Record<string, number> = {};
     const dailyDesignBreakdown: Record<string, { logo: number; backDesign: number; names: number }> = {};
+    const dailyJoDoneCount: Record<string, Set<string>> = {};
 
     completedLeads.forEach(lead => {
         try {
@@ -73,6 +74,11 @@ export async function generateProductionReportAction(input: GenerateProductionRe
                         dailyDesignBreakdown[dateStr].names += (layout.finalNamesDst || []).filter(Boolean).length;
                     });
                 }
+                
+                if (!dailyJoDoneCount[dateStr]) {
+                    dailyJoDoneCount[dateStr] = new Set();
+                }
+                dailyJoDoneCount[dateStr].add(lead.id);
             }
         } catch(e) {
             // ignore invalid dates
@@ -98,6 +104,7 @@ export async function generateProductionReportAction(input: GenerateProductionRe
             date: dateStr,
             ...data,
             total: data.logo + data.backDesign + data.names,
+            doneJoCount: dailyJoDoneCount[dateStr]?.size || 0
         };
     });
 
