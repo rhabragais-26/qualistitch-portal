@@ -29,6 +29,8 @@ import { Button } from './ui/button';
 import { Boxes, Shirt, PackageX, MinusCircle, Edit, Save, X } from 'lucide-react';
 import { cn, generateSku } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { initialPricingConfig } from '@/lib/pricing-data';
+import type { PricingConfig } from '@/lib/pricing';
 
 type Order = {
   productType: string;
@@ -100,6 +102,7 @@ export function InventorySummaryTable() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedStocks, setEditedStocks] = useState<Record<string, number>>({});
   const [editedColors, setEditedColors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user || isAuthLoading) return null;
@@ -111,7 +114,7 @@ export function InventorySummaryTable() {
     return query(collection(firestore, 'leads'));
   }, [firestore, user, isAuthLoading]);
 
-  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError, refetch } = useCollection<InventoryItem>(inventoryQuery);
+  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError, refetch } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
 
@@ -132,78 +135,107 @@ export function InventorySummaryTable() {
     }));
   };
 
+  const createKey = (item: { productType: string; color: string; size: string }) => {
+    return `${item.productType}-${item.color}-${item.size}`
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/\//g, '-');
+  };
+
   const handleSave = async () => {
     if (!firestore) return;
     setIsEditMode(false);
+    setIsSaving(true);
 
     const uniqueItemIds = [...new Set([...Object.keys(editedStocks), ...Object.keys(editedColors)])];
-    if (uniqueItemIds.length === 0) return;
+    if (uniqueItemIds.length === 0) {
+      setIsSaving(false);
+      return;
+    }
 
     let successCount = 0;
     let errorCount = 0;
-    const batch = writeBatch(firestore);
 
     for (const itemId of uniqueItemIds) {
-      const originalItem = inventoryItems?.find(i => i.id === itemId);
-      if (!originalItem) continue;
+      const originalItem = enrichedItems?.find(i => i.id === itemId);
+      if (!originalItem) {
+          errorCount++;
+          continue;
+      }
 
       const newStock = editedStocks[itemId] ?? originalItem.stock;
       const newColor = editedColors[itemId] ?? originalItem.color;
 
-      // If only stock is changed, just update
-      if (newColor === originalItem.color) {
-        batch.update(doc(firestore, 'inventory', itemId), { stock: newStock });
-        successCount++;
-        continue;
-      }
-
-      // Color has changed: Delete old and create/update new
-      const oldDocRef = doc(firestore, 'inventory', itemId);
-      const newItemId = `${originalItem.productType}-${newColor}-${originalItem.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
-      const newDocRef = doc(firestore, 'inventory', newItemId);
-
       try {
-        await runTransaction(firestore, async (transaction) => {
-          const newDocSnap = await transaction.get(newDocRef);
-          
-          if (newDocSnap.exists()) {
-            const existingStock = newDocSnap.data().stock || 0;
-            transaction.update(newDocRef, { stock: existingStock + newStock });
-          } else {
-            transaction.set(newDocRef, {
-              id: newItemId,
-              productType: originalItem.productType,
-              color: newColor,
-              size: originalItem.size,
-              stock: newStock,
-            });
-          }
-          transaction.delete(oldDocRef);
-        });
-        successCount++;
-      } catch (e) {
+        if (newColor !== originalItem.color) {
+          // Color change logic (move)
+          const oldDocRef = doc(firestore, 'inventory', itemId);
+          const newItemId = createKey({
+            productType: originalItem.productType,
+            color: newColor,
+            size: originalItem.size,
+          });
+          const newDocRef = doc(firestore, 'inventory', newItemId);
+
+          await runTransaction(firestore, async (transaction) => {
+              const newDocSnap = await transaction.get(newDocRef);
+              if (newDocSnap.exists()) {
+                  const existingStock = newDocSnap.data().stock || 0;
+                  transaction.update(newDocRef, { stock: existingStock + newStock });
+              } else {
+                  transaction.set(newDocRef, {
+                      id: newItemId,
+                      productType: originalItem.productType,
+                      color: newColor,
+                      size: originalItem.size,
+                      stock: newStock,
+                  });
+              }
+              const oldDocSnap = await transaction.get(oldDocRef);
+              if (oldDocSnap.exists()) {
+                  transaction.delete(oldDocRef);
+              }
+          });
+          successCount++;
+        } else { // Stock change only
+          const docRef = doc(firestore, 'inventory', itemId);
+          await runTransaction(firestore, async (transaction) => {
+              const docSnap = await transaction.get(docRef);
+              if (docSnap.exists()) {
+                  transaction.update(docRef, { stock: newStock });
+              } else {
+                  // Item didn't exist, create it.
+                  transaction.set(docRef, {
+                      id: itemId,
+                      productType: originalItem.productType,
+                      color: originalItem.color,
+                      size: originalItem.size,
+                      stock: newStock,
+                  });
+              }
+          });
+          successCount++;
+        }
+      } catch(e) {
         errorCount++;
-        console.error(`Error moving item ${itemId} to ${newItemId}:`, e);
+        console.error(`Transaction failed for item ${itemId}:`, e);
+        toast({ variant: "destructive", title: `Update Failed for ${originalItem.productType}`, description: (e as Error).message });
       }
     }
     
-    try {
-        await batch.commit();
-        if (errorCount > 0) {
-            toast({ variant: "destructive", title: "Partial Failure", description: `${errorCount} item(s) could not be updated.` });
-        }
-        if (successCount > 0) {
-            toast({ title: "Inventory Updated", description: `${successCount} item(s) have been saved successfully.` });
-        }
-        refetch();
-    } catch (error: any) {
-        console.error("Error committing batch:", error);
-        toast({ variant: "destructive", title: "Save Failed", description: error.message || "Could not save all changes." });
-    } finally {
-        setEditedStocks({});
-        setEditedColors({});
+    if (errorCount > 0) {
+        toast({ variant: "destructive", title: "Partial Failure", description: `${errorCount} item(s) could not be updated.` });
     }
+    if (successCount > 0) {
+        toast({ title: "Inventory Updated", description: `${successCount} item(s) have been saved successfully.` });
+    }
+    
+    refetch();
+    setEditedStocks({});
+    setEditedColors({});
+    setIsSaving(false);
   };
+
 
   const handleCancelEdit = () => {
     setIsEditMode(false);
@@ -253,25 +285,17 @@ export function InventorySummaryTable() {
     const onProcessQuantities = new Map<string, number>();
     const dispatchedQuantities = new Map<string, number>();
     const allItemsMap = new Map<string, { productType: string; color: string; size: string }>();
-
-    const createKey = (item: { productType: string; color: string; size: string }) => 
-        `${item.productType}-${item.color}-${item.size}`;
     
-    // Process leads to get sold quantities and a list of all sold items
     leads.forEach(lead => {
         lead.orders.forEach(order => {
-            if (order.productType === 'Client Owned') return;
-
+            if (order.productType === 'Client Owned' || order.productType === 'Patches') return;
             const key = createKey(order);
-            // Add to all items map
             if (!allItemsMap.has(key)) {
                 allItemsMap.set(key, { productType: order.productType, color: order.color, size: order.size });
             }
 
-            // Aggregate sold quantities
             soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
             
-            // Aggregate quantities in different stages
             if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
                 dispatchedQuantities.set(key, (dispatchedQuantities.get(key) || 0) + order.quantity);
             } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
@@ -280,26 +304,24 @@ export function InventorySummaryTable() {
         });
     });
 
-    // Add inventory items to the allItems map to get the full universe of items
     inventoryItems.forEach(item => {
-        if (item.productType === 'Client Owned') return;
+        if (item.productType === 'Client Owned' || item.productType === 'Patches') return;
         const key = createKey(item);
         if (!allItemsMap.has(key)) {
             allItemsMap.set(key, { productType: item.productType, color: item.color, size: item.size });
         }
     });
     
-    const inventoryMap = new Map(inventoryItems.map(item => [createKey(item), item]));
+    const inventoryMap = new Map(inventoryItems.map(item => [item.id, item]));
 
-    // Process all unique items from both inventory and sales
     const enriched = Array.from(allItemsMap.values()).map(itemDetails => {
-        const key = createKey(itemDetails);
-        const inventoryItem = inventoryMap.get(key);
+        const docId = createKey(itemDetails);
+        const inventoryItem = inventoryMap.get(docId);
         
         const onHand = inventoryItem?.stock ?? 0;
-        const soldQty = soldQuantities.get(key) || 0;
-        const onProcess = onProcessQuantities.get(key) || 0;
-        const dispatched = dispatchedQuantities.get(key) || 0;
+        const soldQty = soldQuantities.get(docId) || 0;
+        const onProcess = onProcessQuantities.get(docId) || 0;
+        const dispatched = dispatchedQuantities.get(docId) || 0;
 
         const totalStockEver = onHand + soldQty;
         const sellThroughRate = totalStockEver > 0 ? (soldQty / totalStockEver) * 100 : 0;
@@ -308,7 +330,7 @@ export function InventorySummaryTable() {
         const sku = generateSku(itemDetails);
         
         return {
-            id: inventoryItem?.id || key,
+            id: docId,
             ...itemDetails,
             stock: onHand,
             sku,
@@ -511,10 +533,10 @@ export function InventorySummaryTable() {
                 <div className="flex items-center gap-2 ml-auto">
                 {isEditMode ? (
                     <>
-                    <Button onClick={handleSave} className="h-9">
-                        <Save className="mr-2 h-4 w-4" /> Save
+                    <Button onClick={handleSave} disabled={isSaving} className="h-9">
+                        <Save className="mr-2 h-4 w-4" /> {isSaving ? 'Saving...' : 'Save'}
                     </Button>
-                    <Button onClick={handleCancelEdit} variant="outline" className="h-9">
+                    <Button onClick={handleCancelEdit} variant="outline" className="h-9" disabled={isSaving}>
                         <X className="mr-2 h-4 w-4" /> Cancel
                     </Button>
                     </>
