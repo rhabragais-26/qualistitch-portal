@@ -573,10 +573,10 @@ export function InventorySummaryTable() {
                       <TableHead className="text-white font-bold align-middle">Item</TableHead>
                       <TableHead className="text-white font-bold align-middle">Color</TableHead>
                       <TableHead className="text-white font-bold align-middle">Size</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">On-Hand</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Sold QTY</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Sell-Through Rate</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Reserved</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">On-Hand</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">On-Process</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Dispatched</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Remaining Stocks</TableHead>
@@ -608,6 +608,16 @@ export function InventorySummaryTable() {
                                 )}
                             </TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{item.size}</TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.soldQty}</TableCell>
+                            <TableCell className={cn(
+                                "text-center font-bold text-xs align-middle py-2",
+                                item.sellThroughRate >= 70 ? "text-green-600" :
+                                item.sellThroughRate >= 40 ? "text-yellow-600" :
+                                "text-red-600"
+                            )}>
+                                {item.sellThroughRate.toFixed(1)}%
+                            </TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.reserved}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">
                                 {isEditMode ? (
                                     <Input 
@@ -620,16 +630,6 @@ export function InventorySummaryTable() {
                                     item.stock
                                 )}
                             </TableCell>
-                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.soldQty}</TableCell>
-                            <TableCell className={cn(
-                                "text-center font-bold text-xs align-middle py-2",
-                                item.sellThroughRate >= 70 ? "text-green-600" :
-                                item.sellThroughRate >= 40 ? "text-yellow-600" :
-                                "text-red-600"
-                            )}>
-                                {item.sellThroughRate.toFixed(1)}%
-                            </TableCell>
-                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.reserved}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.onProcess}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.dispatched}</TableCell>
                             <TableCell className={cn("text-center font-bold text-xs align-middle py-2", item.remaining < 0 && "text-destructive")}>{item.remaining}</TableCell>
