@@ -137,7 +137,7 @@ export function ReplenishmentHistoryTable() {
     if (!isNaN(newQuantity)) {
       setEditedQuantities(prev => ({
         ...prev,
-        [compositeId]: newQuantity,
+        [compositeId]: Math.max(0, newQuantity),
       }));
     }
   };
@@ -181,12 +181,12 @@ export function ReplenishmentHistoryTable() {
         errorCount++;
         continue;
       }
-      const replenishmentDocRef = doc(firestore, 'inventory_replenishments', latestReplenishmentItem.id);
-
+      
       try {
         await runTransaction(firestore, async (transaction) => {
           const inventoryDoc = await transaction.get(inventoryDocRef);
           
+          // 1. Update main inventory stock
           if (inventoryDoc.exists()) {
             const currentStock = inventoryDoc.data().stock || 0;
             transaction.update(inventoryDocRef, { stock: currentStock + delta });
@@ -200,11 +200,24 @@ export function ReplenishmentHistoryTable() {
             });
           }
 
-          const newReplenishmentQuantity = latestReplenishmentItem.quantity + delta;
-          if (newReplenishmentQuantity < 0) {
-            throw new Error(`Cannot reduce quantity for ${latestReplenishmentItem.productType} below zero.`);
+          // 2. Consolidate replenishment records
+          if (newTotalQuantity > 0) {
+            // Update the latest record to the new total
+            const latestReplenishmentRef = doc(firestore, 'inventory_replenishments', latestReplenishmentItem.id);
+            transaction.update(latestReplenishmentRef, { quantity: newTotalQuantity });
+
+            // Delete all other records from that day's consolidation group
+            const otherItemsToDelete = consolidatedItem.items.slice(1);
+            for (const itemToDelete of otherItemsToDelete) {
+                const itemRef = doc(firestore, 'inventory_replenishments', itemToDelete.id);
+                transaction.delete(itemRef);
+            }
+          } else { // newTotalQuantity is 0, so delete all items in the group
+            for (const itemToDelete of consolidatedItem.items) {
+              const itemRef = doc(firestore, 'inventory_replenishments', itemToDelete.id);
+              transaction.delete(itemRef);
+            }
           }
-          transaction.update(replenishmentDocRef, { quantity: newReplenishmentQuantity });
         });
         successCount++;
       } catch (e: any) {
