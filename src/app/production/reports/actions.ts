@@ -1,3 +1,4 @@
+
 'use server';
 import {
   format,
@@ -30,6 +31,8 @@ export type Lead = {
   doneProductionTimestamp?: string | null;
   orders: Order[];
   layouts?: Layout[];
+  isEmbroideryDone?: boolean;
+  embroideryDoneTimestamp?: string | null;
 };
 
 export type GenerateProductionReportInput = {
@@ -45,14 +48,14 @@ export async function generateProductionReportAction(input: GenerateProductionRe
     const year = parseInt(selectedYear, 10);
     const month = parseInt(selectedMonth, 10) - 1;
 
-    const completedLeads = typedLeads.filter(lead => lead.isDone && lead.doneProductionTimestamp);
+    const completedLeads = typedLeads.filter(lead => lead.isEmbroideryDone && lead.embroideryDoneTimestamp);
 
     const dailyProduction: Record<string, number> = {};
     const dailyDesignBreakdown: Record<string, { logo: number; backDesign: number; names: number }> = {};
 
     completedLeads.forEach(lead => {
         try {
-            const completionDate = parseISO(lead.doneProductionTimestamp!);
+            const completionDate = parseISO(lead.embroideryDoneTimestamp!);
             if (getYear(completionDate) === year && getMonth(completionDate) === month) {
                 const dateStr = format(completionDate, 'MMM-dd');
                 
