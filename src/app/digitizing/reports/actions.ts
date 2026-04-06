@@ -52,8 +52,14 @@ export type Lead = {
   layouts?: Layout[];
 };
 
+type UserProfile = {
+  nickname: string;
+  position: string;
+}
+
 const GenerateDigitizingReportInputSchema = z.object({
   leads: z.array(z.any()).describe('An array of lead objects with digitizing status.'),
+  users: z.array(z.any()).describe('An array of user profile objects.'),
   priorityFilter: z.string().describe('Filter by priority type: All, Rush, or Regular.'),
   selectedMonth: z.string().describe('The selected month for the productivity chart (1-12).'),
   selectedYear: z.string().describe('The selected year for the productivity chart.'),
@@ -62,8 +68,9 @@ const GenerateDigitizingReportInputSchema = z.object({
 export type GenerateDigitizingReportInput = z.infer<typeof GenerateDigitizingReportInputSchema>;
 
 export async function generateDigitizingReportAction(input: GenerateDigitizingReportInput) {
-    const { leads, priorityFilter, selectedMonth, selectedYear } = input;
+    const { leads, users, priorityFilter, selectedMonth, selectedYear } = input;
     const typedLeads = leads as Lead[];
+    const typedUsers = users as UserProfile[];
     
     const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
 
@@ -140,10 +147,12 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
         const year = parseInt(selectedYear, 10);
         const month = parseInt(selectedMonth, 10) - 1;
         
+        const activeDigitizers = new Set(typedUsers.filter(u => u.position !== 'RESIGNED').map(u => u.nickname));
+        
         const allUploaders = new Set<string>();
         typedLeads.forEach(lead => {
             lead.layouts?.forEach(layout => {
-                const checkUploader = (uploader: string | null | undefined) => { if (uploader) allUploaders.add(uploader); };
+                const checkUploader = (uploader: string | null | undefined) => { if (uploader && activeDigitizers.has(uploader)) allUploaders.add(uploader); };
                 const checkUploaders = (uploaders: (string | null)[] | undefined) => { (uploaders || []).forEach(checkUploader); };
                 ((layout as any).logoLeftImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
                 ((layout as any).logoRightImages || []).forEach((img: any) => checkUploader(img.uploadedBy));
@@ -162,7 +171,7 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
             lead.layouts?.forEach(layout => {
                 const processUploads = (items: { uploadTime?: string; uploadedBy?: string; }[] | undefined) => {
                     (items || []).forEach(item => {
-                        if (item?.uploadedBy && item.uploadTime) {
+                        if (item?.uploadedBy && item.uploadTime && activeDigitizers.has(item.uploadedBy)) {
                             try {
                                 const uploadDate = new Date(item.uploadTime);
                                 if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
@@ -181,7 +190,7 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
                          if (file) {
                              const uploader = uploaders?.[index];
                              const time = times?.[index];
-                             if (uploader && time) {
+                             if (uploader && time && activeDigitizers.has(uploader)) {
                                 try {
                                     const uploadDate = new Date(time);
                                     if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
@@ -225,6 +234,7 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
         const year = parseInt(selectedYear, 10);
         const month = parseInt(selectedMonth, 10) - 1;
         const counts: Record<string, { logo: number, backDesign: number, names: number }> = {};
+        const activeDigitizers = new Set(typedUsers.filter(u => u.position !== 'RESIGNED').map(u => u.nickname));
 
         typedLeads.forEach(lead => {
             lead.layouts?.forEach(layout => {
@@ -237,7 +247,7 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
                                     const uploadDate = new Date(time);
                                     if (getYear(uploadDate) === year && getMonth(uploadDate) === month) {
                                         const uploader = uploaders?.[index];
-                                        if (uploader) {
+                                        if (uploader && activeDigitizers.has(uploader)) {
                                             if (!counts[uploader]) {
                                                 counts[uploader] = { logo: 0, backDesign: 0, names: 0 };
                                             }

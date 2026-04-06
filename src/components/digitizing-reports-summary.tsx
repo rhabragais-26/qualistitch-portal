@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -140,7 +138,9 @@ export function DigitizingReportsSummary() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
-  
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
+  const { data: users, isLoading: areUsersLoading, error: usersError } = useCollection(usersQuery, undefined, { listen: false });
+
   const [reportData, setReportData] = useState<any>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
 
@@ -167,11 +167,11 @@ export function DigitizingReportsSummary() {
   }, [leads]);
   
    useEffect(() => {
-    if (areLeadsLoading) {
+    if (areLeadsLoading || areUsersLoading) {
         setIsReportLoading(true);
         return;
     }
-    if (!leads) {
+    if (!leads || !users) {
         setIsReportLoading(false);
         setReportData(null);
         return;
@@ -182,6 +182,7 @@ export function DigitizingReportsSummary() {
         try {
           const result = await generateDigitizingReportAction({ 
               leads,
+              users,
               priorityFilter: 'All',
               selectedMonth: progressChartMonth,
               selectedYear: progressChartYear,
@@ -195,7 +196,7 @@ export function DigitizingReportsSummary() {
         }
     };
     generate();
-  }, [leads, areLeadsLoading, progressChartMonth, progressChartYear]);
+  }, [leads, users, areLeadsLoading, areUsersLoading, progressChartMonth, progressChartYear]);
 
 
   const { statusSummary, overdueSummary, digitizerSummary, dailyProgressData, totalStatusCount, ongoingVsCompletedData, monthlyProgramsDone } = useMemo(() => {
@@ -242,7 +243,8 @@ export function DigitizingReportsSummary() {
       'Overdue': '#ef4444', // red
   };
 
-  const isLoading = areLeadsLoading || isReportLoading;
+  const isLoading = areLeadsLoading || isReportLoading || areUsersLoading;
+  const error = leadsError || usersError;
 
   if (isLoading) {
     return (
@@ -278,8 +280,8 @@ export function DigitizingReportsSummary() {
     );
   }
 
-  if (leadsError) {
-    return <p className="text-destructive p-4">Error loading data: {leadsError.message}</p>;
+  if (error) {
+    return <p className="text-destructive p-4">Error loading data: {error.message}</p>;
   }
   
   if (!leads || leads.length === 0 || !reportData) {
