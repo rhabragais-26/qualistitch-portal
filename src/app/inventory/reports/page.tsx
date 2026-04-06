@@ -265,7 +265,6 @@ export default function InventoryReportsPage() {
                   <h3 className="text-lg font-bold text-teal-600">Daily Sold vs. Remaining Stocks</h3>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset Filters</Button>
                     <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
                         <SelectTrigger className="w-[220px]">
                             <SelectValue placeholder="Select Product Type" />
@@ -321,6 +320,7 @@ export default function InventoryReportsPage() {
                             <SelectItem value="30d">Last 30 Days</SelectItem>
                         </SelectContent>
                     </Select>
+                    <Button onClick={handleResetFilters} className="bg-teal-600 hover:bg-teal-700 text-white">Reset Filters</Button>
                 </div>
              </div>
             <DailySoldQuantityChart productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} timeRange={timeRange} priorityFilter={priorityFilter}/>
@@ -350,7 +350,7 @@ export default function InventoryReportsPage() {
                 <div className="space-y-4">
                     <div className="flex justify-between items-center h-[40px] mt-4">
                         <h3 className="text-lg font-bold">
-                            <span className="text-teal-600">Remaining Stocks</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
+                            <span className="text-teal-600">Remaining Stocks</span> (${productTypeFilter} - ${colorFilter} - ${sizeFilter})
                         </h3>
                     </div>
                     <InventoryReportTable reportType="inventory" productTypeFilter={productTypeFilter} colorFilter={colorFilter} sizeFilter={sizeFilter} priorityFilter={priorityFilter} />
@@ -358,7 +358,7 @@ export default function InventoryReportsPage() {
                 <div className="space-y-4">
                     <div className="flex justify-between items-center h-[40px] mt-4">
                         <h3 className="text-lg font-bold">
-                            <span className="text-teal-600">For Priority Purchase</span> ({productTypeFilter} - {colorFilter} - {sizeFilter})
+                            <span className="text-teal-600">For Priority Purchase</span> (${productTypeFilter} - ${colorFilter} - ${sizeFilter})
                         </h3>
                         <Select value={sellThroughRateFilter} onValueChange={setSellThroughRateFilter}>
                             <SelectTrigger className="w-[200px]">
