@@ -24,7 +24,7 @@ import { generateProductionReportAction } from '@/app/production/reports/actions
 export function ProductionReportsSummary() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const [reportData, setReportData] = useState<any>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
@@ -103,6 +103,15 @@ export function ProductionReportsSummary() {
   if (leadsError) {
     return <p className="text-destructive p-4">Error loading data: {leadsError.message}</p>;
   }
+  
+  if (!leads || leads.length === 0 || !reportData) {
+      return (
+        <div className="flex items-center justify-center h-full p-8">
+            <p>No data available to generate reports.</p>
+        </div>
+      );
+  }
+
 
   return (
     <Card>
