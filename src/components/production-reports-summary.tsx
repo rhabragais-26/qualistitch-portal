@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -207,7 +208,7 @@ export function ProductionReportsSummary() {
         </div>
         <Separator />
          <div>
-            <h3 className="font-semibold text-lg text-center mb-2">Daily Design Production (by Type)</h3>
+            <h3 className="font-semibold text-lg text-center mb-2">Daily Productivity by Design Type</h3>
              <ChartContainer config={chartConfig} className="w-full h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -216,13 +217,13 @@ export function ProductionReportsSummary() {
                     <YAxis allowDecimals={false}/>
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ bottom: 0 }}/>
-                    <Bar dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
                         <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                     </Bar>
-                    <Bar dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
                         <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                     </Bar>
-                    <Bar dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
                         <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                     </Bar>
                      <Bar dataKey="total" name="Total" fill="transparent">
