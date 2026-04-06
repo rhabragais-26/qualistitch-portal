@@ -20,9 +20,7 @@ type Order = {
 type Lead = {
   submissionDateTime: string;
   isSentToProduction?: boolean;
-  sentToProductionTimestamp?: string;
   isEndorsedToLogistics?: boolean;
-  endorsedToLogisticsTimestamp?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
   deliveredTimestamp?: string;
@@ -105,51 +103,68 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
       startDate = startOfDay(startOfWeek(endDate, { weekStartsOn: 1 }));
     }
 
-    // 2. Filter relevant data once
-    const relevantItems = inventoryItems.filter(item => 
-      item.productType === productTypeFilter &&
-      (colorFilter === 'All Colors' || item.color === colorFilter) &&
-      (sizeFilter === 'All Sizes' || item.size === sizeFilter)
-    );
-    const relevantLeads = leads.filter(lead => 
-        lead.orders.some(order => 
-            order.productType === productTypeFilter && 
-            (colorFilter === 'All Colors' || order.color === colorFilter) &&
-            (sizeFilter === 'All Sizes' || order.size === sizeFilter)
-        )
-    );
-    const relevantReplenishments = (replenishments || []).filter(repl => 
-        repl.productType === productTypeFilter && 
-        (colorFilter === 'All Colors' || repl.color === colorFilter) &&
-        (sizeFilter === 'All Sizes' || repl.size === sizeFilter)
-    );
+    // 2. Get all unique items that match the filter criteria from both leads and inventory.
+    const allItemsMap = new Map<string, { productType: string, color: string, size: string }>();
+    const createKey = (item: { productType: string, color: string, size: string }) => 
+        `${item.productType}-${item.color}-${item.size}`;
 
-    // 3. Create daily maps for sales and replenishments
+    const addItemToMap = (item: { productType: string, color: string, size: string }) => {
+        if (item.productType === productTypeFilter && 
+            (colorFilter === 'All Colors' || item.color === colorFilter) &&
+            (sizeFilter === 'All Sizes' || item.size === sizeFilter)) {
+            const key = createKey(item);
+            if (!allItemsMap.has(key)) {
+                allItemsMap.set(key, item);
+            }
+        }
+    };
+    leads.forEach(lead => lead.orders.forEach(addItemToMap));
+    inventoryItems.forEach(addItemToMap);
+    
+    const relevantItemsDetails = Array.from(allItemsMap.values());
+
+    // 3. Pre-calculate daily sales and replenishments for the filtered items.
     const dailySales: Record<string, number> = {};
-    relevantLeads.forEach(lead => {
+    const dailyReplenishments: Record<string, number> = {};
+
+    leads.forEach(lead => {
+        const submissionDateStr = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
         lead.orders.forEach(order => {
-            if (order.productType === productTypeFilter && (colorFilter === 'All Colors' || order.color === colorFilter) && (sizeFilter === 'All Sizes' || order.size === sizeFilter)) {
-                try {
-                    const submissionDateStr = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
-                    dailySales[submissionDateStr] = (dailySales[submissionDateStr] || 0) + order.quantity;
-                } catch (e) {}
+            if (allItemsMap.has(createKey(order))) {
+                dailySales[submissionDateStr] = (dailySales[submissionDateStr] || 0) + order.quantity;
             }
         });
     });
 
-    const dailyReplenishments: Record<string, number> = {};
-    relevantReplenishments.forEach(repl => {
-      try {
-        const dateStr = format(new Date(repl.date), 'yyyy-MM-dd');
-        dailyReplenishments[dateStr] = (dailyReplenishments[dateStr] || 0) + repl.quantity;
-      } catch(e) {}
+    (replenishments || []).forEach(repl => {
+        if (allItemsMap.has(createKey(repl))) {
+            const dateStr = format(new Date(repl.date), 'yyyy-MM-dd');
+            dailyReplenishments[dateStr] = (dailyReplenishments[dateStr] || 0) + repl.quantity;
+        }
     });
 
-    // 4. Calculate today's "Remaining Stock" to use as an anchor
-    const onHandToday = relevantItems.reduce((sum, item) => sum + item.stock, 0);
-    const soldEver = relevantLeads.reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter) && (sizeFilter === 'All Sizes' || o.size === sizeFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
-    const onProcessToday = relevantLeads.filter(l => (l.isSentToProduction || l.isEndorsedToLogistics) && l.shipmentStatus !== 'Shipped' && l.shipmentStatus !== 'Delivered').reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter) && (sizeFilter === 'All Sizes' || o.size === sizeFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
-    const dispatchedToday = relevantLeads.filter(l => l.shipmentStatus === 'Shipped' || l.shipmentStatus === 'Delivered').reduce((sum, lead) => sum + lead.orders.filter(o => o.productType === productTypeFilter && (colorFilter === 'All Colors' || o.color === colorFilter) && (sizeFilter === 'All Sizes' || o.size === sizeFilter)).reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+    // 4. Calculate today's total remaining stock for the filtered items to use as an anchor.
+    const inventoryMap = new Map(inventoryItems.map(item => [createKey(item), item]));
+
+    const onHandToday = relevantItemsDetails.reduce((sum, itemDetails) => {
+        const inventoryItem = inventoryMap.get(createKey(itemDetails));
+        return sum + (inventoryItem?.stock || 0);
+    }, 0);
+    
+    const { soldEver, onProcessToday, dispatchedToday } = leads.reduce((acc, lead) => {
+        lead.orders.forEach(order => {
+            if (allItemsMap.has(createKey(order))) {
+                acc.soldEver += order.quantity;
+                if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
+                    acc.dispatchedToday += order.quantity;
+                } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
+                    acc.onProcessToday += order.quantity;
+                }
+            }
+        });
+        return acc;
+    }, { soldEver: 0, onProcessToday: 0, dispatchedToday: 0 });
+    
     const remainingToday = (onHandToday + onProcessToday + dispatchedToday) - soldEver;
 
     // 5. Work backwards to calculate historical remaining stock

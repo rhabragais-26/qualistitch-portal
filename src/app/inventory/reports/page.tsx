@@ -91,13 +91,18 @@ export default function InventoryReportsPage() {
   }, [leads, inventoryItems, productTypeFilter]);
 
   const availableSizes = useMemo(() => {
-    if (!productTypeFilter || !inventoryItems) return ['All Sizes'];
+    if (!productTypeFilter || (!leads && !inventoryItems)) return ['All Sizes'];
+    const sizesFromLeads =
+      leads
+        ?.flatMap((l) => l.orders)
+        .filter((o) => o.productType === productTypeFilter)
+        .map((o) => o.size) || [];
     const sizesFromInventory =
       inventoryItems
         ?.filter((i) => i.productType === productTypeFilter)
         .map((i) => i.size) || [];
 
-    const uniqueSizes = [...new Set(sizesFromInventory)].sort((a, b) => {
+    const uniqueSizes = [...new Set([...sizesFromLeads, ...sizesFromInventory])].sort((a, b) => {
         const indexA = sizeOrder.indexOf(a);
         const indexB = sizeOrder.indexOf(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
@@ -110,7 +115,7 @@ export default function InventoryReportsPage() {
       'All Sizes',
       ...uniqueSizes,
     ];
-  }, [inventoryItems, productTypeFilter]);
+  }, [leads, inventoryItems, productTypeFilter]);
 
   useEffect(() => {
     if (productTypes.length > 0 && !productTypeFilter) {
@@ -136,37 +141,49 @@ export default function InventoryReportsPage() {
     const soldQuantities = new Map<string, number>();
     const onProcessQuantities = new Map<string, number>();
     const dispatchedQuantities = new Map<string, number>();
+    const allItemsMap = new Map<string, { productType: string, color: string, size: string }>();
+
+    const createKey = (order: { productType: string, color: string, size: string }) => 
+        `${order.productType}-${order.color}-${order.size}`;
     
     leads.forEach(lead => {
-        const createKey = (order: { productType: string, color: string, size: string }) => `${order.productType}-${order.color}-${order.size}`;
-        
         lead.orders.forEach(order => {
+            if (order.productType === 'Client Owned' || order.productType === 'Patches') return;
             const key = createKey(order);
+            if (!allItemsMap.has(key)) {
+                allItemsMap.set(key, { productType: order.productType, color: order.color, size: order.size });
+            }
             soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
-        });
 
-        if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
-            lead.orders.forEach(order => {
-                const key = createKey(order);
+            if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
                 dispatchedQuantities.set(key, (dispatchedQuantities.get(key) || 0) + order.quantity);
-            });
-        } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
-            lead.orders.forEach(order => {
-                const key = createKey(order);
+            } else if (lead.isSentToProduction || lead.isEndorsedToLogistics) {
                 onProcessQuantities.set(key, (onProcessQuantities.get(key) || 0) + order.quantity);
-            });
+            }
+        });
+    });
+
+    inventoryItems.forEach(item => {
+        if (item.productType === 'Client Owned' || item.productType === 'Patches') return;
+        const key = createKey(item);
+        if (!allItemsMap.has(key)) {
+            allItemsMap.set(key, { productType: item.productType, color: item.color, size: item.size });
         }
     });
-    
-    const processedItems = inventoryItems.map(item => {
-        const key = `${item.productType}-${item.color}-${item.size}`;
+
+    const inventoryMap = new Map(inventoryItems.map(item => [createKey(item), item]));
+
+    const processedItems = Array.from(allItemsMap.values()).map(itemDetails => {
+        const key = createKey(itemDetails);
+        const inventoryItem = inventoryMap.get(key);
+
         const sold = soldQuantities.get(key) || 0;
         const onProcess = onProcessQuantities.get(key) || 0;
         const dispatched = dispatchedQuantities.get(key) || 0;
-        const onHand = item.stock;
+        const onHand = inventoryItem?.stock ?? 0;
 
         const count = (onHand + onProcess + dispatched) - sold;
-        return { ...item, count };
+        return { ...itemDetails, count };
       });
     
     let filteredItems = processedItems;
