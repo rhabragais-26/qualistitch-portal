@@ -27,7 +27,7 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Boxes, Shirt, PackageX, MinusCircle, Edit, Save, X } from 'lucide-react';
-import { cn, generateSku } from '@/lib/utils';
+import { cn, generateSku, formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import type { PricingConfig } from '@/lib/pricing';
@@ -59,6 +59,7 @@ type EnrichedInventoryItem = InventoryItem & {
   soldQty: number;
   onProcess: number;
   dispatched: number;
+  reserved: number;
   remaining: number;
   sellThroughRate: number;
 };
@@ -322,6 +323,7 @@ export function InventorySummaryTable() {
         const soldQty = soldQuantities.get(docId) || 0;
         const onProcess = onProcessQuantities.get(docId) || 0;
         const dispatched = dispatchedQuantities.get(docId) || 0;
+        const reserved = soldQty - onProcess - dispatched;
 
         const totalStockEver = onHand + soldQty;
         const sellThroughRate = totalStockEver > 0 ? (soldQty / totalStockEver) * 100 : 0;
@@ -337,6 +339,7 @@ export function InventorySummaryTable() {
             soldQty,
             onProcess,
             dispatched,
+            reserved,
             remaining: remaining,
             sellThroughRate,
         };
@@ -573,6 +576,7 @@ export function InventorySummaryTable() {
                       <TableHead className="text-white font-bold align-middle text-center">On-Hand</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Sold QTY</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Sell-Through Rate</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Reserved</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">On-Process</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Dispatched</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Remaining Stocks</TableHead>
@@ -625,6 +629,7 @@ export function InventorySummaryTable() {
                             )}>
                                 {item.sellThroughRate.toFixed(1)}%
                             </TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.reserved}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.onProcess}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.dispatched}</TableCell>
                             <TableCell className={cn("text-center font-bold text-xs align-middle py-2", item.remaining < 0 && "text-destructive")}>{item.remaining}</TableCell>
