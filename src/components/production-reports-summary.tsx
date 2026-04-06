@@ -11,15 +11,19 @@ import {
   ResponsiveContainer,
   Legend,
   LabelList,
+  BarChart,
+  Bar,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { getYear, format } from 'date-fns';
+import { getYear, format, parse } from 'date-fns';
 import type { Lead } from '@/app/production/reports/actions';
 import { generateProductionReportAction } from '@/app/production/reports/actions';
+import { ChartTooltipContent, ChartContainer } from './ui/chart';
+import { Separator } from './ui/separator';
 
 export function ProductionReportsSummary() {
   const firestore = useFirestore();
@@ -81,8 +85,8 @@ export function ProductionReportsSummary() {
     generate();
   }, [leads, areLeadsLoading, selectedMonth, selectedYear]);
 
-  const { dailyProgressData } = useMemo(() => {
-    if (!reportData) return { dailyProgressData: [] };
+  const { dailyProgressData, dailyBreakdownData } = useMemo(() => {
+    if (!reportData) return { dailyProgressData: [], dailyBreakdownData: [] };
     return reportData;
   }, [reportData]);
 
@@ -111,6 +115,37 @@ export function ProductionReportsSummary() {
         </div>
       );
   }
+  
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
+      return (
+        <div className="bg-card p-2.5 text-card-foreground rounded-md border shadow-md">
+          <p className="font-bold mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-sm">
+              <div className="flex items-center">
+                <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: entry.fill }} />
+                <span>{entry.name}:</span>
+              </div>
+              <span className="font-bold">{entry.value}</span>
+            </div>
+          ))}
+           {payload.length > 1 && (
+            <>
+              <Separator className="my-2" />
+              <div className="flex items-center justify-between font-bold text-sm">
+                  <span>Total:</span>
+                  <span>{total}</span>
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+  
+    return null;
+};
 
 
   return (
@@ -118,8 +153,8 @@ export function ProductionReportsSummary() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-                <CardTitle>Daily Production Output</CardTitle>
-                <CardDescription>Total quantity of items marked as "Done Production" per day.</CardDescription>
+                <CardTitle>Production Reports</CardTitle>
+                <CardDescription>Daily production output metrics.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -137,20 +172,50 @@ export function ProductionReportsSummary() {
             </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={dailyProgressData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="quantity" name="Quantity Produced" stroke="hsl(var(--chart-1))" strokeWidth={2}>
-                <LabelList dataKey="quantity" position="top" formatter={(value: number) => value > 0 ? value : null} />
-              </Line>
-            </LineChart>
-          </ResponsiveContainer>
+      <CardContent className="space-y-8">
+        <div>
+            <h3 className="font-semibold text-lg text-center mb-2">Daily Production Output (by Item Quantity)</h3>
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={dailyProgressData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip content={<ChartTooltipContent />} />
+                  <Legend />
+                  <Line type="monotone" dataKey="quantity" name="Quantity Produced" stroke="hsl(var(--chart-1))" strokeWidth={2}>
+                    <LabelList dataKey="quantity" position="top" formatter={(value: number) => value > 0 ? value : null} />
+                  </Line>
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+        </div>
+        <Separator />
+         <div>
+            <h3 className="font-semibold text-lg text-center mb-2">Daily Design Production (by Type)</h3>
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" />
+                  <YAxis allowDecimals={false}/>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
+                  <Bar dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
+                      <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                  </Bar>
+                  <Bar dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                      <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                  </Bar>
+                  <Bar dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
+                      <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                  </Bar>
+                   <Bar dataKey="total" name="Total" fill="transparent">
+                      <LabelList dataKey="total" position="top" className="fill-black" formatter={(value: number) => value > 0 ? value : ''} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
         </div>
       </CardContent>
     </Card>

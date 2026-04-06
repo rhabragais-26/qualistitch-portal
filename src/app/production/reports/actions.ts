@@ -13,11 +13,23 @@ type Order = {
   quantity: number;
 };
 
+type FileObject = {
+    name: string;
+    url: string;
+};
+
+type Layout = {
+    finalLogoDst?: (FileObject | null)[];
+    finalBackDesignDst?: (FileObject | null)[];
+    finalNamesDst?: (FileObject | null)[];
+};
+
 export type Lead = {
   id: string;
   isDone?: boolean;
   doneProductionTimestamp?: string | null;
   orders: Order[];
+  layouts?: Layout[];
 };
 
 export type GenerateProductionReportInput = {
@@ -36,14 +48,28 @@ export async function generateProductionReportAction(input: GenerateProductionRe
     const completedLeads = typedLeads.filter(lead => lead.isDone && lead.doneProductionTimestamp);
 
     const dailyProduction: Record<string, number> = {};
+    const dailyDesignBreakdown: Record<string, { logo: number; backDesign: number; names: number }> = {};
 
     completedLeads.forEach(lead => {
         try {
             const completionDate = parseISO(lead.doneProductionTimestamp!);
             if (getYear(completionDate) === year && getMonth(completionDate) === month) {
                 const dateStr = format(completionDate, 'MMM-dd');
+                
                 const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                 dailyProduction[dateStr] = (dailyProduction[dateStr] || 0) + totalQuantity;
+
+                if (!dailyDesignBreakdown[dateStr]) {
+                    dailyDesignBreakdown[dateStr] = { logo: 0, backDesign: 0, names: 0 };
+                }
+
+                if (lead.layouts) {
+                    lead.layouts.forEach(layout => {
+                        dailyDesignBreakdown[dateStr].logo += (layout.finalLogoDst || []).filter(Boolean).length;
+                        dailyDesignBreakdown[dateStr].backDesign += (layout.finalBackDesignDst || []).filter(Boolean).length;
+                        dailyDesignBreakdown[dateStr].names += (layout.finalNamesDst || []).filter(Boolean).length;
+                    });
+                }
             }
         } catch(e) {
             // ignore invalid dates
@@ -61,8 +87,19 @@ export async function generateProductionReportAction(input: GenerateProductionRe
             quantity: dailyProduction[dateStr] || 0
         };
     });
+    
+    const dailyBreakdownData = daysInMonth.map(day => {
+        const dateStr = format(day, 'MMM-dd');
+        const data = dailyDesignBreakdown[dateStr] || { logo: 0, backDesign: 0, names: 0 };
+        return {
+            date: dateStr,
+            ...data,
+            total: data.logo + data.backDesign + data.names,
+        };
+    });
 
     return {
         dailyProgressData,
+        dailyBreakdownData,
     };
 }
