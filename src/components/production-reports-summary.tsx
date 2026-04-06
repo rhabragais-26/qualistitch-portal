@@ -2,8 +2,8 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -16,7 +16,7 @@ import {
   Cell,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -185,16 +185,22 @@ export function ProductionReportsSummary() {
             <div className="h-[400px]">
               <ChartContainer config={{}} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dailyProgressData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Line type="monotone" dataKey="quantity" name="Quantity Produced" stroke="hsl(var(--chart-1))" strokeWidth={2}>
-                      <LabelList dataKey="quantity" position="top" formatter={(value: number) => value > 0 ? value : null} />
-                    </Line>
-                  </LineChart>
+                    <AreaChart data={dailyProgressData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <defs>
+                            <linearGradient id="colorQuantity" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip content={<ChartTooltipContent />} />
+                        <Legend />
+                        <Area type="monotone" dataKey="quantity" name="Quantity Produced" stroke="hsl(var(--chart-1))" strokeWidth={2} fillOpacity={1} fill="url(#colorQuantity)">
+                            <LabelList dataKey="quantity" position="top" className="fill-black font-bold" formatter={(value: number) => value > 0 ? value : null} />
+                        </Area>
+                    </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
@@ -202,15 +208,14 @@ export function ProductionReportsSummary() {
         <Separator />
          <div>
             <h3 className="font-semibold text-lg text-center mb-2">Daily Design Production (by Type)</h3>
-            <div className="h-[400px]">
-              <ChartContainer config={chartConfig} className="w-full h-full">
+             <ChartContainer config={chartConfig} className="w-full h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="date" />
                     <YAxis allowDecimals={false}/>
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend />
+                    <Legend wrapperStyle={{ bottom: 0 }}/>
                     <Bar dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
                         <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                     </Bar>
@@ -226,7 +231,6 @@ export function ProductionReportsSummary() {
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
-            </div>
         </div>
       </CardContent>
     </Card>
