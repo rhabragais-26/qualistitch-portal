@@ -17,6 +17,7 @@ import {
   Cell,
   ComposedChart,
   Line,
+  ReferenceLine,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -35,72 +36,90 @@ const chartConfig = {
   },
 };
 
-export function ProductionReportsSummary() {
-  const firestore = useFirestore();
-  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+const COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(220, 70%, 70%)',
+  'hsl(340, 70%, 70%)',
+];
 
-  const [reportData, setReportData] = useState<any>(null);
-  const [isReportLoading, setIsReportLoading] = useState(true);
+const StatusDoughnutCard = ({ title, count, total, color }: { title: string; count: number; total: number; color: string }) => {
+    const percentage = total > 0 ? (count / total) * 100 : 0;
+    const data = [
+        { name: title, value: count },
+        { name: 'other', value: Math.max(0, total - count) },
+    ];
+    const chartColors = [color, '#e5e7eb']; // Active color and a light gray for the rest
 
-  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+    return (
+        <Card className="flex flex-col items-center justify-start p-4 text-center">
+            <CardHeader className="p-0 mb-2">
+                <CardTitle className="text-lg font-medium">{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 relative w-36 h-36">
+                <ChartContainer config={{}} className="w-full h-full">
+                    <ResponsiveContainer>
+                        <PieChart>
+                            <Tooltip
+                                cursor={false}
+                                content={<ChartTooltipContent
+                                    hideLabel
+                                    formatter={(value, name) => (
+                                        <div className="flex flex-col">
+                                            <span className="font-bold">{name === 'other' ? 'Other' : title}</span>
+                                            <span>{value} orders</span>
+                                        </div>
+                                    )}
+                                />}
+                            />
+                            <Pie
+                                data={data}
+                                dataKey="value"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                innerRadius="60%"
+                                outerRadius="100%"
+                                startAngle={90}
+                                endAngle={450}
+                                stroke="none"
+                            >
+                                {data.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={chartColors[index]} />
+                                ))}
+                            </Pie>
+                        </PieChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-3xl font-bold">{count}</span>
+                </div>
+            </CardContent>
+            <div className="mt-2 text-center">
+                 <span className="text-sm font-bold">{percentage.toFixed(1)}%</span>
+            </div>
+        </Card>
+    );
+};
 
-  const { availableYears, monthOptions } = useMemo(() => {
-    if (!leads) {
-        const currentYear = new Date().getFullYear();
-        return {
-            availableYears: [currentYear.toString()],
-            monthOptions: Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: format(new Date(2000, i), 'MMMM') }))
-        };
-    }
-    const yearsSet = new Set(leads.map(l => getYear(new Date(l.submissionDateTime))));
-    const sortedYears = Array.from(yearsSet).sort((a, b) => b - a).map(String);
+const PriorityBar = ({ percentage, count, label, color }: { percentage: number, count: number, label: string, color: string }) => {
+    return (
+        <div className="flex flex-col items-center w-full">
+            <p className="font-medium text-sm self-start">{label}</p>
+            <div className="w-full h-8 bg-gray-200 rounded-lg my-1 relative overflow-hidden">
+                <div style={{ width: `${percentage}%`, backgroundColor: color }} className="h-full rounded-lg flex items-center justify-center transition-all duration-500">
+                    <span className="text-white font-bold text-sm">{percentage.toFixed(0)}%</span>
+                </div>
+            </div>
+            <p className="text-sm font-bold self-end">{count} orders</p>
+        </div>
+    )
+}
 
-    const months = Array.from({ length: 12 }, (_, i) => ({
-      value: (i + 1).toString(),
-      label: format(new Date(2000, i), 'MMMM')
-    }));
-
-    return { availableYears: sortedYears, monthOptions: months };
-  }, [leads]);
-
-  useEffect(() => {
-    if (areLeadsLoading) {
-        setIsReportLoading(true);
-        return;
-    }
-    if (!leads) {
-        setIsReportLoading(false);
-        setReportData(null);
-        return;
-    }
-    
-    const generate = async () => {
-        setIsReportLoading(true);
-        try {
-          const result = await generateProductionReportAction({ 
-              leads,
-              selectedMonth: selectedMonth,
-              selectedYear: selectedYear,
-          });
-          setReportData(result);
-        } catch (e: any) {
-          console.error('Failed to generate report:', e);
-          setReportData(null);
-        } finally {
-          setIsReportLoading(false);
-        }
-    };
-    generate();
-  }, [leads, areLeadsLoading, selectedMonth, selectedYear]);
-
-  const { dailyProgressData, dailyBreakdownData } = useMemo(() => {
-    if (!reportData) return { dailyProgressData: [], dailyBreakdownData: [] };
-    return reportData;
-  }, [reportData]);
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const designPayloads = payload.filter(p => ['logo', 'backDesign', 'names'].includes(p.dataKey));
       const totalDesigns = designPayloads.reduce((sum: number, entry: any) => sum + entry.value, 0);
@@ -134,25 +153,153 @@ export function ProductionReportsSummary() {
     }
   
     return null;
+};
+
+export function ProductionReportsSummary() {
+  
+  const firestore = useFirestore();
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+
+  const [reportData, setReportData] = useState<any>(null);
+  const [isReportLoading, setIsReportLoading] = useState(true);
+
+  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+
+  const { availableYears, monthOptions } = useMemo(() => {
+    if (!leads) {
+        const currentYear = new Date().getFullYear();
+        return {
+            availableYears: [currentYear.toString()],
+            monthOptions: Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: format(new Date(2000, i), 'MMMM') }))
+        };
+    }
+    const yearsSet = new Set(leads.map(l => getYear(new Date(l.submissionDateTime))));
+    const sortedYears = Array.from(yearsSet).sort((a, b) => b - a).map(String);
+
+    const months = Array.from({ length: 12 }, (_, i) => ({
+      value: (i + 1).toString(),
+      label: format(new Date(2000, i), 'MMMM')
+    }));
+
+    return { availableYears: sortedYears, monthOptions: months };
+  }, [leads]);
+  
+   useEffect(() => {
+    if (areLeadsLoading) {
+        setIsReportLoading(true);
+        return;
+    }
+    if (!leads) {
+        setIsReportLoading(false);
+        setReportData(null);
+        return;
+    }
+    
+    const generate = async () => {
+        setIsReportLoading(true);
+        try {
+          const result = await generateProductionReportAction({ 
+              leads,
+              selectedMonth: selectedMonth,
+              selectedYear: selectedYear,
+          });
+          setReportData(result);
+        } catch (e: any) {
+          console.error('Failed to generate report:', e);
+          setReportData(null);
+        } finally {
+          setIsReportLoading(false);
+        }
+    };
+    generate();
+  }, [leads, areLeadsLoading, selectedMonth, selectedYear]);
+
+
+  const { dailyProgressData, dailyBreakdownData } = useMemo(() => {
+    if (!reportData) return { dailyProgressData: [], dailyBreakdownData: [] };
+    return reportData;
+  }, [reportData]);
+
+  const totalPrograms = useMemo(() => {
+    if (!dailyBreakdownData) return 0;
+    return dailyBreakdownData.reduce((sum: any, item: any) => sum + item.doneJoCount, 0);
+  }, [dailyBreakdownData]);
+
+
+  const RADIAN = Math.PI / 180;
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, count, fill }: any) => {
+    if (percent === 0) return null;
+    const radiusInside = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const xInside = cx + radiusInside * Math.cos(-midAngle * RADIAN);
+    const yInside = cy + radiusInside * Math.sin(-midAngle * RADIAN);
+  
+    const radiusOutside = outerRadius + 15;
+    const xStart = cx + outerRadius * Math.cos(-midAngle * RADIAN);
+    const yStart = cy + outerRadius * Math.sin(-midAngle * RADIAN);
+    const xEnd = cx + radiusOutside * Math.cos(-midAngle * RADIAN);
+    const yEnd = cy + radiusOutside * Math.sin(-midAngle * RADIAN);
+    const textAnchor = xEnd > cx ? 'start' : 'end';
+  
+    return (
+      <g>
+        <text x={xInside} y={yInside} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={14}>
+          {`${(percent * 100).toFixed(0)}%`}
+        </text>
+        <path d={`M${xStart},${yStart} L${xEnd},${yEnd}`} stroke={fill} fill="none" />
+        <text x={xEnd + (xEnd > cx ? 1 : -1) * 4} y={yEnd} textAnchor={textAnchor} fill="#333" dominantBaseline="central" fontWeight="bold">
+          {`${count}`}
+        </text>
+      </g>
+    );
   };
 
+  const overdueColors: { [key: string]: string } = {
+      'On Track': '#22c55e', // green
+      'Nearly Overdue': '#eab308', // yellow
+      'Overdue': '#ef4444', // red
+  };
 
-  if (areLeadsLoading || isReportLoading) {
+  const isLoading = areLeadsLoading || isReportLoading;
+  const error = leadsError;
+
+  if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-8 w-1/2" />
-          <Skeleton className="h-4 w-3/4" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[300px] w-full" />
-        </CardContent>
-      </Card>
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-48 w-full" />
+            ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => (
+            <Card key={i} className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+                <CardHeader>
+                <Skeleton className="h-8 w-1/2" />
+                <Skeleton className="h-4 w-3/4" />
+                </CardHeader>
+                <CardContent>
+                <Skeleton className="h-[250px] w-full" />
+                </CardContent>
+            </Card>
+            ))}
+        </div>
+        <Card className="lg:col-span-3">
+             <CardHeader>
+              <Skeleton className="h-8 w-1/2" />
+              <Skeleton className="h-4 w-3/4" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[300px] w-full" />
+            </CardContent>
+        </Card>
+      </div>
     );
   }
 
-  if (leadsError) {
-    return <p className="text-destructive p-4">Error loading data: {leadsError.message}</p>;
+  if (error) {
+    return <p className="text-destructive p-4">Error loading data: {error.message}</p>;
   }
   
   if (!leads || leads.length === 0 || !reportData) {
@@ -162,6 +309,7 @@ export function ProductionReportsSummary() {
         </div>
       );
   }
+
 
   return (
     <Card>
@@ -220,7 +368,23 @@ export function ProductionReportsSummary() {
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} scale="band" />
+                    <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        dy={10}
+                        interval={0}
+                        tick={{ fontSize: 12 }}
+                    />
+                    <XAxis
+                        dataKey="date"
+                        orientation="top"
+                        tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)), 'E')}
+                        tickLine={false}
+                        axisLine={false}
+                        interval={0}
+                        height={1}
+                        tick={{ fontSize: 10 }}
+                    />
                     <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
                     <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
                     <Tooltip content={<CustomTooltip />} />
@@ -257,3 +421,4 @@ export function ProductionReportsSummary() {
     </Card>
   );
 }
+
