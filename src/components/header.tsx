@@ -558,13 +558,13 @@ const HeaderMemo = React.memo(function Header({
                           <PackageSearch className="mr-2" />
                           Shipment Queue
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleNavigation('/logistics/summary')}>
-                          <LineChart className="mr-2" />
-                          Reports
-                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleNavigation('/inventory/operational-cases')}>
                         <TriangleAlert className="mr-2" />
                         Operational Cases
+                      </DropdownMenuItem>
+                       <DropdownMenuItem onClick={() => handleNavigation('/logistics/summary')}>
+                          <LineChart className="mr-2" />
+                          Reports
                       </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
