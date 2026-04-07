@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -558,8 +559,8 @@ const HeaderMemo = React.memo(function Header({
                           Shipment Queue
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleNavigation('/logistics/summary')}>
-                          <FileText className="mr-2" />
-                          Summary
+                          <LineChart className="mr-2" />
+                          Reports
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleNavigation('/inventory/operational-cases')}>
                         <TriangleAlert className="mr-2" />
