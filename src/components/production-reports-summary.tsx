@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { AreaChart, Area, PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine, ComposedChart } from 'recharts';
+import { Area, AreaChart, PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine, ComposedChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -375,30 +375,40 @@ export function ProductionReportsSummary() {
                           <CartesianGrid strokeDasharray="3 3" vertical={false} />
                           <XAxis
                               dataKey="date"
-                              tickLine={true}
-                              axisLine={true}
+                              xAxisId="bottom"
                               dy={10}
                               interval={0}
                               tick={{ fontSize: 12 }}
-                              scale="band"
+                          />
+                          <XAxis
+                              dataKey="date"
+                              xAxisId="top"
+                              orientation="top"
+                              tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)), 'E')}
+                              tickLine={false}
+                              axisLine={false}
+                              interval={0}
+                              height={1}
+                              tick={{ fontSize: 10 }}
                           />
                           <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
                           <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend wrapperStyle={{ bottom: 0 }}/>
                           <ReferenceLine y={0} yAxisId="left" stroke="#000" />
-                          <Bar yAxisId="left" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                          <Bar yAxisId="left" xAxisId="bottom" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
                               <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                           </Bar>
-                          <Bar yAxisId="left" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
+                          <Bar yAxisId="left" xAxisId="bottom" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
                               <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                           </Bar>
-                          <Bar yAxisId="left" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
+                          <Bar yAxisId="left" xAxisId="bottom" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
                               <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                              <LabelList content={renderTotalLabel} />
+                              <LabelList dataKey="total" content={renderTotalLabel} />
                           </Bar>
                           <Line 
                               yAxisId="right" 
+                              xAxisId="bottom"
                               type="monotone" 
                               dataKey="doneJoCount" 
                               name="J.O.s Done" 
