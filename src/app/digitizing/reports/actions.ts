@@ -1,5 +1,4 @@
 
-
 'use server';
 import { z } from 'zod';
 import { addDays, differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval, getYear, getMonth } from 'date-fns';
@@ -112,7 +111,8 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
         const leadsForOverdue = typedLeads.filter(lead => 
             lead.joNumber && 
             !lead.isDigitizingArchived && 
-            !orderTypesToSkip.includes(lead.orderType)
+            !orderTypesToSkip.includes(lead.orderType) &&
+            (priorityFilter === 'All' || lead.priorityType === priorityFilter)
         );
         leadsForOverdue.forEach(lead => {
             const submissionDate = new Date(lead.submissionDateTime);

@@ -242,7 +242,7 @@ export function DigitizingReportsSummary() {
       </g>
     );
   };
-
+  
   const renderTotalLabel = (props: any) => {
     const { x, y, width, value, payload } = props;
     if (!payload || typeof x !== 'number' || typeof y !== 'number') return null;
