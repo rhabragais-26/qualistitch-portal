@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine } from 'recharts';
+import { AreaChart, Area, PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine, ComposedChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -13,7 +12,6 @@ import { getYear, format, parse } from 'date-fns';
 import type { Lead } from '@/app/production/reports/actions';
 import { Separator } from './ui/separator';
 import { generateProductionReportAction } from '@/app/production/reports/actions';
-import { ComposedChart } from 'recharts';
 
 const chartConfig = {
   count: {
@@ -369,19 +367,19 @@ export function ProductionReportsSummary() {
             <CardHeader className="p-0 mb-4">
                 <CardTitle className="text-lg text-center">Daily Productivity by Design Type</CardTitle>
             </CardHeader>
-            <CardContent className="h-80 p-0">
+            <CardContent className="h-[400px] p-0">
               <ChartContainer config={chartConfig} className="w-full h-full">
                   <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis
+                           <XAxis
                             dataKey="date"
-                            scale="band"
                             tickLine={true}
                             axisLine={true}
                             dy={10}
                             interval={0}
                             tick={{ fontSize: 12 }}
+                            scale="band" 
                             xAxisId="bottom"
                           />
                           <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
@@ -409,7 +407,6 @@ export function ProductionReportsSummary() {
                               strokeWidth={2}
                               dot={{ r: 4 }}
                               activeDot={{ r: 6 }}
-                              isFront={true}
                           >
                             <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="#ff7300" fontWeight="bold" />
                           </Line>
