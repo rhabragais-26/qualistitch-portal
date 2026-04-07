@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { AreaChart, Area, PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine, ComposedChart } from 'recharts';
+import { Area, AreaChart, PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine, ComposedChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -150,6 +149,7 @@ export function ProductionReportsSummary() {
   const [reportData, setReportData] = useState<any>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
 
+  const [priorityFilter, setPriorityFilter] = useState('All');
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
@@ -201,7 +201,7 @@ export function ProductionReportsSummary() {
         }
     };
     generate();
-  }, [leads, users, areLeadsLoading, areUsersLoading, selectedMonth, selectedYear]);
+  }, [leads, users, areLeadsLoading, areUsersLoading, selectedMonth, selectedYear, priorityFilter]);
 
 
   const { dailyProgressData, dailyBreakdownData, designTypeQuantities } = useMemo(() => {
@@ -274,23 +274,8 @@ export function ProductionReportsSummary() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-48 w-full" />
-            ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-            <Card key={i} className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-                <CardHeader>
-                <Skeleton className="h-8 w-1/2" />
-                <Skeleton className="h-4 w-3/4" />
-                </CardHeader>
-                <CardContent>
-                <Skeleton className="h-[250px] w-full" />
-                </CardContent>
-            </Card>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
         </div>
         <Card className="lg:col-span-3">
              <CardHeader>
@@ -343,25 +328,6 @@ export function ProductionReportsSummary() {
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
-        <Card>
-          <CardHeader>
-              <CardTitle>Total Items Embroidered</CardTitle>
-              <CardDescription>
-                  Total quantity of embroidered items based on design type for the selected month.
-              </CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {designTypeQuantities.map((item: any) => (
-                  <StatusDoughnutCard
-                      key={item.name}
-                      title={item.name}
-                      count={item.count}
-                      total={totalDesignQuantities}
-                      color={item.color}
-                  />
-              ))}
-          </CardContent>
-        </Card>
         <div>
             <h3 className="font-semibold text-lg text-center mb-2">Daily Production Output (by Item Quantity)</h3>
             <div className="h-[400px]">
@@ -397,46 +363,66 @@ export function ProductionReportsSummary() {
                       <ResponsiveContainer>
                           <ComposedChart
                               data={dailyBreakdownData}
-                              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                              margin={{ top: 20, right: 0, left: 0, bottom: 20 }}
                               barGap={0}
                               barCategoryGap="20%"
                           >
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="date" xAxisId="bottom" tickLine={false} axisLine={true} dy={10} interval={0} tick={{ fontSize: 12 }} scale="band" />
-                              <XAxis dataKey="date" xAxisId="top" orientation="top" tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)), 'E')} tickLine={false} axisLine={false} interval={0} height={1} tick={{ fontSize: 10 }} />
-                              <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
-                              <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
-                              <Tooltip content={<CustomTooltip />} />
-                              <Legend wrapperStyle={{ bottom: 0 }}/>
-                              <ReferenceLine y={0} yAxisId="left" xAxisId="bottom" stroke="#000" />
-                              <Bar yAxisId="left" xAxisId="bottom" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
-                                  <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                              </Bar>
-                              <Bar yAxisId="left" xAxisId="bottom" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
-                                  <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                              </Bar>
-                              <Bar yAxisId="left" xAxisId="bottom" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
-                                  <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                                  <LabelList dataKey="total" content={renderTotalLabel} />
-                              </Bar>
-                              <Line
-                                  yAxisId="right"
-                                  xAxisId="bottom"
-                                  type="monotone" 
-                                  dataKey="doneJoCount" 
-                                  name="J.O.s Done" 
-                                  stroke="purple"
-                                  strokeWidth={2}
-                                  dot={{ r: 4, fill: 'purple' }}
-                                  activeDot={{ r: 6 }}
-                              >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" xAxisId="bottom" tickLine={false} axisLine={true} dy={10} interval={0} tick={{ fontSize: 12 }} scale="band" />
+                            <XAxis dataKey="date" xAxisId="top" orientation="top" tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)), 'E')} tickLine={false} axisLine={false} interval={0} height={1} tick={{ fontSize: 10 }} />
+                            <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
+                            <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend wrapperStyle={{ bottom: 0 }}/>
+                            <ReferenceLine y={0} yAxisId="left" stroke="#000" xAxisId="bottom" />
+                            <Bar yAxisId="left" xAxisId="bottom" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                                <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                            </Bar>
+                            <Bar yAxisId="left" xAxisId="bottom" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
+                                <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                            </Bar>
+                            <Bar yAxisId="left" xAxisId="bottom" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
+                                <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                                <LabelList dataKey="total" content={renderTotalLabel} />
+                            </Bar>
+                            <Line
+                                yAxisId="right"
+                                xAxisId="bottom"
+                                type="monotone" 
+                                dataKey="doneJoCount" 
+                                name="J.O.s Done" 
+                                stroke="purple"
+                                strokeWidth={2}
+                                dot={{ r: 4, fill: 'purple' }}
+                                activeDot={{ r: 6 }}
+                            >
                                 <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="purple" fontWeight="bold" />
-                              </Line>
+                            </Line>
                           </ComposedChart>
                       </ResponsiveContainer>
                   </ChartContainer>
             </CardContent>
           </div>
+          <Separator />
+          <div>
+            <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-lg text-center">Total Items Embroidered</CardTitle>
+                <CardDescription className="text-center text-sm">
+                    Total quantity of embroidered items based on design type for the selected month.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 p-0">
+                {designTypeQuantities.map((item: any) => (
+                    <StatusDoughnutCard
+                        key={item.name}
+                        title={item.name}
+                        count={item.count}
+                        total={totalDesignQuantities}
+                        color={item.color}
+                    />
+                ))}
+            </CardContent>
+        </div>
       </CardContent>
     </Card>
   );
