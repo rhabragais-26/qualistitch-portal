@@ -369,63 +369,64 @@ export function ProductionReportsSummary() {
                 <CardTitle className="text-lg text-center">Daily Productivity by Design Type</CardTitle>
             </CardHeader>
             <CardContent className="h-[400px] p-0">
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis
-                              dataKey="date"
-                              xAxisId="bottom"
-                              dy={10}
-                              interval={0}
-                              tick={{ fontSize: 12 }}
-                          />
-                          <XAxis
-                              dataKey="date"
-                              xAxisId="top"
-                              orientation="top"
-                              tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)), 'E')}
-                              tickLine={false}
-                              axisLine={false}
-                              interval={0}
-                              height={1}
-                              tick={{ fontSize: 10 }}
-                          />
-                          <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
-                          <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
-                          <Tooltip content={<CustomTooltip />} />
-                          <Legend wrapperStyle={{ bottom: 0 }}/>
-                          <ReferenceLine y={0} yAxisId="left" stroke="#000" />
-                          <Bar yAxisId="left" xAxisId="bottom" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
-                              <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                          </Bar>
-                          <Bar yAxisId="left" xAxisId="bottom" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
-                              <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                          </Bar>
-                          <Bar yAxisId="left" xAxisId="bottom" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
-                              <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                              <LabelList dataKey="total" content={renderTotalLabel} />
-                          </Bar>
-                          <Line 
-                              yAxisId="right" 
-                              xAxisId="bottom"
-                              type="monotone" 
-                              dataKey="doneJoCount" 
-                              name="J.O.s Done" 
-                              stroke="#8884d8" 
-                              strokeWidth={2}
-                              dot={{ r: 4 }}
-                              activeDot={{ r: 6 }}
-                          >
-                            <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="#8884d8" fontWeight="bold" />
-                          </Line>
-                      </ComposedChart>
-                  </ResponsiveContainer>
-              </ChartContainer>
+                  <ChartContainer config={chartConfig} className="w-full h-full">
+                      <ResponsiveContainer>
+                          <ComposedChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                              <XAxis
+                                  dataKey="date"
+                                  xAxisId="bottom"
+                                  tickLine={false}
+                                  axisLine={false}
+                                  dy={10}
+                                  interval={0}
+                                  tick={{ fontSize: 12 }}
+                              />
+                              <XAxis
+                                  dataKey="date"
+                                  xAxisId="top"
+                                  orientation="top"
+                                  tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)), 'E')}
+                                  tickLine={false}
+                                  axisLine={false}
+                                  interval={0}
+                                  height={1}
+                                  tick={{ fontSize: 10 }}
+                              />
+                              <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
+                              <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
+                              <Tooltip content={<CustomTooltip />} />
+                              <Legend wrapperStyle={{ bottom: 0 }}/>
+                              <ReferenceLine y={0} yAxisId="left" xAxisId="bottom" stroke="#000" />
+                              <Bar yAxisId="left" xAxisId="bottom" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                                  <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                              </Bar>
+                              <Bar yAxisId="left" xAxisId="bottom" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
+                                  <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                              </Bar>
+                              <Bar yAxisId="left" xAxisId="bottom" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
+                                  <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                                  <LabelList dataKey="total" content={renderTotalLabel} />
+                              </Bar>
+                              <Line 
+                                  yAxisId="right" 
+                                  xAxisId="bottom"
+                                  type="monotone" 
+                                  dataKey="doneJoCount" 
+                                  name="J.O.s Done" 
+                                  stroke="#880088" 
+                                  strokeWidth={2}
+                                  dot={{ r: 4 }}
+                                  activeDot={{ r: 6 }}
+                              >
+                                <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="#880088" fontWeight="bold" />
+                              </Line>
+                          </ComposedChart>
+                      </ResponsiveContainer>
+                  </ChartContainer>
             </CardContent>
           </div>
       </CardContent>
     </Card>
   );
 }
-
