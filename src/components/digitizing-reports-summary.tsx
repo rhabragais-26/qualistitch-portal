@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine, ComposedChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -104,25 +104,30 @@ const PriorityBar = ({ percentage, count, label, color }: { percentage: number, 
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
+      const designPayloads = payload.filter(p => ['logo', 'backDesign', 'names'].includes(p.dataKey));
+      const totalDesigns = designPayloads.reduce((sum: number, entry: any) => sum + entry.value, 0);
+      
       return (
         <div className="bg-card p-2.5 text-card-foreground rounded-md border shadow-md">
           <p className="font-bold mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-sm">
-              <div className="flex items-center">
-                <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: entry.fill }} />
-                <span>{entry.name}:</span>
+          {payload.map((entry: any, index: number) => {
+            if (entry.dataKey === 'total') return null;
+            return (
+              <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-sm">
+                <div className="flex items-center">
+                  <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: entry.stroke || entry.fill }} />
+                  <span>{entry.name}:</span>
+                </div>
+                <span className="font-bold">{entry.value}</span>
               </div>
-              <span className="font-bold">{entry.value}</span>
-            </div>
-          ))}
-          {payload.length > 1 && (
+            );
+          })}
+          {designPayloads.length > 0 && (
             <>
               <Separator className="my-2" />
               <div className="flex items-center justify-between font-bold text-sm">
-                  <span>Total:</span>
-                  <span>{total}</span>
+                  <span>Total Designs:</span>
+                  <span>{totalDesigns}</span>
               </div>
             </>
           )}
@@ -144,6 +149,7 @@ export function DigitizingReportsSummary() {
   const [reportData, setReportData] = useState<any>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
 
+  const [priorityFilter, setPriorityFilter] = useState('All');
   const [progressChartMonth, setProgressChartMonth] = useState((new Date().getMonth() + 1).toString());
   const [progressChartYear, setProgressChartYear] = useState(new Date().getFullYear().toString());
 
@@ -183,7 +189,7 @@ export function DigitizingReportsSummary() {
           const result = await generateDigitizingReportAction({ 
               leads,
               users,
-              priorityFilter: 'All',
+              priorityFilter: priorityFilter,
               selectedMonth: progressChartMonth,
               selectedYear: progressChartYear,
           });
@@ -196,7 +202,7 @@ export function DigitizingReportsSummary() {
         }
     };
     generate();
-  }, [leads, users, areLeadsLoading, areUsersLoading, progressChartMonth, progressChartYear]);
+  }, [leads, users, areLeadsLoading, areUsersLoading, progressChartMonth, progressChartYear, priorityFilter]);
 
 
   const { statusSummary, overdueSummary, digitizerSummary, dailyProgressData, totalStatusCount, ongoingVsCompletedData, monthlyProgramsDone } = useMemo(() => {
@@ -235,6 +241,21 @@ export function DigitizingReportsSummary() {
         </text>
       </g>
     );
+  };
+
+  const renderTotalLabel = (props: any) => {
+    const { x, y, width, value, payload } = props;
+    if (!payload || typeof x !== 'number' || typeof y !== 'number') return null;
+    const { total } = payload;
+  
+    if (total > 0) {
+      return (
+        <text x={x + width / 2} y={y} dy={-4} fill="#000" fontSize={12} textAnchor="middle" fontWeight="bold">
+          {total}
+        </text>
+      );
+    }
+    return null;
   };
 
   const overdueColors: { [key: string]: string } = {
@@ -413,6 +434,16 @@ export function DigitizingReportsSummary() {
                         <CardDescription>Combined count of Uploaded Initial Program Images and Final DST Files (Logo, Back Design and Names) on a daily basis</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
+                        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Filter Priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="All">All Priorities</SelectItem>
+                                <SelectItem value="Rush">Rush</SelectItem>
+                                <SelectItem value="Regular">Regular</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <Select value={progressChartYear} onValueChange={setProgressChartYear}>
                             <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
                             <SelectContent>

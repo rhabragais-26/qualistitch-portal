@@ -147,10 +147,15 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
         const year = parseInt(selectedYear, 10);
         const month = parseInt(selectedMonth, 10) - 1;
         
+        const leadsForChart = typedLeads.filter(lead => {
+            if (priorityFilter === 'All') return true;
+            return lead.priorityType === priorityFilter;
+        });
+
         const activeDigitizers = new Set(typedUsers.filter(u => u.position !== 'RESIGNED').map(u => u.nickname));
         
         const allUploaders = new Set<string>();
-        typedLeads.forEach(lead => {
+        leadsForChart.forEach(lead => {
             lead.layouts?.forEach(layout => {
                 const checkUploader = (uploader: string | null | undefined) => { if (uploader && activeDigitizers.has(uploader)) allUploaders.add(uploader); };
                 const checkUploaders = (uploaders: (string | null)[] | undefined) => { (uploaders || []).forEach(checkUploader); };
@@ -167,7 +172,7 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
         
         const dailyCounts: { [date: string]: { [uploader: string]: number } } = {};
         
-        typedLeads.forEach(lead => {
+        leadsForChart.forEach(lead => {
             lead.layouts?.forEach(layout => {
                 const processUploads = (items: { uploadTime?: string; uploadedBy?: string; }[] | undefined) => {
                     (items || []).forEach(item => {
@@ -235,8 +240,13 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
         const month = parseInt(selectedMonth, 10) - 1;
         const counts: Record<string, { logo: number, backDesign: number, names: number }> = {};
         const activeDigitizers = new Set(typedUsers.filter(u => u.position !== 'RESIGNED').map(u => u.nickname));
+        
+        const leadsForChart = typedLeads.filter(lead => {
+            if (priorityFilter === 'All') return true;
+            return lead.priorityType === priorityFilter;
+        });
 
-        typedLeads.forEach(lead => {
+        leadsForChart.forEach(lead => {
             lead.layouts?.forEach(layout => {
                 const processFileArrays = (files: (FileObject | null)[] | undefined, times: (string | null)[] | undefined, uploaders: (string | null)[] | undefined, type: 'logo' | 'backDesign' | 'names') => {
                     (files || []).forEach((file, index) => {
