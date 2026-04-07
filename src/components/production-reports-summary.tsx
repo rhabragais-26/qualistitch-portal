@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -372,43 +373,41 @@ export function ProductionReportsSummary() {
                   <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                           <XAxis
-                            dataKey="date"
-                            tickLine={true}
-                            axisLine={true}
-                            dy={10}
-                            interval={0}
-                            tick={{ fontSize: 12 }}
-                            scale="band" 
-                            xAxisId="bottom"
+                          <XAxis
+                              dataKey="date"
+                              tickLine={true}
+                              axisLine={true}
+                              dy={10}
+                              interval={0}
+                              tick={{ fontSize: 12 }}
+                              scale="band"
                           />
                           <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
                           <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend wrapperStyle={{ bottom: 0 }}/>
-                          <ReferenceLine y={0} yAxisId="left" stroke="#000" xAxisId="bottom" />
-                          <Bar yAxisId="left" xAxisId="bottom" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                          <ReferenceLine y={0} yAxisId="left" stroke="#000" />
+                          <Bar yAxisId="left" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
                               <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                           </Bar>
-                          <Bar yAxisId="left" xAxisId="bottom" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
+                          <Bar yAxisId="left" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
                               <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                           </Bar>
-                          <Bar yAxisId="left" xAxisId="bottom" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
+                          <Bar yAxisId="left" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
                               <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                               <LabelList content={renderTotalLabel} />
                           </Bar>
                           <Line 
                               yAxisId="right" 
-                              xAxisId="bottom"
                               type="monotone" 
                               dataKey="doneJoCount" 
                               name="J.O.s Done" 
-                              stroke="#ff7300" 
+                              stroke="#8884d8" 
                               strokeWidth={2}
                               dot={{ r: 4 }}
                               activeDot={{ r: 6 }}
                           >
-                            <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="#ff7300" fontWeight="bold" />
+                            <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="#8884d8" fontWeight="bold" />
                           </Line>
                       </ComposedChart>
                   </ResponsiveContainer>
@@ -419,3 +418,4 @@ export function ProductionReportsSummary() {
     </Card>
   );
 }
+
