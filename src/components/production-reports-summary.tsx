@@ -1,24 +1,8 @@
 
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  LabelList,
-  BarChart,
-  Bar,
-  Cell,
-  ComposedChart,
-  Line,
-  ReferenceLine,
-} from 'recharts';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -27,8 +11,9 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { getYear, format, parse } from 'date-fns';
 import type { Lead } from '@/app/production/reports/actions';
-import { generateProductionReportAction } from '@/app/production/reports/actions';
 import { Separator } from './ui/separator';
+import { generateProductionReportAction } from '@/app/production/reports/actions';
+import { ComposedChart } from 'recharts';
 
 const chartConfig = {
   count: {
@@ -204,8 +189,7 @@ export function ProductionReportsSummary() {
         try {
           const result = await generateProductionReportAction({ 
               leads,
-              users,
-              priorityFilter: 'All',
+              users: [],
               selectedMonth: selectedMonth,
               selectedYear: selectedYear,
           });
@@ -257,6 +241,21 @@ export function ProductionReportsSummary() {
         </text>
       </g>
     );
+  };
+  
+  const renderTotalLabel = (props: any) => {
+    const { x, y, width, value, payload } = props;
+    if (!payload || typeof x !== 'number' || typeof y !== 'number') return null;
+    const { total } = payload;
+  
+    if (total > 0) {
+      return (
+        <text x={x + width / 2} y={y} dy={-4} fill="#000" fontSize={12} textAnchor="middle" fontWeight="bold">
+          {total}
+        </text>
+      );
+    }
+    return null;
   };
 
   const overdueColors: { [key: string]: string } = {
@@ -358,7 +357,7 @@ export function ProductionReportsSummary() {
                         <Tooltip content={<ChartTooltipContent />} />
                         <Legend />
                         <Area type="monotone" dataKey="quantity" name="Quantity Produced" stroke="hsl(var(--chart-1))" strokeWidth={2} fillOpacity={1} fill="url(#colorQuantity)">
-                            <LabelList dataKey="quantity" position="top" className="fill-black font-bold" formatter={(value: number) => value > 0 ? value : null} />
+                             <LabelList dataKey="quantity" position="top" className="fill-black font-bold" formatter={(value: number) => value > 0 ? value : null} />
                         </Area>
                     </AreaChart>
                 </ResponsiveContainer>
@@ -367,66 +366,58 @@ export function ProductionReportsSummary() {
         </div>
         <Separator />
          <div>
-            <h3 className="font-semibold text-lg text-center mb-2">Daily Productivity by Design Type</h3>
-             <ChartContainer config={chartConfig} className="w-full h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                        dataKey="date"
-                        tickLine={true} 
-                        axisLine={true} 
-                        dy={10}
-                        interval={0}
-                        tick={{ fontSize: 12 }}
-                        xAxisId="bottom"
-                    />
-                    <XAxis
-                        dataKey="date"
-                        orientation="top"
-                        tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)), 'E')}
-                        tickLine={false}
-                        axisLine={false}
-                        interval={0}
-                        height={1}
-                        tick={{ fontSize: 10 }}
-                        xAxisId="top"
-                    />
-                    <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
-                    <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ bottom: 0 }}/>
-                    <ReferenceLine y={0} yAxisId="left" xAxisId="bottom" stroke="#000" />
-                    <Bar yAxisId="left" xAxisId="bottom" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
-                        <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                    </Bar>
-                    <Bar yAxisId="left" xAxisId="bottom" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
-                        <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                    </Bar>
-                    <Bar yAxisId="left" xAxisId="bottom" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
-                        <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
-                    </Bar>
-                    <Bar yAxisId="left" xAxisId="bottom" dataKey="total" name="Total Designs" fill="transparent">
-                        <LabelList dataKey="total" position="top" className="fill-black" formatter={(value: number) => value > 0 ? value : ''} />
-                    </Bar>
-                    <Line 
-                        yAxisId="right" 
-                        xAxisId="bottom"
-                        type="monotone" 
-                        dataKey="doneJoCount" 
-                        name="J.O.s Done" 
-                        stroke="#ff7300" 
-                        strokeWidth={2}
-                        dot={{ r: 4 }}
-                        activeDot={{ r: 6 }}
-                        isFront={true}
-                    >
-                      <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="#ff7300" fontWeight="bold" />
-                    </Line>
-                  </ComposedChart>
-                </ResponsiveContainer>
+            <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-lg text-center">Daily Productivity by Design Type</CardTitle>
+            </CardHeader>
+            <CardContent className="h-80 p-0">
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={dailyBreakdownData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis
+                            dataKey="date"
+                            scale="band"
+                            tickLine={true}
+                            axisLine={true}
+                            dy={10}
+                            interval={0}
+                            tick={{ fontSize: 12 }}
+                            xAxisId="bottom"
+                          />
+                          <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
+                          <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend wrapperStyle={{ bottom: 0 }}/>
+                          <ReferenceLine y={0} yAxisId="left" stroke="#000" xAxisId="bottom" />
+                          <Bar yAxisId="left" xAxisId="bottom" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                              <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                          </Bar>
+                          <Bar yAxisId="left" xAxisId="bottom" dataKey="backDesign" stackId="a" name="Back Designs" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]}>
+                              <LabelList dataKey="backDesign" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                          </Bar>
+                          <Bar yAxisId="left" xAxisId="bottom" dataKey="names" stackId="a" name="Names" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]}>
+                              <LabelList dataKey="names" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
+                              <LabelList content={renderTotalLabel} />
+                          </Bar>
+                          <Line 
+                              yAxisId="right" 
+                              xAxisId="bottom"
+                              type="monotone" 
+                              dataKey="doneJoCount" 
+                              name="J.O.s Done" 
+                              stroke="#ff7300" 
+                              strokeWidth={2}
+                              dot={{ r: 4 }}
+                              activeDot={{ r: 6 }}
+                              isFront={true}
+                          >
+                            <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="#ff7300" fontWeight="bold" />
+                          </Line>
+                      </ComposedChart>
+                  </ResponsiveContainer>
               </ChartContainer>
-        </div>
+            </CardContent>
+          </div>
       </CardContent>
     </Card>
   );
