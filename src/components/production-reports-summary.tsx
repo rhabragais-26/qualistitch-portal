@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { Area, AreaChart, PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine, ComposedChart } from 'recharts';
+import { AreaChart, Area, PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, LineChart, Line, ReferenceLine, ComposedChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -204,10 +204,15 @@ export function ProductionReportsSummary() {
   }, [leads, users, areLeadsLoading, areUsersLoading, selectedMonth, selectedYear]);
 
 
-  const { dailyProgressData, dailyBreakdownData } = useMemo(() => {
-    if (!reportData) return { dailyProgressData: [], dailyBreakdownData: [] };
+  const { dailyProgressData, dailyBreakdownData, designTypeQuantities } = useMemo(() => {
+    if (!reportData) return { dailyProgressData: [], dailyBreakdownData: [], designTypeQuantities: [] };
     return reportData;
   }, [reportData]);
+  
+  const totalDesignQuantities = useMemo(() => {
+    if (!designTypeQuantities) return 0;
+    return designTypeQuantities.reduce((sum: number, item: any) => sum + item.count, 0);
+  }, [designTypeQuantities]);
 
   const totalPrograms = useMemo(() => {
     if (!dailyBreakdownData) return 0;
@@ -338,6 +343,25 @@ export function ProductionReportsSummary() {
         </div>
       </CardHeader>
       <CardContent className="space-y-8">
+        <Card>
+          <CardHeader>
+              <CardTitle>Total Items Embroidered</CardTitle>
+              <CardDescription>
+                  Total quantity of embroidered items based on design type for the selected month.
+              </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {designTypeQuantities.map((item: any) => (
+                  <StatusDoughnutCard
+                      key={item.name}
+                      title={item.name}
+                      count={item.count}
+                      total={totalDesignQuantities}
+                      color={item.color}
+                  />
+              ))}
+          </CardContent>
+        </Card>
         <div>
             <h3 className="font-semibold text-lg text-center mb-2">Daily Production Output (by Item Quantity)</h3>
             <div className="h-[400px]">
@@ -373,10 +397,12 @@ export function ProductionReportsSummary() {
                       <ResponsiveContainer>
                           <ComposedChart
                               data={dailyBreakdownData}
-                              margin={{ top: 20, right: 5, left: 20, bottom: 20 }}
+                              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                              barGap={0}
+                              barCategoryGap="20%"
                           >
                               <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="date" xAxisId="bottom" tickLine={true} axisLine={true} dy={10} interval={0} tick={{ fontSize: 12 }} />
+                              <XAxis dataKey="date" xAxisId="bottom" tickLine={false} axisLine={true} dy={10} interval={0} tick={{ fontSize: 12 }} scale="band" />
                               <XAxis dataKey="date" xAxisId="top" orientation="top" tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1)), 'E')} tickLine={false} axisLine={false} interval={0} height={1} tick={{ fontSize: 10 }} />
                               <YAxis yAxisId="left" orientation="left" allowDecimals={false} />
                               <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
@@ -394,14 +420,14 @@ export function ProductionReportsSummary() {
                                   <LabelList dataKey="total" content={renderTotalLabel} />
                               </Bar>
                               <Line
-                                  yAxisId="right" 
+                                  yAxisId="right"
                                   xAxisId="bottom"
                                   type="monotone" 
                                   dataKey="doneJoCount" 
                                   name="J.O.s Done" 
                                   stroke="purple"
                                   strokeWidth={2}
-                                  dot={{ r: 4 }}
+                                  dot={{ r: 4, fill: 'purple' }}
                                   activeDot={{ r: 6 }}
                               >
                                 <LabelList dataKey="doneJoCount" position="top" formatter={(value: number) => value > 0 ? value : null} fill="purple" fontWeight="bold" />
