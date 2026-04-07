@@ -33,37 +33,50 @@ const COLORS = {
   awaitingSalesAudit: 'hsl(var(--chart-2))',
 };
 
-const DoughnutChart = ({ data, title }: { data: { name: string; value: number; fill: string }[], title: string }) => (
-    <div className="w-full h-[250px] flex flex-col items-center">
-        <h3 className="text-center font-semibold text-lg mb-2">{title}</h3>
-        {data[0].value > 0 ? (
-            <ChartContainer config={chartConfig} className="w-full h-full max-w-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Tooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="60%" outerRadius="80%">
-                            {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                        </Pie>
-                        <text
-                            x="50%"
-                            y="50%"
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                            className="fill-foreground text-3xl font-bold"
-                        >
-                            {data[0].value}
-                        </text>
-                    </PieChart>
-                </ResponsiveContainer>
-            </ChartContainer>
-        ) : (
-             <div className="flex-1 flex items-center justify-center text-muted-foreground">No data</div>
-        )}
-    </div>
-);
+const DoughnutChart = ({ data, title, total }: { data: { name: string; value: number; fill: string }[], title: string, total: number }) => {
+    const value = data.length > 0 ? data[0].value : 0;
+    const percentage = total > 0 ? (value / total) * 100 : 0;
+    const chartData = [
+        { name: title, value: value },
+        { name: 'other', value: Math.max(0, total - value) },
+    ];
+    const chartColors = [data.length > 0 ? data[0].fill : '#ccc', '#e5e7eb']; // Active color and a light gray for the rest
 
+    return (
+        <div className="w-full h-[250px] flex flex-col items-center">
+            <h3 className="text-center font-semibold text-lg mb-2">{title}</h3>
+            {value > 0 ? (
+                <ChartContainer config={chartConfig} className="w-full h-full max-w-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Tooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                            <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="60%" outerRadius="80%" stroke="none">
+                                {chartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                                ))}
+                            </Pie>
+                            <text
+                                x="50%"
+                                y="50%"
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                className="fill-foreground text-3xl font-bold"
+                            >
+                                {value}
+                            </text>
+                        </PieChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+            ) : (
+                 <div className="flex-1 flex items-center justify-center text-muted-foreground">No data</div>
+            )}
+            <div className="mt-2 text-center">
+                 <span className="text-sm font-bold">{percentage.toFixed(1)}%</span>
+                 <p className="text-xs text-muted-foreground">of {total} total</p>
+            </div>
+        </div>
+    );
+};
 
 const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   const firestore = useFirestore();
@@ -71,21 +84,30 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   const summaryData = useMemo(() => {
-    if (!leads) return { awaitingQualityCheck: 0, awaitingSalesAudit: 0 };
+    if (!leads) return { awaitingQualityCheck: 0, totalForQualityCheck: 0, awaitingSalesAudit: 0, totalForSalesAudit: 0 };
     
+    const totalForQualityCheck = leads.filter(
+        lead => lead.isEndorsedToLogistics
+    ).length;
+
     const awaitingQualityCheck = leads.filter(
         lead => lead.isEndorsedToLogistics && !lead.isQualityApproved
+    ).length;
+
+    const totalForSalesAudit = leads.filter(
+        lead => lead.isSalesAuditRequested || lead.isSalesAuditComplete
     ).length;
 
     const awaitingSalesAudit = leads.filter(
         lead => lead.isSalesAuditRequested && !lead.isSalesAuditComplete
     ).length;
 
-    return { awaitingQualityCheck, awaitingSalesAudit };
+    return { awaitingQualityCheck, totalForQualityCheck, awaitingSalesAudit, totalForSalesAudit };
   }, [leads]);
   
-  const qualityCheckData = [{ name: 'Awaiting Quality Check', value: summaryData.awaitingQualityCheck, fill: COLORS.awaitingQualityCheck }];
-  const salesAuditData = [{ name: 'Awaiting Sales Audit', value: summaryData.awaitingSalesAudit, fill: COLORS.awaitingSalesAudit }];
+  const { awaitingQualityCheck, totalForQualityCheck, awaitingSalesAudit, totalForSalesAudit } = summaryData;
+  const qualityCheckData = [{ name: 'Awaiting Quality Check', value: awaitingQualityCheck, fill: COLORS.awaitingQualityCheck }];
+  const salesAuditData = [{ name: 'Awaiting Sales Audit', value: awaitingSalesAudit, fill: COLORS.awaitingSalesAudit }];
 
   if (isLoading) {
     return (
@@ -115,8 +137,8 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <DoughnutChart data={qualityCheckData} title="Awaiting Quality Check" />
-        <DoughnutChart data={salesAuditData} title="Awaiting Sales Audit" />
+        <DoughnutChart data={qualityCheckData} title="Awaiting Quality Check" total={totalForQualityCheck} />
+        <DoughnutChart data={salesAuditData} title="Awaiting Sales Audit" total={totalForSalesAudit} />
       </CardContent>
     </Card>
   );
