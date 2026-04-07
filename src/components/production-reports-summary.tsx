@@ -160,6 +160,8 @@ export function ProductionReportsSummary() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
+  const { data: users, isLoading: areUsersLoading, error: usersError } = useCollection(usersQuery, undefined, { listen: false });
 
   const [reportData, setReportData] = useState<any>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
@@ -187,11 +189,11 @@ export function ProductionReportsSummary() {
   }, [leads]);
   
    useEffect(() => {
-    if (areLeadsLoading) {
+    if (areLeadsLoading || areUsersLoading) {
         setIsReportLoading(true);
         return;
     }
-    if (!leads) {
+    if (!leads || !users) {
         setIsReportLoading(false);
         setReportData(null);
         return;
@@ -202,6 +204,8 @@ export function ProductionReportsSummary() {
         try {
           const result = await generateProductionReportAction({ 
               leads,
+              users,
+              priorityFilter: 'All',
               selectedMonth: selectedMonth,
               selectedYear: selectedYear,
           });
@@ -214,7 +218,7 @@ export function ProductionReportsSummary() {
         }
     };
     generate();
-  }, [leads, areLeadsLoading, selectedMonth, selectedYear]);
+  }, [leads, users, areLeadsLoading, areUsersLoading, selectedMonth, selectedYear]);
 
 
   const { dailyProgressData, dailyBreakdownData } = useMemo(() => {
@@ -261,8 +265,8 @@ export function ProductionReportsSummary() {
       'Overdue': '#ef4444', // red
   };
 
-  const isLoading = areLeadsLoading || isReportLoading;
-  const error = leadsError;
+  const isLoading = areLeadsLoading || isReportLoading || areUsersLoading;
+  const error = leadsError || usersError;
 
   if (isLoading) {
     return (
@@ -370,8 +374,8 @@ export function ProductionReportsSummary() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
                         dataKey="date"
-                        tickLine={true}
-                        axisLine={true}
+                        tickLine={true} 
+                        axisLine={true} 
                         dy={10}
                         interval={0}
                         tick={{ fontSize: 12 }}
@@ -392,7 +396,7 @@ export function ProductionReportsSummary() {
                     <YAxis yAxisId="right" orientation="right" allowDecimals={false} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ bottom: 0 }}/>
-                    <ReferenceLine y={0} yAxisId="left" stroke="#000" />
+                    <ReferenceLine y={0} yAxisId="left" xAxisId="bottom" stroke="#000" />
                     <Bar yAxisId="left" xAxisId="bottom" dataKey="logo" stackId="a" name="Logos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
                         <LabelList dataKey="logo" position="center" className="fill-white" formatter={(value: number) => value > 0 ? value : ''} />
                     </Bar>
