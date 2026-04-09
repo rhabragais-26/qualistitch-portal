@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import {
@@ -40,6 +39,8 @@ const chartConfig = {
   count: {
     label: 'Count',
   },
+  requested: { label: 'Requested', color: 'hsl(var(--chart-3))' },
+  completed: { label: 'Approved', color: 'hsl(var(--chart-2))' }
 };
 
 const COLORS = {
@@ -331,6 +332,27 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
     });
   }, [leads, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
 
+  const CustomAuditTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-card p-2.5 text-card-foreground rounded-md border shadow-md">
+          <p className="font-bold mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-sm">
+                <div className="flex items-center">
+                    <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: entry.stroke || entry.fill }} />
+                    <span>{entry.name}:</span>
+                </div>
+                <span className="font-bold">{entry.value} orders</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+  
+    return null;
+  };
+
   if (isLoading) {
     return (
         <Card className="w-full shadow-xl">
@@ -470,13 +492,13 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                <div className="mt-8">
                 <h3 className="font-semibold text-center mb-2">Daily Sales Audit Progress</h3>
                 <div className="h-[300px]">
-                  <ChartContainer config={{ requested: { label: 'Requested', color: 'hsl(var(--chart-3))' }, completed: { label: 'Approved', color: 'hsl(var(--chart-2))' } }} className="w-full h-full">
+                  <ChartContainer config={chartConfig} className="w-full h-full">
                     <ResponsiveContainer>
                       <ComposedChart data={dailyAuditData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                         <YAxis allowDecimals={false} />
-                        <Tooltip content={<ChartTooltipContent formatter={(value) => `${value} orders`} />} />
+                        <Tooltip content={<CustomAuditTooltip />} />
                         <Legend />
                         <Area type="monotone" dataKey="requested" name="Requested" stroke="hsl(var(--chart-3))" fill="hsl(var(--chart-3))" fillOpacity={0.4}>
                           <LabelList dataKey="requested" position="top" formatter={(value: number) => value > 0 ? value : ''} />
@@ -496,4 +518,3 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
 });
 
 export { LogisticsSummaryMemo as LogisticsSummary };
-
