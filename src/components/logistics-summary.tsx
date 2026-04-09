@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -37,14 +38,6 @@ const chartConfig = {
   count: {
     label: 'Count',
   },
-  averageOverdue: {
-    label: 'Avg Overdue Days',
-    color: 'hsl(var(--chart-5))',
-  },
-  overdueCount: {
-    label: 'Overdue Orders',
-    color: 'hsl(var(--chart-2))',
-  },
 };
 
 const COLORS = {
@@ -54,50 +47,50 @@ const COLORS = {
   delivered: 'hsl(var(--chart-5))',
 };
 
-const DoughnutChart = ({ data, title, total }: { data: { name: string; value: number; fill: string }[], title: string, total: number }) => {
+const DoughnutChartCard = React.memo(function DoughnutChartCard({ data, title, total }: { data: { name: string; value: number; fill: string }[], title: string, total: number }) {
     const value = data.length > 0 ? data[0].value : 0;
     const percentage = total > 0 ? (value / total) * 100 : 0;
     const chartData = [
         { name: title, value: value },
         { name: 'other', value: Math.max(0, total - value) },
     ];
-    const chartColors = [data.length > 0 ? data[0].fill : '#ccc', '#e5e7eb']; // Active color and a light gray for the rest
+    const chartColors = [data.length > 0 ? data[0].fill : '#ccc', '#e5e7eb'];
 
     return (
-        <div className="w-full h-[250px] flex flex-col items-center border rounded-lg p-4">
-            <h3 className="text-center font-semibold text-lg mb-2">{title}</h3>
-            {value > 0 ? (
-                <ChartContainer config={chartConfig} className="w-full h-full max-w-[200px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Tooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                            <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="60%" outerRadius="80%" stroke="none" startAngle={90} endAngle={450}>
-                                {chartData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-                                ))}
-                            </Pie>
-                            <text
-                                x="50%"
-                                y="50%"
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                                className="fill-foreground text-3xl font-bold"
-                            >
-                                {value}
-                            </text>
-                        </PieChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-            ) : (
-                 <div className="flex-1 flex items-center justify-center text-muted-foreground">No data</div>
-            )}
+        <Card className="flex flex-col items-center justify-start p-4 text-center border">
+            <CardHeader className="p-0 mb-2">
+                <CardTitle className="text-lg font-medium">{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 relative w-36 h-36">
+                {value > 0 ? (
+                    <ChartContainer config={{}} className="w-full h-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Tooltip cursor={false} content={<ChartTooltipContent hideLabel formatter={(value, name) => (<div className="flex flex-col"> <span className="font-bold">{name === 'other' ? 'Other' : title}</span> <span>{value} orders</span> </div>)} />} />
+                                <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="60%" outerRadius="80%" stroke="none" startAngle={90} endAngle={450}>
+                                    {chartData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={chartColors[index]} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">No data</div>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-3xl font-bold">{value}</span>
+                </div>
+            </CardContent>
             <div className="mt-2 text-center">
                  <span className="text-sm font-bold">{percentage.toFixed(1)}%</span>
                  <p className="text-xs text-muted-foreground">of {total} total</p>
             </div>
-        </div>
+        </Card>
     )
-};
+});
+DoughnutChartCard.displayName = 'DoughnutChartCard';
+
 
 const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   const firestore = useFirestore();
@@ -226,7 +219,7 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
     });
   }, [leads, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
 
-  const overdueProgressData = useMemo(() => {
+  const dailyShippedData = useMemo(() => {
     if (!leads) return [];
 
     let startDate: Date;
@@ -251,42 +244,29 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
         endDate = endOfMonth(startDate);
     }
     
-    const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
+    const dailyQuantities: { [date: string]: number } = {};
 
-    const dailyOverdueStats = allDaysInRange.map(currentDay => {
-        let totalOverdueDays = 0;
-        let overdueOrderCount = 0;
-
-        leads.forEach(lead => {
-            if (lead.shipmentStatus === 'Delivered') return;
-            
-            let deliveryDate: Date | null = null;
-            if (lead.adjustedDeliveryDate) {
-                deliveryDate = new Date(lead.adjustedDeliveryDate);
-            } else if (lead.deliveryDate) {
-                deliveryDate = new Date(lead.deliveryDate);
-            } else {
-                const deadlineDays = lead.priorityType === 'Rush' ? 7 : 22;
-                deliveryDate = addDays(new Date(lead.submissionDateTime), deadlineDays);
-            }
-
-            if (currentDay > deliveryDate) {
-                const daysOver = differenceInDays(currentDay, deliveryDate);
-                totalOverdueDays += daysOver;
-                overdueOrderCount++;
-            }
-        });
-
-        const averageOverdueDays = overdueOrderCount > 0 ? totalOverdueDays / overdueOrderCount : 0;
-
-        return {
-            date: format(currentDay, 'MMM dd'),
-            averageOverdue: averageOverdueDays,
-            overdueCount: overdueOrderCount,
-        };
+    leads.forEach(lead => {
+        if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
+            try {
+                const shippedDate = new Date(lead.shippedTimestamp);
+                if (shippedDate >= startDate && shippedDate <= endDate) {
+                    const dateStr = format(shippedDate, 'yyyy-MM-dd');
+                    const totalQuantity = lead.orders?.reduce((sum, order) => sum + order.quantity, 0) || 0;
+                    dailyQuantities[dateStr] = (dailyQuantities[dateStr] || 0) + totalQuantity;
+                }
+            } catch (e) { /* ignore invalid dates */ }
+        }
     });
 
-    return dailyOverdueStats;
+    const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
+    return allDaysInRange.map(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      return {
+        date: format(day, 'MMM dd'),
+        quantity: dailyQuantities[dateStr] || 0,
+      };
+    });
   }, [leads, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
 
 
@@ -321,10 +301,10 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <DoughnutChart data={qualityCheckData} title="Awaiting Quality Check" total={totalForQualityCheck} />
-            <DoughnutChart data={salesAuditData} title="Awaiting Sales Audit" total={totalForSalesAudit} />
-            <DoughnutChart data={shippedData} title="Shipped Items" total={totalShippedAndDelivered} />
-            <DoughnutChart data={deliveredData} title="Delivered Items" total={totalShippedAndDelivered} />
+            <DoughnutChartCard data={qualityCheckData} title="Awaiting Quality Check" total={totalForQualityCheck} />
+            <DoughnutChartCard data={salesAuditData} title="Awaiting Sales Audit" total={totalForSalesAudit} />
+            <DoughnutChartCard data={shippedData} title="Shipped Items" total={totalShippedAndDelivered} />
+            <DoughnutChartCard data={deliveredData} title="Delivered Items" total={totalShippedAndDelivered} />
           </CardContent>
         </Card>
 
@@ -399,64 +379,32 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                 </ChartContainer>
             </CardContent>
         </Card>
+
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black border-none mt-8">
             <CardHeader>
-                <CardTitle className="text-black">Daily Overdue Progress</CardTitle>
+                <CardTitle className="text-black">Daily Shipped Quantity</CardTitle>
                 <CardDescription className="text-gray-600">
-                    Average overdue days and total overdue orders for the selected period.
+                    Total quantity of items shipped each day.
                 </CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
-                <ChartContainer config={chartConfig} className="w-full h-full">
+                <ChartContainer config={{ quantity: { label: 'Quantity' } }} className="w-full h-full">
                     <ResponsiveContainer>
-                    <ComposedChart data={overdueProgressData}>
+                    <AreaChart data={dailyShippedData}>
                         <defs>
-                            <linearGradient id="colorOverdue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--chart-5))" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="hsl(var(--chart-5))" stopOpacity={0}/>
+                            <linearGradient id="colorShipped" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                        <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-5))" allowDecimals={false} />
-                        <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" allowDecimals={false} />
-                        <Tooltip 
-                            content={
-                                <ChartTooltipContent 
-                                    formatter={(value, name) => {
-                                        if (name === 'Avg Overdue Days') return `${(value as number).toFixed(1)} days (avg)`;
-                                        if (name === 'Overdue Orders') return `${value} orders`;
-                                        return `${value}`;
-                                    }}
-                                />
-                            }
-                        />
-                        <Legend />
-                        <Area 
-                            yAxisId="left" 
-                            type="monotone" 
-                            dataKey="averageOverdue" 
-                            name="Avg Overdue Days" 
-                            stroke="hsl(var(--chart-5))" 
-                            strokeWidth={2} 
-                            fill="url(#colorOverdue)" 
-                            dot
-                        >
-                            <LabelList dataKey="averageOverdue" position="top" formatter={(value: number) => value > 0 ? value.toFixed(1) : ''} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip content={<ChartTooltipContent formatter={(value) => `${value} items`} />} />
+                        <Area type="monotone" dataKey="quantity" name="Items Shipped" stroke="hsl(var(--chart-2))" strokeWidth={2} fill="url(#colorShipped)" dot>
+                        <LabelList dataKey="quantity" position="top" formatter={(value: number) => value > 0 ? value : ''} />
                         </Area>
-                        <Line
-                            yAxisId="right"
-                            type="monotone"
-                            dataKey="overdueCount"
-                            name="Overdue Orders"
-                            stroke="hsl(var(--chart-2))"
-                            strokeWidth={2}
-                            dot={{ r: 4 }}
-                            activeDot={{ r: 6 }}
-                        >
-                            <LabelList dataKey="overdueCount" position="top" formatter={(value: number) => value > 0 ? value : ''} />
-                        </Line>
-                    </ComposedChart>
+                    </AreaChart>
                     </ResponsiveContainer>
                 </ChartContainer>
             </CardContent>
