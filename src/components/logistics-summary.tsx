@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -20,6 +19,8 @@ type Lead = {
   isQualityApproved?: boolean;
   isSalesAuditRequested?: boolean;
   isSalesAuditComplete?: boolean;
+  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  orders: { quantity: number }[];
 };
 
 const chartConfig = {
@@ -31,6 +32,8 @@ const chartConfig = {
 const COLORS = {
   awaitingQualityCheck: 'hsl(var(--chart-1))',
   awaitingSalesAudit: 'hsl(var(--chart-2))',
+  shipped: 'hsl(var(--chart-4))',
+  delivered: 'hsl(var(--chart-5))',
 };
 
 const DoughnutChart = ({ data, title, total }: { data: { name: string; value: number; fill: string }[], title: string, total: number }) => {
@@ -84,7 +87,7 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   const summaryData = useMemo(() => {
-    if (!leads) return { awaitingQualityCheck: 0, totalForQualityCheck: 0, awaitingSalesAudit: 0, totalForSalesAudit: 0 };
+    if (!leads) return { awaitingQualityCheck: 0, totalForQualityCheck: 0, awaitingSalesAudit: 0, totalForSalesAudit: 0, shippedItems: 0, deliveredItems: 0, totalShippedAndDelivered: 0 };
     
     const totalForQualityCheck = leads.filter(
         lead => lead.isEndorsedToLogistics
@@ -102,12 +105,30 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
         lead => lead.isSalesAuditRequested && !lead.isSalesAuditComplete
     ).length;
 
-    return { awaitingQualityCheck, totalForQualityCheck, awaitingSalesAudit, totalForSalesAudit };
+    const calculateTotalQuantity = (filteredLeads: Lead[]): number => {
+        return filteredLeads.reduce((sum, lead) => {
+            const orderQuantity = lead.orders?.reduce((orderSum, order) => orderSum + order.quantity, 0) || 0;
+            return sum + orderQuantity;
+        }, 0);
+    };
+
+    const shippedLeads = leads.filter(lead => lead.shipmentStatus === 'Shipped');
+    const deliveredLeads = leads.filter(lead => lead.shipmentStatus === 'Delivered');
+
+    const shippedItems = calculateTotalQuantity(shippedLeads);
+    const deliveredItems = calculateTotalQuantity(deliveredLeads);
+    
+    const totalShippedAndDelivered = shippedItems + deliveredItems;
+
+    return { awaitingQualityCheck, totalForQualityCheck, awaitingSalesAudit, totalForSalesAudit, shippedItems, deliveredItems, totalShippedAndDelivered };
   }, [leads]);
   
-  const { awaitingQualityCheck, totalForQualityCheck, awaitingSalesAudit, totalForSalesAudit } = summaryData;
+  const { awaitingQualityCheck, totalForQualityCheck, awaitingSalesAudit, totalForSalesAudit, shippedItems, deliveredItems, totalShippedAndDelivered } = summaryData;
   const qualityCheckData = [{ name: 'Awaiting Quality Check', value: awaitingQualityCheck, fill: COLORS.awaitingQualityCheck }];
   const salesAuditData = [{ name: 'Awaiting Sales Audit', value: awaitingSalesAudit, fill: COLORS.awaitingSalesAudit }];
+  const shippedData = [{ name: 'Shipped Items', value: shippedItems, fill: COLORS.shipped }];
+  const deliveredData = [{ name: 'Delivered Items', value: deliveredItems, fill: COLORS.delivered }];
+
 
   if (isLoading) {
     return (
@@ -116,7 +137,9 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                 <Skeleton className="h-8 w-1/2" />
                 <Skeleton className="h-4 w-3/4" />
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Skeleton className="h-[250px] w-full" />
+                <Skeleton className="h-[250px] w-full" />
                 <Skeleton className="h-[250px] w-full" />
                 <Skeleton className="h-[250px] w-full" />
             </CardContent>
@@ -136,9 +159,11 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
           An overview of key metrics for the logistics department.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <DoughnutChart data={qualityCheckData} title="Awaiting Quality Check" total={totalForQualityCheck} />
         <DoughnutChart data={salesAuditData} title="Awaiting Sales Audit" total={totalForSalesAudit} />
+        <DoughnutChart data={shippedData} title="Shipped Items" total={totalShippedAndDelivered} />
+        <DoughnutChart data={deliveredData} title="Delivered Items" total={totalShippedAndDelivered} />
       </CardContent>
     </Card>
   );
