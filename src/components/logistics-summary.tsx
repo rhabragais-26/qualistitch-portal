@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -16,7 +17,7 @@ import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { format, startOfDay, endOfDay, subDays, addDays, startOfMonth, endOfMonth, eachDayOfInterval, getYear, getMonth } from 'date-fns';
+import { format, startOfDay, endOfDay, subDays, addDays, startOfMonth, endOfMonth, eachDayOfInterval, getYear, getMonth, differenceInDays } from 'date-fns';
 
 type Lead = {
   isEndorsedToLogistics?: boolean;
@@ -29,6 +30,8 @@ type Lead = {
   adjustedDeliveryDate?: string;
   submissionDateTime: string;
   priorityType: 'Rush' | 'Regular';
+  shippedTimestamp?: string;
+  deliveredTimestamp?: string;
 };
 
 const chartConfig = {
@@ -216,6 +219,69 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
     });
   }, [leads, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
 
+  const overdueProgressData = useMemo(() => {
+    if (!leads) return [];
+
+    let startDate: Date;
+    let endDate: Date;
+    const now = new Date();
+
+    if (deliveryFilterType === 'range') {
+        if (deliveryTimeRange === '7d') {
+          startDate = startOfDay(subDays(now, 6));
+          endDate = endOfDay(now);
+        } else if (deliveryTimeRange === '14d') {
+          startDate = startOfDay(subDays(now, 13));
+          endDate = endOfDay(now);
+        } else { // 30d
+          startDate = startOfDay(subDays(now, 29));
+          endDate = endOfDay(now);
+        }
+    } else { // month filter
+        const year = parseInt(deliveryYear, 10);
+        const month = parseInt(deliveryMonth, 10) - 1;
+        startDate = startOfMonth(new Date(year, month));
+        endDate = endOfMonth(startDate);
+    }
+    
+    const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
+
+    const dailyOverdueStats = allDaysInRange.map(currentDay => {
+        let totalOverdueDays = 0;
+        let overdueOrderCount = 0;
+
+        leads.forEach(lead => {
+            if (lead.shipmentStatus === 'Delivered') return;
+            
+            let deliveryDate: Date | null = null;
+            if (lead.adjustedDeliveryDate) {
+                deliveryDate = new Date(lead.adjustedDeliveryDate);
+            } else if (lead.deliveryDate) {
+                deliveryDate = new Date(lead.deliveryDate);
+            } else {
+                const deadlineDays = lead.priorityType === 'Rush' ? 7 : 22;
+                deliveryDate = addDays(new Date(lead.submissionDateTime), deadlineDays);
+            }
+
+            if (currentDay > deliveryDate) {
+                const daysOver = differenceInDays(currentDay, deliveryDate);
+                totalOverdueDays += daysOver;
+                overdueOrderCount++;
+            }
+        });
+
+        const averageOverdueDays = overdueOrderCount > 0 ? totalOverdueDays / overdueOrderCount : 0;
+
+        return {
+            date: format(currentDay, 'MMM dd'),
+            averageOverdue: averageOverdueDays,
+            overdueCount: overdueOrderCount,
+        };
+    });
+
+    return dailyOverdueStats;
+  }, [leads, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
+
 
   if (isLoading) {
     return (
@@ -320,6 +386,46 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                         <Tooltip content={<ChartTooltipContent formatter={(value) => `${value} items`} />} />
                         <Area type="monotone" dataKey="quantity" name="Items for Delivery" stroke="hsl(var(--chart-4))" strokeWidth={2} fill="url(#colorDelivery)" dot>
                         <LabelList dataKey="quantity" position="top" formatter={(value: number) => value > 0 ? value : ''} />
+                        </Area>
+                    </AreaChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+            </CardContent>
+        </Card>
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black border-none mt-8">
+            <CardHeader>
+                <CardTitle className="text-black">Daily Overdue Progress</CardTitle>
+                <CardDescription className="text-gray-600">
+                    Average number of days orders are overdue, calculated daily for the selected period.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+                <ChartContainer config={{ averageOverdue: { label: 'Avg Overdue Days', color: 'hsl(var(--chart-5))' } }} className="w-full h-full">
+                    <ResponsiveContainer>
+                    <AreaChart data={overdueProgressData}>
+                        <defs>
+                            <linearGradient id="colorOverdue" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--chart-5))" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="hsl(var(--chart-5))" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip 
+                            content={
+                                <ChartTooltipContent 
+                                    formatter={(value, name, props) => (
+                                        <div className="flex flex-col">
+                                            <span>{`${(value as number).toFixed(1)} days (avg)`}</span>
+                                            <span className="text-xs text-muted-foreground">{props.payload.overdueCount} overdue orders</span>
+                                        </div>
+                                    )}
+                                />
+                            }
+                        />
+                        <Area type="monotone" dataKey="averageOverdue" name="Avg Overdue Days" stroke="hsl(var(--chart-5))" strokeWidth={2} fill="url(#colorOverdue)" dot>
+                            <LabelList dataKey="averageOverdue" position="top" formatter={(value: number) => value > 0 ? value.toFixed(1) : ''} />
                         </Area>
                     </AreaChart>
                     </ResponsiveContainer>
