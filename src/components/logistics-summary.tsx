@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -503,8 +504,8 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                         <Area type="monotone" dataKey="requested" name="Requested" stroke="hsl(var(--chart-3))" fill="hsl(var(--chart-3))" fillOpacity={0.4}>
                           <LabelList dataKey="requested" position="top" formatter={(value: number) => value > 0 ? value : ''} />
                         </Area>
-                        <Bar dataKey="completed" name="Approved" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
-                          <LabelList dataKey="completed" position="top" formatter={(value: number) => value > 0 ? value : ''} />
+                        <Bar dataKey="completed" name="Approved" fill="hsl(var(--chart-2))" fillOpacity={0.7} radius={[4, 4, 0, 0]}>
+                          <LabelList dataKey="completed" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
                         </Bar>
                       </ComposedChart>
                     </ResponsiveContainer>
