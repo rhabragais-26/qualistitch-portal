@@ -43,14 +43,14 @@ const DoughnutChart = ({ data, title, total }: { data: { name: string; value: nu
     const chartColors = [data.length > 0 ? data[0].fill : '#ccc', '#e5e7eb']; // Active color and a light gray for the rest
 
     return (
-        <div className="w-full h-[250px] flex flex-col items-center">
+        <div className="w-full h-[250px] flex flex-col items-center border rounded-lg p-4">
             <h3 className="text-center font-semibold text-lg mb-2">{title}</h3>
             {value > 0 ? (
                 <ChartContainer config={chartConfig} className="w-full h-full max-w-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Tooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                            <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="60%" outerRadius="80%" stroke="none">
+                            <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="60%" outerRadius="80%" stroke="none" startAngle={90} endAngle={450}>
                                 {chartData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                                 ))}
