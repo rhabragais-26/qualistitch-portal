@@ -36,7 +36,7 @@ function OperationalCasesPageContent() {
   const [isFormDirty, setIsFormDirty] = useState(false);
   const { userProfile } = useUser();
   const pathname = usePathname();
-  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+  const canEdit = hasEditPermission(userProfile, pathname);
   const [imageInView, setImageInView] = useState<string | null>(null);
 
   const handleEdit = (caseItem: OperationalCase) => {

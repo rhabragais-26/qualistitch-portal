@@ -27,7 +27,7 @@ export default function AddItemsPage() {
   const { toast } = useToast();
   const { userProfile } = useUser();
   const pathname = usePathname();
-  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+  const canEdit = hasEditPermission(userProfile, pathname);
 
 
   const handleAddItem = (item: Omit<StagedItem, 'id'>) => {

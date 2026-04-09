@@ -102,11 +102,27 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'profile', 'finance', 'marketing', 'admin'],
 };
 
-export function hasEditPermission(position: UserPosition | undefined, pathname: string, customPermissions?: UserPermissions): boolean {
-  if (!position) {
+export type UserPermissions = {
+  [key in PageGroup]?: boolean;
+};
+
+type UserProfileLike = {
+  position?: UserPosition;
+  role?: 'user' | 'admin';
+  permissions?: UserPermissions;
+};
+
+
+export function hasEditPermission(profile: UserProfileLike | null | undefined, pathname: string): boolean {
+  if (!profile || !profile.position) {
     return false;
   }
   
+  // Admin role has full access, except to the admin page itself which is handled separately.
+  if (profile.role === 'admin') {
+    return !pathname.startsWith('/admin');
+  }
+
   // Admin page is protected separately by the isAdmin flag in useUser hook
   if (pathname.startsWith('/admin')) {
       return false; 
@@ -124,18 +140,14 @@ export function hasEditPermission(position: UserPosition | undefined, pathname: 
   }
 
   // Check for custom permission first
-  if (customPermissions && customPermissions[group] !== undefined) {
-    return customPermissions[group]!;
+  if (profile.permissions && profile.permissions[group] !== undefined) {
+    return profile.permissions[group]!;
   }
   
   // Fallback to default position-based permissions
-  if (position === 'Page Admin' || position === 'CEO') {
+  if (profile.position === 'Page Admin' || profile.position === 'CEO') {
     return true;
   }
 
-  return defaultPermissions[position]?.includes(group) ?? false;
+  return defaultPermissions[profile.position]?.includes(group) ?? false;
 }
-
-type UserPermissions = {
-  [key in PageGroup]?: boolean;
-};

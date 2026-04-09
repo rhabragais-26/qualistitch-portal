@@ -1,5 +1,4 @@
 
-
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
@@ -42,7 +41,7 @@ export default function QuotationPage() {
   
   const { userProfile } = useUser();
   const pathname = usePathname();
-  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+  const canEdit = hasEditPermission(userProfile, pathname);
   
   const [editedUnitPrices, setEditedUnitPrices] = useState<Record<string, number>>({});
   const [editedAddOnPrices, setEditedAddOnPrices] = useState<Record<string, number>>({});

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Header } from '@/components/header';
@@ -8,8 +9,7 @@ import { usePathname } from 'next/navigation';
 
 export default function FullyPaidOrdersPage() {
   const { userProfile } = useUser();
-  const pathname = usePathname();
-  const canEdit = hasEditPermission(userProfile?.position as any, `/finance/receivables`);
+  const canEdit = hasEditPermission(userProfile, `/finance/receivables`);
 
   return (
     <Header>

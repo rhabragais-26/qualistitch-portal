@@ -45,7 +45,7 @@ export default function NewOrderPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const pathname = usePathname();
-  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+  const canEdit = hasEditPermission(userProfile, pathname);
   const [formKey, setFormKey] = useState(0);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -61,7 +61,7 @@ export default function NewOrderPage() {
   const [isItemPricesDragging, setIsItemPricesDragging] = useState(false);
   const [isRunningAdsDragging, setIsRunningAdsDragging] = useState(false);
   
-  const [orderType, setOrderType] = useState<'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | undefined>(undefined);
+  const [orderType, setOrderType] = useState<'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | 'Item Sample' | undefined>(undefined);
 
   const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
   const [discounts, setDiscounts] = useState<Record<string, Discount>>({});

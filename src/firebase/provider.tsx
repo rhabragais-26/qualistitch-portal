@@ -7,6 +7,7 @@ import { Firestore, doc, onSnapshot, DocumentData, Unsubscribe, getDoc, updateDo
 import { Auth, User, onIdTokenChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 import { initiateAnonymousSignIn } from './auth-writes';
+import type { PageGroup } from '@/lib/permissions';
 
 // Define the shape of the user profile document in Firestore
 interface UserProfile {
@@ -18,6 +19,7 @@ interface UserProfile {
   position: string;
   photoURL?: string;
   lastSeen?: string;
+  permissions?: { [key in PageGroup]?: boolean; };
 }
 
 interface UserAuthState {

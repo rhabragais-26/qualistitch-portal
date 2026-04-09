@@ -16,14 +16,10 @@ import { Button } from './ui/button';
 import { Save, Trash2, ChevronDown } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { UserPosition, hasEditPermission, PageGroup, allPageGroups, defaultPermissions } from '@/lib/permissions';
+import { UserPosition, hasEditPermission, PageGroup, allPageGroups, defaultPermissions, UserPermissions } from '@/lib/permissions';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { isEqual } from 'lodash';
-
-type UserPermissions = {
-  [key in PageGroup]?: boolean;
-};
 
 type UserProfile = {
   uid: string;
@@ -136,7 +132,7 @@ const AdminUserTableRow = React.memo(({
                   <div key={group.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={`${user.uid}-${group.id}`}
-                      checked={hasEditPermission(editedUser.position, group.path, editedUser.permissions)}
+                      checked={hasEditPermission(editedUser as UserProfile, group.path)}
                       onCheckedChange={(checked) => onPermissionChange(user.uid, group.id, !!checked)}
                     />
                     <Label htmlFor={`${user.uid}-${group.id}`} className="text-xs font-normal">

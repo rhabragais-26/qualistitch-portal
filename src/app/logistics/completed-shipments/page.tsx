@@ -1,3 +1,4 @@
+
 'use client';
 import { Header } from '@/components/header';
 import { ShipmentQueueTable } from '@/components/shipment-queue-table';
@@ -8,7 +9,7 @@ import { usePathname } from 'next/navigation';
 export default function ShippedOrdersPage() {
   const { userProfile } = useUser();
   const pathname = usePathname();
-  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+  const canEdit = hasEditPermission(userProfile, pathname);
 
   return (
     <Header>

@@ -1,5 +1,4 @@
 
-
 'use client';
 
     import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
@@ -206,8 +205,7 @@
       const { toast } = useToast();
       const router = useRouter();
       const { userProfile } = useUser();
-      const pathname = usePathname();
-      const canEdit = hasEditPermission(userProfile?.position as any, `/job-order`);
+      const canEdit = hasEditPermission(userProfile, `/job-order`);
       const storage = getStorage(firebaseApp);
       
       const [currentPage, setCurrentPage] = useState(0);

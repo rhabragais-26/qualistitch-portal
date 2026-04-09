@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation';
 export default function JobOrderPage() {
   const { userProfile } = useUser();
   const pathname = usePathname();
-  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+  const canEdit = hasEditPermission(userProfile, pathname);
 
   return (
     <Header>
