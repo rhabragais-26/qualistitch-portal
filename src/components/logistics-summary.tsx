@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -12,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, LabelList, ComposedChart, Line, Legend } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
@@ -37,6 +36,14 @@ type Lead = {
 const chartConfig = {
   count: {
     label: 'Count',
+  },
+  averageOverdue: {
+    label: 'Avg Overdue Days',
+    color: 'hsl(var(--chart-5))',
+  },
+  overdueCount: {
+    label: 'Overdue Orders',
+    color: 'hsl(var(--chart-2))',
   },
 };
 
@@ -89,7 +96,7 @@ const DoughnutChart = ({ data, title, total }: { data: { name: string; value: nu
                  <p className="text-xs text-muted-foreground">of {total} total</p>
             </div>
         </div>
-    );
+    )
 };
 
 const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
@@ -396,13 +403,13 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
             <CardHeader>
                 <CardTitle className="text-black">Daily Overdue Progress</CardTitle>
                 <CardDescription className="text-gray-600">
-                    Average number of days orders are overdue, calculated daily for the selected period.
+                    Average overdue days and total overdue orders for the selected period.
                 </CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
-                <ChartContainer config={{ averageOverdue: { label: 'Avg Overdue Days', color: 'hsl(var(--chart-5))' } }} className="w-full h-full">
+                <ChartContainer config={chartConfig} className="w-full h-full">
                     <ResponsiveContainer>
-                    <AreaChart data={overdueProgressData}>
+                    <ComposedChart data={overdueProgressData}>
                         <defs>
                             <linearGradient id="colorOverdue" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="hsl(var(--chart-5))" stopOpacity={0.8}/>
@@ -411,23 +418,45 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                        <YAxis allowDecimals={false} />
+                        <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-5))" allowDecimals={false} />
+                        <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" allowDecimals={false} />
                         <Tooltip 
                             content={
                                 <ChartTooltipContent 
-                                    formatter={(value, name, props) => (
-                                        <div className="flex flex-col">
-                                            <span>{`${(value as number).toFixed(1)} days (avg)`}</span>
-                                            <span className="text-xs text-muted-foreground">{props.payload.overdueCount} overdue orders</span>
-                                        </div>
-                                    )}
+                                    formatter={(value, name) => {
+                                        if (name === 'Avg Overdue Days') return `${(value as number).toFixed(1)} days (avg)`;
+                                        if (name === 'Overdue Orders') return `${value} orders`;
+                                        return `${value}`;
+                                    }}
                                 />
                             }
                         />
-                        <Area type="monotone" dataKey="averageOverdue" name="Avg Overdue Days" stroke="hsl(var(--chart-5))" strokeWidth={2} fill="url(#colorOverdue)" dot>
+                        <Legend />
+                        <Area 
+                            yAxisId="left" 
+                            type="monotone" 
+                            dataKey="averageOverdue" 
+                            name="Avg Overdue Days" 
+                            stroke="hsl(var(--chart-5))" 
+                            strokeWidth={2} 
+                            fill="url(#colorOverdue)" 
+                            dot
+                        >
                             <LabelList dataKey="averageOverdue" position="top" formatter={(value: number) => value > 0 ? value.toFixed(1) : ''} />
                         </Area>
-                    </AreaChart>
+                        <Line
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey="overdueCount"
+                            name="Overdue Orders"
+                            stroke="hsl(var(--chart-2))"
+                            strokeWidth={2}
+                            dot={{ r: 4 }}
+                            activeDot={{ r: 6 }}
+                        >
+                            <LabelList dataKey="overdueCount" position="top" formatter={(value: number) => value > 0 ? value : ''} />
+                        </Line>
+                    </ComposedChart>
                     </ResponsiveContainer>
                 </ChartContainer>
             </CardContent>
