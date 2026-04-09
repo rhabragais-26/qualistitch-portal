@@ -221,7 +221,7 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
     });
   }, [leads, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
 
-  const dailyOverdueData = useMemo(() => {
+  const dailyShippedData = useMemo(() => {
     if (!leads) return [];
 
     let startDate: Date;
@@ -245,44 +245,32 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
         startDate = startOfMonth(new Date(year, month));
         endDate = endOfMonth(startDate);
     }
+    
+    const dailyQuantities: { [date: string]: number } = {};
+    
+    leads.forEach(lead => {
+      if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
+        try {
+          const shippedDate = new Date(lead.shippedTimestamp);
+          if (shippedDate >= startDate && shippedDate <= endDate) {
+            const dateStr = format(shippedDate, 'yyyy-MM-dd');
+            const totalQuantity = lead.orders?.reduce((sum, order) => sum + order.quantity, 0) || 0;
+            dailyQuantities[dateStr] = (dailyQuantities[dateStr] || 0) + totalQuantity;
+          }
+        } catch(e) { /* ignore invalid dates */ }
+      }
+    });
 
     const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
-
     return allDaysInRange.map(day => {
-      let totalOverdueDays = 0;
-      let overdueOrderCount = 0;
-      
-      leads.forEach(lead => {
-        if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
-          return;
-        }
-        
-        let deliveryDate: Date | null = null;
-        if (lead.adjustedDeliveryDate) {
-            deliveryDate = new Date(lead.adjustedDeliveryDate);
-        } else if (lead.deliveryDate) {
-            deliveryDate = new Date(lead.deliveryDate);
-        } else {
-            const deadlineDays = lead.priorityType === 'Rush' ? 7 : 22;
-            deliveryDate = addDays(new Date(lead.submissionDateTime), deadlineDays);
-        }
-        
-        const overdueDays = differenceInDays(day, deliveryDate);
-        
-        if (overdueDays > 0) {
-          totalOverdueDays += overdueDays;
-          overdueOrderCount++;
-        }
-      });
-      
+      const dateStr = format(day, 'yyyy-MM-dd');
       return {
         date: format(day, 'MMM dd'),
-        avgOverdueDays: overdueOrderCount > 0 ? totalOverdueDays / overdueOrderCount : 0,
-        overdueOrderCount: overdueOrderCount,
+        quantity: dailyQuantities[dateStr] || 0,
       };
     });
   }, [leads, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
-
+  
   const dailyAuditData = useMemo(() => {
     if (!leads) return [];
 
@@ -342,7 +330,6 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
       };
     });
   }, [leads, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
-
 
   if (isLoading) {
     return (
@@ -457,30 +444,25 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                 </div>
               </div>
               <div className="mt-8">
-                <h3 className="font-semibold text-center mb-2">Daily Overdue Progress</h3>
+                <h3 className="font-semibold text-center mb-2">Daily Shipped Quantity</h3>
                 <div className="h-[300px]">
-                  <ChartContainer config={{ avgOverdueDays: { label: 'Avg Overdue Days', color: 'hsl(var(--chart-5))' }, overdueOrderCount: { label: 'Overdue Orders', color: 'hsl(var(--destructive))' } }} className="w-full h-full">
+                  <ChartContainer config={{ quantity: { label: 'Quantity' } }} className="w-full h-full">
                     <ResponsiveContainer>
-                      <ComposedChart data={dailyOverdueData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                          <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-5))" allowDecimals={false} />
-                          <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--destructive))" allowDecimals={false} />
-                          <Tooltip content={<ChartTooltipContent formatter={(value, name) => `${name === 'Avg Overdue Days' ? value.toFixed(1) : value} ${name === 'Avg Overdue Days' ? 'days' : 'orders'}`} />} />
-                          <Legend />
-                          <defs>
-                            <linearGradient id="colorOverdue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--chart-5))" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="hsl(var(--chart-5))" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
-                          <Area yAxisId="left" type="monotone" dataKey="avgOverdueDays" name="Avg Overdue Days" stroke="hsl(var(--chart-5))" fill="url(#colorOverdue)" fillOpacity={0.4}>
-                            <LabelList dataKey="avgOverdueDays" position="top" formatter={(value: number) => value > 0 ? value.toFixed(1) : ''} />
-                          </Area>
-                          <Line yAxisId="right" type="monotone" dataKey="overdueOrderCount" name="Overdue Orders" stroke="hsl(var(--destructive))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }}>
-                             <LabelList dataKey="overdueOrderCount" position="top" formatter={(value: number) => value > 0 ? value : ''} />
-                          </Line>
-                      </ComposedChart>
+                      <AreaChart data={dailyShippedData}>
+                        <defs>
+                          <linearGradient id="colorShipped" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip content={<ChartTooltipContent formatter={(value) => `${value} items shipped`} />} />
+                        <Area type="monotone" dataKey="quantity" name="Items Shipped" stroke="hsl(var(--chart-2))" strokeWidth={2} fill="url(#colorShipped)" dot>
+                          <LabelList dataKey="quantity" position="top" formatter={(value: number) => value > 0 ? value : ''} />
+                        </Area>
+                      </AreaChart>
                     </ResponsiveContainer>
                   </ChartContainer>
                 </div>
@@ -515,4 +497,3 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
 
 export { LogisticsSummaryMemo as LogisticsSummary };
 
-```
