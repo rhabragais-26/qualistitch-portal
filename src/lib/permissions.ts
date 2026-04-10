@@ -88,18 +88,20 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'S.E Officer': ['sales'],
   'Inventory Officer': ['inventory'],
   'Purchasing Officer': ['inventory', 'logistics'],
-  'Digitizer': ['digitizing'],
-  'E.D Coordinator': ['digitizing'],
   'Production Line Leader': ['production'],
   'Production Head': ['production'],
   'Logistics Officer': ['logistics'],
   'Operations Manager': ['inventory', 'production', 'logistics'],
-  'Operations Head': ['inventory', 'logistics'],
+  'Operations Head': ['inventory', 'production', 'logistics'],
+  'Digitizer': ['digitizing'],
+  'E.D Coordinator': ['digitizing'],
+  'HR': ['profile'],
   'Finance': ['finance'],
+  'CEO': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'profile', 'finance', 'marketing', 'admin'],
+  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'profile', 'finance', 'marketing', 'admin'],
   'Marketing Head': ['marketing'],
   'Social Media Manager': ['marketing'],
   'Content Marketing Specialist': ['marketing'],
-  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'profile', 'finance', 'marketing', 'admin'],
 };
 
 export type UserPermissions = {
@@ -118,7 +120,6 @@ export function hasEditPermission(profile: UserProfileLike | null | undefined, p
     return false;
   }
   
-  // Admin role has full access, except to the admin page itself which is handled separately.
   if (profile.role === 'admin') {
     return !pathname.startsWith('/admin');
   }
