@@ -148,7 +148,7 @@ export function MarketingCalendar() {
   const [imageInView, setImageInView] = useState<string | null>(null);
 
   const pathname = usePathname();
-  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+  const canEdit = hasEditPermission(userProfile, pathname);
   
   const eventsByDate = useMemo(() => {
     const map = new Map<string, MarketingEvent[]>();
@@ -161,7 +161,7 @@ export function MarketingCalendar() {
           }
           map.get(dateKey)!.push(event);
         } catch (e) {
-          console.warn(`Invalid date format for event ${event.id}: ${event.date}`);
+          console.warn(`Invalid date format for event ${'\'\'\''}event.id{'\'\''}: ${'\'\'\''}event.date{'\'\''}`);
         }
       });
     }
@@ -217,7 +217,7 @@ export function MarketingCalendar() {
   };
 
   const handleDeleteEvent = async () => {
-    if (!deletingEventId || !firestore) return;
+    if (!deletingEventId || !firestore || !userProfile) return;
     try {
         await deleteDoc(doc(firestore, 'marketingCalendar', deletingEventId));
         toast({ title: 'Event Deleted' });
@@ -227,7 +227,6 @@ export function MarketingCalendar() {
         setDeletingEventId(null);
     }
   };
-
   
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth));
@@ -410,7 +409,6 @@ export function MarketingCalendar() {
                     event={currentEvent}
                     onSave={handleSaveEvent}
                     onCancel={() => setDialogView('list')}
-                    onClose={() => {}}
                 />
             ) : null}
         </DialogContent>
