@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -282,7 +283,7 @@ export default function RevisionHistoryPage() {
                                 <TableRow>
                                     <TableHead>J.O. Number</TableHead>
                                     <TableHead>Digitizer</TableHead>
-                                    <TableHead>#</TableHead>
+                                    <TableHead>Revision No.</TableHead>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Reason</TableHead>
                                     <TableHead>Details</TableHead>
