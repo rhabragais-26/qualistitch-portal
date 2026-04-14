@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -66,7 +65,7 @@ export default function RevisionHistoryPage() {
   const { data: allLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery);
   
   const allRevisionsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'revisions'), orderBy('timestamp', 'desc')) : null),
+    () => (firestore ? query(collection(firestore, 'revisions')) : null),
     [firestore]
   );
   const { data: allRevisions, isLoading: areRevisionsLoading } = useCollection<Revision>(allRevisionsQuery);
@@ -108,7 +107,7 @@ export default function RevisionHistoryPage() {
   
   const enrichedRevisions = useMemo(() => {
     if (!allRevisions || !allLeads) return [];
-    return allRevisions.map(revision => {
+    const enriched = allRevisions.map(revision => {
       const lead = allLeads.find(l => l.id === revision.leadId);
       return {
         ...revision,
@@ -116,6 +115,15 @@ export default function RevisionHistoryPage() {
         assignedDigitizer: lead?.assignedDigitizer
       };
     });
+
+    // Sort by JO Number descending, then by revision number ascending
+    return enriched.sort((a, b) => {
+        if (a.joNumber !== b.joNumber) {
+            return b.joNumber - a.joNumber;
+        }
+        return a.revisionNumber - b.revisionNumber;
+    });
+
   }, [allRevisions, allLeads]);
 
   const filteredHistory = useMemo(() => {
