@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -116,12 +117,20 @@ export default function RevisionHistoryPage() {
       };
     });
 
-    // Sort by JO Number descending, then by revision number ascending
+    // Sort by Date descending, then by JO Number descending, then by revision number ascending
     return enriched.sort((a, b) => {
-        if (a.joNumber !== b.joNumber) {
-            return b.joNumber - a.joNumber;
+        const dateA = new Date(a.timestamp).getTime();
+        const dateB = new Date(b.timestamp).getTime();
+
+        if (dateB !== dateA) {
+            return dateB - dateA; // Sort by date descending (latest first)
         }
-        return a.revisionNumber - b.revisionNumber;
+
+        if (a.joNumber !== b.joNumber) {
+            return b.joNumber - a.joNumber; // Then by JO Number descending
+        }
+        
+        return a.revisionNumber - b.revisionNumber; // Finally by revision number ascending
     });
 
   }, [allRevisions, allLeads]);
@@ -306,10 +315,10 @@ export default function RevisionHistoryPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead>Date</TableHead>
                                         <TableHead>J.O. Number</TableHead>
                                         <TableHead>Revision No.</TableHead>
                                         <TableHead>Digitizer</TableHead>
-                                        <TableHead>Date</TableHead>
                                         <TableHead>Reason</TableHead>
                                         <TableHead>Details</TableHead>
                                         <TableHead>Submitted By</TableHead>
@@ -320,10 +329,10 @@ export default function RevisionHistoryPage() {
                                     : filteredHistory && filteredHistory.length > 0 ? (
                                         filteredHistory.map(rev => (
                                             <TableRow key={rev.id}>
+                                                <TableCell>{formatDateTime(rev.timestamp).dateTime}</TableCell>
                                                 <TableCell>{formatJoNumber(rev.joNumber)}</TableCell>
                                                 <TableCell className="font-bold">{formatRevisionNumber(rev.revisionNumber)}</TableCell>
                                                 <TableCell>{rev.assignedDigitizer || 'N/A'}</TableCell>
-                                                <TableCell>{formatDateTime(rev.timestamp).dateTime}</TableCell>
                                                 <TableCell>{rev.reason}</TableCell>
                                                 <TableCell className="max-w-md whitespace-pre-wrap">{rev.details}</TableCell>
                                                 <TableCell>{rev.submittedBy}</TableCell>
