@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -27,6 +26,7 @@ type Lead = {
   contactNumber: string;
   landlineNumber?: string;
   revisionCount?: number;
+  assignedDigitizer?: string;
 };
 
 type Revision = {
@@ -38,6 +38,11 @@ type Revision = {
   details: string;
   timestamp: string;
   submittedBy: string;
+};
+
+type EnrichedRevision = Revision & {
+    customerName?: string;
+    assignedDigitizer?: string;
 };
 
 const reasonOptions = ["Client's Request", "Digitizer's Output Concern"];
@@ -54,16 +59,17 @@ export default function RevisionHistoryPage() {
   const [newRevisionReason, setNewRevisionReason] = useState<string>('');
   const [newRevisionDetails, setNewRevisionDetails] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [historySearch, setHistorySearch] = useState('');
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: allLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery);
   
-  const leadId = foundLead?.id;
-  const revisionsQuery = useMemoFirebase(
-    () => (firestore && leadId ? query(collection(firestore, 'revisions'), where('leadId', '==', leadId), orderBy('revisionNumber', 'asc')) : null),
-    [firestore, leadId]
+  const allRevisionsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'revisions'), orderBy('timestamp', 'desc')) : null),
+    [firestore]
   );
-  const { data: revisions, isLoading: areRevisionsLoading } = useCollection<Revision>(revisionsQuery);
+  const { data: allRevisions, isLoading: areRevisionsLoading } = useCollection<Revision>(allRevisionsQuery);
+
 
   const isLoading = areLeadsLoading || areRevisionsLoading;
 
@@ -98,6 +104,29 @@ export default function RevisionHistoryPage() {
     if (mobile && landline) return `${mobile} / ${landline}`;
     return mobile || landline || '';
   };
+  
+  const enrichedRevisions = useMemo(() => {
+    if (!allRevisions || !allLeads) return [];
+    return allRevisions.map(revision => {
+      const lead = allLeads.find(l => l.id === revision.leadId);
+      return {
+        ...revision,
+        customerName: lead?.customerName,
+        assignedDigitizer: lead?.assignedDigitizer
+      };
+    });
+  }, [allRevisions, allLeads]);
+
+  const filteredHistory = useMemo(() => {
+    if (!historySearch) return enrichedRevisions;
+    const lowercasedSearch = historySearch.toLowerCase();
+    return enrichedRevisions.filter(rev => 
+        formatJoNumber(rev.joNumber).toLowerCase().includes(lowercasedSearch) ||
+        (rev.customerName && rev.customerName.toLowerCase().includes(lowercasedSearch)) ||
+        (rev.assignedDigitizer && rev.assignedDigitizer.toLowerCase().includes(lowercasedSearch))
+    );
+  }, [enrichedRevisions, historySearch]);
+
 
   const handleRecordRevision = async () => {
     if (!foundLead || !newRevisionReason || !newRevisionDetails.trim() || !userProfile || !firestore) {
@@ -106,7 +135,8 @@ export default function RevisionHistoryPage() {
     }
     setIsSaving(true);
     
-    const revisionNumber = (revisions?.length || 0) + 1;
+    const leadRevisions = allRevisions?.filter(r => r.leadId === foundLead.id) || [];
+    const revisionNumber = leadRevisions.length + 1;
     const revisionId = uuidv4();
     const revisionDocRef = doc(firestore, 'revisions', revisionId);
     const leadDocRef = doc(firestore, 'leads', foundLead.id);
@@ -237,13 +267,21 @@ export default function RevisionHistoryPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Revision History</CardTitle>
-                    <CardDescription>History of revisions for the selected Job Order.</CardDescription>
+                    <CardDescription>History of all recorded revision requests.</CardDescription>
+                    <Input
+                        placeholder="Search History by J.O., Customer, or Digitizer..."
+                        value={historySearch}
+                        onChange={(e) => setHistorySearch(e.target.value)}
+                        className="mt-2"
+                    />
                 </CardHeader>
                 <CardContent>
                     <ScrollArea className="h-[60vh] border rounded-md">
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                    <TableHead>J.O. Number</TableHead>
+                                    <TableHead>Digitizer</TableHead>
                                     <TableHead>#</TableHead>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Reason</TableHead>
@@ -252,10 +290,12 @@ export default function RevisionHistoryPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {isLoading ? <TableRow><TableCell colSpan={5}><Skeleton className="h-24 w-full"/></TableCell></TableRow> 
-                                : revisions && revisions.length > 0 ? (
-                                    revisions.map(rev => (
+                                {isLoading ? <TableRow><TableCell colSpan={7}><Skeleton className="h-24 w-full"/></TableCell></TableRow> 
+                                : filteredHistory && filteredHistory.length > 0 ? (
+                                    filteredHistory.map(rev => (
                                         <TableRow key={rev.id}>
+                                            <TableCell>{formatJoNumber(rev.joNumber)}</TableCell>
+                                            <TableCell>{rev.assignedDigitizer || 'N/A'}</TableCell>
                                             <TableCell className="font-bold">{rev.revisionNumber}</TableCell>
                                             <TableCell>{formatDateTime(rev.timestamp).dateTime}</TableCell>
                                             <TableCell>{rev.reason}</TableCell>
@@ -265,8 +305,8 @@ export default function RevisionHistoryPage() {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center text-muted-foreground h-48">
-                                            {foundLead ? 'No revisions recorded for this J.O. yet.' : 'Search for a J.O. to view its revision history.'}
+                                        <TableCell colSpan={7} className="text-center text-muted-foreground h-48">
+                                            No revisions recorded yet.
                                         </TableCell>
                                     </TableRow>
                                 )}
