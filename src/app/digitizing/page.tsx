@@ -1,4 +1,6 @@
 
+'use client';
+
 import { Header } from '@/components/header';
 import { DigitizingTable } from '@/components/digitizing-table';
 
