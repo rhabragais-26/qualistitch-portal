@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -33,13 +34,13 @@ type Revision = {
   leadId: string;
   joNumber: number;
   revisionNumber: number;
-  reason: 'Client Request' | "Digitizer's Output Concern";
+  reason: "Client's Request" | "Digitizer's Output Concern";
   details: string;
   timestamp: string;
   submittedBy: string;
 };
 
-const reasonOptions = ["Client Request", "Digitizer's Output Concern"];
+const reasonOptions = ["Client's Request", "Digitizer's Output Concern"];
 
 export function RevisionHistoryTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();

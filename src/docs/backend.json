@@ -18,6 +18,22 @@
         },
         "required": ["id", "date", "productType", "color", "size", "quantity", "submittedBy", "timestamp"]
     },
+    "Revision": {
+      "title": "Revision",
+      "type": "object",
+      "description": "Represents a revision request for a job order.",
+      "properties": {
+        "id": { "type": "string" },
+        "leadId": { "type": "string" },
+        "joNumber": { "type": "number" },
+        "revisionNumber": { "type": "number" },
+        "reason": { "type": "string", "enum": ["Client's Request", "Digitizer's Output Concern"] },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "submittedBy": { "type": "string" }
+      },
+      "required": ["id", "leadId", "joNumber", "revisionNumber", "reason", "details", "timestamp", "submittedBy"]
+    },
     "FinanceCategory": {
         "title": "FinanceCategory",
         "type": "object",
@@ -25,10 +41,9 @@
         "properties": {
             "id": { "type": "string" },
             "name": { "type": "string" },
-            "department": { "type": "string" },
             "group": { "type": "string", "enum": ["Fixed", "Variable", "One-Time"] }
         },
-        "required": ["id", "name", "department", "group"]
+        "required": ["id", "name", "group"]
     },
     "FinanceAssumption": {
         "title": "FinanceAssumption",
@@ -356,11 +371,6 @@
           "congratsPhotoURL": { "type": "string", "format": "uri", "description": "URL to the user's profile picture." },
           "announcementText": { "type": "string", "description": "The text content of a global announcement." },
           "announcementType": { "type": "string", "enum": ["banner", "notification"], "description": "The display type of the announcement." },
-          "announcementDepartment": {
-            "type": "array",
-            "items": { "type": "string" },
-            "description": "The departments the announcement is targeted to. An empty array or an array containing 'All' means everyone."
-           },
           "announcementTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for the announcement event." },
           "announcementSender": { "type": "string", "description": "Nickname of the user who sent the announcement." }
         }
@@ -652,6 +662,10 @@
         "isRevision": {
           "type": "boolean",
           "description": "Indicates if the job order requires revision."
+        },
+        "revisionCount": {
+          "type": "number",
+          "description": "The number of revisions requested for this lead."
         },
         "revisionTimestamp": {
             "type": "string",
@@ -1104,6 +1118,14 @@
         }
       },
       {
+        "path": "/revisions/{revisionId}",
+        "definition": {
+          "entityName": "Revision",
+          "schema": { "$ref": "#/backend/entities/Revision" },
+          "description": "Stores revision history for job orders."
+        }
+      },
+      {
         "path": "/financeCategories/{categoryId}",
         "definition": {
           "entityName": "FinanceCategory",
@@ -1434,5 +1456,4 @@
     "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\\n\\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\\n\\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
   }
 }
-
 
