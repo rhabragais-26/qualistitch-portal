@@ -170,6 +170,20 @@ export default function RevisionHistoryPage() {
     }
   };
 
+  const formatRevisionNumber = (num: number) => {
+    const j = num % 10, k = num % 100;
+    if (j == 1 && k != 11) {
+        return num + "st";
+    }
+    if (j == 2 && k != 12) {
+        return num + "nd";
+    }
+    if (j == 3 && k != 13) {
+        return num + "rd";
+    }
+    return num + "th";
+  };
+
   return (
     <Header>
       <main className="p-4 sm:p-6 lg:p-8">
@@ -297,7 +311,7 @@ export default function RevisionHistoryPage() {
                                         <TableRow key={rev.id}>
                                             <TableCell>{formatJoNumber(rev.joNumber)}</TableCell>
                                             <TableCell>{rev.assignedDigitizer || 'N/A'}</TableCell>
-                                            <TableCell className="font-bold">{rev.revisionNumber}</TableCell>
+                                            <TableCell className="font-bold">{formatRevisionNumber(rev.revisionNumber)}</TableCell>
                                             <TableCell>{formatDateTime(rev.timestamp).dateTime}</TableCell>
                                             <TableCell>{rev.reason}</TableCell>
                                             <TableCell className="max-w-[250px] whitespace-pre-wrap">{rev.details}</TableCell>
@@ -321,3 +335,5 @@ export default function RevisionHistoryPage() {
     </Header>
   );
 }
+
+    
