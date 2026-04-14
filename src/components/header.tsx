@@ -45,6 +45,7 @@ import {
   Gift,
   Newspaper,
   CandlestickChart,
+  History,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -466,7 +467,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'digitizing'} onOpenChange={(isOpen) => handleMenuOpenChange('digitizing', isOpen)}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports', '/digitizing/program-files-database']))}>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/digitizing']))}>
                         <ScanLine className="mr-2" />
                         Digitizing
                         <ChevronDown className="ml-2 h-4 w-4" />
@@ -480,6 +481,10 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/digitizing/program-files-database')}>
                       <FolderKanban className="mr-2" />
                       Program Files Database
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/digitizing/revision-history')}>
+                      <History className="mr-2" />
+                      Revision History
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/digitizing/reports')}>
                       <LineChart className="mr-2" />

@@ -1,4 +1,5 @@
 
+
 export type UserPosition = 
   | 'SCES'
   | 'Sales Supervisor'
@@ -48,6 +49,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/digitizing/programming-queue': 'digitizing',
   '/digitizing/completed-programs': 'digitizing',
   '/digitizing/program-files-database': 'digitizing',
+  '/digitizing/revision-history': 'digitizing',
   '/digitizing/reports': 'digitizing',
   '/inventory/add-items': 'inventory',
   '/inventory/item-preparation-for-production': 'inventory',
@@ -89,7 +91,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Inventory Officer': ['inventory'],
   'Purchasing Officer': ['inventory', 'logistics'],
   'Production Line Leader': ['production'],
-  'Production Head': ['production'],
+  'Production Head': ['production', 'inventory', 'logistics'],
   'Logistics Officer': ['logistics'],
   'Operations Manager': ['inventory', 'production', 'logistics'],
   'Operations Head': ['inventory', 'production', 'logistics'],
@@ -121,7 +123,7 @@ export function hasEditPermission(profile: UserProfileLike | null | undefined, p
   }
   
   if (profile.role === 'admin') {
-    return !pathname.startsWith('/admin');
+    return true;
   }
 
   // Admin page is protected separately by the isAdmin flag in useUser hook

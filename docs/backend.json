@@ -18,6 +18,22 @@
         },
         "required": ["id", "date", "productType", "color", "size", "quantity", "submittedBy", "timestamp"]
     },
+    "Revision": {
+      "title": "Revision",
+      "type": "object",
+      "description": "Represents a revision request for a job order.",
+      "properties": {
+        "id": { "type": "string" },
+        "leadId": { "type": "string" },
+        "joNumber": { "type": "number" },
+        "revisionNumber": { "type": "number" },
+        "reason": { "type": "string", "enum": ["Client Request", "Digitizer's Output Concern"] },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "submittedBy": { "type": "string" }
+      },
+      "required": ["id", "leadId", "joNumber", "revisionNumber", "reason", "details", "timestamp", "submittedBy"]
+    },
     "FinanceCategory": {
         "title": "FinanceCategory",
         "type": "object",
@@ -647,6 +663,10 @@
           "type": "boolean",
           "description": "Indicates if the job order requires revision."
         },
+        "revisionCount": {
+          "type": "number",
+          "description": "The number of revisions requested for this lead."
+        },
         "revisionTimestamp": {
             "type": "string",
             "format": "date-time",
@@ -1095,6 +1115,14 @@
             "$ref": "#/backend/entities/InventoryReplenishment"
           },
           "description": "Stores historical records of inventory replenishments."
+        }
+      },
+      {
+        "path": "/revisions/{revisionId}",
+        "definition": {
+          "entityName": "Revision",
+          "schema": { "$ref": "#/backend/entities/Revision" },
+          "description": "Stores revision history for job orders."
         }
       },
       {
