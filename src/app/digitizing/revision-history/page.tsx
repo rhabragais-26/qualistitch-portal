@@ -296,8 +296,8 @@ export default function RevisionHistoryPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>J.O. Number</TableHead>
-                                    <TableHead>Digitizer</TableHead>
                                     <TableHead>Revision No.</TableHead>
+                                    <TableHead>Digitizer</TableHead>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Reason</TableHead>
                                     <TableHead>Details</TableHead>
@@ -310,8 +310,8 @@ export default function RevisionHistoryPage() {
                                     filteredHistory.map(rev => (
                                         <TableRow key={rev.id}>
                                             <TableCell>{formatJoNumber(rev.joNumber)}</TableCell>
-                                            <TableCell>{rev.assignedDigitizer || 'N/A'}</TableCell>
                                             <TableCell className="font-bold">{formatRevisionNumber(rev.revisionNumber)}</TableCell>
+                                            <TableCell>{rev.assignedDigitizer || 'N/A'}</TableCell>
                                             <TableCell>{formatDateTime(rev.timestamp).dateTime}</TableCell>
                                             <TableCell>{rev.reason}</TableCell>
                                             <TableCell className="max-w-[250px] whitespace-pre-wrap">{rev.details}</TableCell>
@@ -335,5 +335,3 @@ export default function RevisionHistoryPage() {
     </Header>
   );
 }
-
-    
