@@ -16,8 +16,8 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, AreaChart, Area, XAx
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
-import { formatCurrency } from '@/lib/utils';
-import { format, startOfDay, endOfDay, subDays, addDays, startOfMonth, endOfMonth, eachDayOfInterval, getYear, getMonth, differenceInDays } from 'date-fns';
+import { formatCurrency, cn } from '@/lib/utils';
+import { format, startOfDay, endOfDay, subDays, addDays, startOfMonth, endOfMonth, eachDayOfInterval, getYear, getMonth } from 'date-fns';
 
 type Lead = {
   isEndorsedToLogistics?: boolean;
@@ -445,23 +445,27 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   };
 
   const CustomQualityTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-card p-2.5 text-card-foreground rounded-md border shadow-md">
-          <p className="font-bold mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-sm">
-                <div className="flex items-center">
-                    <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: entry.stroke || entry.fill }} />
-                    <span>{entry.name}:</span>
-                </div>
-                <span className="font-bold">{entry.value} {entry.name === 'Total Items' ? 'items' : 'orders'}</span>
+    if (!active || !payload || payload.length === 0) {
+      return null;
+    }
+    return (
+      <div className="bg-card p-2.5 text-card-foreground rounded-md border shadow-md">
+        <p className="font-bold mb-2">{label}</p>
+        <div className="space-y-1">
+          {payload.map((entry: any) => (
+            <div key={entry.dataKey} className="flex justify-between items-center gap-4 text-sm">
+              <div className="flex items-center gap-2" style={{ color: entry.stroke || entry.fill }}>
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.stroke || entry.fill }}/>
+                <span>{entry.name}:</span>
+              </div>
+              <span className="font-semibold" style={{ color: entry.stroke || entry.fill }}>
+                {entry.value} {entry.dataKey === 'totalQuantity' ? 'items' : 'orders'}
+              </span>
             </div>
           ))}
         </div>
-      );
-    }
-    return null;
+      </div>
+    );
   };
   
   const isLoading = areLeadsLoading || areCasesLoading;
@@ -569,7 +573,7 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                            <YAxis allowDecimals={false} />
+                            <YAxis allowDecimals={false} domain={[0, dataMax => Math.round(dataMax * 1.2)]} />
                             <Tooltip content={<ChartTooltipContent formatter={(value) => `${value} items`} />} />
                             <Area type="monotone" dataKey="quantity" name="Items for Delivery" stroke="hsl(var(--chart-4))" strokeWidth={2} fill="url(#colorDelivery)" dot>
                             <LabelList dataKey="quantity" position="top" formatter={(value: number) => value > 0 ? value : ''} />
@@ -628,26 +632,27 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
               <div className="mt-8">
                 <h3 className="font-semibold text-center mb-2">Daily Quality Check</h3>
                 <div className="h-[300px]">
-                  <ChartContainer config={{ approved: { label: 'Approved', color: 'hsl(var(--chart-2))' }, disapproved: { label: 'Disapproved', color: 'hsl(var(--destructive))' }, totalQuantity: { label: 'Total Items', color: 'hsl(var(--chart-1))' } }} className="w-full h-full">
-                      <ResponsiveContainer>
-                          <ComposedChart data={dailyQualityCheckData}>
-                              <CartesianGrid vertical={false} />
-                              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                              <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" allowDecimals={false} label={{ value: 'Total Items', angle: -90, position: 'insideLeft', style: {textAnchor: 'middle'} }} />
-                              <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" allowDecimals={false} label={{ value: 'Order Count', angle: 90, position: 'insideRight', style: {textAnchor: 'middle'} }}/>
-                              <Tooltip content={<CustomQualityTooltip />} />
-                              <Area yAxisId="left" type="monotone" dataKey="totalQuantity" name="Total Items" fill="hsl(var(--chart-1))" stroke="hsl(var(--chart-1))" fillOpacity={0.2}>
-                                <LabelList dataKey="totalQuantity" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
-                              </Area>
-                              <Bar yAxisId="right" dataKey="approved" name="Approved" stackId="a" fill="hsl(var(--chart-2))" fillOpacity={0.7} radius={[4, 4, 0, 0]}>
-                                <LabelList dataKey="approved" position="center" className="fill-white font-bold" formatter={(value: number) => value > 0 ? value : ''} />
-                              </Bar>
-                              <Bar yAxisId="right" dataKey="disapproved" name="Disapproved" stackId="a" fill="hsl(var(--destructive))" fillOpacity={0.7} radius={[4, 4, 0, 0]}>
-                                  <LabelList dataKey="disapproved" position="center" className="fill-white font-bold" formatter={(value: number) => value > 0 ? value : ''} />
-                              </Bar>
-                          </ComposedChart>
-                      </ResponsiveContainer>
-                  </ChartContainer>
+                    <ChartContainer config={{ approved: { label: 'Approved', color: 'hsl(var(--chart-2))' }, disapproved: { label: 'Disapproved', color: 'hsl(var(--destructive))' }, totalQuantity: { label: 'Total Items', color: 'hsl(var(--chart-1))' } }} className="w-full h-full">
+                        <ResponsiveContainer>
+                            <ComposedChart data={dailyQualityCheckData}>
+                                <CartesianGrid vertical={false} />
+                                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                                <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" allowDecimals={false} label={{ value: 'Total Items', angle: -90, position: 'insideLeft', style: {textAnchor: 'middle'} }} />
+                                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" allowDecimals={false} label={{ value: 'Order Count', angle: 90, position: 'insideRight', style: {textAnchor: 'middle'} }}/>
+                                <Tooltip content={<CustomQualityTooltip />} />
+                                <Legend />
+                                <Area yAxisId="left" type="monotone" dataKey="totalQuantity" name="Total Items" fill="hsl(var(--chart-1))" stroke="hsl(var(--chart-1))" fillOpacity={0.2}>
+                                    <LabelList dataKey="totalQuantity" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
+                                </Area>
+                                <Bar yAxisId="right" dataKey="approved" name="Approved" stackId="a" fill="hsl(var(--chart-2))" fillOpacity={0.7} radius={[4, 4, 0, 0]}>
+                                    <LabelList dataKey="approved" position="center" className="fill-white font-bold" formatter={(value: number) => value > 0 ? value : ''} />
+                                </Bar>
+                                <Bar yAxisId="right" dataKey="disapproved" name="Disapproved" stackId="a" fill="hsl(var(--destructive))" fillOpacity={0.7} radius={[4, 4, 0, 0]}>
+                                    <LabelList dataKey="disapproved" position="center" className="fill-white font-bold" formatter={(value: number) => value > 0 ? value : ''} />
+                                </Bar>
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    </ChartContainer>
                 </div>
               </div>
             </CardContent>
@@ -655,7 +660,6 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
     </div>
   );
 });
+LogisticsSummaryMemo.displayName = 'LogisticsSummaryMemo';
 
 export { LogisticsSummaryMemo as LogisticsSummary };
-
-```
