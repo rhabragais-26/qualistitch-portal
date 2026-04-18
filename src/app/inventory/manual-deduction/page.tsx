@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Calendar, MessageSquare, Boxes, Palette, Ruler } from 'lucide-react';
+import { User, Calendar, MessageSquare, Boxes, Palette, Ruler, Trash2 } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
 import { doc, collection, query, runTransaction, orderBy } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
@@ -24,6 +24,8 @@ import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { PricingConfig } from '@/lib/pricing';
 import { initialPricingConfig } from '@/lib/pricing-data';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
 
 const manualDeductionFormSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
@@ -66,6 +68,7 @@ export default function ManualDeductionPage() {
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingDeduction, setDeletingDeduction] = useState<ManualDeduction | null>(null);
 
   const pricingConfigRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'pricing', 'default') : null),
@@ -96,7 +99,7 @@ export default function ManualDeductionPage() {
   });
 
   const deductionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'manual_item_deductions'), orderBy('timestamp', 'desc')) : null, [firestore]);
-  const { data: deductions, isLoading } = useCollection<ManualDeduction>(deductionsQuery);
+  const { data: deductions, isLoading, refetch } = useCollection<ManualDeduction>(deductionsQuery, undefined, { listen: false });
   
   const { watch, setValue } = form;
   const productTypeValue = watch('productType');
@@ -175,6 +178,7 @@ export default function ManualDeductionPage() {
       });
 
       toast({ title: 'Success!', description: 'Manual deduction has been recorded and inventory updated.' });
+      refetch();
       form.reset({
         date: new Date(),
         endorsedTo: '',
@@ -191,6 +195,50 @@ export default function ManualDeductionPage() {
       setIsSaving(false);
     }
   };
+
+  const handleDeleteDeduction = async () => {
+    if (!deletingDeduction || !firestore) return;
+
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const deductionData = deletingDeduction;
+
+            // Add back stock for each item in the deduction
+            for (const item of deductionData.items) {
+                const inventoryItemId = `${item.productType}-${item.color}-${item.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
+                const inventoryDocRef = doc(firestore, 'inventory', inventoryItemId);
+
+                const inventoryDoc = await transaction.get(inventoryDocRef);
+                const currentStock = inventoryDoc.exists() ? inventoryDoc.data().stock || 0 : 0;
+                
+                const newStock = currentStock + item.quantity;
+                
+                if (inventoryDoc.exists()) {
+                    transaction.update(inventoryDocRef, { stock: newStock });
+                } else {
+                    transaction.set(inventoryDocRef, {
+                        id: inventoryItemId,
+                        productType: item.productType,
+                        color: item.color,
+                        size: item.size,
+                        stock: newStock
+                    });
+                }
+            }
+
+            const deductionRef = doc(firestore, 'manual_item_deductions', deductionData.id);
+            transaction.delete(deductionRef);
+        });
+
+        toast({ title: 'Success!', description: 'Deduction record has been deleted and inventory restored.' });
+        setDeletingDeduction(null);
+        refetch();
+    } catch (e: any) {
+        console.error('Failed to delete deduction:', e);
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: e.message });
+    }
+  };
+
 
   const isPolo = productTypeValue?.includes('Polo Shirt');
   
@@ -299,21 +347,22 @@ export default function ManualDeductionPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Endorsed To</TableHead>
-                                    <TableHead>Reason</TableHead>
-                                    <TableHead>Items</TableHead>
-                                    <TableHead>Submitted By</TableHead>
+                                    <TableHead className="text-center">Date</TableHead>
+                                    <TableHead className="text-center">Endorsed To</TableHead>
+                                    <TableHead className="text-center">Reason</TableHead>
+                                    <TableHead className="text-center">Items</TableHead>
+                                    <TableHead className="text-center">Submitted By</TableHead>
+                                    <TableHead className="text-center">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {isLoading ? <TableRow><TableCell colSpan={5}><Skeleton className="h-24 w-full" /></TableCell></TableRow>
+                                {isLoading ? <TableRow><TableCell colSpan={6}><Skeleton className="h-24 w-full" /></TableCell></TableRow>
                                     : deductions && deductions.length > 0 ? deductions.map(log => (
                                     <TableRow key={log.id}>
-                                        <TableCell>{formatDateTime(log.date).dateTimeShort}</TableCell>
-                                        <TableCell>{log.endorsedTo}</TableCell>
-                                        <TableCell>{log.reason}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="text-center align-middle">{formatDateTime(log.date).dateTimeShort}</TableCell>
+                                        <TableCell className="text-center align-middle">{log.endorsedTo}</TableCell>
+                                        <TableCell className="text-center align-middle">{log.reason}</TableCell>
+                                        <TableCell className="text-left align-middle">
                                             <ul className="list-disc pl-4 text-xs">
                                                 {log.items.map((item, index) => (
                                                     <li key={index}>
@@ -322,9 +371,14 @@ export default function ManualDeductionPage() {
                                                 ))}
                                             </ul>
                                         </TableCell>
-                                        <TableCell>{log.submittedBy}</TableCell>
+                                        <TableCell className="text-center align-middle">{log.submittedBy}</TableCell>
+                                        <TableCell className="text-center align-middle">
+                                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeletingDeduction(log)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
                                     </TableRow>
-                                )) : <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No records yet.</TableCell></TableRow>}
+                                )) : <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No records yet.</TableCell></TableRow>}
                             </TableBody>
                         </Table>
                     </ScrollArea>
@@ -333,6 +387,20 @@ export default function ManualDeductionPage() {
           </div>
         </div>
       </main>
+      <AlertDialog open={!!deletingDeduction} onOpenChange={() => setDeletingDeduction(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This will permanently delete the deduction record and add the item quantity back to inventory. This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteDeduction}>Confirm Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
     </Header>
   );
 }
