@@ -53,7 +53,7 @@ const chartConfig = {
     label: 'Count',
   },
   requested: { label: 'Requested', color: 'hsl(var(--chart-3))' },
-  completed: { label: 'Approved', color: 'hsl(var(--chart-2))' }
+  completed: { label: 'Approved', color: 'hsl(var(--chart-4))' }
 };
 
 const COLORS = {
@@ -621,7 +621,7 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                         <Area type="monotone" dataKey="requested" name="Requested" stroke="hsl(var(--chart-3))" fill="hsl(var(--chart-3))" fillOpacity={0.4}>
                           <LabelList dataKey="requested" position="top" formatter={(value: number) => value > 0 ? value : ''} />
                         </Area>
-                        <Bar dataKey="completed" name="Approved" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                        <Bar dataKey="completed" name="Approved" fill="hsl(var(--chart-4))" fillOpacity={0.7} radius={[4, 4, 0, 0]}>
                           <LabelList dataKey="completed" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
                         </Bar>
                       </ComposedChart>
@@ -640,7 +640,6 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                                 <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" allowDecimals={false} label={{ value: 'Total Items', angle: -90, position: 'insideLeft', style: {textAnchor: 'middle'} }} />
                                 <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" allowDecimals={false} label={{ value: 'Order Count', angle: 90, position: 'insideRight', style: {textAnchor: 'middle'} }}/>
                                 <Tooltip content={<CustomQualityTooltip />} />
-                                <Legend />
                                 <Area yAxisId="left" type="monotone" dataKey="totalQuantity" name="Total Items" fill="hsl(var(--chart-1))" stroke="hsl(var(--chart-1))" fillOpacity={0.2}>
                                     <LabelList dataKey="totalQuantity" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
                                 </Area>
