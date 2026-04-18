@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,6 +24,7 @@ import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { PricingConfig } from '@/lib/pricing';
 import { initialPricingConfig } from '@/lib/pricing-data';
+import { FormProvider } from 'react-hook-form';
 
 const manualDeductionFormSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
@@ -116,8 +118,6 @@ export default function ManualDeductionPage() {
 
     try {
       await runTransaction(firestore, async (transaction) => {
-        transaction.set(deductionRef, deductionData);
-
         const inventoryItemId = `${itemToDeduct.productType}-${itemToDeduct.color}-${itemToDeduct.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
         const inventoryDocRef = doc(firestore, 'inventory', inventoryItemId);
         
@@ -125,11 +125,16 @@ export default function ManualDeductionPage() {
         if (!inventoryDoc.exists()) {
           throw new Error(`Inventory item not found for: ${itemToDeduct.productType} ${itemToDeduct.color} ${itemToDeduct.size}`);
         }
+        
         const currentStock = inventoryDoc.data().stock || 0;
         const newStock = currentStock - itemToDeduct.quantity;
+
         if (newStock < 0) {
             throw new Error(`Not enough stock for ${itemToDeduct.productType} (${itemToDeduct.color}, ${itemToDeduct.size}). Available: ${currentStock}, Needed: ${itemToDeduct.quantity}.`);
         }
+
+        // All writes must be after all reads in a transaction.
+        transaction.set(deductionRef, deductionData);
         transaction.update(inventoryDocRef, { stock: newStock });
       });
 
@@ -179,7 +184,7 @@ export default function ManualDeductionPage() {
                 <CardDescription>Record inventory deductions for special cases.</CardDescription>
               </CardHeader>
               <CardContent>
-                <Form {...form}>
+                <FormProvider {...form}>
                   <form onSubmit={form.handleSubmit(handleSaveDeduction)} className="space-y-4">
                     <FormField control={form.control} name="date" render={({ field }) => (
                       <FormItem>
@@ -234,7 +239,7 @@ export default function ManualDeductionPage() {
                       </Button>
                     </div>
                   </form>
-                </Form>
+                </FormProvider>
               </CardContent>
             </Card>
           </div>
