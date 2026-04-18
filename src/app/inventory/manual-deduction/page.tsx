@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -24,7 +24,6 @@ import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { PricingConfig } from '@/lib/pricing';
 import { initialPricingConfig } from '@/lib/pricing-data';
-import { FormProvider } from 'react-hook-form';
 
 const manualDeductionFormSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
@@ -37,6 +36,14 @@ const manualDeductionFormSchema = z.object({
 });
 
 type ManualDeductionFormValues = z.infer<typeof manualDeductionFormSchema>;
+
+type InventoryItem = {
+  id: string;
+  productType: string;
+  color: string;
+  size: string;
+  stock: number;
+};
 
 type ManualDeduction = {
   id: string;
@@ -65,6 +72,8 @@ export default function ManualDeductionPage() {
     [firestore]
   );
   const { data: fetchedConfig } = useDoc<PricingConfig>(pricingConfigRef);
+  const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
+  const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
 
   const pricingConfig = useMemo(() => fetchedConfig || initialPricingConfig, [fetchedConfig]);
   
@@ -88,6 +97,21 @@ export default function ManualDeductionPage() {
 
   const deductionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'manual_item_deductions'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: deductions, isLoading } = useCollection<ManualDeduction>(deductionsQuery);
+  
+  const { watch, setValue } = form;
+  const productTypeValue = watch('productType');
+  const colorValue = watch('color');
+  const sizeValue = watch('size');
+  
+  const availableStock = useMemo(() => {
+    if (!inventoryItems || !productTypeValue || !colorValue || !sizeValue) return null;
+    const item = inventoryItems.find(i => 
+      i.productType === productTypeValue && 
+      i.color === colorValue && 
+      i.size === sizeValue
+    );
+    return item?.stock;
+  }, [inventoryItems, productTypeValue, colorValue, sizeValue]);
 
   const handleSaveDeduction = async (data: ManualDeductionFormValues) => {
     if (!firestore || !userProfile) {
@@ -95,6 +119,16 @@ export default function ManualDeductionPage() {
       return;
     }
     setIsSaving(true);
+    
+    if (availableStock === null || availableStock === undefined || data.quantity > availableStock) {
+        toast({
+            variant: 'destructive',
+            title: 'Not enough stock',
+            description: `Only ${availableStock ?? 0} items available for ${data.productType} (${data.color}, ${data.size}).`,
+        });
+        setIsSaving(false);
+        return;
+    }
     
     const deductionId = uuidv4();
     const deductionRef = doc(firestore, 'manual_item_deductions', deductionId);
@@ -122,20 +156,22 @@ export default function ManualDeductionPage() {
         const inventoryDocRef = doc(firestore, 'inventory', inventoryItemId);
         
         const inventoryDoc = await transaction.get(inventoryDocRef);
-        if (!inventoryDoc.exists()) {
-          throw new Error(`Inventory item not found for: ${itemToDeduct.productType} ${itemToDeduct.color} ${itemToDeduct.size}`);
-        }
+        const currentStock = inventoryDoc.exists() ? inventoryDoc.data().stock || 0 : 0;
         
-        const currentStock = inventoryDoc.data().stock || 0;
         const newStock = currentStock - itemToDeduct.quantity;
 
         if (newStock < 0) {
-            throw new Error(`Not enough stock for ${itemToDeduct.productType} (${itemToDeduct.color}, ${itemToDeduct.size}). Available: ${currentStock}, Needed: ${itemToDeduct.quantity}.`);
+          throw new Error(`Not enough stock for ${itemToDeduct.productType} (${itemToDeduct.color}, ${itemToDeduct.size}). Available: ${currentStock}, Needed: ${itemToDeduct.quantity}.`);
         }
-
-        // All writes must be after all reads in a transaction.
+        
+        if (inventoryDoc.exists()) {
+            transaction.update(inventoryDocRef, { stock: newStock });
+        } else {
+             // This case should be rare if validation is correct, but as a fallback:
+            throw new Error(`Inventory item not found for: ${itemToDeduct.productType} ${itemToDeduct.color} ${itemToDeduct.size}`);
+        }
+        
         transaction.set(deductionRef, deductionData);
-        transaction.update(inventoryDocRef, { stock: newStock });
       });
 
       toast({ title: 'Success!', description: 'Manual deduction has been recorded and inventory updated.' });
@@ -156,9 +192,6 @@ export default function ManualDeductionPage() {
     }
   };
 
-  const { watch, setValue } = form;
-  const productTypeValue = watch('productType');
-  const colorValue = watch('color');
   const isPolo = productTypeValue?.includes('Polo Shirt');
   
   const jacketColors = useMemo(() => ['Army Green', 'Black', 'Black/Gray', 'Black/Khaki', 'Black/Navy Blue', 'Brown', 'Dark Gray', 'Dark Khaki', 'Khaki', 'Light Gray', 'Light Khaki', 'Maroon/Gray', 'Navy Blue', 'Navy Blue/Gray', 'Olive Green'], []);
@@ -184,62 +217,75 @@ export default function ManualDeductionPage() {
                 <CardDescription>Record inventory deductions for special cases.</CardDescription>
               </CardHeader>
               <CardContent>
-                <FormProvider {...form}>
-                  <form onSubmit={form.handleSubmit(handleSaveDeduction)} className="space-y-4">
-                    <FormField control={form.control} name="date" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2"><Calendar /> Date</FormLabel>
-                        <FormControl><Input type="date" value={field.value ? format(field.value, 'yyyy-MM-dd') : ''} onChange={(e) => field.onChange(new Date(e.target.value))} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="endorsedTo" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2"><User /> Endorsed To (Employee)</FormLabel>
-                        <FormControl><Input placeholder="Enter employee name" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="reason" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2"><MessageSquare /> Reason</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select a reason" /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            {["Freebies", "For Marketing Purposes", "Error Replacement", "c/o Sir Than", "For Showroom"].map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    
-                    <Separator />
-                    
-                    <h4 className="font-semibold pt-2">Item to Deduct</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="productType" render={({ field }) => (
-                            <FormItem><FormLabel className="flex items-center gap-2"><Boxes />Product Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Product Type"/></SelectTrigger></FormControl><SelectContent>{productTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
-                        )}/>
-                        <FormField control={form.control} name="color" render={({ field }) => (
-                            <FormItem><FormLabel className="flex items-center gap-2"><Palette />Color</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!productTypeValue}><FormControl><SelectTrigger><SelectValue placeholder="Color"/></SelectTrigger></FormControl><SelectContent>{availableColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
-                        )}/>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="size" render={({ field }) => (
-                            <FormItem><FormLabel className="flex items-center gap-2"><Ruler />Size</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Size"/></SelectTrigger></FormControl><SelectContent>{productSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
-                        )}/>
-                        <FormField control={form.control} name="quantity" render={({ field }) => (
-                            <FormItem><FormLabel>Quantity</FormLabel><FormControl><Input type="number" placeholder="Quantity" {...field} /></FormControl><FormMessage/></FormItem>
-                        )}/>
-                    </div>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleSaveDeduction)} className="space-y-4">
+                        <FormField control={form.control} name="date" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2"><Calendar /> Date</FormLabel>
+                            <FormControl><Input type="date" value={field.value ? format(field.value, 'yyyy-MM-dd') : ''} onChange={(e) => field.onChange(new Date(e.target.value))} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )} />
+                        <FormField control={form.control} name="endorsedTo" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2"><User /> Endorsed To (Employee)</FormLabel>
+                            <FormControl><Input placeholder="Enter employee name" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )} />
+                        <FormField control={form.control} name="reason" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2"><MessageSquare /> Reason</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Select a reason" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {["Freebies", "For Marketing Purposes", "Error Replacement", "c/o Sir Than", "For Showroom"].map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                            </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )} />
+                        
+                        <Separator />
+                        
+                        <h4 className="font-semibold pt-2">Item to Deduct</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="productType" render={({ field }) => (
+                                <FormItem><FormLabel className="flex items-center gap-2"><Boxes />Product Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Product Type"/></SelectTrigger></FormControl><SelectContent>{productTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="color" render={({ field }) => (
+                                <FormItem><FormLabel className="flex items-center gap-2"><Palette />Color</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!productTypeValue}><FormControl><SelectTrigger><SelectValue placeholder="Color"/></SelectTrigger></FormControl><SelectContent>{availableColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                            )}/>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="size" render={({ field }) => (
+                                <FormItem><FormLabel className="flex items-center gap-2"><Ruler />Size</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Size"/></SelectTrigger></FormControl><SelectContent>{productSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                            )}/>
+                            <FormField control={form.control} name="quantity" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Quantity</FormLabel>
+                                    <FormControl><Input type="number" placeholder="Quantity" {...field} /></FormControl>
+                                    {availableStock !== null && availableStock !== undefined ? (
+                                        <FormDescription>
+                                            Available: {availableStock}
+                                        </FormDescription>
+                                    ) : (productTypeValue && colorValue && sizeValue) &&
+                                        <FormDescription>
+                                            Checking stock...
+                                        </FormDescription>
+                                    }
+                                    <FormMessage/>
+                                </FormItem>
+                            )}/>
+                        </div>
 
-                    <div className="pt-4 flex justify-end">
-                      <Button type="submit" disabled={isSaving}>
-                        {isSaving ? 'Saving...' : 'Save Deduction'}
-                      </Button>
-                    </div>
-                  </form>
-                </FormProvider>
+                        <div className="pt-4 flex justify-end">
+                        <Button type="submit" disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save Deduction'}
+                        </Button>
+                        </div>
+                    </form>
+                  </Form>
               </CardContent>
             </Card>
           </div>
