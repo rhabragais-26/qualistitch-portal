@@ -7,7 +7,7 @@ import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Respon
 import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, eachDayOfInterval, subDays, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ChartContainer } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 
 type Order = {
@@ -35,6 +35,17 @@ type InventoryReplenishment = {
   color: string;
   size: string;
   quantity: number;
+};
+
+type ManualDeduction = {
+  id: string;
+  date: string;
+  items: {
+    productType: string;
+    color: string;
+    size: string;
+    quantity: number;
+  }[];
 };
 
 type InventoryItem = {
@@ -81,6 +92,9 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
   const replenishmentsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'inventory_replenishments')) : null), [firestore]);
   const { data: replenishments, isLoading: areReplenishmentsLoading, error: replenishmentsError } = useCollection<InventoryReplenishment>(replenishmentsQuery, undefined, { listen: false });
   
+  const manualDeductionsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'manual_item_deductions')) : null), [firestore]);
+  const { data: manualDeductions, isLoading: areDeductionsLoading, error: deductionsError } = useCollection<ManualDeduction>(manualDeductionsQuery, undefined, { listen: false });
+
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user || isUserLoading) return null;
     return query(collection(firestore, 'inventory'));
@@ -89,7 +103,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
   
   const chartData = useMemo(() => {
-    if (!leads || !inventoryItems || !productTypeFilter || !replenishments) return [];
+    if (!leads || !inventoryItems || !productTypeFilter || !replenishments || !manualDeductions) return [];
 
     const filteredLeads = leads.filter(lead => priorityFilter === 'All' || lead.priorityType === priorityFilter);
 
@@ -107,7 +121,7 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
       startDate = startOfDay(startOfWeek(endDate, { weekStartsOn: 1 }));
     }
 
-    // 2. Get all unique items that match the filter criteria from both leads and inventory.
+    // 2. Get all unique items that match the filter criteria from all sources.
     const allItemsMap = new Map<string, { productType: string, color: string, size: string }>();
     const createKey = (item: { productType: string, color: string, size: string }) => 
         `${item.productType}-${item.color}-${item.size}`;
@@ -124,12 +138,15 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
     };
     filteredLeads.forEach(lead => lead.orders.forEach(addItemToMap));
     inventoryItems.forEach(addItemToMap);
+    (replenishments || []).forEach(addItemToMap);
+    (manualDeductions || []).forEach(deduction => deduction.items.forEach(addItemToMap));
     
     const relevantItemsDetails = Array.from(allItemsMap.values());
 
-    // 3. Pre-calculate daily sales and replenishments for the filtered items.
+    // 3. Pre-calculate daily totals for the filtered items.
     const dailySales: Record<string, number> = {};
     const dailyReplenishments: Record<string, number> = {};
+    const dailyDeductions: Record<string, number> = {};
 
     filteredLeads.forEach(lead => {
         const submissionDateStr = format(new Date(lead.submissionDateTime), 'yyyy-MM-dd');
@@ -146,6 +163,16 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
             dailyReplenishments[dateStr] = (dailyReplenishments[dateStr] || 0) + repl.quantity;
         }
     });
+    
+    (manualDeductions || []).forEach(deduction => {
+        const dateStr = format(new Date(deduction.date), 'yyyy-MM-dd');
+        deduction.items.forEach(item => {
+            if (allItemsMap.has(createKey(item))) {
+                dailyDeductions[dateStr] = (dailyDeductions[dateStr] || 0) + item.quantity;
+            }
+        });
+    });
+
 
     // 4. Calculate today's total remaining stock for the filtered items to use as an anchor.
     const inventoryMap = new Map(inventoryItems.map(item => [createKey(item), item]));
@@ -185,8 +212,9 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
       
       const soldOnCurrentDay = dailySales[currentDayStr] || 0;
       const replenishedOnCurrentDay = dailyReplenishments[currentDayStr] || 0;
+      const deductedOnCurrentDay = dailyDeductions[currentDayStr] || 0;
       
-      runningRemaining = runningRemaining + soldOnCurrentDay - replenishedOnCurrentDay;
+      runningRemaining = runningRemaining + soldOnCurrentDay - replenishedOnCurrentDay + deductedOnCurrentDay;
       
       const previousDayStr = format(allDaysInRange[i], 'yyyy-MM-dd');
       historicalRemaining[previousDayStr] = runningRemaining;
@@ -199,13 +227,14 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
             date: format(day, 'MMM dd'),
             sold: dailySales[dateStr] || 0,
             replenished: dailyReplenishments[dateStr] || 0,
+            manualDeduction: dailyDeductions[dateStr] || 0,
             remaining: historicalRemaining[dateStr] ?? null,
         };
     });
     
     return dataForChart;
 
-  }, [leads, inventoryItems, replenishments, timeRange, productTypeFilter, colorFilter, sizeFilter, priorityFilter]);
+  }, [leads, inventoryItems, replenishments, manualDeductions, timeRange, productTypeFilter, colorFilter, sizeFilter, priorityFilter]);
 
   const yDomainRight = useMemo(() => {
     const remainingValues = chartData.map(d => d.remaining).filter(v => v !== null) as number[];
@@ -220,8 +249,8 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
     return [yMin, yMax];
   }, [chartData]);
   
-  const isLoading = areLeadsLoading || isInventoryLoading || areReplenishmentsLoading;
-  const error = leadsError || inventoryError || replenishmentsError;
+  const isLoading = isUserLoading || areLeadsLoading || isInventoryLoading || areReplenishmentsLoading || areDeductionsLoading;
+  const error = leadsError || inventoryError || replenishmentsError || deductionsError;
 
   const chartConfig = {
     sold: {
@@ -242,12 +271,13 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         const replenishment = data.replenished;
+        const manualDeduction = data.manualDeduction;
         return (
             <div className="p-2.5 bg-background border rounded-md shadow-lg text-sm">
                 <p className="font-bold mb-2">{label}</p>
                 <div className="space-y-1">
                     {payload.map((entry: any) => {
-                        if (entry.dataKey === 'replenished') return null;
+                        if (entry.dataKey === 'replenished' || entry.dataKey === 'manualDeduction') return null;
 
                         let color;
                         if (entry.dataKey === 'sold') {
@@ -273,6 +303,15 @@ export function DailySoldQuantityChart({ productTypeFilter, colorFilter, sizeFil
                                 <span>Replenishment Count:</span>
                             </div>
                             <span className="font-mono font-medium" style={{ color: '#22c55e' }}>{replenishment.toLocaleString()}</span>
+                        </div>
+                    )}
+                    {manualDeduction > 0 && (
+                        <div key="tooltip-deduction" className="flex justify-between items-center gap-4">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#f472b6' /* pink-400 */ }}/>
+                                <span>Manual Deduction:</span>
+                            </div>
+                            <span className="font-mono font-medium" style={{ color: '#f472b6' }}>{manualDeduction.toLocaleString()}</span>
                         </div>
                     )}
                 </div>
