@@ -2,6 +2,33 @@
 
 {
   "entities": {
+    "ManualItemDeduction": {
+      "title": "ManualItemDeduction",
+      "type": "object",
+      "description": "Represents a manual deduction of inventory for special cases.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "submittedBy": { "type": "string" },
+        "endorsedTo": { "type": "string" },
+        "reason": { "type": "string", "enum": ["Freebies", "For Marketing Purposes", "Error Replacement", "c/o Sir Than", "For Showroom"] },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productType": { "type": "string" },
+              "color": { "type": "string" },
+              "size": { "type": "string" },
+              "quantity": { "type": "number" }
+            },
+            "required": ["productType", "color", "size", "quantity"]
+          }
+        },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "date", "submittedBy", "endorsedTo", "reason", "items", "timestamp"]
+    },
     "InventoryReplenishment": {
         "title": "InventoryReplenishment",
         "type": "object",
@@ -1107,6 +1134,16 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/manual_item_deductions/{deductionId}",
+        "definition": {
+          "entityName": "ManualItemDeduction",
+          "schema": {
+            "$ref": "#/backend/entities/ManualItemDeduction"
+          },
+          "description": "Stores manual inventory deductions."
+        }
+      },
       {
         "path": "/inventory_replenishments/{replenishmentId}",
         "definition": {

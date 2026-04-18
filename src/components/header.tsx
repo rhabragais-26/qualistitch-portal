@@ -46,6 +46,7 @@ import {
   Newspaper,
   CandlestickChart,
   History,
+  PackageX
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -494,7 +495,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'inventory'} onOpenChange={(isOpen) => handleMenuOpenChange('inventory', isOpen)}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/replenishment-history', '/inventory/item-preparation-for-production', '/inventory/sku-list-and-barcodes', '/inventory/summary', '/inventory/reports']))}>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/replenishment-history', '/inventory/manual-deduction', '/inventory/item-preparation-for-production', '/inventory/sku-list-and-barcodes', '/inventory/summary', '/inventory/reports']))}>
                         <Boxes className="mr-2" />
                         Inventory
                         <ChevronDown className="ml-2 h-4 w-4" />
@@ -508,6 +509,10 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/replenishment-history')}>
                       <ClipboardList className="mr-2 h-4 w-4" />
                       Replenishment History
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/inventory/manual-deduction')}>
+                      <PackageX className="mr-2 h-4 w-4" />
+                      Manual Item Deduction
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/item-preparation-for-production')}>
                       <Package className="mr-2" />
