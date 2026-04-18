@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -22,6 +21,7 @@ import { format, startOfDay, endOfDay, subDays, addDays, startOfMonth, endOfMont
 type Lead = {
   isEndorsedToLogistics?: boolean;
   isQualityApproved?: boolean;
+  qualityApprovedTimestamp?: string;
   isSalesAuditRequested?: boolean;
   isSalesAuditComplete?: boolean;
   salesAuditRequestedTimestamp?: string;
@@ -35,6 +35,17 @@ type Lead = {
   shippedTimestamp?: string;
   deliveredTimestamp?: string;
 };
+
+type OperationalCase = {
+  id: string;
+  joNumber: string;
+  caseType: string;
+  isArchived?: boolean;
+  isDeleted?: boolean;
+  submissionDateTime: string;
+  caseItems?: { quantity: number }[];
+};
+
 
 const chartConfig = {
   count: {
@@ -99,7 +110,11 @@ DoughnutChartCard.displayName = 'DoughnutChartCard';
 const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+
+  const operationalCasesQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'operationalCases')) : null), [firestore]);
+  const { data: operationalCases, isLoading: areCasesLoading, error: casesError } = useCollection<OperationalCase>(operationalCasesQuery);
+
 
   const [deliveryFilterType, setDeliveryFilterType] = useState<'range' | 'month'>('range');
   const [deliveryTimeRange, setDeliveryTimeRange] = useState('30d');
@@ -333,6 +348,80 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
     });
   }, [leads, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
 
+  const dailyQualityCheckData = useMemo(() => {
+    if (!leads) return [];
+
+    let startDate: Date;
+    let endDate: Date;
+    const now = new Date();
+
+    if (deliveryFilterType === 'range') {
+        if (deliveryTimeRange === '7d') {
+          startDate = startOfDay(subDays(now, 6));
+          endDate = endOfDay(now);
+        } else if (deliveryTimeRange === '14d') {
+          startDate = startOfDay(subDays(now, 13));
+          endDate = endOfDay(now);
+        } else { // 30d
+          startDate = startOfDay(subDays(now, 29));
+          endDate = endOfDay(now);
+        }
+    } else { // month filter
+        const year = parseInt(deliveryYear, 10);
+        const month = parseInt(deliveryMonth, 10) - 1;
+        startDate = startOfMonth(new Date(year, month));
+        endDate = endOfMonth(startDate);
+    }
+    
+    const dailyData: { [date: string]: { approved: number; disapproved: number; totalQuantity: number } } = {};
+
+    // Process approved leads
+    leads.forEach(lead => {
+      if (lead.isQualityApproved && lead.qualityApprovedTimestamp) {
+        try {
+          const approvedDate = new Date(lead.qualityApprovedTimestamp);
+          if (approvedDate >= startDate && approvedDate <= endDate) {
+            const dateStr = format(approvedDate, 'yyyy-MM-dd');
+            if (!dailyData[dateStr]) {
+              dailyData[dateStr] = { approved: 0, disapproved: 0, totalQuantity: 0 };
+            }
+            dailyData[dateStr].approved++;
+            const quantity = lead.orders?.reduce((sum, order) => sum + order.quantity, 0) || 0;
+            dailyData[dateStr].totalQuantity += quantity;
+          }
+        } catch (e) { /* ignore invalid dates */ }
+      }
+    });
+
+    // Process disapproved leads (from operational cases)
+    (operationalCases || []).forEach(opCase => {
+      if (opCase.caseType === 'Quality Errors') {
+        try {
+          const disapprovedDate = new Date(opCase.submissionDateTime);
+          if (disapprovedDate >= startDate && disapprovedDate <= endDate) {
+            const dateStr = format(disapprovedDate, 'yyyy-MM-dd');
+            if (!dailyData[dateStr]) {
+              dailyData[dateStr] = { approved: 0, disapproved: 0, totalQuantity: 0 };
+            }
+            dailyData[dateStr].disapproved++;
+            const quantity = opCase.caseItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+            dailyData[dateStr].totalQuantity += quantity;
+          }
+        } catch (e) { /* ignore invalid dates */ }
+      }
+    });
+
+    const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
+    return allDaysInRange.map(day => {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      return {
+        date: format(day, 'MMM dd'),
+        ...(dailyData[dateStr] || { approved: 0, disapproved: 0, totalQuantity: 0 }),
+      };
+    });
+
+  }, [leads, operationalCases, deliveryFilterType, deliveryTimeRange, deliveryMonth, deliveryYear]);
+
   const CustomAuditTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -353,6 +442,9 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   
     return null;
   };
+  
+  const isLoading = areLeadsLoading || areCasesLoading;
+  const error = leadsError || casesError;
 
   if (isLoading) {
     return (
@@ -509,6 +601,35 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                         </Bar>
                       </ComposedChart>
                     </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+              </div>
+              <div className="mt-8">
+                <h3 className="font-semibold text-center mb-2">Daily Quality Check</h3>
+                <div className="h-[300px]">
+                  <ChartContainer config={{ approved: { label: 'Approved', color: 'hsl(var(--chart-2))' }, disapproved: { label: 'Disapproved', color: 'hsl(var(--destructive))' }, totalQuantity: { label: 'Total Items', color: 'hsl(var(--chart-1))' } }} className="w-full h-full">
+                      <ResponsiveContainer>
+                          <ComposedChart data={dailyQualityCheckData}>
+                              <CartesianGrid vertical={false} />
+                              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                              <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" allowDecimals={false} label={{ value: 'Total Items', angle: -90, position: 'insideLeft', style: {textAnchor: 'middle'} }} />
+                              <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" allowDecimals={false} label={{ value: 'Order Count', angle: 90, position: 'insideRight', style: {textAnchor: 'middle'} }}/>
+                              <Tooltip content={<ChartTooltipContent
+                                formatter={(value, name) => {
+                                  if (name === "Total Items") return `${value} items`;
+                                  return `${value} orders`;
+                                }}
+                              />} />
+                              <Legend />
+                              <Area yAxisId="left" type="monotone" dataKey="totalQuantity" name="Total Items" fill="hsl(var(--chart-1))" stroke="hsl(var(--chart-1))" fillOpacity={0.2} />
+                              <Bar yAxisId="right" dataKey="approved" name="Approved" stackId="a" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                                <LabelList dataKey="approved" position="center" formatter={(value: number) => value > 0 ? value : ''} />
+                              </Bar>
+                              <Bar yAxisId="right" dataKey="disapproved" name="Disapproved" stackId="a" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]}>
+                                  <LabelList dataKey="disapproved" position="center" formatter={(value: number) => value > 0 ? value : ''} />
+                              </Bar>
+                          </ComposedChart>
+                      </ResponsiveContainer>
                   </ChartContainer>
                 </div>
               </div>
