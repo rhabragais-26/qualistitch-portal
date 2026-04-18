@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Boxes, Palette, Ruler, Plus, User, Calendar, MessageSquare, Trash2 } from 'lucide-react';
+import { User, Calendar, MessageSquare, Boxes, Palette, Ruler } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
 import { doc, collection, query, runTransaction, orderBy } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
@@ -24,22 +24,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { PricingConfig } from '@/lib/pricing';
 import { initialPricingConfig } from '@/lib/pricing-data';
 
-// Schemas and Types
-const deductionItemSchema = z.object({
-  id: z.string(),
-  productType: z.string().min(1, "Required"),
-  color: z.string().min(1, "Required"),
-  size: z.string().min(1, "Required"),
-  quantity: z.number().min(1, "Must be at least 1"),
-});
-type DeductionItem = z.infer<typeof deductionItemSchema>;
-
-const deductionFormSchema = z.object({
+const manualDeductionFormSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
   endorsedTo: z.string().min(1, "Endorsed to is required."),
-  reason: z.enum(["Freebies", "For Marketing Purposes", "Error Replacement", "c/o Sir Than", "For Showroom"]),
+  reason: z.enum(["Freebies", "For Marketing Purposes", "Error Replacement", "c/o Sir Than", "For Showroom"], { required_error: "A reason is required." }),
+  productType: z.string().min(1, "Product type is required."),
+  color: z.string().min(1, "Color is required."),
+  size: z.string().min(1, "Size is required."),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
 });
-type DeductionFormValues = z.infer<typeof deductionFormSchema>;
+
+type ManualDeductionFormValues = z.infer<typeof manualDeductionFormSchema>;
 
 type ManualDeduction = {
   id: string;
@@ -47,7 +42,12 @@ type ManualDeduction = {
   submittedBy: string;
   endorsedTo: string;
   reason: string;
-  items: Omit<DeductionItem, 'id'>[];
+  items: {
+    productType: string;
+    color: string;
+    size: string;
+    quantity: number;
+  }[];
   timestamp: string;
 };
 
@@ -56,7 +56,6 @@ export default function ManualDeductionPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { userProfile } = useUser();
-  const [stagedItems, setStagedItems] = useState<DeductionItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   const pricingConfigRef = useMemoFirebase(
@@ -72,25 +71,25 @@ export default function ManualDeductionPage() {
     return Object.keys(pricingConfig.productGroupMapping || {}).sort();
   }, [pricingConfig]);
 
-  const deductionForm = useForm<DeductionFormValues>({
-    resolver: zodResolver(deductionFormSchema),
-    defaultValues: { date: new Date() },
+  const form = useForm<ManualDeductionFormValues>({
+    resolver: zodResolver(manualDeductionFormSchema),
+    defaultValues: { 
+      date: new Date(),
+      endorsedTo: '',
+      reason: undefined,
+      productType: '',
+      color: '',
+      size: '',
+      quantity: 1,
+     },
   });
 
   const deductionsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'manual_item_deductions'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: deductions, isLoading } = useCollection<ManualDeduction>(deductionsQuery);
 
-  const handleAddItem = (item: Omit<DeductionItem, 'id'>) => {
-    setStagedItems(prev => [...prev, { ...item, id: uuidv4() }]);
-  };
-
-  const handleRemoveItem = (id: string) => {
-    setStagedItems(prev => prev.filter(item => item.id !== id));
-  };
-  
-  const handleSaveDeduction = async (data: DeductionFormValues) => {
-    if (!firestore || !userProfile || stagedItems.length === 0) {
-      toast({ variant: 'destructive', title: 'No items to deduct', description: 'Please add at least one item.' });
+  const handleSaveDeduction = async (data: ManualDeductionFormValues) => {
+    if (!firestore || !userProfile) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
       return;
     }
     setIsSaving(true);
@@ -98,39 +97,52 @@ export default function ManualDeductionPage() {
     const deductionId = uuidv4();
     const deductionRef = doc(firestore, 'manual_item_deductions', deductionId);
     
+    const itemToDeduct = {
+        productType: data.productType,
+        color: data.color,
+        size: data.size,
+        quantity: data.quantity,
+    };
+    
     const deductionData: ManualDeduction = {
       id: deductionId,
       date: data.date.toISOString(),
       submittedBy: userProfile.nickname,
       endorsedTo: data.endorsedTo,
       reason: data.reason,
-      items: stagedItems.map(({ id, ...item }) => item), // remove temporary client-side ID
+      items: [itemToDeduct],
       timestamp: new Date().toISOString(),
     };
 
     try {
       await runTransaction(firestore, async (transaction) => {
-        // 1. Save the deduction record
         transaction.set(deductionRef, deductionData);
 
-        // 2. Decrement inventory stock for each item
-        for (const item of stagedItems) {
-          const inventoryItemId = `${item.productType}-${item.color}-${item.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
-          const inventoryDocRef = doc(firestore, 'inventory', inventoryItemId);
-          
-          const inventoryDoc = await transaction.get(inventoryDocRef);
-          if (!inventoryDoc.exists()) {
-            throw new Error(`Inventory item not found for: ${item.productType} ${item.color} ${item.size}`);
-          }
-          const currentStock = inventoryDoc.data().stock || 0;
-          const newStock = currentStock - item.quantity;
-          transaction.update(inventoryDocRef, { stock: newStock });
+        const inventoryItemId = `${itemToDeduct.productType}-${itemToDeduct.color}-${itemToDeduct.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
+        const inventoryDocRef = doc(firestore, 'inventory', inventoryItemId);
+        
+        const inventoryDoc = await transaction.get(inventoryDocRef);
+        if (!inventoryDoc.exists()) {
+          throw new Error(`Inventory item not found for: ${itemToDeduct.productType} ${itemToDeduct.color} ${itemToDeduct.size}`);
         }
+        const currentStock = inventoryDoc.data().stock || 0;
+        const newStock = currentStock - itemToDeduct.quantity;
+        if (newStock < 0) {
+            throw new Error(`Not enough stock for ${itemToDeduct.productType} (${itemToDeduct.color}, ${itemToDeduct.size}). Available: ${currentStock}, Needed: ${itemToDeduct.quantity}.`);
+        }
+        transaction.update(inventoryDocRef, { stock: newStock });
       });
 
       toast({ title: 'Success!', description: 'Manual deduction has been recorded and inventory updated.' });
-      setStagedItems([]);
-      deductionForm.reset({ date: new Date(), endorsedTo: '', reason: undefined });
+      form.reset({
+        date: new Date(),
+        endorsedTo: '',
+        reason: undefined,
+        productType: '',
+        color: '',
+        size: '',
+        quantity: 1,
+      });
     } catch (e: any) {
       console.error('Deduction failed:', e);
       toast({ variant: 'destructive', title: 'Deduction Failed', description: e.message });
@@ -138,6 +150,23 @@ export default function ManualDeductionPage() {
       setIsSaving(false);
     }
   };
+
+  const { watch, setValue } = form;
+  const productTypeValue = watch('productType');
+  const colorValue = watch('color');
+  const isPolo = productTypeValue?.includes('Polo Shirt');
+  
+  const jacketColors = useMemo(() => ['Army Green', 'Black', 'Black/Gray', 'Black/Khaki', 'Black/Navy Blue', 'Brown', 'Dark Gray', 'Dark Khaki', 'Khaki', 'Light Gray', 'Light Khaki', 'Maroon/Gray', 'Navy Blue', 'Navy Blue/Gray', 'Olive Green'], []);
+  const poloShirtColors = useMemo(() => ['Aqua Blue', 'Black', 'Brown', 'Choco Brown', 'Cream', 'Dark Green', 'Dark Gray', 'Dawn Blue', 'Emerald Green', 'Estate Blue', 'Fair Orchid', 'Fuchsia', 'Gold', 'Golden Yellow', 'Green', 'Green Briar', 'Honey Mustard', 'Irish Green', 'Jade Green', 'Light Green', 'Light Gray', 'Maroon', 'Melange Gray', 'Military Green', 'Mint Green', 'Mocha', 'Navy Blue', 'Nine Ion Gray', 'Oatmeal', 'Orange', 'Pink', 'Purple', 'Rapture Rose', 'Red', 'Royal Blue', 'Sky Blue', 'Slate Blue', 'Teal', 'White', 'Yellow'], []);
+  const productSizes = useMemo(() => ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'], []);
+  
+  const availableColors = isPolo ? poloShirtColors : jacketColors;
+
+  useEffect(() => {
+      if (colorValue && !availableColors.includes(colorValue)) {
+          setValue('color', '');
+      }
+  }, [productTypeValue, availableColors, colorValue, setValue]);
 
   return (
     <Header>
@@ -150,23 +179,23 @@ export default function ManualDeductionPage() {
                 <CardDescription>Record inventory deductions for special cases.</CardDescription>
               </CardHeader>
               <CardContent>
-                <Form {...deductionForm}>
-                  <form onSubmit={deductionForm.handleSubmit(handleSaveDeduction)} className="space-y-4">
-                    <FormField control={deductionForm.control} name="date" render={({ field }) => (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleSaveDeduction)} className="space-y-4">
+                    <FormField control={form.control} name="date" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2"><Calendar /> Date</FormLabel>
-                        <FormControl><Input type="date" value={format(field.value, 'yyyy-MM-dd')} onChange={(e) => field.onChange(new Date(e.target.value))} /></FormControl>
+                        <FormControl><Input type="date" value={field.value ? format(field.value, 'yyyy-MM-dd') : ''} onChange={(e) => field.onChange(new Date(e.target.value))} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={deductionForm.control} name="endorsedTo" render={({ field }) => (
+                    <FormField control={form.control} name="endorsedTo" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2"><User /> Endorsed To (Employee)</FormLabel>
                         <FormControl><Input placeholder="Enter employee name" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={deductionForm.control} name="reason" render={({ field }) => (
+                    <FormField control={form.control} name="reason" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2"><MessageSquare /> Reason</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
@@ -181,10 +210,26 @@ export default function ManualDeductionPage() {
                     
                     <Separator />
                     
-                    <AddItemSubForm onAddItem={handleAddItem} productTypes={productTypes} />
+                    <h4 className="font-semibold pt-2">Item to Deduct</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="productType" render={({ field }) => (
+                            <FormItem><FormLabel className="flex items-center gap-2"><Boxes />Product Type</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Product Type"/></SelectTrigger></FormControl><SelectContent>{productTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                        )}/>
+                        <FormField control={form.control} name="color" render={({ field }) => (
+                            <FormItem><FormLabel className="flex items-center gap-2"><Palette />Color</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!productTypeValue}><FormControl><SelectTrigger><SelectValue placeholder="Color"/></SelectTrigger></FormControl><SelectContent>{availableColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                        )}/>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="size" render={({ field }) => (
+                            <FormItem><FormLabel className="flex items-center gap-2"><Ruler />Size</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Size"/></SelectTrigger></FormControl><SelectContent>{productSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                        )}/>
+                        <FormField control={form.control} name="quantity" render={({ field }) => (
+                            <FormItem><FormLabel>Quantity</FormLabel><FormControl><Input type="number" placeholder="Quantity" {...field} /></FormControl><FormMessage/></FormItem>
+                        )}/>
+                    </div>
 
                     <div className="pt-4 flex justify-end">
-                      <Button type="submit" disabled={isSaving || stagedItems.length === 0}>
+                      <Button type="submit" disabled={isSaving}>
                         {isSaving ? 'Saving...' : 'Save Deduction'}
                       </Button>
                     </div>
@@ -196,41 +241,10 @@ export default function ManualDeductionPage() {
           <div className="lg:col-span-3">
              <Card>
                 <CardHeader>
-                    <CardTitle>Staged Items for Deduction</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ScrollArea className="h-[200px] border rounded-md">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Product</TableHead>
-                                    <TableHead>Color</TableHead>
-                                    <TableHead>Size</TableHead>
-                                    <TableHead className="text-center">Qty</TableHead>
-                                    <TableHead></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {stagedItems.length > 0 ? stagedItems.map(item => (
-                                    <TableRow key={item.id}>
-                                        <TableCell>{item.productType}</TableCell>
-                                        <TableCell>{item.color}</TableCell>
-                                        <TableCell>{item.size}</TableCell>
-                                        <TableCell className="text-center">{item.quantity}</TableCell>
-                                        <TableCell><Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
-                                    </TableRow>
-                                )) : <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No items staged.</TableCell></TableRow>}
-                            </TableBody>
-                        </Table>
-                    </ScrollArea>
-                </CardContent>
-            </Card>
-             <Card className="mt-8">
-                <CardHeader>
                     <CardTitle>Deduction History</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ScrollArea className="h-[400px] border rounded-md">
+                    <ScrollArea className="h-[60vh] border rounded-md">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -271,66 +285,3 @@ export default function ManualDeductionPage() {
     </Header>
   );
 }
-
-// Sub-form for adding items
-const addItemSchema = z.object({
-    productType: z.string().min(1),
-    color: z.string().min(1),
-    size: z.string().min(1),
-    quantity: z.coerce.number().min(1),
-});
-type AddItemFormValues = z.infer<typeof addItemSchema>;
-
-const AddItemSubForm = ({ onAddItem, productTypes }: { onAddItem: (item: Omit<DeductionItem, 'id'>) => void; productTypes: string[] }) => {
-    const form = useForm<AddItemFormValues>({
-        resolver: zodResolver(addItemSchema),
-        defaultValues: { quantity: 1 }
-    });
-    
-    const { watch, setValue } = form;
-    const productTypeValue = watch('productType');
-    const colorValue = watch('color');
-    const isPolo = productTypeValue?.includes('Polo Shirt');
-    
-    const jacketColors = useMemo(() => ['Army Green', 'Black', 'Black/Gray', 'Black/Khaki', 'Black/Navy Blue', 'Brown', 'Dark Gray', 'Dark Khaki', 'Khaki', 'Light Gray', 'Light Khaki', 'Maroon/Gray', 'Navy Blue', 'Navy Blue/Gray', 'Olive Green'], []);
-    const poloShirtColors = useMemo(() => ['Aqua Blue', 'Black', 'Brown', 'Choco Brown', 'Cream', 'Dark Green', 'Dark Gray', 'Dawn Blue', 'Emerald Green', 'Estate Blue', 'Fair Orchid', 'Fuchsia', 'Gold', 'Golden Yellow', 'Green', 'Green Briar', 'Honey Mustard', 'Irish Green', 'Jade Green', 'Light Green', 'Light Gray', 'Maroon', 'Melange Gray', 'Military Green', 'Mint Green', 'Mocha', 'Navy Blue', 'Nine Ion Gray', 'Oatmeal', 'Orange', 'Pink', 'Purple', 'Rapture Rose', 'Red', 'Royal Blue', 'Sky Blue', 'Slate Blue', 'Teal', 'White', 'Yellow'], []);
-    const productSizes = useMemo(() => ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'], []);
-    
-    const availableColors = isPolo ? poloShirtColors : jacketColors;
-
-    useEffect(() => {
-        if (colorValue && !availableColors.includes(colorValue)) {
-            setValue('color', '');
-        }
-    }, [productTypeValue, availableColors, colorValue, setValue]);
-
-    const handleSubmit = (data: AddItemFormValues) => {
-        onAddItem(data);
-        form.reset({ productType: data.productType, color: '', size: '', quantity: 1 });
-    };
-
-    return (
-        <FormProvider {...form}>
-            <div className="space-y-3 p-4 border rounded-md bg-muted/50">
-                <h4 className="font-semibold">Add Item to Deduct</h4>
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="productType" render={({ field }) => (
-                        <FormItem><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Product Type"/></SelectTrigger></FormControl><SelectContent>{productTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="color" render={({ field }) => (
-                        <FormItem><Select onValueChange={field.onChange} value={field.value} disabled={!productTypeValue}><FormControl><SelectTrigger><SelectValue placeholder="Color"/></SelectTrigger></FormControl><SelectContent>{availableColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
-                    )}/>
-                </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="size" render={({ field }) => (
-                        <FormItem><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Size"/></SelectTrigger></FormControl><SelectContent>{productSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="quantity" render={({ field }) => (
-                        <FormItem><FormControl><Input type="number" placeholder="Quantity" {...field} /></FormControl><FormMessage/></FormItem>
-                    )}/>
-                 </div>
-                 <Button type="button" onClick={form.handleSubmit(handleSubmit)} className="w-full">Add Item</Button>
-            </div>
-        </FormProvider>
-    );
-};
