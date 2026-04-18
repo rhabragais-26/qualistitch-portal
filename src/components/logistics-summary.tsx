@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
@@ -442,6 +443,26 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   
     return null;
   };
+
+  const CustomQualityTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-card p-2.5 text-card-foreground rounded-md border shadow-md">
+          <p className="font-bold mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={`item-${index}`} className="flex items-center justify-between gap-4 text-sm">
+                <div className="flex items-center">
+                    <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: entry.stroke || entry.fill }} />
+                    <span>{entry.name}:</span>
+                </div>
+                <span className="font-bold">{entry.value} {entry.name === 'Total Items' ? 'items' : 'orders'}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
   
   const isLoading = areLeadsLoading || areCasesLoading;
   const error = leadsError || casesError;
@@ -596,7 +617,7 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                         <Area type="monotone" dataKey="requested" name="Requested" stroke="hsl(var(--chart-3))" fill="hsl(var(--chart-3))" fillOpacity={0.4}>
                           <LabelList dataKey="requested" position="top" formatter={(value: number) => value > 0 ? value : ''} />
                         </Area>
-                        <Bar dataKey="completed" name="Approved" fill="hsl(var(--chart-2))" fillOpacity={0.7} radius={[4, 4, 0, 0]}>
+                        <Bar dataKey="completed" name="Approved" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
                           <LabelList dataKey="completed" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
                         </Bar>
                       </ComposedChart>
@@ -614,19 +635,15 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
                               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                               <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" allowDecimals={false} label={{ value: 'Total Items', angle: -90, position: 'insideLeft', style: {textAnchor: 'middle'} }} />
                               <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" allowDecimals={false} label={{ value: 'Order Count', angle: 90, position: 'insideRight', style: {textAnchor: 'middle'} }}/>
-                              <Tooltip content={<ChartTooltipContent
-                                formatter={(value, name) => {
-                                  if (name === "Total Items") return `${value} items`;
-                                  return `${value} orders`;
-                                }}
-                              />} />
-                              <Legend />
-                              <Area yAxisId="left" type="monotone" dataKey="totalQuantity" name="Total Items" fill="hsl(var(--chart-1))" stroke="hsl(var(--chart-1))" fillOpacity={0.2} />
-                              <Bar yAxisId="right" dataKey="approved" name="Approved" stackId="a" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
-                                <LabelList dataKey="approved" position="center" formatter={(value: number) => value > 0 ? value : ''} />
+                              <Tooltip content={<CustomQualityTooltip />} />
+                              <Area yAxisId="left" type="monotone" dataKey="totalQuantity" name="Total Items" fill="hsl(var(--chart-1))" stroke="hsl(var(--chart-1))" fillOpacity={0.2}>
+                                <LabelList dataKey="totalQuantity" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
+                              </Area>
+                              <Bar yAxisId="right" dataKey="approved" name="Approved" stackId="a" fill="hsl(var(--chart-2))" fillOpacity={0.7} radius={[4, 4, 0, 0]}>
+                                <LabelList dataKey="approved" position="center" className="fill-white font-bold" formatter={(value: number) => value > 0 ? value : ''} />
                               </Bar>
-                              <Bar yAxisId="right" dataKey="disapproved" name="Disapproved" stackId="a" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]}>
-                                  <LabelList dataKey="disapproved" position="center" formatter={(value: number) => value > 0 ? value : ''} />
+                              <Bar yAxisId="right" dataKey="disapproved" name="Disapproved" stackId="a" fill="hsl(var(--destructive))" fillOpacity={0.7} radius={[4, 4, 0, 0]}>
+                                  <LabelList dataKey="disapproved" position="center" className="fill-white font-bold" formatter={(value: number) => value > 0 ? value : ''} />
                               </Bar>
                           </ComposedChart>
                       </ResponsiveContainer>
@@ -640,3 +657,5 @@ const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
 });
 
 export { LogisticsSummaryMemo as LogisticsSummary };
+
+```
