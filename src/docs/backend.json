@@ -2,6 +2,22 @@
 
 {
   "entities": {
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "type": "object",
+      "description": "Represents a log of a user's action in the system.",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userNickname": { "type": "string" },
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "entityId": { "type": "string", "description": "ID of the entity that was acted upon (e.g., leadId)." },
+        "entityType": { "type": "string", "description": "Type of the entity (e.g., 'Lead', 'Revision')." }
+      },
+      "required": ["id", "timestamp", "userNickname", "userId", "action", "details"]
+    },
     "ManualItemDeduction": {
       "title": "ManualItemDeduction",
       "type": "object",
@@ -1134,6 +1150,16 @@
   },
   "firestore": {
     "structure": [
+       {
+        "path": "/activityLogs/{logId}",
+        "definition": {
+          "entityName": "ActivityLog",
+          "schema": {
+            "$ref": "#/backend/entities/ActivityLog"
+          },
+          "description": "Stores user activity logs."
+        }
+      },
       {
         "path": "/manual_item_deductions/{deductionId}",
         "definition": {

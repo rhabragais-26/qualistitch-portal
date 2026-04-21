@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -629,19 +630,27 @@ const HeaderMemo = React.memo(function Header({
                     </DropdownMenuItem>
                     )}
                     {isAdmin && (
-                    <DropdownMenuItem onClick={() => router.push('/admin/users')}>
-                        <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-2">
-                                <UserCog />
-                                <span>Admin Settings</span>
-                            </div>
-                            {unassignedUsersCount > 0 && (
-                                <Badge variant="destructive" className="h-4 w-4 shrink-0 justify-center rounded-full p-0">
-                                    {unassignedUsersCount}
-                                </Badge>
-                            )}
-                        </div>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onClick={() => router.push('/admin/users')}>
+                          <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center gap-2">
+                                  <UserCog />
+                                  <span>User Management</span>
+                              </div>
+                              {unassignedUsersCount > 0 && (
+                                  <Badge variant="destructive" className="h-4 w-4 shrink-0 justify-center rounded-full p-0">
+                                      {unassignedUsersCount}
+                                  </Badge>
+                              )}
+                          </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/admin/activity-logs')}>
+                          <div className="flex items-center gap-2">
+                              <History />
+                              <span>Activity Logs</span>
+                          </div>
+                      </DropdownMenuItem>
+                    </>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
