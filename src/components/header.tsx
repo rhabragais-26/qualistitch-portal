@@ -635,7 +635,7 @@ const HeaderMemo = React.memo(function Header({
                           <div className="flex items-center justify-between w-full">
                               <div className="flex items-center gap-2">
                                   <UserCog />
-                                  <span>User Management</span>
+                                  <span>Admin Settings</span>
                               </div>
                               {unassignedUsersCount > 0 && (
                                   <Badge variant="destructive" className="h-4 w-4 shrink-0 justify-center rounded-full p-0">
