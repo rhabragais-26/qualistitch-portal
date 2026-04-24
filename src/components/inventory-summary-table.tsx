@@ -3,7 +3,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, runTransaction, getDoc, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, runTransaction, getDoc, writeBatch, getDocs, deleteDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -26,11 +26,22 @@ import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Boxes, Shirt, PackageX, MinusCircle, Edit, Save, X } from 'lucide-react';
+import { Boxes, Shirt, PackageX, MinusCircle, Edit, Save, X, Trash2 } from 'lucide-react';
 import { cn, generateSku, formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import type { PricingConfig } from '@/lib/pricing';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+
 
 type Order = {
   productType: string;
@@ -104,6 +115,7 @@ export function InventorySummaryTable() {
   const [editedStocks, setEditedStocks] = useState<Record<string, number>>({});
   const [editedColors, setEditedColors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<EnrichedInventoryItem | null>(null);
 
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user || isAuthLoading) return null;
@@ -235,6 +247,28 @@ export function InventorySummaryTable() {
     setEditedStocks({});
     setEditedColors({});
     setIsSaving(false);
+  };
+  
+  const confirmDelete = async () => {
+    if (!itemToDelete || !firestore) return;
+
+    try {
+        const docRef = doc(firestore, 'inventory', itemToDelete.id);
+        await deleteDoc(docRef);
+        toast({
+            title: "Item Deleted",
+            description: `${itemToDelete.productType} (${itemToDelete.color}, ${itemToDelete.size}) has been removed from inventory.`,
+        });
+        refetch();
+    } catch (e: any) {
+        toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: e.message || "Could not delete the inventory item.",
+        });
+    } finally {
+        setItemToDelete(null);
+    }
   };
 
 
@@ -418,6 +452,7 @@ export function InventorySummaryTable() {
   const error = inventoryError || leadsError;
 
   return (
+    <>
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
       <CardHeader>
           <CardTitle className="text-black">Inventory Summary</CardTitle>
@@ -581,6 +616,7 @@ export function InventorySummaryTable() {
                       <TableHead className="text-white font-bold align-middle text-center">Dispatched</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Remaining Stocks</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Status</TableHead>
+                      {isEditMode && <TableHead className="text-white font-bold align-middle text-center">Actions</TableHead>}
                     </TableRow>
                   </TableHeader>
                     <TableBody>
@@ -636,6 +672,13 @@ export function InventorySummaryTable() {
                             <TableCell className="text-center align-middle py-2">
                               {getStatusBadge(item.remaining)}
                             </TableCell>
+                            {isEditMode && (
+                                <TableCell className="text-center">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setItemToDelete(item)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </TableCell>
+                            )}
                         </TableRow>
                     ))}
                     </TableBody>
@@ -645,5 +688,24 @@ export function InventorySummaryTable() {
         )}
       </CardContent>
     </Card>
+     <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This will permanently delete the SKU for <br/>
+                    <strong>{itemToDelete?.productType} ({itemToDelete?.color}, {itemToDelete?.size})</strong>.
+                    This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+                    Delete SKU
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
