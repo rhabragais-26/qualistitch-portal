@@ -48,6 +48,7 @@ import { FieldErrors } from 'react-hook-form';
 import Link from 'next/link';
 import { getMonth, getYear, startOfDay, endOfDay, subDays, isSameDay, format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
+import { logActivity } from '@/lib/activity-logger';
 
 const orderSchema = z.object({
   id: z.string().optional(), // Keep track of original order if needed
@@ -562,12 +563,26 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   }, []);
 
   const handleDeleteLead = useCallback(async (leadId: string) => {
-    if(!leadId || !firestore) return;
+    if(!leadId || !firestore || !user || !userProfile || !leads) return;
 
+    const leadToDelete = leads.find(l => l.id === leadId);
+    
     const leadDocRef = doc(firestore, 'leads', leadId);
 
     try {
       await deleteDoc(leadDocRef);
+
+      if (leadToDelete) {
+        logActivity({
+            firestore,
+            user: { uid: user.uid, nickname: userProfile.nickname },
+            action: 'Delete Lead',
+            details: `Deleted lead for ${leadToDelete.customerName} (J.O. ${formatJoNumberUtil(leadToDelete.joNumber)})`,
+            entityId: leadId,
+            entityType: 'Lead'
+        });
+      }
+      
       toast({
         title: "Lead Deleted!",
         description: "The lead has been removed from the records.",
@@ -581,7 +596,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
         description: e.message || "Could not delete the lead.",
       });
     }
-  }, [firestore, toast, refetchLeads]);
+  }, [firestore, toast, refetchLeads, user, userProfile, leads]);
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;

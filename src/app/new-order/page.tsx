@@ -35,6 +35,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { hasEditPermission } from '@/lib/permissions';
 import { isSameDay } from 'date-fns';
 import type { Lead as LeadType } from '@/components/records-table';
+import { logActivity } from '@/lib/activity-logger';
 
 
 export default function NewOrderPage() {
@@ -128,7 +129,7 @@ export default function NewOrderPage() {
   }
 
   const handleNewOrderSubmit = (values: FormValues) => {
-    if (!firestore || !userProfile) return;
+    if (!firestore || !userProfile || !user) return;
     const leadId = uuidv4();
     const leadsRef = collection(firestore, 'leads');
     const leadDocRef = doc(leadsRef, leadId);
@@ -231,6 +232,15 @@ export default function NewOrderPage() {
     }
 
     setDocumentNonBlocking(leadDocRef, submissionData, {});
+
+    logActivity({
+      firestore,
+      user: { uid: user.uid, nickname: userProfile.nickname },
+      action: 'Create Lead',
+      details: `Created new lead for ${submissionData.customerName}.`,
+      entityId: leadId,
+      entityType: 'Lead'
+    });
 
     toast({
       title: 'Lead Submitted!',

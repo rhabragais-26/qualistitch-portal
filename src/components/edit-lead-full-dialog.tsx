@@ -25,6 +25,7 @@ import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase, formatJoNumber } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
+import { logActivity } from '@/lib/activity-logger';
 
 
 interface EditLeadFullDialogProps {
@@ -150,7 +151,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
   };
 
   const handleConfirmSave = useCallback(async () => {
-    if (!firestore || !lead || !userProfile) {
+    if (!firestore || !lead || !userProfile || !user) {
         toast({
             variant: "destructive",
             title: "Update Failed",
@@ -209,6 +210,15 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
         
         const leadDocRef = doc(firestore, 'leads', lead.id);
         await updateDoc(leadDocRef, dataToUpdate);
+
+        logActivity({
+            firestore,
+            user: { uid: user.uid, nickname: userProfile.nickname },
+            action: 'Update Lead',
+            details: `Updated lead for ${dataToUpdate.customerName} (J.O. ${formatJoNumber(lead.joNumber)})`,
+            entityId: lead.id,
+            entityType: 'Lead'
+        });
         
         toast({
             title: "Lead Updated!",
@@ -224,7 +234,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             description: e.message || "Could not update the lead.",
         });
     }
-  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, userProfile, removedFees, editedUnitPrices, editedAddOnPrices, editedProgrammingFees]);
+  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, userProfile, user, removedFees, editedUnitPrices, editedAddOnPrices, editedProgrammingFees]);
 
   return (
     <>
