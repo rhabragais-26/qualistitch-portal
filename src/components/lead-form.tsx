@@ -1431,12 +1431,12 @@ export function LeadForm({
                               {order.productType === 'Patches' ? 'N/A' : remainingStock}
                             </TableCell>
                             <TableCell className="py-1 px-2 text-center align-middle">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleEditOrder(order, index)} disabled={isReadOnly}>
+                              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleEditOrder(order, index)} disabled={isReadOnly}>
                                   <Edit className="h-4 w-4" />
                               </Button>
                               <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100" disabled={isReadOnly}>
+                                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100" disabled={isReadOnly}>
                                       <Trash2 className="h-4 w-4" />
                                   </Button>
                                   </AlertDialogTrigger>
