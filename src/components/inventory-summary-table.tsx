@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
@@ -316,19 +315,18 @@ export function InventorySummaryTable() {
   const enrichedItems = useMemo(() => {
     if (!inventoryItems || !leads) return [];
 
+    const createKey = (item: { productType: string; color: string; size: string }) => 
+        `${item.productType}-${item.color}-${item.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
+    
     const soldQuantities = new Map<string, number>();
     const onProcessQuantities = new Map<string, number>();
     const dispatchedQuantities = new Map<string, number>();
-    const allItemsMap = new Map<string, { productType: string; color: string; size: string }>();
-    
+
     leads.forEach(lead => {
         lead.orders.forEach(order => {
             if (order.productType === 'Client Owned' || order.productType === 'Patches') return;
             const key = createKey(order);
-            if (!allItemsMap.has(key)) {
-                allItemsMap.set(key, { productType: order.productType, color: order.color, size: order.size });
-            }
-
+            
             soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
             
             if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
@@ -338,43 +336,30 @@ export function InventorySummaryTable() {
             }
         });
     });
-
-    inventoryItems.forEach(item => {
-        if (item.productType === 'Client Owned' || item.productType === 'Patches') return;
-        const key = createKey(item);
-        if (!allItemsMap.has(key)) {
-            allItemsMap.set(key, { productType: item.productType, color: item.color, size: item.size });
-        }
-    });
     
-    const inventoryMap = new Map(inventoryItems.map(item => [item.id, item]));
-
-    const enriched = Array.from(allItemsMap.values()).map(itemDetails => {
-        const docId = createKey(itemDetails);
-        const inventoryItem = inventoryMap.get(docId);
+    const enriched = inventoryItems.map(inventoryItem => {
+        const key = inventoryItem.id;
         
-        const onHand = inventoryItem?.stock ?? 0;
-        const soldQty = soldQuantities.get(docId) || 0;
-        const onProcess = onProcessQuantities.get(docId) || 0;
-        const dispatched = dispatchedQuantities.get(docId) || 0;
+        const onHand = inventoryItem.stock;
+        const soldQty = soldQuantities.get(key) || 0;
+        const onProcess = onProcessQuantities.get(key) || 0;
+        const dispatched = dispatchedQuantities.get(key) || 0;
         const reserved = soldQty - onProcess - dispatched;
 
         const totalStockEver = onHand + soldQty;
         const sellThroughRate = totalStockEver > 0 ? (soldQty / totalStockEver) * 100 : 0;
         
         const remaining = (onHand + onProcess + dispatched) - soldQty;
-        const sku = generateSku(itemDetails);
+        const sku = generateSku(inventoryItem);
         
         return {
-            id: docId,
-            ...itemDetails,
-            stock: onHand,
+            ...inventoryItem,
             sku,
             soldQty,
             onProcess,
             dispatched,
             reserved,
-            remaining: remaining,
+            remaining,
             sellThroughRate,
         };
     });
