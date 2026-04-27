@@ -21,6 +21,7 @@ export type UserPosition =
   | 'Marketing Head'
   | 'Social Media Manager'
   | 'Content Marketing Specialist'
+  | 'Marketing Assistant'
   | 'Not Assigned'
   | 'RESIGNED';
 
@@ -104,6 +105,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Marketing Head': ['marketing'],
   'Social Media Manager': ['marketing'],
   'Content Marketing Specialist': ['marketing'],
+  'Marketing Assistant': ['marketing'],
 };
 
 export type UserPermissions = {
