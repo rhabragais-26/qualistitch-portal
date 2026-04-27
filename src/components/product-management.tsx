@@ -65,7 +65,7 @@ export function ProductManagement() {
 
   const [config, setConfig] = useState<EditablePricingConfig | null>(null);
   const [productTypes, setProductTypes] = useState<string[]>([]);
-  const [selectedProductType, setSelectedProductType] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<ProductGroup>('');
   const [newProduct, setNewProduct] = useState({ name: '', group: '' });
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
@@ -76,6 +76,8 @@ export function ProductManagement() {
   
   const [editingCategory, setEditingCategory] = useState<{ oldName: string; newName: string } | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<string | null>(null);
+
+  const productGroups = useMemo(() => config ? Object.keys(config.pricingTiers).sort() as ProductGroup[] : [], [config]);
 
   const saveConfiguration = useCallback(async (configToSave: EditablePricingConfig, successMessage?: string) => {
     if (!configToSave || !pricingConfigRef) return;
@@ -173,14 +175,17 @@ export function ProductManagement() {
       setConfig(dataToUse as unknown as EditablePricingConfig);
       const pTypes = Object.keys(dataToUse.productGroupMapping).sort();
       setProductTypes(pTypes);
-      if (pTypes.length > 0 && !pTypes.includes(selectedProductType)) {
-        setSelectedProductType(pTypes[0]);
+
+      const pGroups = Object.keys(dataToUse.pricingTiers).sort();
+      if (pGroups.length > 0 && !pGroups.includes(selectedCategory)) {
+        setSelectedCategory(pGroups[0] as ProductGroup);
       }
+      
       if (newProduct.group === '' && Object.keys(dataToUse.pricingTiers).length > 0) {
         setNewProduct(p => ({ ...p, group: Object.keys(dataToUse.pricingTiers)[0]}));
       }
     }
-  }, [fetchedConfig, isLoading, selectedProductType, newProduct.group]);
+  }, [fetchedConfig, isLoading, selectedCategory, newProduct.group]);
 
   const isDirty = useMemo(() => {
     if (!config || !fetchedConfig) return false;
@@ -337,10 +342,7 @@ export function ProductManagement() {
     // Save the new configuration to Firestore
     await saveConfiguration(newConfig, `Product "${newProduct.name}" added successfully.`);
     
-    // After saving, also update the local state to select the new product
-    setSelectedProductType(newProduct.name);
     setNewProduct({ name: '', group: newProduct.group });
-    // The refetch from useDoc will update the UI
   }, [config, newProduct, saveConfiguration, toast]);
 
   const handleRemoveProduct = useCallback((productName: string) => {
@@ -352,12 +354,7 @@ export function ProductManagement() {
 
       const newProductTypes = productTypes.filter(p => p !== productName);
       setProductTypes(newProductTypes);
-      if (selectedProductType === productName && newProductTypes.length > 0) {
-        setSelectedProductType(newProductTypes[0]);
-      } else if (newProductTypes.length === 0) {
-        setSelectedProductType('');
-      }
-  }, [config, productTypes, selectedProductType]);
+  }, [config, productTypes]);
   
   const handleAddNewCategory = useCallback(() => {
     if (!config || !newCategoryName.trim()) {
@@ -452,13 +449,7 @@ export function ProductManagement() {
     toast({ title: 'Category Deletion Staged', description: `Category "${deletingCategory}" is marked for deletion. Click "Save All Changes" to apply.` });
   }, [config, deletingCategory, toast]);
 
-  const productGroups = useMemo(() => config ? Object.keys(config.pricingTiers).sort() as ProductGroup[] : [], [config]);
   const addOnTypes = useMemo(() => config ? (Object.keys(config.addOnPricing) as AddOnType[]).filter(type => type !== 'rushFee' && type !== 'shippingFee') : [], [config]);
-  
-  const selectedProductGroup = useMemo(() => {
-    if (!config || !selectedProductType) return null;
-    return config.productGroupMapping[selectedProductType] as ProductGroup | undefined;
-  }, [config, selectedProductType]);
 
   if (isLoading || !config) {
     return <Skeleton className="h-96 w-full" />;
@@ -476,13 +467,13 @@ export function ProductManagement() {
                 </CardDescription>
             </div>
             <div className="flex items-center gap-4">
-                <Label>Select a Product:</Label>
-                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                <Label>Select a Category:</Label>
+                <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as ProductGroup)}>
                     <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Select Product to Edit" />
+                        <SelectValue placeholder="Select Category to Edit" />
                     </SelectTrigger>
                     <SelectContent>
-                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                        {productGroups.map(group => <SelectItem key={group} value={group}>{group}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
@@ -627,7 +618,7 @@ export function ProductManagement() {
       <CardContent className="space-y-8">
         <section>
           <h3 className="text-lg font-semibold mb-4">Product Price Tiers</h3>
-           {selectedProductGroup ? (
+           {selectedCategory ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                   {(['logo', 'name', 'logoAndText'] as const).map((embroideryType, index) => {
                       const getEmbroideryLabel = (type: string) => {
@@ -637,9 +628,9 @@ export function ProductManagement() {
                         return '';
                       }
                       const colors = ['bg-sky-600', 'bg-blue-600', 'bg-indigo-600'];
-                      const key = `${selectedProductGroup}-${embroideryType}`;
+                      const key = `${selectedCategory}-${embroideryType}`;
                       const isEditing = !!editModes[key];
-                      const tiers = config.pricingTiers[selectedProductGroup]?.[embroideryType]?.tiers || [];
+                      const tiers = config.pricingTiers[selectedCategory]?.[embroideryType]?.tiers || [];
                       return (
                         <div key={embroideryType} className="border rounded-lg overflow-hidden shadow flex flex-col">
                            <div className={`p-2 text-center ${colors[index]}`}>
@@ -663,7 +654,7 @@ export function ProductManagement() {
                                             <TableRow key={tierIndex}>
                                                 <TableCell className="p-1 align-middle">
                                                   <div className="flex justify-center">
-                                                      <Input type="text" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center" readOnly={!isEditing}/>
+                                                      <Input type="text" value={tier.min} onChange={e => handleTierChange(selectedCategory, embroideryType, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center" readOnly={!isEditing}/>
                                                   </div>
                                                 </TableCell>
                                                 <TableCell className="p-1 align-middle">
@@ -677,14 +668,14 @@ export function ProductManagement() {
                                                       <Input
                                                         type="text"
                                                         value={tier.price === '' ? '' : new Intl.NumberFormat('en-US').format(Number(tier.price))}
-                                                        onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value.replace(/,/g, ''))}
+                                                        onChange={e => handleTierChange(selectedCategory, embroideryType, tierIndex, 'price', e.target.value.replace(/,/g, ''))}
                                                         className="w-24 h-7 text-xs pl-6 text-center"
                                                         readOnly={!isEditing}
                                                       />
                                                   </div>
                                                 </TableCell>
                                                 <TableCell className="p-1 align-middle">
-                                                  {isEditing && <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(selectedProductGroup!, embroideryType, tierIndex)} className="h-7 w-7 text-destructive">
+                                                  {isEditing && <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(selectedCategory, embroideryType, tierIndex)} className="h-7 w-7 text-destructive">
                                                       <Trash2 className="h-4 w-4" />
                                                   </Button>}
                                                 </TableCell>
@@ -696,7 +687,7 @@ export function ProductManagement() {
                           </div>
                            <div className={`p-2 flex justify-center items-center gap-2 ${colors[index]}`}>
                             {isEditing && (
-                                <Button variant="outline" size="sm" onClick={() => handleAddTier(selectedProductGroup!, embroideryType)}>
+                                <Button variant="outline" size="sm" onClick={() => handleAddTier(selectedCategory, embroideryType)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
                                 </Button>
                             )}
@@ -713,7 +704,7 @@ export function ProductManagement() {
                       )
                   })}
             </div>
-           ) : <p>Select a product to see its pricing.</p>}
+           ) : <p>Select a category to see its pricing.</p>}
         </section>
 
         <section>
