@@ -611,6 +611,14 @@ export function ProductManagement() {
                                 </section>
                             </div>
                         </div>
+                        <DialogFooter className="px-6 py-4 border-t">
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline">Close</Button>
+                            </DialogClose>
+                            <Button onClick={handleSaveChanges} disabled={!isDirty}>
+                                Save Changes
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>
