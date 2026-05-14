@@ -12,6 +12,8 @@ import { getYear, format, parse } from 'date-fns';
 import type { Lead } from '@/app/digitizing/reports/actions';
 import { Separator } from './ui/separator';
 import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 const chartConfig = {
   count: {
@@ -264,6 +266,12 @@ export function DigitizingReportsSummary() {
       'Overdue': '#ef4444', // red
   };
 
+  const handleResetFilters = () => {
+    setPriorityFilter('All');
+    setProgressChartMonth((new Date().getMonth() + 1).toString());
+    setProgressChartYear(new Date().getFullYear().toString());
+  };
+
   const isLoading = areLeadsLoading || isReportLoading || areUsersLoading;
   const error = leadsError || usersError;
 
@@ -316,6 +324,49 @@ export function DigitizingReportsSummary() {
 
   return (
     <>
+      <div className="mb-8 p-4 bg-card text-card-foreground rounded-lg shadow-xl no-print">
+        <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex flex-col gap-1">
+                    <Label className="text-[10px] text-muted-foreground uppercase font-bold px-1">Priority</Label>
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                        <SelectTrigger className="w-[140px] h-9 text-xs">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Priorities</SelectItem>
+                            <SelectItem value="Rush">Rush</SelectItem>
+                            <SelectItem value="Regular">Regular</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <Label className="text-[10px] text-muted-foreground uppercase font-bold px-1">Year</Label>
+                    <Select value={progressChartYear} onValueChange={setProgressChartYear}>
+                        <SelectTrigger className="w-[100px] h-9 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Years</SelectItem>
+                            {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <Label className="text-[10px] text-muted-foreground uppercase font-bold px-1">Month</Label>
+                    <Select value={progressChartMonth} onValueChange={setProgressChartMonth}>
+                        <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Months</SelectItem>
+                            {monthOptions.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="pt-5">
+                    <Button onClick={handleResetFilters} className="h-9 bg-teal-600 hover:bg-teal-700 text-white font-bold">Reset Filters</Button>
+                </div>
+            </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
         {statusSummary.map((status: any, index: any) => (
             <StatusDoughnutCard
@@ -419,7 +470,7 @@ export function DigitizingReportsSummary() {
                                 {digitizerSummary.map((entry: any, index: any) => (
                                     <Cell key={`cell-${index}`} fill={entry.name === 'Unassigned' ? '#6B7280' : COLORS[index % COLORS.length]} />
                                 ))}
-                                <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" fontSize={12} />
+                                <LabelList dataKey="count" position="right" offset={8} className="fill-foreground font-bold" fontSize={11} />
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
@@ -433,30 +484,6 @@ export function DigitizingReportsSummary() {
                         <CardTitle>Daily Productivity per Digitizer</CardTitle>
                         <CardDescription>Combined count of Uploaded Initial Program Images and Final DST Files (Logo, Back Design and Names) on a daily basis</CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Filter Priority" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Priorities</SelectItem>
-                                <SelectItem value="Rush">Rush</SelectItem>
-                                <SelectItem value="Regular">Regular</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select value={progressChartYear} onValueChange={setProgressChartYear}>
-                            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <Select value={progressChartMonth} onValueChange={setProgressChartMonth}>
-                            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                {monthOptions.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
                 </div>
             </CardHeader>
             <CardContent className="space-y-8">
@@ -466,7 +493,9 @@ export function DigitizingReportsSummary() {
                         <LineChart data={dailyProgressData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             {dailyProgressData.map((entry) => {
-                                const date = parse(entry.date as string, 'MMM-dd', new Date(parseInt(progressChartYear), parseInt(progressChartMonth) - 1));
+                                const year = progressChartYear === 'all' ? new Date().getFullYear() : parseInt(progressChartYear);
+                                const month = progressChartMonth === 'all' ? new Date().getMonth() : parseInt(progressChartMonth) - 1;
+                                const date = parse(entry.date as string, 'MMM-dd', new Date(year, month));
                                 if (date.getDay() === 0) { // 0 is Sunday
                                     return <ReferenceLine key={`sunday-line-${entry.date}`} xAxisId="bottom" x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeDasharray="3 3" />;
                                 }
@@ -485,7 +514,11 @@ export function DigitizingReportsSummary() {
                                 dataKey="date"
                                 xAxisId="top"
                                 orientation="top"
-                                tickFormatter={(value) => format(parse(value, 'MMM-dd', new Date(parseInt(progressChartYear), parseInt(progressChartMonth) - 1)), 'E')}
+                                tickFormatter={(value) => {
+                                    const year = progressChartYear === 'all' ? new Date().getFullYear() : parseInt(progressChartYear);
+                                    const month = progressChartMonth === 'all' ? new Date().getMonth() : parseInt(progressChartMonth) - 1;
+                                    return format(parse(value, 'MMM-dd', new Date(year, month)), 'E');
+                                }}
                                 tickLine={false}
                                 axisLine={false}
                                 interval={0}
@@ -496,7 +529,7 @@ export function DigitizingReportsSummary() {
                             <Tooltip content={<ChartTooltipContent />} />
                             <Legend wrapperStyle={{ paddingTop: '20px' }} />
                             {dailyProgressData.length > 0 && Object.keys(dailyProgressData[0]).filter(k => k !== 'date').map((key, index) => (
-                                <Line key={key} name={key} type="monotone" dataKey={key} stroke={COLORS[index % COLORS.length]} xAxisId="bottom" />
+                                <Line key={key} name={key} type="monotone" dataKey={key} stroke={COLORS[index % COLORS.length]} xAxisId="bottom" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                             ))}
                         </LineChart>
                     </ResponsiveContainer>
@@ -524,13 +557,13 @@ export function DigitizingReportsSummary() {
                               <Tooltip content={<CustomTooltip />} />
                               <Legend wrapperStyle={{ bottom: 0 }}/>
                               <Bar dataKey="logo" fill="hsl(var(--chart-2))" name="Logo" radius={[4, 4, 0, 0]}>
-                                  <LabelList dataKey="logo" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
+                                  <LabelList dataKey="logo" position="top" className="fill-black font-bold" fontSize={11} formatter={(value: number) => value > 0 ? value : ''} />
                               </Bar>
                               <Bar dataKey="backDesign" fill="hsl(var(--chart-3))" name="Back Design" radius={[4, 4, 0, 0]}>
-                                  <LabelList dataKey="backDesign" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
+                                  <LabelList dataKey="backDesign" position="top" className="fill-black font-bold" fontSize={11} formatter={(value: number) => value > 0 ? value : ''} />
                               </Bar>
                               <Bar dataKey="names" fill="hsl(var(--chart-5))" name="Names" radius={[4, 4, 0, 0]}>
-                                  <LabelList dataKey="names" position="top" className="fill-black font-bold" fontSize={12} formatter={(value: number) => value > 0 ? value : ''} />
+                                  <LabelList dataKey="names" position="top" className="fill-black font-bold" fontSize={11} formatter={(value: number) => value > 0 ? value : ''} />
                               </Bar>
                           </BarChart>
                       </ResponsiveContainer>

@@ -611,8 +611,8 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
 
                                     <div className="space-y-1">
                                       <p className="font-bold italic">Noted by:</p>
-                                      <p className="pt-8 border-b border-black text-center font-semibold">TBA</p>
-                                      <p className="text-center font-bold">Sales Head</p>
+                                      <p className="pt-8 border-b border-black text-center font-semibold">Aljohn Khemlani</p>
+                                      <p className="text-center font-bold">Sales Manager</p>
                                       <p className="text-center">(Name &amp; Signature, Date)</p>
                                     </div>
 
