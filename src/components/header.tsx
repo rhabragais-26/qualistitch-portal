@@ -44,7 +44,8 @@ import {
   Gift,
   Newspaper,
   CandlestickChart,
-  PackageX
+  PackageX,
+  History
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -503,7 +504,7 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/add-items')}>
                       <PlusSquare className="mr-2" />
                       Add Items
-                    </Divider>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/replenishment-history')}>
                       <ClipboardList className="mr-2 h-4 w-4" />
                       Replenishment History
