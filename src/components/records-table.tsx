@@ -48,7 +48,6 @@ import { FieldErrors } from 'react-hook-form';
 import Link from 'next/link';
 import { getMonth, getYear, startOfDay, endOfDay, subDays, isSameDay, format } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
-import { logActivity } from '@/lib/activity-logger';
 
 const orderSchema = z.object({
   id: z.string().optional(), // Keep track of original order if needed
@@ -565,23 +564,10 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   const handleDeleteLead = useCallback(async (leadId: string) => {
     if(!leadId || !firestore || !user || !userProfile || !leads) return;
 
-    const leadToDelete = leads.find(l => l.id === leadId);
-    
     const leadDocRef = doc(firestore, 'leads', leadId);
 
     try {
       await deleteDoc(leadDocRef);
-
-      if (leadToDelete) {
-        logActivity({
-            firestore,
-            user: { uid: user.uid, nickname: userProfile.nickname },
-            action: 'Delete Lead',
-            details: `Deleted lead for ${leadToDelete.customerName} (J.O. ${formatJoNumberUtil(leadToDelete.joNumber)})`,
-            entityId: leadId,
-            entityType: 'Lead'
-        });
-      }
       
       toast({
         title: "Lead Deleted!",
@@ -610,7 +596,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     return (
       <div className="space-y-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+          <Skeleton key={i} className="h-16 w-full" />
         ))}
       </div>
     );

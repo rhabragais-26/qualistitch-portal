@@ -25,7 +25,6 @@ import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase, formatJoNumber } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
-import { logActivity } from '@/lib/activity-logger';
 
 
 interface EditLeadFullDialogProps {
@@ -211,15 +210,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
         const leadDocRef = doc(firestore, 'leads', lead.id);
         await updateDoc(leadDocRef, dataToUpdate);
 
-        logActivity({
-            firestore,
-            user: { uid: user.uid, nickname: userProfile.nickname },
-            action: 'Update Lead',
-            details: `Updated lead for ${dataToUpdate.customerName} (J.O. ${formatJoNumber(lead.joNumber)})`,
-            entityId: lead.id,
-            entityType: 'Lead'
-        });
-        
         toast({
             title: "Lead Updated!",
             description: "The lead details have been successfully updated.",
