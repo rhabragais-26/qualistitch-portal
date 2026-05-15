@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -46,7 +44,6 @@ import {
   Gift,
   Newspaper,
   CandlestickChart,
-  History,
   PackageX
 } from 'lucide-react';
 import Link from 'next/link';
@@ -412,7 +409,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment', '/sales/quotation', '/sales/data-issues']))}>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment', '/sales/quotation', '/sales/unclosed-leads']))}>
                       <TrendingUp className="mr-2" />
                       Sales
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -506,7 +503,7 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/add-items')}>
                       <PlusSquare className="mr-2" />
                       Add Items
-                    </DropdownMenuItem>
+                    </Divider>
                     <DropdownMenuItem onClick={() => handleNavigation('/inventory/replenishment-history')}>
                       <ClipboardList className="mr-2 h-4 w-4" />
                       Replenishment History
@@ -630,7 +627,6 @@ const HeaderMemo = React.memo(function Header({
                     </DropdownMenuItem>
                     )}
                     {isAdmin && (
-                    <>
                       <DropdownMenuItem onClick={() => router.push('/admin/users')}>
                           <div className="flex items-center justify-between w-full">
                               <div className="flex items-center gap-2">
@@ -644,13 +640,6 @@ const HeaderMemo = React.memo(function Header({
                               )}
                           </div>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push('/admin/activity-logs')}>
-                          <div className="flex items-center gap-2">
-                              <History />
-                              <span>Activity Logs</span>
-                          </div>
-                      </DropdownMenuItem>
-                    </>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
