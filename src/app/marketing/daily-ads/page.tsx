@@ -32,6 +32,8 @@ import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
+import { usePathname } from 'next/navigation';
+import { hasEditPermission } from '@/lib/permissions';
 
 type AdImage = {
   name: string;
@@ -70,6 +72,7 @@ function DailyAdsPage() {
   const firebaseApp = useFirebaseApp();
   const { userProfile, isAdmin } = useUser();
   const { toast } = useToast();
+  const pathname = usePathname();
   const [editingAd, setEditingAd] = useState<DailyAd | null>(null);
   const [deletingAd, setDeletingAd] = useState<DailyAd | null>(null);
   
@@ -79,7 +82,7 @@ function DailyAdsPage() {
   const [images, setImages] = useState<ImageState[]>([]);
   const [showAll, setShowAll] = useState(false);
 
-  const canEdit = useMemo(() => isAdmin || userProfile?.position === 'Marketing Head' || userProfile?.position === 'Social Media Manager', [isAdmin, userProfile]);
+  const canEdit = hasEditPermission(userProfile, pathname);
 
   const adsToShow = useMemo(() => {
     if (!dailyAds) return [];
@@ -217,7 +220,7 @@ function DailyAdsPage() {
                     <fieldset disabled={!canEdit}>
                         <div className="grid grid-cols-2 gap-4">
                             <FormField control={form.control} name="date" render={({ field }) => (
-                            <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" value={format(field.value, 'yyyy-MM-dd')} onChange={(e) => field.onChange(new Date(`${e.target.value}T00:00:00`))} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" value={field.value ? format(field.value, 'yyyy-MM-dd') : ''} onChange={(e) => field.onChange(new Date(`${e.target.value}T00:00:00`))} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField control={form.control} name="adAccount" render={({ field }) => (
                             <FormItem>
