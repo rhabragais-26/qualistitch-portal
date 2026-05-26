@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -75,6 +74,7 @@ const remittanceOptions = [
     "J&T Remittance",
     "LBC Remittance",
     "CASH",
+    "GCash (Felix)",
     "GCash (Jam)",
     "GCash (Jonathan)",
     "GCash (Jhun)",
@@ -99,7 +99,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
   const { userProfile } = useUser();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
 
   const [confirmingLead, setConfirmingLead] = useState<Lead | null>(null);
   const [remittanceMode, setRemittanceMode] = useState('');

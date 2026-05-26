@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -87,7 +86,7 @@ const otherInflowSchema = z.object({
 type OtherInflowFormValues = z.infer<typeof otherInflowSchema>;
 
 const paymentModes = [
-    "CASH", "GCash (Jam)", "GCash (Jonathan)", "GCash (Jhun)", "GCash (Jays)", "GCash (Tantan)", "Paymaya", "Bank Transfer to BDO", "Bank Transfer to BPI", "Bank Transfer to ChinaBank", "J&T Remittance", "LBC Remittance"
+    "CASH", "GCash (Felix)", "GCash (Jam)", "GCash (Jonathan)", "GCash (Jhun)", "GCash (Jays)", "GCash (Tantan)", "Paymaya", "Bank Transfer to BDO", "Bank Transfer to BPI", "Bank Transfer to ChinaBank", "J&T Remittance", "LBC Remittance"
 ];
 
 // Updated OtherInflowsForm to handle edits
@@ -696,8 +695,3 @@ export default function CashInflowsPage() {
     </>
   );
 }
-    
-
-    
-
-    

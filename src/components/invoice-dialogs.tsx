@@ -442,6 +442,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="CASH">CASH</SelectItem>
+                <SelectItem value="GCash (Felix)">GCash (Felix)</SelectItem>
                 <SelectItem value="GCash (Jam)">GCash (Jam)</SelectItem>
                 <SelectItem value="GCash (Jonathan)">GCash (Jonathan)</SelectItem>
                 <SelectItem value="GCash (Jhun)">GCash (Jhun)</SelectItem>
@@ -638,6 +639,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="CASH">CASH</SelectItem>
+                <SelectItem value="GCash (Felix)">GCash (Felix)</SelectItem>
                 <SelectItem value="GCash (Jam)">GCash (Jam)</SelectItem>
                 <SelectItem value="GCash (Jonathan)">GCash (Jonathan)</SelectItem>
                 <SelectItem value="GCash (Jhun)">GCash (Jhun)</SelectItem>
