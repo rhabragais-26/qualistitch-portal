@@ -93,6 +93,7 @@ import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { UserPosition, hasEditPermission, PageGroup, allPageGroups, defaultPermissions } from '@/lib/permissions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import Image from 'next/image';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
