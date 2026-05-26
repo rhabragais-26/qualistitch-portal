@@ -45,7 +45,7 @@ import {
   Newspaper,
   CandlestickChart,
   PackageX,
-  History
+  History as HistoryIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -483,7 +483,7 @@ const HeaderMemo = React.memo(function Header({
                       Program Files Database
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/digitizing/revision-history')}>
-                      <History className="mr-2" />
+                      <HistoryIcon className="mr-2" />
                       Revision History
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/digitizing/reports')}>

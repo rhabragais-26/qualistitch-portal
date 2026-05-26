@@ -14,6 +14,7 @@ import { Separator } from './ui/separator';
 import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
 
 const chartConfig = {
   count: {
@@ -495,9 +496,11 @@ export function DigitizingReportsSummary() {
                             {dailyProgressData.map((entry) => {
                                 const year = progressChartYear === 'all' ? new Date().getFullYear() : parseInt(progressChartYear);
                                 const month = progressChartMonth === 'all' ? new Date().getMonth() : parseInt(progressChartMonth) - 1;
-                                const date = parse(entry.date as string, 'MMM-dd', new Date(year, month));
+                                const dateString = (entry as any).date;
+                                if (!dateString) return null;
+                                const date = parse(dateString, 'MMM-dd', new Date(year, month));
                                 if (date.getDay() === 0) { // 0 is Sunday
-                                    return <ReferenceLine key={`sunday-line-${entry.date}`} xAxisId="bottom" x={entry.date as string} stroke="rgba(0, 0, 0, 0.3)" strokeDasharray="3 3" />;
+                                    return <ReferenceLine key={`sunday-line-${dateString}`} xAxisId="bottom" x={dateString} stroke="rgba(0, 0, 0, 0.3)" strokeDasharray="3 3" />;
                                 }
                                 return null;
                             })}

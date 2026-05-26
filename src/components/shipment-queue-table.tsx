@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { doc, updateDoc, collection, query, setDoc, getDocs, where } from 'firebase/firestore';
@@ -29,14 +27,14 @@ import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, Chev
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { addDays, differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -381,12 +379,12 @@ const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary"
 export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: ShipmentQueueTableProps) {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, refetch: refetchLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
   const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery, undefined, { listen: false });
 
-  const { userProfile } = useUser();
+  const { userProfile, isAdmin } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
@@ -403,6 +401,11 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const [editingWaybills, setEditingWaybills] = useState<{ leadId: string; numbers: string[] } | null>(null);
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
@@ -693,6 +696,52 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
       setDeliveringLead(null);
     }
   };
+
+  const handleMarkAllAsDelivered = async () => {
+    if (!firestore || !userProfile) return;
+
+    const shippedLeads = shipmentQueueLeads.filter(
+      (lead) => lead.shipmentStatus === 'Shipped'
+    );
+
+    if (shippedLeads.length === 0) {
+      toast({
+        title: "No orders to mark",
+        description: "There are no currently filtered 'Shipped' orders to update.",
+      });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    let successCount = 0;
+
+    try {
+      const promises = shippedLeads.map(async (lead) => {
+        const leadDocRef = doc(firestore, 'leads', lead.id);
+        await updateDoc(leadDocRef, {
+          shipmentStatus: 'Delivered',
+          deliveredTimestamp: now,
+          lastModified: now,
+          lastModifiedBy: userProfile.nickname,
+        });
+        successCount++;
+      });
+
+      await Promise.all(promises);
+      toast({
+        title: "Success",
+        description: `${successCount} orders have been marked as Delivered.`,
+      });
+      refetchLeads();
+    } catch (e: any) {
+      console.error("Error bulk updating to delivered:", e);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: e.message || "Could not update some orders.",
+      });
+    }
+  };
   
     const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
         const lead = leads?.find((l) => l.id === leadId);
@@ -821,6 +870,16 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     });
   }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumber]);
 
+  if (areLeadsLoading || !isMounted) {
+    return (
+      <div className="space-y-2 p-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <>
       <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
@@ -849,7 +908,30 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                         />
                     </div>
                 </div>
-                 <div className="w-full text-right">
+                 <div className="w-full text-right flex items-center justify-end gap-4">
+                  {isCompleted && isAdmin && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-9 border-teal-600 text-teal-600 hover:bg-teal-50">
+                          Mark all as delivered
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Mark all as delivered?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will update all currently filtered 'Shipped' orders to 'Delivered' status. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleMarkAllAsDelivered} className="bg-teal-600 hover:bg-teal-700 text-white font-bold">
+                            Confirm
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                   {filterType === 'COMPLETED' ? (
                       <Link href="/logistics/shipment-queue" className="text-sm text-primary hover:underline">
                           View Shipment Queue
@@ -1007,7 +1089,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
           </AlertDialogContent>
         </AlertDialog>
       )}
-        <AlertDialog open={!!joReceivedConfirmation} onOpenChange={setJoReceivedConfirmation}>
+        <AlertDialog open={!!joReceivedConfirmation} onOpenChange={(open) => !open && setJoReceivedConfirmation(null)}>
             <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
