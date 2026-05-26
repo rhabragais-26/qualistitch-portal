@@ -1,4 +1,3 @@
-
 'use server';
 import { z } from 'zod';
 import { addDays, differenceInDays, format, startOfMonth, endOfMonth, eachDayOfInterval, getYear, getMonth } from 'date-fns';
@@ -144,6 +143,10 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
     })();
 
     const dailyProgressData = (() => {
+        if (selectedYear === 'all' || selectedMonth === 'all') {
+          return [];
+        }
+
         const year = parseInt(selectedYear, 10);
         const month = parseInt(selectedMonth, 10) - 1;
         
@@ -220,7 +223,12 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
             });
         });
 
-        const start = startOfMonth(new Date(year, month));
+        const startDateObj = new Date(year, month);
+        if (isNaN(startDateObj.getTime())) {
+            return [];
+        }
+
+        const start = startOfMonth(startDateObj);
         const end = endOfMonth(start);
         const daysInMonth = eachDayOfInterval({ start, end });
 
@@ -236,6 +244,10 @@ export async function generateDigitizingReportAction(input: GenerateDigitizingRe
     })();
     
     const monthlyProgramsDone = (() => {
+        if (selectedYear === 'all' || selectedMonth === 'all') {
+            return [];
+        }
+
         const year = parseInt(selectedYear, 10);
         const month = parseInt(selectedMonth, 10) - 1;
         const counts: Record<string, { logo: number, backDesign: number, names: number }> = {};

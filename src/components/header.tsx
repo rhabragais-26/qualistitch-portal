@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -45,7 +44,8 @@ import {
   Gift,
   Newspaper,
   CandlestickChart,
-  PackageX
+  PackageX,
+  History
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
