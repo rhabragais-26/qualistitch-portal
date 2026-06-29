@@ -52,7 +52,7 @@ type ProgressNotification = {
     isDisapproved: boolean;
 };
 
-type Notification = JoNoteNotification | GlobalAnnouncement | ProgressNotification;
+type AppNotification = JoNoteNotification | GlobalAnnouncement | ProgressNotification;
 
 
 type AppState = {
@@ -203,7 +203,7 @@ export function NotificationBell() {
   };
 
   const sortedNotifications = useMemo(() => {
-    const allNotifs: Notification[] = [
+    const allNotifs: AppNotification[] = [
         ...joNoteNotifications, 
         ...globalAnnouncements, 
         ...progressNotifications.map(p => ({ ...p, notifyAt: p.timestamp }))
@@ -255,11 +255,11 @@ export function NotificationBell() {
             }
         }
 
-        const notification = new Notification(title, {
+        const browserNotification = new Notification(title, {
             body: body,
         });
 
-        setTimeout(() => notification.close(), 5000);
+        setTimeout(() => browserNotification.close(), 5000);
       }
 
       const timer = setTimeout(() => setIsAnimating(false), 500); 
@@ -348,7 +348,6 @@ export function NotificationBell() {
                       {displayedNotifications.map(n => {
                           const isAnnouncement = 'leadId' in n && n.leadId === 'global';
                           const isProgress = 'message' in n;
-                          const isNote = !isAnnouncement && !isProgress;
 
                           if (isProgress) {
                               const notification = n as ProgressNotification;

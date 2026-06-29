@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
@@ -44,6 +43,7 @@ const positions: UserPosition[] = [
     'Digitizer',
     'E.D Coordinator',
     'Inventory Officer',
+    'Inventory Head',
     'Purchasing Officer',
     'Production Line Leader',
     'Production Head',

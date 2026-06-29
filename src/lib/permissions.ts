@@ -1,11 +1,10 @@
-
-
 export type UserPosition = 
   | 'SCES'
   | 'Sales Supervisor'
   | 'Sales Manager'
   | 'S.E Officer'
   | 'Inventory Officer'
+  | 'Inventory Head'
   | 'Purchasing Officer'
   | 'Production Line Leader'
   | 'Production Head'
@@ -53,6 +52,8 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/digitizing/revision-history': 'digitizing',
   '/digitizing/reports': 'digitizing',
   '/inventory/add-items': 'inventory',
+  '/inventory/replenishment-history': 'inventory',
+  '/inventory/manual-deduction': 'inventory',
   '/inventory/item-preparation-for-production': 'inventory',
   '/inventory/completed-endorsement': 'inventory',
   '/inventory/summary': 'inventory',
@@ -90,6 +91,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Sales Manager': ['sales'],
   'S.E Officer': ['sales'],
   'Inventory Officer': ['inventory'],
+  'Inventory Head': ['inventory'],
   'Purchasing Officer': ['inventory', 'logistics'],
   'Production Line Leader': ['production'],
   'Production Head': ['production', 'inventory', 'logistics'],
